@@ -1336,6 +1336,7 @@ const QUALITY = {
 const state = {
   exerciseIndex: 0,
   chapterFilter: "all",
+  favorites: loadFavorites(),
   mode: "degree",
   sound: "piano",
   key: KEY_CHOICES[4],
@@ -1360,6 +1361,7 @@ const ui = {
   promptLabel: document.querySelector("#promptLabel"),
   chapterLabel: document.querySelector("#chapterLabel"),
   keyBadge: document.querySelector("#keyBadge"),
+  favoriteButton: document.querySelector("#favoriteButton"),
   matrixScroll: document.querySelector("#matrixScroll"),
   positionLegend: document.querySelector("#positionLegend"),
   answerGrid: document.querySelector("#answerGrid"),
@@ -1484,6 +1486,11 @@ function init() {
   allOption.textContent = "Все главы · случайно";
   ui.chapterSelect.append(allOption);
 
+  const favoritesOption = document.createElement("option");
+  favoritesOption.value = "favorites";
+  ui.chapterSelect.append(favoritesOption);
+  updateFavoriteChapterOption();
+
   [...new Set(EXERCISES.map((exercise) => exercise.chapter))]
     .sort((left, right) => left - right)
     .forEach((chapter) => {
@@ -1502,7 +1509,15 @@ function init() {
   refreshExerciseSelect();
 
   ui.chapterSelect.addEventListener("change", () => {
-    state.chapterFilter = ui.chapterSelect.value;
+    const previousFilter = state.chapterFilter;
+    const requestedFilter = ui.chapterSelect.value;
+    if (requestedFilter === "favorites" && state.favorites.size === 0) {
+      ui.chapterSelect.value = previousFilter;
+      setFeedback("Избранное пока пусто. Нажмите ♡ у нужной последовательности.");
+      return;
+    }
+
+    state.chapterFilter = requestedFilter;
     const indexes = eligibleExerciseIndexes();
     state.exerciseIndex = nextRandomIndex(
       state.chapterFilter,
@@ -1530,6 +1545,7 @@ function init() {
   ui.reviewButton.addEventListener("click", () => playSequence(true));
   ui.showButton.addEventListener("click", showAnswer);
   ui.nextButton.addEventListener("click", nextExercise);
+  ui.favoriteButton.addEventListener("click", toggleFavorite);
   ui.resetStatsButton.addEventListener("click", resetStats);
   ui.soundSelect.addEventListener("change", () => {
     cancelPlayback();
@@ -1562,7 +1578,8 @@ function eligibleExerciseIndexes() {
   return EXERCISES
     .map((exercise, index) => ({ exercise, index }))
     .filter(({ exercise }) => (
-      state.chapterFilter === "all"
+      (state.chapterFilter === "favorites" && state.favorites.has(exercise.id))
+      || state.chapterFilter === "all"
       || String(exercise.chapter) === state.chapterFilter
     ))
     .map(({ index }) => index);
@@ -1608,6 +1625,9 @@ function nextExercise() {
 }
 
 function nextRandomIndex(chapter, indexes, currentIndex) {
+  if (indexes.length === 0) return currentIndex;
+  if (indexes.length === 1) return indexes[0];
+
   let queue = chapterQueues.get(chapter) || [];
   queue = queue.filter((index) => indexes.includes(index) && index !== currentIndex);
 
@@ -1638,6 +1658,15 @@ function render() {
   ui.sourceLabel.textContent = exercise.source;
   ui.promptLabel.textContent = `Определите последовательность из ${positionCount} аккордов`;
   ui.keyBadge.textContent = state.revealed ? `Тональность: ${state.key.name}` : "Тональность скрыта";
+  const isFavorite = state.favorites.has(exercise.id);
+  ui.favoriteButton.textContent = isFavorite ? "♥" : "♡";
+  ui.favoriteButton.classList.toggle("active", isFavorite);
+  ui.favoriteButton.setAttribute("aria-pressed", String(isFavorite));
+  ui.favoriteButton.setAttribute(
+    "aria-label",
+    isFavorite ? "Удалить из избранного" : "Добавить в избранное",
+  );
+  ui.favoriteButton.title = isFavorite ? "Удалить из избранного" : "Добавить в избранное";
 
   ui.positionLegend.replaceChildren();
   ui.positionLegend.style.setProperty("--positions", positionCount);
@@ -1837,6 +1866,74 @@ function showAnswer() {
 function setFeedback(message, type = "") {
   ui.feedback.textContent = message;
   ui.feedback.className = `feedback${type ? ` ${type}` : ""}`;
+}
+
+function loadFavorites() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("reharm-ear-favorites-v1") || "[]");
+    if (!Array.isArray(stored)) return new Set();
+    const knownIds = new Set(EXERCISES.map((exercise) => exercise.id));
+    return new Set(stored.filter((id) => knownIds.has(id)));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveFavorites() {
+  try {
+    localStorage.setItem(
+      "reharm-ear-favorites-v1",
+      JSON.stringify([...state.favorites]),
+    );
+  } catch {
+    // Favorites remain available for the current session if storage is blocked.
+  }
+}
+
+function updateFavoriteChapterOption() {
+  const option = [...ui.chapterSelect.children]
+    .find((item) => item.value === "favorites");
+  if (option) option.textContent = `Избранное · ${state.favorites.size}`;
+}
+
+function toggleFavorite() {
+  const exercise = currentExercise();
+  const wasFavorite = state.favorites.has(exercise.id);
+
+  if (wasFavorite) state.favorites.delete(exercise.id);
+  else state.favorites.add(exercise.id);
+
+  saveFavorites();
+  updateFavoriteChapterOption();
+
+  if (wasFavorite && state.chapterFilter === "favorites") {
+    const remainingIndexes = eligibleExerciseIndexes();
+    if (remainingIndexes.length === 0) {
+      state.chapterFilter = "all";
+      ui.chapterSelect.value = "all";
+      refreshExerciseSelect();
+      setFeedback("Пример удалён. Избранное пусто, открыт режим «Все главы».");
+      render();
+      return;
+    }
+
+    state.exerciseIndex = nextRandomIndex(
+      "favorites",
+      remainingIndexes,
+      state.exerciseIndex,
+    );
+    refreshExerciseSelect();
+    startExercise(true);
+    setFeedback("Пример удалён из избранного. Открыт следующий сохранённый пример.");
+    return;
+  }
+
+  refreshExerciseSelect();
+  render();
+  setFeedback(
+    wasFavorite ? "Удалено из избранного." : "Добавлено в избранное.",
+    wasFavorite ? "" : "success",
+  );
 }
 
 function loadStats() {

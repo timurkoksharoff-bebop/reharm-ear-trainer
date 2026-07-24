@@ -168,6 +168,37 @@ select {
   letter-spacing: 0;
 }
 
+.exercise-tools {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.favorite-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #45515c;
+  border-radius: 6px;
+  background: transparent;
+  color: #aab3ba;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.favorite-button:hover {
+  border-color: #d76b73;
+  color: #f08b92;
+}
+
+.favorite-button.active {
+  border-color: #d25b65;
+  background: #3b2025;
+  color: #ff7d86;
+}
+
 .key-badge {
   flex: 0 0 auto;
   padding: 8px 10px;
@@ -628,9 +659,12 @@ select:focus-visible {
     display: block;
   }
 
+  .exercise-tools {
+    margin-top: 10px;
+  }
+
   .key-badge {
     display: inline-block;
-    margin-top: 10px;
   }
 
   .position-legend,

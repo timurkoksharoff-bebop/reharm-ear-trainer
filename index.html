@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12273b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Reharm Ear">
+  <title>Reharm Ear Trainer</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow" id="chapterLabel">Reharmonization Techniques</p>
+        <h1>Аккордовые прогрессии</h1>
+      </div>
+      <button class="icon-button" id="resetStatsButton" type="button" title="Сбросить статистику" aria-label="Сбросить статистику">↺</button>
+    </header>
+
+    <section class="controls" aria-label="Настройки упражнения">
+      <label class="chapter-control">
+        <span>Глава</span>
+        <select id="chapterSelect"></select>
+      </label>
+      <label class="example-control">
+        <span>Пример</span>
+        <select id="exerciseSelect"></select>
+      </label>
+      <label>
+        <span>Темп</span>
+        <select id="tempoSelect">
+          <option value="1.8">Медленно</option>
+          <option value="1.45" selected>Средне</option>
+          <option value="1.1">Быстро</option>
+        </select>
+      </label>
+      <label>
+        <span>Звук</span>
+        <select id="soundSelect">
+          <option value="organ" selected>Мягкий орган</option>
+          <option value="piano">Рояль</option>
+        </select>
+      </label>
+      <div class="mode-control">
+        <span>Ответы</span>
+        <div class="segmented" role="group" aria-label="Способ обозначения аккордов">
+          <button class="active" type="button" data-mode="degree">Ступени</button>
+          <button type="button" data-mode="symbol">Аккорды</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="exercise">
+      <div class="exercise-heading">
+        <div>
+          <p class="source" id="sourceLabel"></p>
+          <h2 id="promptLabel"></h2>
+        </div>
+        <span class="key-badge" id="keyBadge">Тональность скрыта</span>
+      </div>
+
+      <div class="matrix-scroll">
+        <div class="position-legend" id="positionLegend" aria-hidden="true"></div>
+        <div class="answer-grid" id="answerGrid"></div>
+      </div>
+
+      <p class="feedback" id="feedback" aria-live="polite">
+        Сначала прозвучит тоника, затем последовательность.
+      </p>
+    </section>
+
+    <section class="stats" aria-label="Статистика">
+      <div>
+        <strong id="completedStat">0</strong>
+        <span>попыток</span>
+      </div>
+      <div>
+        <strong id="accuracyStat">0%</strong>
+        <span>с первой попытки</span>
+      </div>
+      <div>
+        <strong id="streakStat">0</strong>
+        <span>серия</span>
+      </div>
+      <div>
+        <strong id="revealedStat">0</strong>
+        <span>показано</span>
+      </div>
+    </section>
+
+    <section class="piano-panel" aria-label="Клавиатура для проверки аккордов">
+      <div class="piano-panel-heading">
+        <strong>Клавиатура</strong>
+        <button class="piano-stop" id="pianoStopButton" type="button" title="Остановить звуки клавиатуры" aria-label="Остановить звуки клавиатуры">■</button>
+      </div>
+      <div class="piano-scroll">
+        <div class="piano" id="pianoKeyboard" aria-label="Фортепианная клавиатура от C3 до C5"></div>
+      </div>
+    </section>
+
+    <footer class="actions">
+      <button class="secondary" id="showButton" type="button">Показать</button>
+      <button class="secondary" id="reviewButton" type="button" title="Проиграть с подсветкой" disabled>▶ Разбор</button>
+      <button class="play-button" id="playButton" type="button" title="Воспроизвести" aria-label="Воспроизвести">▶</button>
+      <button class="primary" id="nextButton" type="button">Дальше</button>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+# Local macOS wrapper and development helpers are not part of the public PWA.
+Reharm Ear Trainer.app/
+ReharmEarTrainer.m
+START.command
+STOP.command
+serve.py
+server.py
+
+# Local visual checks and developer tests.
+qa/
+tests/

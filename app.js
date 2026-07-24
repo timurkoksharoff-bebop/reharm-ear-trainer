@@ -1392,6 +1392,8 @@ const pianoSampleBuffers = new Map();
 const pianoVoices = new Set();
 const pianoKeyTimers = new Map();
 const chapterQueues = new Map();
+const PIANO_SUSTAIN_RATIO = 1.1;
+const PIANO_RELEASE_SECONDS = 0.7;
 const PIANO_SAMPLE_MANIFEST = [
   [36, "C2"],
   [39, "Ds2"],
@@ -1890,8 +1892,12 @@ async function playSequence(withAnswer) {
 
   const secondsPerChord = Number(ui.tempoSelect.value);
   const startAt = audioContext.currentTime + 0.08;
-  const referenceDuration = secondsPerChord * 0.9;
-  const sequenceStart = startAt + referenceDuration + 0.55;
+  const sustainRatio = state.sound === "piano" ? PIANO_SUSTAIN_RATIO : 0.9;
+  const releaseTail = state.sound === "piano" ? PIANO_RELEASE_SECONDS : 0.02;
+  const chordDuration = secondsPerChord * sustainRatio;
+  const referenceDuration = chordDuration;
+  const referenceGap = state.sound === "piano" ? PIANO_RELEASE_SECONDS + 0.05 : 0.55;
+  const sequenceStart = startAt + referenceDuration + referenceGap;
 
   if (withAnswer) {
     setFeedback("Опорный аккорд: I — тоника.", "playing");
@@ -1902,7 +1908,7 @@ async function playSequence(withAnswer) {
     scheduleChord(
       item,
       sequenceStart + index * secondsPerChord,
-      secondsPerChord * 0.9,
+      chordDuration,
     );
 
     if (withAnswer) {
@@ -1936,9 +1942,11 @@ async function playSequence(withAnswer) {
     render();
   }, (
     referenceDuration
-    + 0.55
-    + currentExercise().sequence.length * secondsPerChord
-    + 0.2
+    + referenceGap
+    + Math.max(0, currentExercise().sequence.length - 1) * secondsPerChord
+    + chordDuration
+    + releaseTail
+    + 0.25
   ) * 1000);
 }
 
@@ -1956,7 +1964,7 @@ async function previewChord(item, optionIndex) {
   cancelPlayback();
   if (!await ensureAudioContext()) return;
 
-  const duration = 1.15;
+  const duration = state.sound === "piano" ? 1.65 : 1.15;
   state.previewOptionIndex = optionIndex;
   setFeedback(`Прослушивание: ${optionLabel(item)}.`, "playing");
   render();
@@ -2224,12 +2232,16 @@ function scheduleSampledPianoNotes(context, notes, startAt, duration) {
       startAt + 0.008,
     );
     envelope.gain.setValueAtTime(0.9, startAt + Math.min(0.35, duration * 0.4));
-    envelope.gain.exponentialRampToValueAtTime(0.0001, releaseAt + 0.5);
+    const releaseSeconds = PIANO_RELEASE_SECONDS;
+    envelope.gain.exponentialRampToValueAtTime(
+      0.0001,
+      releaseAt + releaseSeconds,
+    );
 
     source.connect(envelope);
     envelope.connect(master);
     source.start(startAt);
-    source.stop(releaseAt + 0.55);
+    source.stop(releaseAt + releaseSeconds + 0.05);
     return source;
   });
 }

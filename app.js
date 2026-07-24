@@ -1974,7 +1974,10 @@ async function previewChord(item, optionIndex) {
     state.previewOptionIndex = null;
     releaseAudioContext();
     render();
-  }, (duration + 0.2) * 1000);
+  }, (
+    duration
+    + (state.sound === "piano" ? PIANO_RELEASE_SECONDS + 0.1 : 0.2)
+  ) * 1000);
 }
 
 function buildPianoKeyboard() {
@@ -2204,7 +2207,13 @@ function nearestPianoSample(midi) {
   };
 }
 
-function scheduleSampledPianoNotes(context, notes, startAt, duration) {
+function scheduleSampledPianoNotes(
+  context,
+  notes,
+  startAt,
+  duration,
+  { bassVoiceCount = 0, bassGain = 1 } = {},
+) {
   const master = context.createGain();
   const compressor = context.createDynamicsCompressor();
   const level = Math.min(0.92, 1.28 / Math.sqrt(notes.length));
@@ -2227,10 +2236,8 @@ function scheduleSampledPianoNotes(context, notes, startAt, duration) {
     source.buffer = sample.buffer;
     source.playbackRate.setValueAtTime(playbackRate, startAt);
     envelope.gain.setValueAtTime(0.0001, startAt);
-    envelope.gain.exponentialRampToValueAtTime(
-      noteIndex === 0 && notes.length > 1 ? 0.82 : 1,
-      startAt + 0.008,
-    );
+    const peakGain = noteIndex < bassVoiceCount ? bassGain : 1;
+    envelope.gain.exponentialRampToValueAtTime(peakGain, startAt + 0.008);
     envelope.gain.setValueAtTime(0.9, startAt + Math.min(0.35, duration * 0.4));
     const releaseSeconds = PIANO_RELEASE_SECONDS;
     envelope.gain.exponentialRampToValueAtTime(
@@ -2333,8 +2340,11 @@ function releaseAudioContext() {
   }
 }
 
-function scheduleChord(item, startAt, duration) {
-  const isPiano = state.sound === "piano";
+function midiNotesForChord(item) {
+  const hasIndependentBass = (
+    item.bassOffset !== null
+    && item.bassOffset !== item.offset
+  );
   const rootPitchClass = (state.key.tonic + item.offset) % 12;
   const bassPitchClass = (
     state.key.tonic
@@ -2346,14 +2356,30 @@ function scheduleChord(item, startAt, duration) {
 
   const notes = [
     bassMidi,
+    ...(hasIndependentBass ? [bassMidi + 12] : []),
     ...QUALITY[item.quality].intervals.map((interval) => upperRootMidi + interval),
   ];
+  return { notes, hasIndependentBass };
+}
+
+function scheduleChord(item, startAt, duration) {
+  const isPiano = state.sound === "piano";
+  const { notes, hasIndependentBass } = midiNotesForChord(item);
 
   if (
     isPiano
     && pianoSampleBuffers.size === PIANO_SAMPLE_MANIFEST.length
   ) {
-    scheduleSampledPianoNotes(audioContext, notes, startAt, duration);
+    scheduleSampledPianoNotes(
+      audioContext,
+      notes,
+      startAt,
+      duration,
+      {
+        bassVoiceCount: hasIndependentBass ? 2 : 1,
+        bassGain: hasIndependentBass ? 1.34 : 1.12,
+      },
+    );
     return;
   }
 

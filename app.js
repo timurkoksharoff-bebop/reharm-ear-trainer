@@ -1337,7 +1337,7 @@ const state = {
   exerciseIndex: 0,
   chapterFilter: "all",
   mode: "degree",
-  sound: "organ",
+  sound: "piano",
   key: KEY_CHOICES[4],
   answers: [],
   wrongAnswers: [],
@@ -1387,9 +1387,34 @@ let pianoAudioContext = null;
 let pianoIdleTimer = null;
 let mobileAudioElement = null;
 let mobileAudioUnlocked = false;
+let pianoSamplePromise = null;
+const pianoSampleBuffers = new Map();
 const pianoVoices = new Set();
 const pianoKeyTimers = new Map();
 const chapterQueues = new Map();
+const PIANO_SAMPLE_MANIFEST = [
+  [36, "C2"],
+  [39, "Ds2"],
+  [42, "Fs2"],
+  [45, "A2"],
+  [48, "C3"],
+  [51, "Ds3"],
+  [54, "Fs3"],
+  [57, "A3"],
+  [60, "C4"],
+  [63, "Ds4"],
+  [66, "Fs4"],
+  [69, "A4"],
+  [72, "C5"],
+  [75, "Ds5"],
+  [78, "Fs5"],
+  [84, "C6"],
+  [87, "Ds6"],
+  [90, "Fs6"],
+].map(([midi, name]) => ({
+  midi,
+  url: `samples/piano/${name}.mp3`,
+}));
 
 function chord(degree, offset, quality, spelling = null, bassOffset = null) {
   return { degree, offset, quality, spelling, bassOffset };
@@ -2005,6 +2030,24 @@ async function triggerPianoKey(button, midi) {
   const startAt = context.currentTime + 0.01;
   const isPiano = state.sound === "piano";
   const duration = isPiano ? 2.15 : 1.55;
+
+  if (isPiano && await ensurePianoSamples(context)) {
+    const sources = scheduleSampledPianoNotes(
+      context,
+      [midi],
+      startAt,
+      duration,
+    );
+    const voice = { sources };
+    pianoVoices.add(voice);
+    sources[0].onended = () => {
+      pianoVoices.delete(voice);
+      schedulePianoContextRelease();
+    };
+    flashPianoKey(button);
+    return;
+  }
+
   const frequency = 440 * (2 ** ((midi - 69) / 12));
   const voice = {
     oscillator: context.createOscillator(),
@@ -2050,6 +2093,10 @@ async function triggerPianoKey(button, midi) {
   voice.oscillator.stop(startAt + duration + 0.02);
   voice.overtone.stop(startAt + duration + 0.02);
 
+  flashPianoKey(button);
+}
+
+function flashPianoKey(button) {
   button.classList.add("active");
   window.clearTimeout(pianoKeyTimers.get(button));
   pianoKeyTimers.set(button, window.setTimeout(() => {
@@ -2099,7 +2146,92 @@ async function ensureAudioContext() {
     setFeedback("Не удалось включить звук. Проверьте беззвучный режим iPhone.", "error");
     return false;
   }
+  if (state.sound === "piano") {
+    await ensurePianoSamples(audioContext);
+  }
   return true;
+}
+
+async function ensurePianoSamples(context) {
+  if (pianoSampleBuffers.size === PIANO_SAMPLE_MANIFEST.length) return true;
+
+  pianoSamplePromise ||= Promise.all(PIANO_SAMPLE_MANIFEST.map(async (sample) => {
+    const response = await fetch(sample.url);
+    if (!response.ok) {
+      throw new Error(`Piano sample ${sample.url}: HTTP ${response.status}`);
+    }
+    const encoded = await response.arrayBuffer();
+    const buffer = await new Promise((resolve, reject) => {
+      context.decodeAudioData(encoded, resolve, reject);
+    });
+    return [sample.midi, buffer];
+  }))
+    .then((samples) => {
+      samples.forEach(([midi, buffer]) => pianoSampleBuffers.set(midi, buffer));
+      return true;
+    })
+    .catch((error) => {
+      console.error(error);
+      pianoSamplePromise = null;
+      setFeedback(
+        "Семплы рояля не загрузились; временно используется синтезированный тембр.",
+        "error",
+      );
+      return false;
+    });
+
+  return pianoSamplePromise;
+}
+
+function nearestPianoSample(midi) {
+  let nearest = PIANO_SAMPLE_MANIFEST[0];
+  PIANO_SAMPLE_MANIFEST.forEach((sample) => {
+    if (Math.abs(sample.midi - midi) < Math.abs(nearest.midi - midi)) {
+      nearest = sample;
+    }
+  });
+  return {
+    ...nearest,
+    buffer: pianoSampleBuffers.get(nearest.midi),
+  };
+}
+
+function scheduleSampledPianoNotes(context, notes, startAt, duration) {
+  const master = context.createGain();
+  const compressor = context.createDynamicsCompressor();
+  const level = Math.min(0.92, 1.28 / Math.sqrt(notes.length));
+  master.gain.setValueAtTime(level, startAt);
+  compressor.threshold.setValueAtTime(-14, startAt);
+  compressor.knee.setValueAtTime(9, startAt);
+  compressor.ratio.setValueAtTime(3, startAt);
+  compressor.attack.setValueAtTime(0.003, startAt);
+  compressor.release.setValueAtTime(0.22, startAt);
+  master.connect(compressor);
+  compressor.connect(context.destination);
+
+  return notes.map((midi, noteIndex) => {
+    const sample = nearestPianoSample(midi);
+    const source = context.createBufferSource();
+    const envelope = context.createGain();
+    const playbackRate = 2 ** ((midi - sample.midi) / 12);
+    const releaseAt = startAt + duration;
+
+    source.buffer = sample.buffer;
+    source.playbackRate.setValueAtTime(playbackRate, startAt);
+    envelope.gain.setValueAtTime(0.0001, startAt);
+    envelope.gain.exponentialRampToValueAtTime(
+      noteIndex === 0 && notes.length > 1 ? 0.82 : 1,
+      startAt + 0.008,
+    );
+    envelope.gain.setValueAtTime(0.9, startAt + Math.min(0.35, duration * 0.4));
+    envelope.gain.exponentialRampToValueAtTime(0.0001, releaseAt + 0.5);
+
+    source.connect(envelope);
+    envelope.connect(master);
+    source.start(startAt);
+    source.stop(releaseAt + 0.55);
+    return source;
+  });
 }
 
 function isAppleMobileDevice() {
@@ -2204,6 +2336,14 @@ function scheduleChord(item, startAt, duration) {
     bassMidi,
     ...QUALITY[item.quality].intervals.map((interval) => upperRootMidi + interval),
   ];
+
+  if (
+    isPiano
+    && pianoSampleBuffers.size === PIANO_SAMPLE_MANIFEST.length
+  ) {
+    scheduleSampledPianoNotes(audioContext, notes, startAt, duration);
+    return;
+  }
 
   const master = audioContext.createGain();
   const filter = audioContext.createBiquadFilter();

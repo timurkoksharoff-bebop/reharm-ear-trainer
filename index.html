@@ -40,16 +40,16 @@
       <label>
         <span>Темп</span>
         <select id="tempoSelect">
-          <option value="1.8">Медленно</option>
-          <option value="1.45" selected>Средне</option>
+          <option value="1.8" selected>Медленно</option>
+          <option value="1.45">Средне</option>
           <option value="1.1">Быстро</option>
         </select>
       </label>
       <label>
         <span>Звук</span>
         <select id="soundSelect">
-          <option value="organ" selected>Мягкий орган</option>
-          <option value="piano">Рояль</option>
+          <option value="piano" selected>Настоящий рояль</option>
+          <option value="organ">Мягкий орган</option>
         </select>
       </label>
       <div class="mode-control">
@@ -78,6 +78,13 @@
       <p class="feedback" id="feedback" aria-live="polite">
         Сначала прозвучит тоника, затем последовательность.
       </p>
+    </section>
+
+    <section class="actions" aria-label="Управление упражнением">
+      <button class="secondary" id="showButton" type="button">Показать</button>
+      <button class="secondary" id="reviewButton" type="button" title="Проиграть с подсветкой" disabled>▶ Разбор</button>
+      <button class="play-button" id="playButton" type="button" title="Воспроизвести" aria-label="Воспроизвести">▶</button>
+      <button class="primary" id="nextButton" type="button" title="Пропустить без учета в статистике">Пропустить</button>
     </section>
 
     <section class="stats" aria-label="Статистика">
@@ -109,12 +116,6 @@
       </div>
     </section>
 
-    <footer class="actions">
-      <button class="secondary" id="showButton" type="button">Показать</button>
-      <button class="secondary" id="reviewButton" type="button" title="Проиграть с подсветкой" disabled>▶ Разбор</button>
-      <button class="play-button" id="playButton" type="button" title="Воспроизвести" aria-label="Воспроизвести">▶</button>
-      <button class="primary" id="nextButton" type="button">Дальше</button>
-    </footer>
   </main>
 
   <script src="app.js"></script>

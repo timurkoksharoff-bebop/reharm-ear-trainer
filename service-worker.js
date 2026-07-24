@@ -1,4 +1,4 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.7";
+const CACHE_NAME = "reharm-ear-trainer-v0.8";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -8,6 +8,24 @@ const APP_FILES = [
   "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png",
+  "./samples/piano/C2.mp3",
+  "./samples/piano/Ds2.mp3",
+  "./samples/piano/Fs2.mp3",
+  "./samples/piano/A2.mp3",
+  "./samples/piano/C3.mp3",
+  "./samples/piano/Ds3.mp3",
+  "./samples/piano/Fs3.mp3",
+  "./samples/piano/A3.mp3",
+  "./samples/piano/C4.mp3",
+  "./samples/piano/Ds4.mp3",
+  "./samples/piano/Fs4.mp3",
+  "./samples/piano/A4.mp3",
+  "./samples/piano/C5.mp3",
+  "./samples/piano/Ds5.mp3",
+  "./samples/piano/Fs5.mp3",
+  "./samples/piano/C6.mp3",
+  "./samples/piano/Ds6.mp3",
+  "./samples/piano/Fs6.mp3",
 ];
 
 self.addEventListener("install", (event) => {

@@ -1360,6 +1360,7 @@ const ui = {
   promptLabel: document.querySelector("#promptLabel"),
   chapterLabel: document.querySelector("#chapterLabel"),
   keyBadge: document.querySelector("#keyBadge"),
+  matrixScroll: document.querySelector("#matrixScroll"),
   positionLegend: document.querySelector("#positionLegend"),
   answerGrid: document.querySelector("#answerGrid"),
   feedback: document.querySelector("#feedback"),
@@ -1384,6 +1385,8 @@ let autoNextTimer = null;
 let highlightTimers = [];
 let pianoAudioContext = null;
 let pianoIdleTimer = null;
+let mobileAudioElement = null;
+let mobileAudioUnlocked = false;
 const pianoVoices = new Set();
 const pianoKeyTimers = new Map();
 const chapterQueues = new Map();
@@ -1441,6 +1444,14 @@ function currentExercise() {
 }
 
 function init() {
+  document.addEventListener("pointerdown", () => {
+    requestPortraitOrientation();
+    unlockMobileAudio();
+  }, { once: true, capture: true });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) requestPortraitOrientation();
+  });
+
   const allOption = document.createElement("option");
   allOption.value = "all";
   allOption.textContent = "Все главы · случайно";
@@ -1594,6 +1605,7 @@ function shuffle(items) {
 function render() {
   const exercise = currentExercise();
   const positionCount = exercise.sequence.length;
+  ui.matrixScroll.dataset.compact = String(positionCount >= 10);
 
   ui.chapterLabel.textContent = `Reharmonization Techniques · Chapter ${exercise.chapter}`;
   ui.sourceLabel.textContent = exercise.source;
@@ -1979,9 +1991,15 @@ async function triggerPianoKey(button, midi) {
     return;
   }
 
+  await unlockMobileAudio();
   window.clearTimeout(pianoIdleTimer);
   pianoAudioContext ||= new AudioEngine();
-  await pianoAudioContext.resume();
+  try {
+    await pianoAudioContext.resume();
+  } catch {
+    setFeedback("Не удалось включить звук. Проверьте беззвучный режим iPhone.", "error");
+    return;
+  }
 
   const context = pianoAudioContext;
   const startAt = context.currentTime + 0.01;
@@ -2073,9 +2091,74 @@ async function ensureAudioContext() {
     setFeedback("Этот браузер не поддерживает воспроизведение Web Audio.", "error");
     return false;
   }
+  await unlockMobileAudio();
   audioContext ||= new AudioEngine();
-  await audioContext.resume();
+  try {
+    await audioContext.resume();
+  } catch {
+    setFeedback("Не удалось включить звук. Проверьте беззвучный режим iPhone.", "error");
+    return false;
+  }
   return true;
+}
+
+function isAppleMobileDevice() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function requestPortraitOrientation() {
+  const orientation = window.screen?.orientation;
+  if (!orientation?.lock) return;
+  orientation.lock("portrait-primary").catch(() => {});
+}
+
+async function unlockMobileAudio() {
+  if (!isAppleMobileDevice() || mobileAudioUnlocked) return true;
+
+  if (!mobileAudioElement) {
+    const sampleRate = 8000;
+    const sampleCount = 800;
+    const wav = new ArrayBuffer(44 + sampleCount);
+    const view = new DataView(wav);
+    const writeText = (offset, text) => {
+      for (let index = 0; index < text.length; index += 1) {
+        view.setUint8(offset + index, text.charCodeAt(index));
+      }
+    };
+
+    writeText(0, "RIFF");
+    view.setUint32(4, 36 + sampleCount, true);
+    writeText(8, "WAVE");
+    writeText(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate, true);
+    view.setUint16(32, 1, true);
+    view.setUint16(34, 8, true);
+    writeText(36, "data");
+    view.setUint32(40, sampleCount, true);
+    for (let index = 44; index < wav.byteLength; index += 1) {
+      view.setUint8(index, 128);
+    }
+
+    mobileAudioElement = new Audio(URL.createObjectURL(
+      new Blob([wav], { type: "audio/wav" }),
+    ));
+    mobileAudioElement.preload = "auto";
+    mobileAudioElement.setAttribute("playsinline", "");
+  }
+
+  try {
+    mobileAudioElement.currentTime = 0;
+    await mobileAudioElement.play();
+    mobileAudioUnlocked = true;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function tonicReferenceChord() {

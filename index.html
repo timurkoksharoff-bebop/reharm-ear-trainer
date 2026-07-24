@@ -8,12 +8,17 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Reharm Ear">
+  <meta name="screen-orientation" content="portrait">
   <title>Reharm Ear Trainer</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="orientation-guard" role="status">
+    <strong>Поверните iPhone вертикально</strong>
+  </div>
+
   <main class="app-shell">
     <header class="topbar">
       <div>
@@ -65,7 +70,7 @@
         <span class="key-badge" id="keyBadge">Тональность скрыта</span>
       </div>
 
-      <div class="matrix-scroll">
+      <div class="matrix-scroll" id="matrixScroll">
         <div class="position-legend" id="positionLegend" aria-hidden="true"></div>
         <div class="answer-grid" id="answerGrid"></div>
       </div>

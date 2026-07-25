@@ -19,7 +19,7 @@ than absolute chord names.
   `https://github.com/timurkoksharoff-bebop/reharm-ear-trainer`
 - Production PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
-- Current published cache version: `0.11`
+- Current published cache version: `0.13`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -171,7 +171,8 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.11` includes the favorites feature.
+- Production PWA `0.13` includes 239 progressions: 107 core examples and
+  132 exercise-answer variants from printed pages 172–185.
 - GitHub Pages and the repository are working.
 - Favorites and statistics are device-local.
 - The catalog is manually encoded from the book and still benefits from

@@ -13,3 +13,10 @@ server.py
 # Local visual checks and developer tests.
 qa/
 tests/
+
+# Purchased/reference study materials stay local and must not be published.
+reference/*.pdf
+reference/**/*.pdf
+
+# Local deployment credentials.
+private/

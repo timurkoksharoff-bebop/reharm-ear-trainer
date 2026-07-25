@@ -1,4 +1,4 @@
-const EXERCISES = [
+const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-6",
     chapter: 1,
@@ -1300,6 +1300,146 @@ const EXERCISES = [
   ]),
 ];
 
+const REFERENCE_ANSWER_SPECS = [
+  ["1-1-r1", 1, "1.1", 172, 14, "C", "1", "E-7 F C A-7"],
+  ["1-1-r2", 1, "1.1", 172, 14, "C", "2", "A-7 F E- A-7"],
+  ["1-2-r1", 1, "1.2", 172, 15, "C", "1", "F6 G D- A- G"],
+  ["1-2-r2", 1, "1.2", 172, 15, "C", "2", "F D- F G F C G"],
+  ["1-3-r1", 1, "1.3", 172, 15, "C", "1", "D-7 D-7 G D-7 C A-7 G C"],
+  ["1-3-r2", 1, "1.3", 172, 15, "C", "2", "F BbMaj7 G BbMaj7 A-7 G A-"],
+  ["1-3-r3", 1, "1.3", 172, 15, "C", "3", "F BbMaj7 G BbMaj7 A-7 G A-"],
+  ["1-4-r1", 1, "1.4", 172, 16, "C", "1", "CMaj7 A-7 CMaj7 A-7 D-7 A-7 G7sus4 G7"],
+  ["1-4-r2", 1, "1.4", 172, 16, "C", "2", "E-7 CMaj7 A-7 E-7 FMaj7 D-7 BbMaj7 G7"],
+  ["2-1-r1", 2, "2.1", 172, 26, "C", "1", "CMaj7 D-7 CMaj7 A-7 D-7 E-7 BbMaj7 CMaj7"],
+  ["2-1-r2", 2, "2.1", 172, 26, "C", "2", "A-7 BbMaj7 CMaj7 A-7 D-7 CMaj7 BbMaj7 G7 CMaj7"],
+  ["2-1-r3", 2, "2.1", 172, 26, "C", "3", "FMaj7 G7 CMaj7 A-7 BbMaj7 A-7 G7 CMaj7"],
+  ["2-2-r1", 2, "2.2", 172, 27, "C", "1", "E-7 FMaj7 GMaj7 CMaj7 A-7 E-7 FMaj7 CMaj7"],
+  ["2-2-r2", 2, "2.2", 172, 27, "C", "2", "CMaj7 D7sus4 GMaj7 CMaj7 A-7 F#-7(b5) G6 CMaj7"],
+  ["2-2-r3", 2, "2.2", 172, 27, "C", "3", "GMaj7 A-7 E-7 A-7 CMaj7 D7 E-7 A-7"],
+  ["2-2-r4", 2, "2.2", 172, 27, "C", "4", "D7 E-7 B-7 A-7 CMaj7 B-7 CMaj7 D7sus4"],
+  ["3-1-r1", 3, "3.1", 173, 35, "C", "1", "A-7 D7 G-7 C7 B-7 E7 A-7 D7"],
+  ["3-1-r2", 3, "3.1", 173, 35, "C", "2", "D-7 G7 C-7 B7sus4 Bb-7 A7 A-7 D7"],
+  ["3-2-r1", 3, "3.2", 173, 35, "C", "1", "A-7 D7 G7 C7 FMaj7"],
+  ["3-2-r2", 3, "3.2", 173, 35, "C", "2", "E-7 Eb7 A-7 D7 G-7 C7 FMaj7"],
+  ["3-3-r1", 3, "3.3", 173, 36, "Eb", "1", "Eb7 Ab7 G7 C7 B7 F7 Bb7 EbMaj7"],
+  ["3-3-r2", 3, "3.3", 173, 36, "Eb", "2", "Bb7 Eb-7 Ab7 G-7 Gb7 F-7 Bb7 EbMaj7"],
+  ["3-4-r1", 3, "3.4", 173, 36, "Eb", "1", "C-7 F7sus4 Bb7 Eb7 AbMaj7"],
+  ["3-4-r2", 3, "3.4", 173, 36, "Eb", "2", "C-7 F7sus4 Bb7 A7 AbMaj7"],
+  ["4-1-r1", 4, "4.1", 173, 42, "G", "1", "G6 E-7 CMaj7 C-7 F7 B-7(b5) E7(b9) A-7 D7sus4 C#-7(b5) F#7(b9) B-7 E7 A-7 D7"],
+  ["4-2-r1", 4, "4.2", 173, 43, "G", "1", "D7 G6 C-7 F7 E-7 A7 D-7 G7 C#-7(b5) F#7(b9) B-7(b5) E7(b9) A-7 D7"],
+  ["4-2-r2", 4, "4.2", 173, 43, "G", "2", "D7sus4 E-7 A7 D-7 G7 F#-7(b5) F7 E-7 FMaj7 G6 B-7 E7 Bb-7 Eb7"],
+  ["4-3-analysis", 4, "4.3", 173, 43, "C", "analysis", "C6 B7sus4 B7 C6 A7"],
+  ["4-4-r1", 4, "4.4", 173, 44, "C", "1", "C6 G7 BbMaj7 C6 G7 BbMaj7 CMaj7 B7sus4 E-7 A-7 B7 C#7 C7 B7 C6 B7 E7 A7"],
+  ["4-4-r2", 4, "4.4", 173, 44, "C", "2", "D7 G7 CMaj7 G7 F#7sus4 B7 CMaj7 FMaj7 G7 CMaj7 C7 B7 E7 E-7 A7"],
+  ["5-1-r1", 5, "5.1", 174, 50, "Eb", "1", "Bb7 Eb6 C-7 F-7 Bb7 EbMaj7 Eo7 F-7"],
+  ["5-1-r2", 5, "5.1", 174, 50, "Eb", "2", "Bb7 Eb6 CbMaj7 AbMaj7 Ab-7 EbMaj7 GbMaj7 F-7"],
+  ["5-1-r3", 5, "5.1", 174, 50, "Eb", "3", "Bb7 DbMaj7 Eb6 C-7 D-7(b5) Db7 G-7 GbMaj7 EMaj7"],
+  ["5-2-r1", 5, "5.2", 174, 51, "C", "1", "CMaj7 A-7 D-7 G7 CMaj7 CMaj7 G7 CMaj7 G7 CMaj7 C#o7 D-7 G7 C"],
+  ["5-2-r2", 5, "5.2", 174, 51, "C", "2", "G7 A-7 AbMaj7 EbMaj7 D-7 Bb7 CMaj7 G-7 CMaj7 G7 AbMaj7 EbMaj7 D-7 G7 E-7 EbMaj7 D-7 G7 CMaj7"],
+  ["5-2-r3", 5, "5.2", 174, 51, "C", "3", "BbMaj7 CMaj7 EbMaj7 D-7 DbMaj7 CMaj7 Bb7 CMaj7 Bb7 A-7 AbMaj7 G7sus4 G7 EbMaj7 DbMaj7 D-7 Bb7 CMaj7 C7sus4"],
+  ["5-3-r1", 5, "5.3", 174, 52, "F", "1", "A-7 AbMaj7 G-7 FMaj7 DbMaj7 D-7 G7 G-7 C7sus4 Bb-7 Eb7 FMaj7 Ab7"],
+  ["5-3-r2", 5, "5.3", 174, 52, "F", "2", "FMaj7 F-6 A-7 AbMaj7 G-7 Eb7 FMaj7 Bb-6 C7 A-7 EbMaj7 D7"],
+  ["5-3-r3", 5, "5.3", 174, 52, "F", "3", "DbMaj7 Bb-6 FMaj7 F-6 EbMaj7 DbMaj7 EbMaj7 GbMaj7 G-7 A-7 D7"],
+  ["6-1-r1", 6, "6.1", 175, 62, "C", "1", "FMaj7 FMaj7/E D-7 D-7/C B7 E-7 Bb7 A-7 G7 F-7"],
+  ["6-1-r2", 6, "6.1", 175, 62, "C", "2", "E-7 A-7 AbMaj7 G7 FMaj7 FMaj7 E-7 FMaj7 Bb7"],
+  ["6-1-r3", 6, "6.1", 175, 62, "C", "3", "A-7 A-7/G FMaj7 EbMaj7 G7/D CMaj7 B-7(b5) Bb7"],
+  ["6-2-r1", 6, "6.2", 175, 63, "Db", "1", "Eb-7 Eb-7/Db CbMaj7 CbMaj7/Bb Ab7 DbMaj7 DbMaj7/C Bb-7 Db7/Ab GbMaj7"],
+  ["6-2-r2", 6, "6.2", 175, 63, "Db", "2", "Ab7 Ab7/Gb F-7 Eb-7 DbMaj7 DbMaj7/C Bb-7 Ab7 Ab7/Gb DbMaj7/F Eb7"],
+  ["6-2-r3", 6, "6.2", 175, 63, "Db", "3", "Ab7/Eb DbMaj7 C-7(b5) F7(b9) Bb-7 Cb7 DbMaj7 Ab7/Eb F-7"],
+  ["6-3-r1", 6, "6.3", 176, 64, "C", "1", "F7 E-7(b5) Eb7 D-7(b5) G7 C-7 C-7/Bb Ab7 G-7 G-7/F"],
+  ["6-3-r2", 6, "6.3", 176, 64, "C", "2", "Eb7 FMaj7 G-7 AbMaj7 BbMaj7 C-7 F7 D-7 D-7/C G7/B"],
+  ["6-3-r3", 6, "6.3", 176, 64, "C", "3", "D-7 C7 C7/Bb A-7 A-7/G FMaj7 FMaj7/E EbMaj7 EbMaj7/D DbMaj7 D-7 D-7/C B-7(b5) BbMaj7"],
+  ["7-1-a", 7, "7.1", 176, 71, "Eb", "line 1", "BbMaj7 EbMaj7 Eb+(Maj7) Eb D-7(b5) G7(b9) C-7 F7(b9)"],
+  ["7-1-b", 7, "7.1", 176, 71, "Bb", "line 2", "BbMaj7 C7 A-7(b5) D7(b9) G-7"],
+  ["7-1-c", 7, "7.1", 176, 71, "G", "line 3", "B-7 B-/A# B-/A B-/G# CMaj7 CMaj7/B A-7 D7 GMaj7"],
+  ["7-2-analysis", 7, "7.2", 176, 72, "G", "analysis", "G- G-(#5) G-6 G-(#5) G- G-(#5) G-6 G-(#5) AbMaj7 AbMaj7/G F-7 Bb7 EbMaj7"],
+  ["7-3-analysis", 7, "7.3", 177, 72, "Eb", "analysis", "F7(b13,b9) BbMaj7 F-7 Bb Bb7 Bb+(Maj7) EbMaj7 Bb6 Dbo7 C-7 F7 D-7(b5) G7"],
+  ["8-1-t1", 8, "8.1", 177, 80, "F", "turnaround 1", "FMaj7 D-7 G-7 C7 A-7 D7 G-7 C7 FMaj7"],
+  ["8-1-t2", 8, "8.1", 177, 80, "F", "turnaround 2", "FMaj7 D-7 G-7 C7 D-7 G7 G-7 C7 FMaj7"],
+  ["8-2-t1", 8, "8.2", 177, 80, "C", "turnaround 1", "D-7 G7sus4 F#-7(b5) B7sus4 E-7 Eb7 D-7 G7 E-7 A7"],
+  ["8-2-t2", 8, "8.2", 177, 80, "C", "turnaround 2", "D-7 G7sus4 F#-7(b5) FMaj7 E-7 A7 D-7 G7 E-7 A7"],
+  ["8-3-t1", 8, "8.3", 177, 81, "Eb", "turnaround 1", "F-7 Bb7 G-7 C7 F-7 DbMaj7 Eb6 C-7"],
+  ["8-3-t2", 8, "8.3", 177, 81, "Eb", "turnaround 2", "F-7 Bb7 CbMaj7 DbMaj7 Eb6 C-7"],
+  ["8-4-t1", 8, "8.4", 177, 84, "C", "turnaround 1", "D-7 G7sus4 F#-7(b5) B7(b9) E-7 Eb7 DMaj7"],
+  ["8-4-t2", 8, "8.4", 177, 84, "C", "turnaround 2", "D-7 G7sus4 EbMaj7 DbMaj7 Gb7 AbMaj7"],
+  ["8-5-t1", 8, "8.5", 178, 85, "F", "turnaround 1", "FMaj7 D-7 G-7 C7 D-7 G7 F#-7 F7 BbMaj7"],
+  ["8-5-t2", 8, "8.5", 178, 85, "F", "turnaround 2", "FMaj7 D-7 G-7 C7 BbMaj7 EbMaj7 AbMaj7 BbMaj7"],
+  ["8-5-t3", 8, "8.5", 178, 85, "F", "turnaround 3", "FMaj7 D-7 G-7 C7 A-7 D7 D-7 G7 CMaj7"],
+  ["8-5-t4", 8, "8.5", 178, 85, "G", "turnaround 4", "GMaj7 E-7 A-7 D7 B-7 E7 A-7 Ab7 DbMaj7"],
+  ["9-1-e1", 9, "9.1", 178, 91, "F", "extended ending 1", "FMaj7 D-7 G-7 C7 A-7 AbMaj7 GbMaj7 F"],
+  ["9-1-e2", 9, "9.1", 178, 91, "F", "extended ending 2", "FMaj7 D-7 G-7 C7 D-7 DbMaj7 C7sus4 Bb-7 Eb7 FMaj7"],
+  ["9-2-e1", 9, "9.2", 178, 91, "F", "extended ending 1", "F-7 Bb7 A-7(b5) Ab7 G-7 C7alt FMaj7"],
+  ["9-2-e2", 9, "9.2", 178, 91, "Ab", "extended ending 2", "F-7 Bb7 GbMaj7 AbMaj7 Bb-7 Eb7 AbMaj7"],
+  ["9-3-e1", 9, "9.3", 179, 92, "G", "extended ending 1", "B-7 Bb7 A-7 G B-7 E7sus4 E7 A-7 Ab7 GMaj7"],
+  ["9-3-e2", 9, "9.3", 179, 92, "G", "extended ending 2", "B-7 Bb7 A-7 G BbMaj7 EbMaj7 AbMaj7 G6"],
+  ["9-4-e1", 9, "9.4", 179, 93, "C", "extended ending 1", "D-7(b5) G7 AbMaj7 BbMaj7 Eb C-7"],
+  ["9-4-e2", 9, "9.4", 179, 93, "C", "extended ending 2", "D-7(b5) G7 DbMaj7 GbMaj7 AbMaj7 GMaj7"],
+  ["9-5-answer", 9, "9.5", 179, 94, "C", "answer", "D-7(b5) G7 C-7 A-7(b5) Ab7 G-7 C7 F-7 E7 EbMaj7 A-7 D7 G-"],
+  ["9-6-answer", 9, "9.6", 179, 94, "F", "answer", "FMaj7 D-7 G-7 C7 F6 AbMaj7 GbMaj7 G-7 C7 A-7 D7 G-7 C7 BbMaj7"],
+  ["10-1-answer", 10, "10.1", 179, 102, "F", "answer", "F7 F7/Eb Bb/D Bb-/Db F/C D7/C G7/B C7/Bb F/A Ab7 C/G F#-7(b5) D-7/F G7 C"],
+  ["10-2-answer", 10, "10.2", 179, 102, "F", "answer", "F7 F7/Eb Bb/D Bb-/Db F/C D7/C G7/B C7/Bb F/A Ab7 C/G F#-7(b5) D-7/F G7 C"],
+  ["10-3-answer", 10, "10.3", 180, 103, "F", "answer", "FMaj7 G-7 C7 B-7(b5) E7(b9) A-7 AbMaj7 GbMaj7 G-7 C7 FMaj7 Bb-7 Eb7 D-7 G7 G-7 Gb7"],
+  ["10-4-answer", 10, "10.4", 180, 103, "F", "answer", "FMaj7 G-7 C7 B-7(b5,9) E7(b9) A-7(9) AbMaj7 GbMaj7 G-7 C7 FMaj7 Bb-7 Eb7 D-7 G7 G-7 Gb7"],
+  ["10-5-answer", 10, "10.5", 180, 104, "F", "answer", "FMaj7 G-7 C7 B-7(b5,9) E7(b9) A-7(9) AbMaj7 GbMaj7 G-7 C7 FMaj7 Bb-7 Eb7 D-7 G7 G-7 Gb7"],
+  ["10-6-answer", 10, "10.6", 180, 104, "F", "answer", "FMaj7 G-7 C7 B-7(b5,9) E7(b9) A-7(9) AbMaj7 GbMaj7 G-7 C7 FMaj7 Bb-7 Eb7 D-7 G7 G-7 Gb7"],
+  ["11-1-r1", 11, "11.1", 180, 111, "C", "1", "C- C-/B C-/Bb C-/Ab C- C-/B C-/Bb C-/A C- C-(#5) C-6 C-(#5) C- C-/B C-/Bb C-/A"],
+  ["11-1-r2", 11, "11.1", 180, 111, "C", "2", "C- C-(#5) C-6 C-(#5) C- C-(#5) C-6 C-(#5)"],
+  ["11-2-r1", 11, "11.2", 181, 112, "A", "1", "A- A-/G# A-/G A-/F# A- A-/G# A-/G A-/F A- A-(#5) A-6 A-(#5) A- A-/G# A-/G A-/F#"],
+  ["11-2-r2", 11, "11.2", 181, 112, "A", "2", "A- A-/G# A-/G A-/F# A-/F E7(b9)"],
+  ["12-1-answer", 12, "12.1", 181, 120, "E", "answer", "F#-7 B7 EMaj7 F#7 F#-7 F7 B-7 E7"],
+  ["12-2-answer", 12, "12.2", 181, 120, "F", "answer", "FMaj7 D7 G-7 E7(b9) FMaj7/A C-7 F7"],
+  ["12-3-answer", 12, "12.3", 181, 121, "G", "answer", "D7/A B-7(b5) E7(b9) G-7"],
+  ["12-4-answer", 12, "12.4", 181, 121, "F", "answer", "Bb/D A7(b5) C-7 F7"],
+  ["12-5-answer", 12, "12.5", 181, 121, "Eb", "answer", "D7 F7 Bb7 C7(b9) F-7 Bb7 EbMaj7"],
+  ["12-6-answer", 12, "12.6", 182, 122, "Eb", "answer", "Bb7 EbMaj7 G7 AbMaj7 F7 Bb7 G7 C-7 F7"],
+  ["12-7-answer", 12, "12.7", 182, 122, "C", "answer", "D-7(9) E-7(b5) A7(b9) C-7(b5)"],
+  ["13-1-r1", 13, "13.1", 182, 141, "C", "1", "C-7 DbMaj7 C-7 DbMaj7 DbMaj7 Eb DbMaj7 C-7"],
+  ["13-1-r2", 13, "13.1", 182, 141, "F", "2", "F-7 Bb7 F-7 EbMaj7 G-7 AbMaj7 G-7"],
+  ["13-1-r3", 13, "13.1", 182, 141, "Ab", "3", "AbMaj7 G-7 AbMaj7 Bb AbMaj7 G-7 AbMaj7"],
+  ["13-1-r4", 13, "13.1", 182, 141, "Bb", "4", "Bb7sus4 Ab Bb7sus4 Ab DbMaj7 Eb7 DbMaj7"],
+  ["13-2-r1", 13, "13.2", 182, 142, "Bb", "1", "Bb- Eb Bb- Eb Db C- Db A B/A"],
+  ["13-2-r2", 13, "13.2", 182, 142, "Db", "2", "DbMaj7 Eb Db Eb DbMaj7 Eb7 B- C#-"],
+  ["13-2-r3", 13, "13.2", 182, 142, "F", "3", "F-7 GbMaj7 F- Eb7 F- Eb-7 F-7 GbMaj7 F-7 GbMaj7 GMaj7 AMaj7"],
+  ["13-2-r4", 13, "13.2", 182, 142, "Ab", "4", "AbMaj7(#11) Bb/Ab Eb Bb-7 DbMaj7 Eb7 DbMaj7 Eb7 EMaj7 F#/E"],
+  ["13-3-r1", 13, "13.3", 183, 144, "C", "1", "BbMaj7 C BbMaj7 C BbMaj7 C BbMaj7 C"],
+  ["13-3-r2", 13, "13.3", 183, 144, "D", "2", "D-7 E-7 D-7 CMaj7 D-7"],
+  ["13-3-r3", 13, "13.3", 183, 144, "A", "3", "FMaj7/A A- E-7/A A- A-7 G/F FMaj7(#11)"],
+  ["13-3-r4", 13, "13.3", 183, 144, "G", "4", "G7sus4 F G7sus4 D-7 G7sus4"],
+  ["14-1-r1", 14, "14.1", 183, 151, "C", "1", "C/D F/G Db/G G/C D-7/G"],
+  ["14-1-r2", 14, "14.1", 183, 151, "C", "2", "B-/E G/A A-/D Ab/G C/D E-/A D-7/G"],
+  ["14-1-r3", 14, "14.1", 183, 151, "C", "3", "A-7/D A-7/G F-/G G/C Eb/Ab"],
+  ["14-2-r1", 14, "14.2", 183, 152, "Eb", "1", "Eb-/Ab F-/Bb A/D Bb/Eb"],
+  ["14-2-r2", 14, "14.2", 183, 152, "Eb", "2", "Gb/Ab Ab/Bb A/D D-/Eb"],
+  ["14-2-r3", 14, "14.2", 183, 152, "Eb", "3", "Bb-/Ab C-/Bb A/D F/Eb"],
+  ["14-3-r1", 14, "14.3", 183, 153, "D", "1", "A-/D F/G A-/D F/G B-/E E-/A Ab/Db F-/Bb"],
+  ["14-3-r2", 14, "14.3", 183, 153, "D", "2", "C/F D-/G C/D D-/G G/C A-/D Ab-/Db"],
+  ["14-3-r3", 14, "14.3", 183, 153, "D", "3", "D-/G G/F D-/G B-/E C/F Db/Gb Ab/Db"],
+  ["14-4-r1", 14, "14.4", 184, 154, "D", "1", "D-/G C-/F Eb/Ab Ab-/Db Ab-/Db Db-/Gb"],
+  ["14-4-r2", 14, "14.4", 184, 154, "D", "2", "D-/G A-/D F-/Bb F#-/B Db/C Ab-/Db"],
+  ["14-4-r3", 14, "14.4", 184, 154, "F", "3", "C-/F Bb/Eb F-/Bb Bb-/Eb Bb-/Eb F#-/E"],
+  ["15-1-r1", 15, "15.1", 184, 159, "D", "1", "D7sus4 E7sus4 D7sus4"],
+  ["15-1-r2", 15, "15.1", 184, 159, "D", "2", "A7sus4 G7sus4 D7sus4 A7sus4 G7sus4 A7sus4"],
+  ["15-2-r1", 15, "15.2", 184, 160, "D", "1", "D-7 Eb-7 D-7 A-7 B-7 A-7 B-7 C-7"],
+  ["15-2-r2", 15, "15.2", 184, 160, "G", "2", "GMaj7 EbMaj7 CMaj7 AbMaj7 FMaj7 GMaj7 EbMaj7 CMaj7 AbMaj7"],
+  ["15-3-r1", 15, "15.3", 184, 161, "B", "1", "B7sus4 A7sus4 D7sus4"],
+  ["15-3-r2", 15, "15.3", 184, 161, "D", "2", "D7sus4 E7sus4 A7sus4 B7sus4"],
+  ["15-3-r3", 15, "15.3", 184, 161, "F#", "3", "F#-7 E-7 D-7 C#-7"],
+  ["15-4-r1", 15, "15.4", 184, 162, "F", "1", "F7sus4 G7sus4 E7sus4 Eb7sus4 F7sus4"],
+  ["15-4-r2", 15, "15.4", 184, 162, "Bb", "2", "Bb7sus4 Eb7sus4 F7sus4 D7sus4 Bb7sus4 D7sus4"],
+  ["16-1-r1", 16, "16.1", 185, 170, "F", "1", "C-/F D-/G Eb/F F/G"],
+  ["16-1-r2", 16, "16.1", 185, 170, "C", "2", "C-7 D-7 C-7 D-7"],
+  ["16-1-r3", 16, "16.1", 185, 170, "F", "3", "C/F C/F Bb/Eb C/F Bb/Eb"],
+  ["16-2-r1", 16, "16.2", 185, 171, "C", "1", "CMaj7 D B-7 CMaj7 D B-7"],
+  ["16-2-r2", 16, "16.2", 185, 171, "E", "2", "E-7 FMaj7 E-7 FMaj7 D-/E C/F D-/E C/F"],
+  ["16-2-r3", 16, "16.2", 185, 171, "F#", "3", "F#7sus4 A7sus4 C7sus4 Eb7sus4 F#7sus4 A7sus4 F#7sus4 C7sus4"],
+  ["16-2-r4", 16, "16.2", 185, 171, "F#", "4", "E/F# G/A Bb/C Db/Eb E-/F# G/A E-/F# Db/Eb"],
+];
+
+const EXERCISES = [
+  ...CORE_EXERCISES,
+  ...REFERENCE_ANSWER_SPECS.map(referenceAnswerExercise),
+];
+
 const KEY_CHOICES = [
   { name: "C", tonic: 0, spelling: "sharp" },
   { name: "D♭", tonic: 1, spelling: "flat" },
@@ -1325,12 +1465,20 @@ const QUALITY = {
   maj7sharp11: { suffix: "Maj7(#11)", intervals: [0, 4, 7, 11, 18] },
   m7: { suffix: "−7", intervals: [0, 3, 7, 10] },
   m7b5: { suffix: "−7(♭5)", intervals: [0, 3, 6, 10] },
+  m7natural9: { suffix: "−7(9)", intervals: [0, 3, 7, 10, 14] },
+  m7b5natural9: { suffix: "−7(♭5,9)", intervals: [0, 3, 6, 10, 14] },
   m6: { suffix: "−6", intervals: [0, 3, 7, 9] },
   "7": { suffix: "7", intervals: [0, 4, 7, 10] },
   "7b9": { suffix: "7(♭9)", intervals: [0, 4, 7, 10, 13] },
   "7b9b13": { suffix: "7(♭9,♭13)", intervals: [0, 4, 7, 10, 13, 20] },
   dim7: { suffix: "°7", intervals: [0, 3, 6, 9] },
   "7sus4": { suffix: "7sus4", intervals: [0, 5, 7, 10] },
+  "7b5": { suffix: "7(♭5)", intervals: [0, 4, 6, 10] },
+  "7sharp5": { suffix: "7(#5)", intervals: [0, 4, 8, 10] },
+  "7alt": { suffix: "7alt", intervals: [0, 4, 6, 10, 13] },
+  m7b9: { suffix: "−7(♭9)", intervals: [0, 3, 7, 10, 13] },
+  minSharp5: { suffix: "−(#5)", intervals: [0, 3, 8] },
+  augMaj7: { suffix: "+(Maj7)", intervals: [0, 4, 8, 11] },
 };
 
 const state = {
@@ -1444,6 +1592,123 @@ function pianoReleaseSeconds(sound = state.sound) {
   return isPianoLegato(sound)
     ? PIANO_LEGATO_RELEASE_SECONDS
     : PIANO_RELEASE_SECONDS;
+}
+
+function referenceAnswerExercise(spec) {
+  const [
+    id,
+    chapter,
+    exercise,
+    answerPage,
+    exercisePage,
+    tonicName,
+    variant,
+    symbolSequence,
+  ] = spec;
+  const sequence = symbolSequence.trim().split(/\s+/).map((symbol) => (
+    referenceChord(symbol, tonicName)
+  ));
+  return makeExercise({
+    id: `answer-${id}`,
+    chapter,
+    name: `Exercise ${exercise} — reference answer ${variant}`,
+    source: (
+      `Chapter ${chapter} · Exercise ${exercise} · `
+      + `ответ ${variant} · печатная стр. ${answerPage} `
+      + `(задание: стр. ${exercisePage})`
+    ),
+    baseTonic: notePitchClass(tonicName),
+    sequence,
+    distractors: [
+      referenceChord(tonicName, tonicName),
+      chord("II−7", 2, "m7"),
+      chord("V7", 7, "7"),
+      chord("♭VIIMaj7", 10, "maj7", "flat"),
+    ],
+  });
+}
+
+function referenceChord(symbol, tonicName) {
+  const [upperSymbol, bassSymbol = null] = symbol.split("/");
+  const match = upperSymbol.match(/^([A-G](?:b|#)?)(.*)$/);
+  if (!match) throw new Error(`Unsupported reference chord: ${symbol}`);
+  const [, rootName, suffix] = match;
+  const qualityBySuffix = {
+    "": "maj",
+    "-": "min",
+    "6": "6",
+    "Maj7": "maj7",
+    "Maj7(#11)": "maj7sharp11",
+    "-7": "m7",
+    "-7(b5)": "m7b5",
+    "-7(9)": "m7natural9",
+    "-7(b5,9)": "m7b5natural9",
+    "-6": "m6",
+    "7": "7",
+    "7(b9)": "7b9",
+    "7(b9,b13)": "7b9b13",
+    "7(b13,b9)": "7b9b13",
+    "7(b5)": "7b5",
+    "7(#5)": "7sharp5",
+    "7alt": "7alt",
+    "-7(b9)": "m7b9",
+    "-(#5)": "minSharp5",
+    "+(Maj7)": "augMaj7",
+    "7sus4": "7sus4",
+    "o7": "dim7",
+  };
+  const quality = qualityBySuffix[suffix];
+  if (!quality) throw new Error(`Unsupported reference chord quality: ${symbol}`);
+  const tonic = notePitchClass(tonicName);
+  const root = notePitchClass(rootName);
+  const offset = (root - tonic + 12) % 12;
+  const bassOffset = bassSymbol
+    ? (notePitchClass(bassSymbol) - tonic + 12) % 12
+    : null;
+  const spelling = rootName.includes("b")
+    ? "flat"
+    : (rootName.includes("#") ? "sharp" : null);
+  const degree = referenceDegreeLabel(offset, quality, spelling, bassOffset);
+  return chord(degree, offset, quality, spelling, bassOffset);
+}
+
+function notePitchClass(noteName) {
+  const match = noteName.match(/^([A-G])([b#]?)$/);
+  if (!match) throw new Error(`Unsupported note name: ${noteName}`);
+  const naturals = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  const accidental = match[2] === "b" ? -1 : (match[2] === "#" ? 1 : 0);
+  return (naturals[match[1]] + accidental + 12) % 12;
+}
+
+function referenceDegreeLabel(offset, quality, spelling, bassOffset) {
+  const sharpDegrees = ["I", "#I", "II", "#II", "III", "IV", "#IV", "V", "#V", "VI", "#VI", "VII"];
+  const flatDegrees = ["I", "♭II", "II", "♭III", "III", "IV", "♭V", "V", "♭VI", "VI", "♭VII", "VII"];
+  const degrees = spelling === "sharp" ? sharpDegrees : flatDegrees;
+  const suffixes = {
+    maj: "",
+    min: "−",
+    "6": "6",
+    maj7: "Maj7",
+    maj7sharp11: "Maj7(#11)",
+    m7: "−7",
+    m7b5: "−7(♭5)",
+    m7natural9: "−7(9)",
+    m7b5natural9: "−7(♭5,9)",
+    m6: "−6",
+    "7": "7",
+    "7b9": "7(♭9)",
+    "7b9b13": "7(♭9,♭13)",
+    "7b5": "7(♭5)",
+    "7sharp5": "7(#5)",
+    "7alt": "7alt",
+    m7b9: "−7(♭9)",
+    minSharp5: "−(#5)",
+    augMaj7: "+(Maj7)",
+    "7sus4": "7sus4",
+    dim7: "°7",
+  };
+  const bass = bassOffset === null ? "" : `/${degrees[bassOffset]}`;
+  return `${degrees[offset]}${suffixes[quality]}${bass}`;
 }
 
 function makeExercise({ distractors = [], sequence, ...metadata }) {

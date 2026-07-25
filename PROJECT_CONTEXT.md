@@ -19,7 +19,7 @@ than absolute chord names.
   `https://github.com/timurkoksharoff-bebop/reharm-ear-trainer`
 - Production PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
-- Current published cache version: `0.13`
+- Current published cache version: `0.14`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -52,6 +52,9 @@ When adding or correcting a progression:
 - `Избранное` contains progressions marked with the heart button.
 - Favorites are stored locally on each device and remain available offline.
   They are not synchronized between iPhone and Mac.
+- Favorites use a versioned record with stable exercise metadata and request
+  persistent browser storage when supported, so normal PWA rebuilds and
+  catalog-ID migrations do not discard them.
 - Before every exercise, a tonic reference chord sounds first.
 - Wrong choices turn red and remain unavailable; the student keeps trying
   until the correct chord is found.
@@ -68,9 +71,13 @@ When adding or correcting a progression:
 ## Audio Decisions
 
 - Default sound: sampled grand piano.
-- Alternative sound: soft synthesized organ.
+- Alternative sounds: legato sampled piano, sampled Wurlitzer EP200 electric
+  piano, soft synthesized organ, and a bass-only mode that plays each chord's
+  actual lowest note.
 - Default tempo: slow.
 - Piano chords have a longer sustain so the harmony can be analyzed.
+- On supported iOS versions, the PWA requests a playback audio session so an
+  already-started progression can continue while another app is in front.
 - True slash chords reinforce the independent bass in two octaves.
 - The application uses Web Audio only while playing and does not capture MIDI.
 

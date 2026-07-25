@@ -1481,6 +1481,9 @@ const QUALITY = {
   augMaj7: { suffix: "+(Maj7)", intervals: [0, 4, 8, 11] },
 };
 
+const FAVORITES_STORAGE_KEY = "reharm-ear-favorites-v2";
+const LEGACY_FAVORITES_STORAGE_KEY = "reharm-ear-favorites-v1";
+
 const state = {
   exerciseIndex: 0,
   chapterFilter: "all",
@@ -1538,7 +1541,9 @@ let pianoIdleTimer = null;
 let mobileAudioElement = null;
 let mobileAudioUnlocked = false;
 let pianoSamplePromise = null;
+let electricPianoSamplePromise = null;
 const pianoSampleBuffers = new Map();
+const electricPianoSampleBuffers = new Map();
 const pianoVoices = new Set();
 const pianoKeyTimers = new Map();
 const chapterQueues = new Map();
@@ -1546,6 +1551,7 @@ const PIANO_SUSTAIN_RATIO = 1.1;
 const PIANO_LEGATO_SUSTAIN_RATIO = 1.35;
 const PIANO_RELEASE_SECONDS = 0.7;
 const PIANO_LEGATO_RELEASE_SECONDS = 1.1;
+const ELECTRIC_PIANO_RELEASE_SECONDS = 0.85;
 const PIANO_SAMPLE_MANIFEST = [
   [36, "C2"],
   [39, "Ds2"],
@@ -1569,29 +1575,66 @@ const PIANO_SAMPLE_MANIFEST = [
   midi,
   url: `samples/piano/${name}.mp3`,
 }));
+const ELECTRIC_PIANO_SAMPLE_MANIFEST = [
+  [36, "c2f", -7],
+  [41, "f2f", -6],
+  [47, "b2f", -8],
+  [52, "e3f", -4],
+  [56, "ab3f", -11],
+  [61, "db4f", -2],
+  [68, "ab4f", 0],
+  [73, "db5f", 3],
+  [79, "g5f", -7],
+  [85, "db6f", 0],
+  [92, "ab6f", 0],
+].map(([midi, name, tuneCents]) => ({
+  midi,
+  tuneCents,
+  url: `samples/electric-piano/${name}.m4a`,
+}));
 
 function chord(degree, offset, quality, spelling = null, bassOffset = null) {
   return { degree, offset, quality, spelling, bassOffset };
 }
 
 function isPianoSound(sound = state.sound) {
-  return sound === "piano" || sound === "piano-legato";
+  return sound === "piano" || sound === "piano-legato" || sound === "bass";
 }
 
 function isPianoLegato(sound = state.sound) {
   return sound === "piano-legato";
 }
 
+function isElectricPianoSound(sound = state.sound) {
+  return sound === "electric-piano";
+}
+
+function isSampledKeyboardSound(sound = state.sound) {
+  return isPianoSound(sound) || isElectricPianoSound(sound);
+}
+
+function isBassSound(sound = state.sound) {
+  return sound === "bass";
+}
+
 function soundName(sound = state.sound) {
-  if (sound === "piano-legato") return "рояль legato";
-  if (sound === "piano") return "рояль";
-  return "мягкий орган";
+  if (sound === "piano-legato") return "пианино legato";
+  if (sound === "piano") return "пианино";
+  if (sound === "electric-piano") return "электропианино";
+  if (sound === "bass") return "бас";
+  return "орган";
 }
 
 function pianoReleaseSeconds(sound = state.sound) {
   return isPianoLegato(sound)
     ? PIANO_LEGATO_RELEASE_SECONDS
     : PIANO_RELEASE_SECONDS;
+}
+
+function keyboardReleaseSeconds(sound = state.sound) {
+  return isElectricPianoSound(sound)
+    ? ELECTRIC_PIANO_RELEASE_SECONDS
+    : pianoReleaseSeconds(sound);
 }
 
 function referenceAnswerExercise(spec) {
@@ -1760,12 +1803,16 @@ function currentExercise() {
 }
 
 function init() {
+  configurePlaybackAudioSession();
   document.addEventListener("pointerdown", () => {
     requestPortraitOrientation();
     unlockMobileAudio();
   }, { once: true, capture: true });
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) requestPortraitOrientation();
+    if (document.hidden) return;
+    requestPortraitOrientation();
+    configurePlaybackAudioSession();
+    resumeAudioAfterInterruption();
   });
 
   const allOption = document.createElement("option");
@@ -2157,10 +2204,29 @@ function setFeedback(message, type = "") {
 
 function loadFavorites() {
   try {
-    const stored = JSON.parse(localStorage.getItem("reharm-ear-favorites-v1") || "[]");
+    const stored = JSON.parse(
+      localStorage.getItem(FAVORITES_STORAGE_KEY)
+      || localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY)
+      || "[]",
+    );
     if (!Array.isArray(stored)) return new Set();
-    const knownIds = new Set(EXERCISES.map((exercise) => exercise.id));
-    return new Set(stored.filter((id) => knownIds.has(id)));
+
+    const exercisesById = new Map(
+      EXERCISES.map((exercise) => [exercise.id, exercise]),
+    );
+    const exercisesBySignature = new Map(
+      EXERCISES.map((exercise) => [favoriteSignature(exercise), exercise]),
+    );
+    const restoredIds = stored.flatMap((item) => {
+      if (typeof item === "string") {
+        return exercisesById.has(item) ? [item] : [];
+      }
+      if (!item || typeof item !== "object") return [];
+      if (exercisesById.has(item.id)) return [item.id];
+      const matched = exercisesBySignature.get(favoriteSignature(item));
+      return matched ? [matched.id] : [];
+    });
+    return new Set(restoredIds);
   } catch {
     return new Set();
   }
@@ -2168,12 +2234,45 @@ function loadFavorites() {
 
 function saveFavorites() {
   try {
+    const records = EXERCISES
+      .filter((exercise) => state.favorites.has(exercise.id))
+      .map((exercise) => ({
+        id: exercise.id,
+        chapter: exercise.chapter,
+        name: exercise.name,
+        source: exercise.source,
+      }));
     localStorage.setItem(
-      "reharm-ear-favorites-v1",
+      FAVORITES_STORAGE_KEY,
+      JSON.stringify(records),
+    );
+    localStorage.setItem(
+      LEGACY_FAVORITES_STORAGE_KEY,
       JSON.stringify([...state.favorites]),
     );
   } catch {
     // Favorites remain available for the current session if storage is blocked.
+  }
+  requestPersistentFavoritesStorage();
+}
+
+function favoriteSignature(exercise) {
+  return [
+    exercise.chapter ?? "",
+    exercise.name ?? "",
+    exercise.source ?? "",
+  ].join("\u001f");
+}
+
+async function requestPersistentFavoritesStorage() {
+  if (typeof navigator === "undefined" || !navigator.storage?.persist) return false;
+  try {
+    if (navigator.storage.persisted && await navigator.storage.persisted()) {
+      return true;
+    }
+    return await navigator.storage.persist();
+  } catch {
+    return false;
   }
 }
 
@@ -2276,16 +2375,18 @@ async function playSequence(withAnswer) {
 
   const secondsPerChord = Number(ui.tempoSelect.value);
   const startAt = audioContext.currentTime + 0.08;
-  const pianoSound = isPianoSound();
+  const sampledKeyboardSound = isSampledKeyboardSound();
   const sustainRatio = isPianoLegato()
     ? PIANO_LEGATO_SUSTAIN_RATIO
-    : (pianoSound ? PIANO_SUSTAIN_RATIO : 0.9);
-  const releaseTail = pianoSound ? pianoReleaseSeconds() : 0.02;
+    : (sampledKeyboardSound ? PIANO_SUSTAIN_RATIO : 0.9);
+  const releaseTail = sampledKeyboardSound ? keyboardReleaseSeconds() : 0.02;
   const chordDuration = secondsPerChord * sustainRatio;
-  const referenceDuration = pianoSound
+  const referenceDuration = sampledKeyboardSound
     ? secondsPerChord * PIANO_SUSTAIN_RATIO
     : chordDuration;
-  const referenceGap = pianoSound ? pianoReleaseSeconds() + 0.05 : 0.55;
+  const referenceGap = sampledKeyboardSound
+    ? keyboardReleaseSeconds() + 0.05
+    : 0.55;
   const sequenceStart = startAt + referenceDuration + referenceGap;
 
   if (withAnswer) {
@@ -2353,7 +2454,9 @@ async function previewChord(item, optionIndex) {
   cancelPlayback();
   if (!await ensureAudioContext()) return;
 
-  const duration = isPianoLegato() ? 2.25 : (isPianoSound() ? 1.65 : 1.15);
+  const duration = isPianoLegato()
+    ? 2.25
+    : (isSampledKeyboardSound() ? 1.65 : 1.15);
   state.previewOptionIndex = optionIndex;
   setFeedback(`Прослушивание: ${optionLabel(item)}.`, "playing");
   render();
@@ -2365,7 +2468,7 @@ async function previewChord(item, optionIndex) {
     render();
   }, (
     duration
-    + (isPianoSound() ? pianoReleaseSeconds() + 0.1 : 0.2)
+    + (isSampledKeyboardSound() ? keyboardReleaseSeconds() + 0.1 : 0.2)
   ) * 1000);
 }
 
@@ -2416,6 +2519,7 @@ async function triggerPianoKey(button, midi) {
     return;
   }
 
+  configurePlaybackAudioSession();
   await unlockMobileAudio();
   window.clearTimeout(pianoIdleTimer);
   pianoAudioContext ||= new AudioEngine();
@@ -2429,7 +2533,11 @@ async function triggerPianoKey(button, midi) {
   const context = pianoAudioContext;
   const startAt = context.currentTime + 0.01;
   const isPiano = isPianoSound();
-  const duration = isPianoLegato() ? 2.85 : (isPiano ? 2.15 : 1.55);
+  const isElectricPiano = isElectricPianoSound();
+  const isSampledKeyboard = isPiano || isElectricPiano;
+  const duration = isPianoLegato()
+    ? 2.85
+    : (isSampledKeyboard ? 2.15 : 1.55);
 
   if (isPiano && await ensurePianoSamples(context)) {
     const sources = scheduleSampledPianoNotes(
@@ -2437,6 +2545,27 @@ async function triggerPianoKey(button, midi) {
       [midi],
       startAt,
       duration,
+    );
+    const voice = { sources };
+    pianoVoices.add(voice);
+    sources[0].onended = () => {
+      pianoVoices.delete(voice);
+      schedulePianoContextRelease();
+    };
+    flashPianoKey(button);
+    return;
+  }
+  if (isElectricPiano && await ensureElectricPianoSamples(context)) {
+    const sources = scheduleSampledPianoNotes(
+      context,
+      [midi],
+      startAt,
+      duration,
+      {
+        releaseSeconds: ELECTRIC_PIANO_RELEASE_SECONDS,
+        sampleManifest: ELECTRIC_PIANO_SAMPLE_MANIFEST,
+        sampleBuffers: electricPianoSampleBuffers,
+      },
     );
     const voice = { sources };
     pianoVoices.add(voice);
@@ -2459,22 +2588,31 @@ async function triggerPianoKey(button, midi) {
 
   voice.oscillator.type = "triangle";
   voice.oscillator.frequency.setValueAtTime(frequency, startAt);
-  voice.overtone.type = isPiano ? "triangle" : "sine";
-  voice.overtone.frequency.setValueAtTime(frequency * (isPiano ? 2.012 : 2.005), startAt);
+  voice.overtone.type = isSampledKeyboard ? "triangle" : "sine";
+  voice.overtone.frequency.setValueAtTime(
+    frequency * (isSampledKeyboard ? 2.012 : 2.005),
+    startAt,
+  );
   voice.filter.type = "lowpass";
-  voice.filter.frequency.setValueAtTime(isPiano ? 5200 : 3100, startAt);
-  if (isPiano) {
+  voice.filter.frequency.setValueAtTime(isSampledKeyboard ? 5200 : 3100, startAt);
+  if (isSampledKeyboard) {
     voice.filter.frequency.exponentialRampToValueAtTime(1350, startAt + 1.35);
   }
   voice.filter.Q.setValueAtTime(0.65, startAt);
   voice.gain.gain.setValueAtTime(0.0001, startAt);
-  voice.gain.gain.exponentialRampToValueAtTime(isPiano ? 0.28 : 0.2, startAt + 0.012);
-  voice.gain.gain.exponentialRampToValueAtTime(isPiano ? 0.055 : 0.075, startAt + 0.52);
+  voice.gain.gain.exponentialRampToValueAtTime(
+    isSampledKeyboard ? 0.28 : 0.2,
+    startAt + 0.012,
+  );
+  voice.gain.gain.exponentialRampToValueAtTime(
+    isSampledKeyboard ? 0.055 : 0.075,
+    startAt + 0.52,
+  );
   voice.gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-  voice.overtoneGain.gain.setValueAtTime(isPiano ? 0.14 : 0.08, startAt);
+  voice.overtoneGain.gain.setValueAtTime(isSampledKeyboard ? 0.14 : 0.08, startAt);
   voice.overtoneGain.gain.exponentialRampToValueAtTime(
     0.0001,
-    startAt + (isPiano ? 0.72 : 0.48),
+    startAt + (isSampledKeyboard ? 0.72 : 0.48),
   );
 
   voice.oscillator.connect(voice.gain);
@@ -2538,6 +2676,7 @@ async function ensureAudioContext() {
     setFeedback("Этот браузер не поддерживает воспроизведение Web Audio.", "error");
     return false;
   }
+  configurePlaybackAudioSession();
   await unlockMobileAudio();
   audioContext ||= new AudioEngine();
   try {
@@ -2548,6 +2687,8 @@ async function ensureAudioContext() {
   }
   if (isPianoSound()) {
     await ensurePianoSamples(audioContext);
+  } else if (isElectricPianoSound()) {
+    await ensureElectricPianoSamples(audioContext);
   }
   return true;
 }
@@ -2570,13 +2711,47 @@ async function ensurePianoSamples(context) {
       console.error(error);
       pianoSamplePromise = null;
       setFeedback(
-        "Семплы рояля не загрузились; временно используется синтезированный тембр.",
+        "Сэмплы пианино не загрузились; временно используется синтезированный тембр.",
         "error",
       );
       return false;
     });
 
   return pianoSamplePromise;
+}
+
+async function ensureElectricPianoSamples(context) {
+  if (
+    electricPianoSampleBuffers.size
+    === ELECTRIC_PIANO_SAMPLE_MANIFEST.length
+  ) return true;
+
+  electricPianoSamplePromise ||= Promise.all(
+    ELECTRIC_PIANO_SAMPLE_MANIFEST.map(async (sample) => {
+      const encoded = await loadPianoSampleBytes(sample.url);
+      const buffer = await new Promise((resolve, reject) => {
+        context.decodeAudioData(encoded, resolve, reject);
+      });
+      return [sample.midi, buffer];
+    }),
+  )
+    .then((samples) => {
+      samples.forEach(([midi, buffer]) => (
+        electricPianoSampleBuffers.set(midi, buffer)
+      ));
+      return true;
+    })
+    .catch((error) => {
+      console.error(error);
+      electricPianoSamplePromise = null;
+      setFeedback(
+        "Сэмплы электропианино не загрузились; временно используется синтезированный тембр.",
+        "error",
+      );
+      return false;
+    });
+
+  return electricPianoSamplePromise;
 }
 
 async function loadPianoSampleBytes(url) {
@@ -2610,16 +2785,20 @@ async function loadPianoSampleBytes(url) {
   });
 }
 
-function nearestPianoSample(midi) {
-  let nearest = PIANO_SAMPLE_MANIFEST[0];
-  PIANO_SAMPLE_MANIFEST.forEach((sample) => {
+function nearestPianoSample(
+  midi,
+  sampleManifest = PIANO_SAMPLE_MANIFEST,
+  sampleBuffers = pianoSampleBuffers,
+) {
+  let nearest = sampleManifest[0];
+  sampleManifest.forEach((sample) => {
     if (Math.abs(sample.midi - midi) < Math.abs(nearest.midi - midi)) {
       nearest = sample;
     }
   });
   return {
     ...nearest,
-    buffer: pianoSampleBuffers.get(nearest.midi),
+    buffer: sampleBuffers.get(nearest.midi),
   };
 }
 
@@ -2632,6 +2811,8 @@ function scheduleSampledPianoNotes(
     bassVoiceCount = 0,
     bassGain = 1,
     releaseSeconds = pianoReleaseSeconds(),
+    sampleManifest = PIANO_SAMPLE_MANIFEST,
+    sampleBuffers = pianoSampleBuffers,
   } = {},
 ) {
   const master = context.createGain();
@@ -2647,10 +2828,15 @@ function scheduleSampledPianoNotes(
   compressor.connect(context.destination);
 
   return notes.map((midi, noteIndex) => {
-    const sample = nearestPianoSample(midi);
+    const sample = nearestPianoSample(midi, sampleManifest, sampleBuffers);
     const source = context.createBufferSource();
     const envelope = context.createGain();
-    const playbackRate = 2 ** ((midi - sample.midi) / 12);
+    const playbackRate = 2 ** (
+      (
+        (midi - sample.midi) * 100
+        + (sample.tuneCents ?? 0)
+      ) / 1200
+    );
     const releaseAt = startAt + duration;
 
     source.buffer = sample.buffer;
@@ -2675,6 +2861,23 @@ function scheduleSampledPianoNotes(
 function isAppleMobileDevice() {
   return /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function configurePlaybackAudioSession() {
+  if (typeof navigator === "undefined" || !navigator.audioSession) return false;
+  try {
+    navigator.audioSession.type = "playback";
+    return navigator.audioSession.type === "playback";
+  } catch {
+    return false;
+  }
+}
+
+function resumeAudioAfterInterruption() {
+  [audioContext, pianoAudioContext].forEach((context) => {
+    if (!context || context.state === "closed" || context.state === "running") return;
+    context.resume().catch(() => {});
+  });
 }
 
 function requestPortraitOrientation() {
@@ -2781,9 +2984,20 @@ function midiNotesForChord(item) {
   return { notes, hasIndependentBass };
 }
 
+function playbackNotesForChord(item, sound = state.sound) {
+  const voicing = midiNotesForChord(item);
+  if (!isBassSound(sound)) return voicing;
+  return {
+    notes: [voicing.notes[0]],
+    hasIndependentBass: false,
+  };
+}
+
 function scheduleChord(item, startAt, duration) {
   const isPiano = isPianoSound();
-  const { notes, hasIndependentBass } = midiNotesForChord(item);
+  const isElectricPiano = isElectricPianoSound();
+  const isSampledKeyboard = isPiano || isElectricPiano;
+  const { notes, hasIndependentBass } = playbackNotesForChord(item);
 
   if (
     isPiano
@@ -2802,12 +3016,32 @@ function scheduleChord(item, startAt, duration) {
     );
     return;
   }
+  if (
+    isElectricPiano
+    && electricPianoSampleBuffers.size
+      === ELECTRIC_PIANO_SAMPLE_MANIFEST.length
+  ) {
+    scheduleSampledPianoNotes(
+      audioContext,
+      notes,
+      startAt,
+      duration,
+      {
+        bassVoiceCount: hasIndependentBass ? 2 : 1,
+        bassGain: hasIndependentBass ? 1.22 : 1.06,
+        releaseSeconds: ELECTRIC_PIANO_RELEASE_SECONDS,
+        sampleManifest: ELECTRIC_PIANO_SAMPLE_MANIFEST,
+        sampleBuffers: electricPianoSampleBuffers,
+      },
+    );
+    return;
+  }
 
   const master = audioContext.createGain();
   const filter = audioContext.createBiquadFilter();
   filter.type = "lowpass";
-  filter.frequency.setValueAtTime(isPiano ? 5400 : 2600, startAt);
-  if (isPiano) {
+  filter.frequency.setValueAtTime(isSampledKeyboard ? 5400 : 2600, startAt);
+  if (isSampledKeyboard) {
     filter.frequency.exponentialRampToValueAtTime(
       1450,
       startAt + Math.max(0.25, duration * 0.82),
@@ -2816,12 +3050,12 @@ function scheduleChord(item, startAt, duration) {
   filter.Q.setValueAtTime(0.7, startAt);
   master.gain.setValueAtTime(0.0001, startAt);
   master.gain.exponentialRampToValueAtTime(
-    (isPiano ? 0.36 : 0.24) / Math.sqrt(notes.length),
+    (isSampledKeyboard ? 0.36 : 0.24) / Math.sqrt(notes.length),
     startAt + 0.018,
   );
   master.gain.exponentialRampToValueAtTime(
-    (isPiano ? 0.035 : 0.08) / Math.sqrt(notes.length),
-    startAt + duration * (isPiano ? 0.72 : 0.48),
+    (isSampledKeyboard ? 0.035 : 0.08) / Math.sqrt(notes.length),
+    startAt + duration * (isSampledKeyboard ? 0.72 : 0.48),
   );
   master.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
   filter.connect(master);
@@ -2834,18 +3068,28 @@ function scheduleChord(item, startAt, duration) {
     const noteGain = audioContext.createGain();
     const overtoneGain = audioContext.createGain();
 
-    oscillator.type = isPiano ? "triangle" : (noteIndex === 0 ? "sine" : "triangle");
+    oscillator.type = isSampledKeyboard
+      ? "triangle"
+      : (noteIndex === 0 ? "sine" : "triangle");
     oscillator.frequency.setValueAtTime(frequency, startAt);
-    overtone.type = isPiano ? "triangle" : "sine";
-    overtone.frequency.setValueAtTime(frequency * (isPiano ? 2.014 : 2.01), startAt);
-    noteGain.gain.setValueAtTime(
-      isPiano ? (noteIndex === 0 ? 0.72 : 0.58) : (noteIndex === 0 ? 0.82 : 0.64),
+    overtone.type = isSampledKeyboard ? "triangle" : "sine";
+    overtone.frequency.setValueAtTime(
+      frequency * (isSampledKeyboard ? 2.014 : 2.01),
       startAt,
     );
-    overtoneGain.gain.setValueAtTime(isPiano ? 0.19 : 0.13, startAt);
+    noteGain.gain.setValueAtTime(
+      isSampledKeyboard
+        ? (noteIndex === 0 ? 0.72 : 0.58)
+        : (noteIndex === 0 ? 0.82 : 0.64),
+      startAt,
+    );
+    overtoneGain.gain.setValueAtTime(
+      isSampledKeyboard ? 0.19 : 0.13,
+      startAt,
+    );
     overtoneGain.gain.exponentialRampToValueAtTime(
       0.0001,
-      startAt + duration * (isPiano ? 0.34 : 0.45),
+      startAt + duration * (isSampledKeyboard ? 0.34 : 0.45),
     );
 
     oscillator.connect(noteGain);

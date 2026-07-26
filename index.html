@@ -126,14 +126,20 @@
     </section>
 
     <section class="actions" aria-label="Exercise actions">
+      <button
+        class="history-button"
+        id="previousButton"
+        type="button"
+        title="Previous sequence"
+        aria-label="Previous sequence"
+        disabled
+      >←</button>
       <button class="secondary" id="showButton" type="button">Show answer</button>
       <button class="secondary" id="reviewButton" type="button" title="Play with highlighting" disabled>▶ Review</button>
-      <div class="playback-controls" id="playbackControls">
+      <div class="playback-controls" id="playbackControls" aria-label="Sequence playback">
+        <button class="segment-play-button" type="button" data-play-segment="0" hidden></button>
         <button class="play-button" id="playButton" type="button" title="Play full sequence" aria-label="Play full sequence">▶</button>
-        <div class="segment-playback" id="segmentPlayback" aria-label="Play in parts" hidden>
-          <button class="segment-play-button" type="button" data-play-segment="0"></button>
-          <button class="segment-play-button" type="button" data-play-segment="1"></button>
-        </div>
+        <button class="segment-play-button" type="button" data-play-segment="1" hidden></button>
       </div>
       <button class="primary" id="nextButton" type="button" title="Skip without changing statistics">Skip</button>
     </section>

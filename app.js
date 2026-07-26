@@ -1524,10 +1524,10 @@ const ui = {
   feedback: document.querySelector("#feedback"),
   playbackControls: document.querySelector("#playbackControls"),
   playButton: document.querySelector("#playButton"),
-  segmentPlayback: document.querySelector("#segmentPlayback"),
   segmentPlayButtons: [...document.querySelectorAll("[data-play-segment]")],
   showButton: document.querySelector("#showButton"),
   reviewButton: document.querySelector("#reviewButton"),
+  previousButton: document.querySelector("#previousButton"),
   nextButton: document.querySelector("#nextButton"),
   resetStatsButton: document.querySelector("#resetStatsButton"),
   pianoKeyboard: document.querySelector("#pianoKeyboard"),
@@ -1566,6 +1566,7 @@ const uprightBassSampleBuffers = new Map();
 const pianoVoices = new Set();
 const pianoKeyTimers = new Map();
 const chapterQueues = new Map();
+const exerciseHistory = [];
 let voicingPopoverAnchor = null;
 const PIANO_SUSTAIN_RATIO = 1.1;
 const PIANO_LEGATO_SUSTAIN_RATIO = 1.35;
@@ -1580,6 +1581,9 @@ const AUDIO_HARDWARE_IDLE_THRESHOLD_MS = 6000;
 const AUDIO_HARDWARE_WARMUP_MS = 110;
 const AUDIO_CONTEXT_IDLE_CLOSE_MS = 120000;
 const SEGMENTED_PLAYBACK_MIN_LENGTH = 8;
+const CHORD_NOTES_HOLD_MS = 520;
+const CHORD_NOTES_HOLD_MOVE_PX = 12;
+const EXERCISE_HISTORY_LIMIT = 50;
 const PIANO_SAMPLE_MANIFEST = [
   [36, "C2"],
   [39, "Ds2"],
@@ -1937,6 +1941,7 @@ function init() {
       return;
     }
 
+    rememberCurrentExercise();
     state.chapterFilter = requestedFilter;
     const indexes = eligibleExerciseIndexes();
     state.exerciseIndex = nextRandomIndex(
@@ -1949,7 +1954,10 @@ function init() {
   });
 
   ui.exerciseSelect.addEventListener("change", () => {
-    state.exerciseIndex = Number(ui.exerciseSelect.value);
+    const requestedIndex = Number(ui.exerciseSelect.value);
+    if (requestedIndex === state.exerciseIndex) return;
+    rememberCurrentExercise();
+    state.exerciseIndex = requestedIndex;
     startExercise(true);
   });
 
@@ -1969,6 +1977,7 @@ function init() {
   });
   ui.reviewButton.addEventListener("click", () => playSequence(true));
   ui.showButton.addEventListener("click", showAnswer);
+  ui.previousButton.addEventListener("click", previousExercise);
   ui.nextButton.addEventListener("click", nextExercise);
   ui.favoriteButton.addEventListener("click", toggleFavorite);
   ui.resetStatsButton.addEventListener("click", resetStats);
@@ -2037,16 +2046,59 @@ function pickKey() {
 function nextExercise() {
   window.clearTimeout(autoNextTimer);
   const indexes = eligibleExerciseIndexes();
+  let nextIndex = state.exerciseIndex;
 
   if (indexes.length > 1) {
-    state.exerciseIndex = nextRandomIndex(
+    nextIndex = nextRandomIndex(
       state.chapterFilter,
       indexes,
       state.exerciseIndex,
     );
   }
+  if (nextIndex !== state.exerciseIndex) rememberCurrentExercise();
+  state.exerciseIndex = nextIndex;
   refreshExerciseSelect();
   startExercise(true);
+}
+
+function currentExerciseSnapshot() {
+  return {
+    exerciseIndex: state.exerciseIndex,
+    chapterFilter: state.chapterFilter,
+    key: { ...state.key },
+  };
+}
+
+function rememberCurrentExercise() {
+  const snapshot = currentExerciseSnapshot();
+  const previous = exerciseHistory.at(-1);
+  if (
+    previous
+    && previous.exerciseIndex === snapshot.exerciseIndex
+    && previous.chapterFilter === snapshot.chapterFilter
+    && previous.key.name === snapshot.key.name
+  ) return;
+
+  exerciseHistory.push(snapshot);
+  if (exerciseHistory.length > EXERCISE_HISTORY_LIMIT) {
+    exerciseHistory.splice(0, exerciseHistory.length - EXERCISE_HISTORY_LIMIT);
+  }
+}
+
+function previousExercise() {
+  const snapshot = exerciseHistory.pop();
+  if (!snapshot) return;
+
+  cancelPlayback();
+  window.clearTimeout(autoNextTimer);
+  state.chapterFilter = snapshot.chapterFilter;
+  state.exerciseIndex = snapshot.exerciseIndex;
+  state.key = { ...snapshot.key };
+  ui.chapterSelect.value = state.chapterFilter;
+  refreshExerciseSelect();
+  startExercise(false);
+  setFeedback("Previous sequence.");
+  render();
 }
 
 function nextRandomIndex(chapter, indexes, currentIndex) {
@@ -2152,8 +2204,13 @@ function render() {
     row.style.setProperty("--matrix-width", `${98 + positionCount * 35}px`);
     row.tabIndex = 0;
     row.setAttribute("role", "button");
-    row.setAttribute("aria-label", `Preview chord ${optionLabel(option)}`);
-    row.title = `Preview ${optionLabel(option)}`;
+    row.setAttribute(
+      "aria-label",
+      `Preview chord ${optionLabel(option)}. Hold for sounding notes.`,
+    );
+    row.setAttribute("aria-haspopup", "dialog");
+    row.setAttribute("aria-expanded", "false");
+    row.title = `Preview ${optionLabel(option)} · hold for sounding notes`;
     const activeOptionIndex = !showActiveAnswer
       ? -1
       : correctOptionIndex(state.activePosition);
@@ -2162,6 +2219,11 @@ function render() {
     row.addEventListener("click", () => previewChord(option, optionIndex));
     row.addEventListener("keydown", (event) => {
       if (event.target !== row) return;
+      if (event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        openVoicingPopover(option, row);
+        return;
+      }
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
       previewChord(option, optionIndex);
@@ -2172,8 +2234,11 @@ function render() {
     const label = document.createElement("span");
     label.className = "answer-label";
     label.textContent = optionLabel(option);
-    const notesButton = createChordNotesButton(option);
-    name.append(label, notesButton);
+    if (label.textContent.length >= 9) label.classList.add("long");
+    if (label.textContent.length >= 13) label.classList.add("very-long");
+    name.title = `Hold to show sounding notes for ${label.textContent}`;
+    name.append(label);
+    attachChordNotesHold(name, option, row);
     row.append(name);
 
     for (let position = 0; position < positionCount; position += 1) {
@@ -2226,6 +2291,7 @@ function render() {
 
   ui.showButton.disabled = state.revealed || state.completed || state.playing;
   ui.reviewButton.disabled = !state.revealed || state.playing;
+  ui.previousButton.disabled = exerciseHistory.length === 0;
   ui.playbackControls.classList.toggle("segmented", showSegmentPlayback);
   ui.playButton.hidden = false;
   ui.playButton.disabled = false;
@@ -2236,10 +2302,9 @@ function render() {
     state.playing ? "Stop and reset playback" : "Play full sequence",
   );
   ui.playButton.title = state.playing ? "Stop" : "Play full sequence";
-  ui.segmentPlayback.hidden = !showSegmentPlayback;
   ui.segmentPlayButtons.forEach((button, index) => {
     const range = playbackRanges[index];
-    if (!range) {
+    if (!range || !showSegmentPlayback) {
       button.hidden = true;
       return;
     }
@@ -3547,49 +3612,55 @@ function renderVoicingSvg(item, sound = state.sound) {
   return svg;
 }
 
-function createChordNotesButton(item) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "chord-notes-button";
-  button.title = `Show sounding notes for ${optionLabel(item)}`;
-  button.setAttribute("aria-label", button.title);
-  button.setAttribute("aria-haspopup", "dialog");
-  button.setAttribute("aria-expanded", "false");
+function attachChordNotesHold(target, item, focusTarget = target) {
+  let holdTimer = null;
+  let holdTriggered = false;
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
 
-  const icon = svgElement("svg", {
-    viewBox: "0 0 28 28",
-    "aria-hidden": "true",
+  const clearHoldTimer = () => {
+    window.clearTimeout(holdTimer);
+    holdTimer = null;
+    pointerId = null;
+    target.classList.remove("holding");
+  };
+
+  target.addEventListener("pointerdown", (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    clearHoldTimer();
+    holdTriggered = false;
+    pointerId = event.pointerId;
+    startX = event.clientX ?? 0;
+    startY = event.clientY ?? 0;
+    target.classList.add("holding");
+    holdTimer = window.setTimeout(() => {
+      holdTimer = null;
+      holdTriggered = true;
+      target.classList.remove("holding");
+      openVoicingPopover(item, focusTarget);
+    }, CHORD_NOTES_HOLD_MS);
   });
-  [8, 11, 14, 17, 20].forEach((y) => {
-    icon.append(svgElement("line", {
-      x1: 3.5,
-      x2: 24.5,
-      y1: y,
-      y2: y,
-    }));
+
+  target.addEventListener("pointermove", (event) => {
+    if (pointerId === null || event.pointerId !== pointerId) return;
+    if (
+      Math.hypot(
+        (event.clientX ?? 0) - startX,
+        (event.clientY ?? 0) - startY,
+      ) > CHORD_NOTES_HOLD_MOVE_PX
+    ) clearHoldTimer();
   });
-  icon.append(
-    svgElement("ellipse", {
-      cx: 14.5,
-      cy: 14,
-      rx: 3.2,
-      ry: 2.25,
-      transform: "rotate(-18 14.5 14)",
-    }),
-    svgElement("line", {
-      x1: 17.4,
-      x2: 17.4,
-      y1: 13.3,
-      y2: 5.5,
-    }),
-  );
-  button.append(icon);
-  button.addEventListener("pointerdown", (event) => event.stopPropagation());
-  button.addEventListener("click", (event) => {
+
+  target.addEventListener("pointerup", clearHoldTimer);
+  target.addEventListener("pointercancel", clearHoldTimer);
+  target.addEventListener("contextmenu", (event) => event.preventDefault());
+  target.addEventListener("click", (event) => {
+    if (!holdTriggered) return;
+    holdTriggered = false;
+    event.preventDefault();
     event.stopPropagation();
-    openVoicingPopover(item, button);
   });
-  return button;
 }
 
 function positionVoicingPopover(anchor) {

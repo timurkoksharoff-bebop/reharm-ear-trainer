@@ -19,7 +19,7 @@ than absolute chord names.
   `https://github.com/timurkoksharoff-bebop/reharm-ear-trainer`
 - Production PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
-- Current published cache version: `0.14`
+- Current published cache version: `0.17`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -70,14 +70,16 @@ When adding or correcting a progression:
   until the correct chord is found.
 - Correct choices turn blue.
 - Completing all positions automatically advances to another random example.
+- A compact left-arrow action returns to the previous sequence from the
+  current session, restoring its chapter filter and transposed key.
 - `Skip` advances without affecting statistics.
 - `Show answer` reveals the solution.
 - `Review` replays the revealed progression while highlighting the sounding
   scale degree.
 - Every answer row can be pressed to audition that chord independently.
-- A discreet staff icon beside each chord opens a grand-staff popover with the
-  exact playback voicing; bass-only, upright reinforcement, and independent
-  slash basses are represented explicitly.
+- Holding a chord label opens a grand-staff popover with the exact playback
+  voicing without taking horizontal space from the label; bass-only, upright
+  reinforcement, and independent slash basses are represented explicitly.
 - The lower two-octave keyboard is available for manual checking.
 - Portrait mobile layout is primary; long progressions use compact dots.
 
@@ -208,9 +210,9 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.14` includes 239 progressions: 107 core examples and
+- Production PWA `0.17` includes 239 progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
-- The current local release candidate uses cache `0.16`. Localhost previews
+- The local working copy uses cache `0.17`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
 - GitHub Pages and the repository are working.

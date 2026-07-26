@@ -46,40 +46,70 @@ When adding or correcting a progression:
 
 ## Current Product Behavior
 
+- The shipping interface is English-only.
+- Chapter, exercise, tempo, sound, and notation controls live in the top-right
+  settings panel so the main screen opens directly on the listening grid.
+- Short exercises keep the complete chord grid and primary action row within
+  the first desktop viewport; longer grids may scroll.
 - Chapters 1-16 can be selected separately.
-- `Все главы · случайно` shuffles the complete catalog without an immediate
+- `All chapters · shuffle` shuffles the complete catalog without an immediate
   repeat.
-- `Избранное` contains progressions marked with the heart button.
+- `Favorites` contains progressions marked with the heart button.
 - Favorites are stored locally on each device and remain available offline.
   They are not synchronized between iPhone and Mac.
 - Favorites use a versioned record with stable exercise metadata and request
   persistent browser storage when supported, so normal PWA rebuilds and
   catalog-ID migrations do not discard them.
 - Before every exercise, a tonic reference chord sounds first.
+- Progressions with eight or more chords keep a full-sequence round Play button
+  and add two compact numbered playback ranges; each half starts with its own
+  tonic reference.
+- During blind playback, the current position number is highlighted without
+  revealing the correct chord row. Review mode may highlight both.
 - Wrong choices turn red and remain unavailable; the student keeps trying
   until the correct chord is found.
 - Correct choices turn blue.
 - Completing all positions automatically advances to another random example.
-- `Пропустить` advances without affecting statistics.
-- `Показать` reveals the solution.
-- `Разбор` replays the revealed progression while highlighting the sounding
+- `Skip` advances without affecting statistics.
+- `Show answer` reveals the solution.
+- `Review` replays the revealed progression while highlighting the sounding
   scale degree.
 - Every answer row can be pressed to audition that chord independently.
+- A discreet staff icon beside each chord opens a grand-staff popover with the
+  exact playback voicing; bass-only, upright reinforcement, and independent
+  slash basses are represented explicitly.
 - The lower two-octave keyboard is available for manual checking.
 - Portrait mobile layout is primary; long progressions use compact dots.
 
 ## Audio Decisions
 
 - Default sound: sampled grand piano.
-- Alternative sounds: legato sampled piano, sampled Wurlitzer EP200 electric
-  piano, soft synthesized organ, and a bass-only mode that plays each chord's
-  actual lowest note.
+- Alternative sounds: legato sampled piano, sampled piano reinforced by VSCO
+  2 CE pizzicato upright bass, sampled Wurlitzer EP200 electric piano, soft
+  synthesized organ, and a bass-only mode that plays each chord's actual
+  lowest note.
 - Default tempo: slow.
 - Piano chords have a longer sustain so the harmony can be analyzed.
 - On supported iOS versions, the PWA requests a playback audio session so an
   already-started progression can continue while another app is in front.
+- A near-silent hardware warm-up and a short-lived reusable audio context
+  protect the first audible attack after an idle period from mobile Web Audio
+  wake-up glitches.
 - True slash chords reinforce the independent bass in two octaves.
+- The upright-bass reinforcement uses a short pizzicato envelope and a gentle
+  low-pass filter so source-sample string noise does not read as percussion.
 - The application uses Web Audio only while playing and does not capture MIDI.
+
+## Visual Direction
+
+- Keep the interface quiet, precise, and highly legible: thin outlines,
+  restrained nature-derived colors, and serif display type with a neutral
+  sans-serif for controls.
+- The current blurred pastel atmosphere images are a temporary mood layer, not
+  a final art direction. Do not add or iterate on imagery without a new
+  explicit request.
+- Exercise mood selection is deterministic and based on harmonic tension, so
+  an exercise keeps the same background between renders.
 
 ## Source Layout
 
@@ -178,8 +208,11 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.13` includes 239 progressions: 107 core examples and
+- Production PWA `0.14` includes 239 progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
+- The current local release candidate uses cache `0.16`. Localhost previews
+  unregister service workers automatically so iterative testing never mixes
+  current HTML with stale cached JavaScript.
 - GitHub Pages and the repository are working.
 - Favorites and statistics are device-local.
 - The catalog is manually encoded from the book and still benefits from

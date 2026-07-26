@@ -2,8 +2,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-6",
     chapter: 1,
-    name: "Fig. 1.6 — базовая модель",
-    source: "Chapter 1 · Fig. 1.6 · печатная стр. 9",
+    name: "Fig. 1.6 — basic model",
+    source: "Chapter 1 · Fig. 1.6 · printed p. 9",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -20,8 +20,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-7",
     chapter: 1,
-    name: "Fig. 1.7 — простая замена",
-    source: "Chapter 1 · Fig. 1.7 · печатная стр. 9",
+    name: "Fig. 1.7 — simple substitution",
+    source: "Chapter 1 · Fig. 1.7 · printed p. 9",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -38,8 +38,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-8",
     chapter: 1,
-    name: "Fig. 1.8 — еще одна замена",
-    source: "Chapter 1 · Fig. 1.8 · печатная стр. 9",
+    name: "Fig. 1.8 — another substitution",
+    source: "Chapter 1 · Fig. 1.8 · printed p. 9",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -56,8 +56,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-9",
     chapter: 1,
-    name: "Fig. 1.9 — минорный II–V",
-    source: "Chapter 1 · Fig. 1.9 · печатная стр. 10",
+    name: "Fig. 1.9 — minor II–V",
+    source: "Chapter 1 · Fig. 1.9 · printed p. 10",
     baseTonic: 5,
     sequence: [
       chord("II−7(♭5)", 2, "m7b5"),
@@ -73,8 +73,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-10a",
     chapter: 1,
-    name: "Fig. 1.10 — вариант с VII−7(♭5)",
-    source: "Chapter 1 · Fig. 1.10 · печатная стр. 10",
+    name: "Fig. 1.10 — variant with VII−7(♭5)",
+    source: "Chapter 1 · Fig. 1.10 · printed p. 10",
     baseTonic: 5,
     sequence: [
       chord("II−7(♭5)", 2, "m7b5"),
@@ -90,8 +90,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-10b",
     chapter: 1,
-    name: "Fig. 1.10 — вариант с V7sus4",
-    source: "Chapter 1 · Fig. 1.10 · печатная стр. 10",
+    name: "Fig. 1.10 — variant with V7sus4",
+    source: "Chapter 1 · Fig. 1.10 · printed p. 10",
     baseTonic: 5,
     sequence: [
       chord("II−7(♭5)", 2, "m7b5"),
@@ -107,8 +107,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-11",
     chapter: 1,
-    name: "Fig. 1.11 — разрешение в III−7",
-    source: "Chapter 1 · Fig. 1.11 · печатная стр. 10",
+    name: "Fig. 1.11 — resolution to III−7",
+    source: "Chapter 1 · Fig. 1.11 · printed p. 10",
     baseTonic: 5,
     sequence: [
       chord("II−7(♭5)", 2, "m7b5"),
@@ -124,8 +124,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-15",
     chapter: 1,
-    name: "Fig. 1.15 — slash-бас в III−7",
-    source: "Chapter 1 · Fig. 1.15 · печатная стр. 13",
+    name: "Fig. 1.15 — slash bass in III−7",
+    source: "Chapter 1 · Fig. 1.15 · printed p. 13",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -144,8 +144,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-1-16",
     chapter: 1,
-    name: "Fig. 1.16 — расширенная замена",
-    source: "Chapter 1 · Fig. 1.16 · печатная стр. 13",
+    name: "Fig. 1.16 — extended substitution",
+    source: "Chapter 1 · Fig. 1.16 · printed p. 13",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -167,7 +167,7 @@ const CORE_EXERCISES = [
     id: "fig-2-4",
     chapter: 2,
     name: "Fig. 2.4 — strong cadence",
-    source: "Chapter 2 · Fig. 2.4 · печатная стр. 19",
+    source: "Chapter 2 · Fig. 2.4 · printed p. 19",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -185,7 +185,7 @@ const CORE_EXERCISES = [
     id: "fig-2-5",
     chapter: 2,
     name: "Fig. 2.5 — weak cadence",
-    source: "Chapter 2 · Fig. 2.5 · печатная стр. 20",
+    source: "Chapter 2 · Fig. 2.5 · printed p. 20",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -203,7 +203,7 @@ const CORE_EXERCISES = [
     id: "fig-2-6",
     chapter: 2,
     name: "Fig. 2.6 — deceptive cadence",
-    source: "Chapter 2 · Fig. 2.6 · печатная стр. 20",
+    source: "Chapter 2 · Fig. 2.6 · printed p. 20",
     baseTonic: 0,
     sequence: [
       chord("II−7", 2, "m7"),
@@ -219,8 +219,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-2-8",
     chapter: 2,
-    name: "Fig. 2.8 — менее активный harmonic rhythm",
-    source: "Chapter 2 · Fig. 2.8 · печатная стр. 21",
+    name: "Fig. 2.8 — less active harmonic rhythm",
+    source: "Chapter 2 · Fig. 2.8 · printed p. 21",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -240,8 +240,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-2-9",
     chapter: 2,
-    name: "Fig. 2.9 — терция в верхнем голосе",
-    source: "Chapter 2 · Fig. 2.9 · печатная стр. 21",
+    name: "Fig. 2.9 — third in the top voice",
+    source: "Chapter 2 · Fig. 2.9 · printed p. 21",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -262,7 +262,7 @@ const CORE_EXERCISES = [
     id: "fig-2-10",
     chapter: 2,
     name: "Fig. 2.10 — borrowed ♭VIIMaj7",
-    source: "Chapter 2 · Fig. 2.10 · печатная стр. 22",
+    source: "Chapter 2 · Fig. 2.10 · printed p. 22",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -282,8 +282,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-2-11",
     chapter: 2,
-    name: "Fig. 2.11 — квинта в верхнем голосе",
-    source: "Chapter 2 · Fig. 2.11 · печатная стр. 22",
+    name: "Fig. 2.11 — fifth in the top voice",
+    source: "Chapter 2 · Fig. 2.11 · printed p. 22",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -303,8 +303,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-2-12a",
     chapter: 2,
-    name: "Fig. 2.12 — вариант с VII−7(♭5)",
-    source: "Chapter 2 · Fig. 2.12 · печатная стр. 22",
+    name: "Fig. 2.12 — variant with VII−7(♭5)",
+    source: "Chapter 2 · Fig. 2.12 · printed p. 22",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -323,8 +323,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-2-12b",
     chapter: 2,
-    name: "Fig. 2.12 — вариант с ♭VIIMaj7",
-    source: "Chapter 2 · Fig. 2.12 · печатная стр. 22",
+    name: "Fig. 2.12 — variant with ♭VIIMaj7",
+    source: "Chapter 2 · Fig. 2.12 · printed p. 22",
     baseTonic: 0,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -344,8 +344,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "ch3-fifths-chain",
     chapter: 3,
-    name: "Extended dominants — движение по квинтам",
-    source: "Chapter 3 · вступление · печатная стр. 28",
+    name: "Extended dominants — circle-of-fifths motion",
+    source: "Chapter 3 · introduction · printed p. 28",
     baseTonic: 0,
     sequence: [
       chord("I7", 0, "7"),
@@ -362,8 +362,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "ch3-chromatic-chain",
     chapter: 3,
-    name: "Extended dominants — хроматическое снижение",
-    source: "Chapter 3 · вступление · печатная стр. 28",
+    name: "Extended dominants — chromatic descent",
+    source: "Chapter 3 · introduction · printed p. 28",
     baseTonic: 0,
     sequence: [
       chord("I7", 0, "7"),
@@ -381,8 +381,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-3-2",
     chapter: 3,
-    name: "Fig. 3.2 — полная цепь extended dominants",
-    source: "Chapter 3 · Fig. 3.2 · печатная стр. 29",
+    name: "Fig. 3.2 — complete extended-dominant chain",
+    source: "Chapter 3 · Fig. 3.2 · printed p. 29",
     baseTonic: 3,
     sequence: [
       chord("#II7", 3, "7", "sharp"),
@@ -405,7 +405,7 @@ const CORE_EXERCISES = [
     id: "fig-3-4",
     chapter: 3,
     name: "Fig. 3.4 — tritone substitutions",
-    source: "Chapter 3 · Fig. 3.4 · печатная стр. 30",
+    source: "Chapter 3 · Fig. 3.4 · printed p. 30",
     baseTonic: 3,
     sequence: [
       chord("VI7", 9, "7"),
@@ -428,8 +428,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-3-7",
     chapter: 3,
-    name: "Fig. 3.7 — Georgia, исправленная замена",
-    source: "Chapter 3 · Fig. 3.7 · печатная стр. 31",
+    name: "Fig. 3.7 — Georgia, corrected substitution",
+    source: "Chapter 3 · Fig. 3.7 · printed p. 31",
     baseTonic: 5,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -453,7 +453,7 @@ const CORE_EXERCISES = [
     id: "fig-3-16",
     chapter: 3,
     name: "Fig. 3.16 — extended dominants only",
-    source: "Chapter 3 · Fig. 3.16 · печатная стр. 33",
+    source: "Chapter 3 · Fig. 3.16 · printed p. 33",
     baseTonic: 5,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -476,8 +476,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-3-17",
     chapter: 3,
-    name: "Fig. 3.17 — dominants и minor sevenths",
-    source: "Chapter 3 · Fig. 3.17 · печатная стр. 33",
+    name: "Fig. 3.17 — dominants and minor sevenths",
+    source: "Chapter 3 · Fig. 3.17 · printed p. 33",
     baseTonic: 5,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -502,7 +502,7 @@ const CORE_EXERCISES = [
     id: "fig-4-1",
     chapter: 4,
     name: "Fig. 4.1 — Georgia, original form",
-    source: "Chapter 4 · Fig. 4.1 · печатная стр. 37",
+    source: "Chapter 4 · Fig. 4.1 · printed p. 37",
     baseTonic: 5,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -528,7 +528,7 @@ const CORE_EXERCISES = [
     id: "fig-4-2",
     chapter: 4,
     name: "Fig. 4.2 — Georgia with displacement",
-    source: "Chapter 4 · Fig. 4.2 · печатная стр. 37",
+    source: "Chapter 4 · Fig. 4.2 · printed p. 37",
     baseTonic: 5,
     sequence: [
       chord("IMaj7", 0, "maj7"),
@@ -556,7 +556,7 @@ const CORE_EXERCISES = [
     id: "fig-4-3",
     chapter: 4,
     name: "Fig. 4.3 — My Ship, original form",
-    source: "Chapter 4 · Fig. 4.3 · печатная стр. 38",
+    source: "Chapter 4 · Fig. 4.3 · printed p. 38",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -574,8 +574,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-4-4",
     chapter: 4,
-    name: "Fig. 4.4 — displaced dominants и related II−7",
-    source: "Chapter 4 · Fig. 4.4 · печатная стр. 38",
+    name: "Fig. 4.4 — displaced dominants and related II−7",
+    source: "Chapter 4 · Fig. 4.4 · printed p. 38",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -597,7 +597,7 @@ const CORE_EXERCISES = [
     id: "fig-4-6",
     chapter: 4,
     name: "Fig. 4.6 — My Ship, clashes fixed",
-    source: "Chapter 4 · Fig. 4.6 · печатная стр. 39",
+    source: "Chapter 4 · Fig. 4.6 · printed p. 39",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -620,7 +620,7 @@ const CORE_EXERCISES = [
     id: "fig-4-7",
     chapter: 4,
     name: "Fig. 4.7 — tritone substitution for III7",
-    source: "Chapter 4 · Fig. 4.7 · печатная стр. 39",
+    source: "Chapter 4 · Fig. 4.7 · printed p. 39",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -642,8 +642,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "fig-4-8",
     chapter: 4,
-    name: "Fig. 4.8 — две tritone substitutions",
-    source: "Chapter 4 · Fig. 4.8 · печатная стр. 39",
+    name: "Fig. 4.8 — two tritone substitutions",
+    source: "Chapter 4 · Fig. 4.8 · printed p. 39",
     baseTonic: 5,
     sequence: [
       chord("I6", 0, "6"),
@@ -666,8 +666,8 @@ const CORE_EXERCISES = [
   makeExercise({
     id: "exercise-5-1",
     chapter: 5,
-    name: "Exercise 5.1 — исходная форма",
-    source: "Chapter 5 · Exercise 5.1 · печатная стр. 50",
+    name: "Exercise 5.1 — original form",
+    source: "Chapter 5 · Exercise 5.1 · printed p. 50",
     baseTonic: 3,
     sequence: [
       chord("V7", 7, "7"),
@@ -1497,6 +1497,7 @@ const state = {
   revealed: false,
   playing: false,
   playbackMode: null,
+  playbackRange: null,
   activePosition: null,
   previewOptionIndex: null,
   lastKeyName: "",
@@ -1508,6 +1509,10 @@ const ui = {
   exerciseSelect: document.querySelector("#exerciseSelect"),
   tempoSelect: document.querySelector("#tempoSelect"),
   soundSelect: document.querySelector("#soundSelect"),
+  settingsButton: document.querySelector("#settingsButton"),
+  settingsPanel: document.querySelector("#settingsPanel"),
+  settingsScrim: document.querySelector("#settingsScrim"),
+  settingsCloseButton: document.querySelector("#settingsCloseButton"),
   sourceLabel: document.querySelector("#sourceLabel"),
   promptLabel: document.querySelector("#promptLabel"),
   chapterLabel: document.querySelector("#chapterLabel"),
@@ -1517,7 +1522,10 @@ const ui = {
   positionLegend: document.querySelector("#positionLegend"),
   answerGrid: document.querySelector("#answerGrid"),
   feedback: document.querySelector("#feedback"),
+  playbackControls: document.querySelector("#playbackControls"),
   playButton: document.querySelector("#playButton"),
+  segmentPlayback: document.querySelector("#segmentPlayback"),
+  segmentPlayButtons: [...document.querySelectorAll("[data-play-segment]")],
   showButton: document.querySelector("#showButton"),
   reviewButton: document.querySelector("#reviewButton"),
   nextButton: document.querySelector("#nextButton"),
@@ -1529,29 +1537,49 @@ const ui = {
   streakStat: document.querySelector("#streakStat"),
   revealedStat: document.querySelector("#revealedStat"),
   modeButtons: [...document.querySelectorAll("[data-mode]")],
+  voicingPopover: document.querySelector("#voicingPopover"),
+  voicingTitle: document.querySelector("#voicingTitle"),
+  voicingStaff: document.querySelector("#voicingStaff"),
+  voicingNotes: document.querySelector("#voicingNotes"),
+  voicingMeta: document.querySelector("#voicingMeta"),
+  voicingCloseButton: document.querySelector("#voicingCloseButton"),
 };
 
 let audioContext = null;
+let audioContextIdleTimer = null;
+let audioContextLastUsedAt = 0;
 let stopTimer = null;
 let previewTimer = null;
 let autoNextTimer = null;
 let highlightTimers = [];
 let pianoAudioContext = null;
+let pianoAudioContextLastUsedAt = 0;
 let pianoIdleTimer = null;
 let mobileAudioElement = null;
 let mobileAudioUnlocked = false;
 let pianoSamplePromise = null;
 let electricPianoSamplePromise = null;
+let uprightBassSamplePromise = null;
 const pianoSampleBuffers = new Map();
 const electricPianoSampleBuffers = new Map();
+const uprightBassSampleBuffers = new Map();
 const pianoVoices = new Set();
 const pianoKeyTimers = new Map();
 const chapterQueues = new Map();
+let voicingPopoverAnchor = null;
 const PIANO_SUSTAIN_RATIO = 1.1;
 const PIANO_LEGATO_SUSTAIN_RATIO = 1.35;
 const PIANO_RELEASE_SECONDS = 0.7;
 const PIANO_LEGATO_RELEASE_SECONDS = 1.1;
 const ELECTRIC_PIANO_RELEASE_SECONDS = 0.85;
+const ELECTRIC_PIANO_OUTPUT_GAIN = 0.8;
+const UPRIGHT_BASS_OUTPUT_GAIN = 0.82;
+const UPRIGHT_BASS_MAX_DURATION_SECONDS = 1.05;
+const UPRIGHT_BASS_FILTER_HZ = 2600;
+const AUDIO_HARDWARE_IDLE_THRESHOLD_MS = 6000;
+const AUDIO_HARDWARE_WARMUP_MS = 110;
+const AUDIO_CONTEXT_IDLE_CLOSE_MS = 120000;
+const SEGMENTED_PLAYBACK_MIN_LENGTH = 8;
 const PIANO_SAMPLE_MANIFEST = [
   [36, "C2"],
   [39, "Ds2"],
@@ -1592,13 +1620,25 @@ const ELECTRIC_PIANO_SAMPLE_MANIFEST = [
   tuneCents,
   url: `samples/electric-piano/${name}.m4a`,
 }));
+const UPRIGHT_BASS_SAMPLE_MANIFEST = [
+  [36, "c2"],
+  [40, "e2"],
+  [44, "gs2"],
+  [49, "cs3"],
+].map(([midi, name]) => ({
+  midi,
+  url: `samples/upright-bass/${name}.m4a`,
+}));
 
 function chord(degree, offset, quality, spelling = null, bassOffset = null) {
   return { degree, offset, quality, spelling, bassOffset };
 }
 
 function isPianoSound(sound = state.sound) {
-  return sound === "piano" || sound === "piano-legato" || sound === "bass";
+  return sound === "piano"
+    || sound === "piano-legato"
+    || sound === "piano-upright"
+    || sound === "bass";
 }
 
 function isPianoLegato(sound = state.sound) {
@@ -1607,6 +1647,10 @@ function isPianoLegato(sound = state.sound) {
 
 function isElectricPianoSound(sound = state.sound) {
   return sound === "electric-piano";
+}
+
+function isUprightBassSound(sound = state.sound) {
+  return sound === "piano-upright";
 }
 
 function isSampledKeyboardSound(sound = state.sound) {
@@ -1618,11 +1662,12 @@ function isBassSound(sound = state.sound) {
 }
 
 function soundName(sound = state.sound) {
-  if (sound === "piano-legato") return "пианино legato";
-  if (sound === "piano") return "пианино";
-  if (sound === "electric-piano") return "электропианино";
-  if (sound === "bass") return "бас";
-  return "орган";
+  if (sound === "piano-legato") return "Piano legato";
+  if (sound === "piano-upright") return "Piano + upright bass";
+  if (sound === "piano") return "Piano";
+  if (sound === "electric-piano") return "Electric piano";
+  if (sound === "bass") return "Bass";
+  return "Organ";
 }
 
 function pianoReleaseSeconds(sound = state.sound) {
@@ -1651,14 +1696,20 @@ function referenceAnswerExercise(spec) {
   const sequence = symbolSequence.trim().split(/\s+/).map((symbol) => (
     referenceChord(symbol, tonicName)
   ));
+  const answerName = variant === "answer"
+    ? "reference answer"
+    : `reference answer ${variant}`;
+  const answerSource = variant === "answer"
+    ? "answer"
+    : `answer ${variant}`;
   return makeExercise({
     id: `answer-${id}`,
     chapter,
-    name: `Exercise ${exercise} — reference answer ${variant}`,
+    name: `Exercise ${exercise} — ${answerName}`,
     source: (
       `Chapter ${chapter} · Exercise ${exercise} · `
-      + `ответ ${variant} · печатная стр. ${answerPage} `
-      + `(задание: стр. ${exercisePage})`
+      + `${answerSource} · printed p. ${answerPage} `
+      + `(exercise: p. ${exercisePage})`
     ),
     baseTonic: notePitchClass(tonicName),
     sequence,
@@ -1774,7 +1825,7 @@ function catalogExercise(id, chapter, name, page, baseTonic, rawSequence) {
     id,
     chapter,
     name,
-    source: `Chapter ${chapter} · ${name.split(" — ")[0]} · печатная стр. ${page}`,
+    source: `Chapter ${chapter} · ${name.split(" — ")[0]} · printed p. ${page}`,
     baseTonic,
     sequence: rawSequence.map((item) => chord(...item)),
     distractors,
@@ -1802,6 +1853,15 @@ function currentExercise() {
   return EXERCISES[state.exerciseIndex];
 }
 
+function setSettingsOpen(open) {
+  ui.settingsPanel.hidden = !open;
+  ui.settingsScrim.hidden = !open;
+  ui.settingsButton.setAttribute("aria-expanded", String(open));
+  ui.settingsButton.setAttribute("aria-label", open ? "Close settings" : "Open settings");
+  document.body.classList.toggle("settings-open", open);
+  if (open) ui.settingsCloseButton.focus?.();
+}
+
 function init() {
   configurePlaybackAudioSession();
   document.addEventListener("pointerdown", () => {
@@ -1814,10 +1874,36 @@ function init() {
     configurePlaybackAudioSession();
     resumeAudioAfterInterruption();
   });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !ui.voicingPopover.hidden) {
+      closeVoicingPopover(true);
+      return;
+    }
+    if (event.key === "Escape" && !ui.settingsPanel.hidden) {
+      setSettingsOpen(false);
+      ui.settingsButton.focus?.();
+    }
+  });
+  document.addEventListener("pointerdown", (event) => {
+    if (ui.voicingPopover.hidden) return;
+    if (
+      ui.voicingPopover.contains?.(event.target)
+      || voicingPopoverAnchor?.contains?.(event.target)
+    ) return;
+    closeVoicingPopover(false);
+  });
+  ui.voicingCloseButton.addEventListener("click", () => closeVoicingPopover(true));
+  closeVoicingPopover(false);
+  ui.settingsButton.addEventListener("click", () => {
+    setSettingsOpen(ui.settingsPanel.hidden);
+  });
+  ui.settingsCloseButton.addEventListener("click", () => setSettingsOpen(false));
+  ui.settingsScrim.addEventListener("click", () => setSettingsOpen(false));
+  setSettingsOpen(false);
 
   const allOption = document.createElement("option");
   allOption.value = "all";
-  allOption.textContent = "Все главы · случайно";
+  allOption.textContent = "All chapters · shuffle";
   ui.chapterSelect.append(allOption);
 
   const favoritesOption = document.createElement("option");
@@ -1847,7 +1933,7 @@ function init() {
     const requestedFilter = ui.chapterSelect.value;
     if (requestedFilter === "favorites" && state.favorites.size === 0) {
       ui.chapterSelect.value = previousFilter;
-      setFeedback("Избранное пока пусто. Нажмите ♡ у нужной последовательности.");
+      setFeedback("Favorites are empty. Tap ♡ on a progression to save it.");
       return;
     }
 
@@ -1876,6 +1962,11 @@ function init() {
   });
 
   ui.playButton.addEventListener("click", toggleMainPlayback);
+  ui.segmentPlayButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      toggleSegmentPlayback(Number(button.dataset.playSegment));
+    });
+  });
   ui.reviewButton.addEventListener("click", () => playSequence(true));
   ui.showButton.addEventListener("click", showAnswer);
   ui.nextButton.addEventListener("click", nextExercise);
@@ -1885,7 +1976,7 @@ function init() {
     cancelPlayback();
     stopPianoVoices();
     state.sound = ui.soundSelect.value;
-    setFeedback(`Тембр: ${soundName()}.`);
+    setFeedback(`Sound: ${soundName()}.`);
     render();
   });
   ui.pianoStopButton.addEventListener("click", stopPianoVoices);
@@ -1932,7 +2023,7 @@ function startExercise(randomizeKey) {
   state.completed = false;
   state.revealed = false;
   state.activePosition = null;
-  setFeedback("Сначала прозвучит тоника, затем последовательность.");
+  setFeedback("Tonic first, then the progression.");
   render();
 }
 
@@ -1983,24 +2074,59 @@ function shuffle(items) {
   return copy;
 }
 
+function stableStringHash(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function harmonicTensionScore(exercise) {
+  const total = exercise.sequence.reduce((score, item) => {
+    let chordScore = 0;
+    if (/[♭#°+]/.test(item.degree)) chordScore += 0.8;
+    if (/dim|b5|b9|b13|aug|alt|minMaj/i.test(item.quality)) chordScore += 1.1;
+    if (item.bassOffset !== null && item.bassOffset !== item.offset) chordScore += 0.35;
+    return score + chordScore;
+  }, 0);
+  return total / exercise.sequence.length;
+}
+
+function visualMoodForExercise(exercise) {
+  const hash = stableStringHash(exercise.id);
+  const tension = harmonicTensionScore(exercise);
+  if (tension > 0.72) return ["rain", "dusk"][hash % 2];
+  if (tension > 0.32) return ["lake", "rain", "dusk"][hash % 3];
+  return ["dawn", "meadow", "lake"][hash % 3];
+}
+
 function render() {
+  if (!ui.voicingPopover.hidden) closeVoicingPopover(false);
   const exercise = currentExercise();
   const positionCount = exercise.sequence.length;
+  const playbackRanges = segmentedPlaybackRanges(positionCount);
+  const showSegmentPlayback = (
+    playbackRanges.length > 0
+    && state.playbackMode !== "review"
+  );
   ui.matrixScroll.dataset.compact = String(positionCount >= 10);
+  document.body.dataset.atmosphere = visualMoodForExercise(exercise);
 
   ui.chapterLabel.textContent = `Reharmonization Techniques · Chapter ${exercise.chapter}`;
   ui.sourceLabel.textContent = exercise.source;
-  ui.promptLabel.textContent = `Определите последовательность из ${positionCount} аккордов`;
-  ui.keyBadge.textContent = state.revealed ? `Тональность: ${state.key.name}` : "Тональность скрыта";
+  ui.promptLabel.textContent = `Sequence · ${positionCount} chords`;
+  ui.keyBadge.textContent = state.revealed ? `Key: ${state.key.name}` : "Key hidden";
   const isFavorite = state.favorites.has(exercise.id);
   ui.favoriteButton.textContent = isFavorite ? "♥" : "♡";
   ui.favoriteButton.classList.toggle("active", isFavorite);
   ui.favoriteButton.setAttribute("aria-pressed", String(isFavorite));
   ui.favoriteButton.setAttribute(
     "aria-label",
-    isFavorite ? "Удалить из избранного" : "Добавить в избранное",
+    isFavorite ? "Remove from favorites" : "Add to favorites",
   );
-  ui.favoriteButton.title = isFavorite ? "Удалить из избранного" : "Добавить в избранное";
+  ui.favoriteButton.title = isFavorite ? "Remove from favorites" : "Add to favorites";
 
   ui.positionLegend.replaceChildren();
   ui.positionLegend.style.setProperty("--positions", positionCount);
@@ -2008,11 +2134,17 @@ function render() {
   ui.positionLegend.append(document.createElement("span"));
   for (let position = 0; position < positionCount; position += 1) {
     const number = document.createElement("span");
+    number.className = "position-number";
     number.textContent = String(position + 1);
+    number.classList.toggle("active", state.activePosition === position);
     ui.positionLegend.append(number);
   }
 
   ui.answerGrid.replaceChildren();
+  const showActiveAnswer = (
+    state.activePosition !== null
+    && state.playbackMode === "review"
+  );
   exercise.options.forEach((option, optionIndex) => {
     const row = document.createElement("div");
     row.className = "answer-row";
@@ -2020,30 +2152,35 @@ function render() {
     row.style.setProperty("--matrix-width", `${98 + positionCount * 35}px`);
     row.tabIndex = 0;
     row.setAttribute("role", "button");
-    row.setAttribute("aria-label", `Прослушать аккорд ${optionLabel(option)}`);
-    row.title = `Прослушать ${optionLabel(option)}`;
-    const activeOptionIndex = state.activePosition === null
+    row.setAttribute("aria-label", `Preview chord ${optionLabel(option)}`);
+    row.title = `Preview ${optionLabel(option)}`;
+    const activeOptionIndex = !showActiveAnswer
       ? -1
       : correctOptionIndex(state.activePosition);
     if (optionIndex === activeOptionIndex) row.classList.add("sounding");
     if (optionIndex === state.previewOptionIndex) row.classList.add("previewing");
     row.addEventListener("click", () => previewChord(option, optionIndex));
     row.addEventListener("keydown", (event) => {
+      if (event.target !== row) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
       previewChord(option, optionIndex);
     });
 
+    const name = document.createElement("span");
+    name.className = "answer-name";
     const label = document.createElement("span");
     label.className = "answer-label";
     label.textContent = optionLabel(option);
-    row.append(label);
+    const notesButton = createChordNotesButton(option);
+    name.append(label, notesButton);
+    row.append(name);
 
     for (let position = 0; position < positionCount; position += 1) {
       const dot = document.createElement("button");
       dot.className = "dot";
       dot.type = "button";
-      dot.title = `${optionLabel(option)}, позиция ${position + 1}`;
+      dot.title = `${optionLabel(option)}, position ${position + 1}`;
       dot.setAttribute("aria-label", dot.title);
       dot.dataset.option = String(optionIndex);
       dot.dataset.position = String(position);
@@ -2064,6 +2201,8 @@ function render() {
       }
 
       if (
+        showActiveAnswer
+        &&
         state.activePosition === position
         && isCorrectOption(position, optionIndex)
       ) {
@@ -2087,16 +2226,58 @@ function render() {
 
   ui.showButton.disabled = state.revealed || state.completed || state.playing;
   ui.reviewButton.disabled = !state.revealed || state.playing;
+  ui.playbackControls.classList.toggle("segmented", showSegmentPlayback);
+  ui.playButton.hidden = false;
   ui.playButton.disabled = false;
   ui.playButton.classList.toggle("playing", state.playing);
   ui.playButton.textContent = state.playing ? "■" : "▶";
   ui.playButton.setAttribute(
     "aria-label",
-    state.playing ? "Остановить и сбросить воспроизведение" : "Воспроизвести сначала",
+    state.playing ? "Stop and reset playback" : "Play full sequence",
   );
-  ui.playButton.title = state.playing ? "Стоп" : "Воспроизвести сначала";
+  ui.playButton.title = state.playing ? "Stop" : "Play full sequence";
+  ui.segmentPlayback.hidden = !showSegmentPlayback;
+  ui.segmentPlayButtons.forEach((button, index) => {
+    const range = playbackRanges[index];
+    if (!range) {
+      button.hidden = true;
+      return;
+    }
+
+    button.hidden = false;
+    const label = playbackRangeLabel(range);
+    const isActive = (
+      state.playing
+      && state.playbackMode === "blind"
+      && state.playbackRange?.start === range.start
+      && state.playbackRange?.end === range.end
+    );
+    button.textContent = `${isActive ? "■" : "▶"} ${label}`;
+    button.classList.toggle("playing", isActive);
+    button.disabled = state.playing && !isActive;
+    button.setAttribute(
+      "aria-label",
+      isActive
+        ? `Stop playback of part ${label}`
+        : `Play part ${label}`,
+    );
+    button.title = isActive ? "Stop" : `Play chords ${label}`;
+  });
   ui.nextButton.disabled = false;
   updateStats();
+}
+
+function segmentedPlaybackRanges(positionCount) {
+  if (positionCount < SEGMENTED_PLAYBACK_MIN_LENGTH) return [];
+  const midpoint = Math.ceil(positionCount / 2);
+  return [
+    { start: 0, end: midpoint },
+    { start: midpoint, end: positionCount },
+  ];
+}
+
+function playbackRangeLabel(range) {
+  return `${range.start + 1}–${range.end}`;
 }
 
 function optionLabel(option) {
@@ -2119,7 +2300,7 @@ function selectAnswer(position, optionIndex) {
   if (!isCorrectOption(position, optionIndex)) {
     state.wrongAnswers[position].add(optionIndex);
     setFeedback(
-      `Позиция ${position + 1}: неверно. Выберите другой аккорд.`,
+      `Position ${position + 1}: not quite. Choose another chord.`,
       "error",
     );
     render();
@@ -2135,7 +2316,7 @@ function selectAnswer(position, optionIndex) {
 
   const solvedCount = state.answers.filter((answer) => answer !== null).length;
   setFeedback(
-    `Позиция ${position + 1}: верно. Решено ${solvedCount} из ${state.answers.length}.`,
+    `Position ${position + 1}: correct. ${solvedCount} of ${state.answers.length} solved.`,
     "success",
   );
   render();
@@ -2173,10 +2354,10 @@ function completeExercise() {
   saveStats();
 
   if (perfect) {
-    setFeedback("Вся последовательность определена с первой попытки.", "success");
+    setFeedback("Entire progression solved on the first try.", "success");
   } else {
     setFeedback(
-      `Последовательность определена. С первой попытки: ${firstTryPositions} из ${state.answers.length}.`,
+      `Progression solved. First try: ${firstTryPositions} of ${state.answers.length}.`,
       "success",
     );
   }
@@ -2193,7 +2374,7 @@ function showAnswer() {
   state.stats.revealed += 1;
   state.stats.streak = 0;
   saveStats();
-  setFeedback("Правильная последовательность показана синим.", "success");
+  setFeedback("The correct progression is shown in blue.", "success");
   render();
 }
 
@@ -2279,7 +2460,7 @@ async function requestPersistentFavoritesStorage() {
 function updateFavoriteChapterOption() {
   const option = [...ui.chapterSelect.children]
     .find((item) => item.value === "favorites");
-  if (option) option.textContent = `Избранное · ${state.favorites.size}`;
+  if (option) option.textContent = `Favorites · ${state.favorites.size}`;
 }
 
 function toggleFavorite() {
@@ -2298,7 +2479,7 @@ function toggleFavorite() {
       state.chapterFilter = "all";
       ui.chapterSelect.value = "all";
       refreshExerciseSelect();
-      setFeedback("Пример удалён. Избранное пусто, открыт режим «Все главы».");
+      setFeedback("Removed. Favorites are empty, so All chapters is open.");
       render();
       return;
     }
@@ -2310,14 +2491,14 @@ function toggleFavorite() {
     );
     refreshExerciseSelect();
     startExercise(true);
-    setFeedback("Пример удалён из избранного. Открыт следующий сохранённый пример.");
+    setFeedback("Removed from favorites. The next saved progression is open.");
     return;
   }
 
   refreshExerciseSelect();
   render();
   setFeedback(
-    wasFavorite ? "Удалено из избранного." : "Добавлено в избранное.",
+    wasFavorite ? "Removed from favorites." : "Added to favorites.",
     wasFavorite ? "" : "success",
   );
 }
@@ -2347,7 +2528,7 @@ function saveStats() {
 }
 
 function resetStats() {
-  if (!window.confirm("Сбросить всю статистику этого тренажера?")) return;
+  if (!window.confirm("Reset all statistics for this trainer?")) return;
   state.stats = { completed: 0, positions: 0, correctPositions: 0, streak: 0, bestStreak: 0, revealed: 0 };
   saveStats();
   updateStats();
@@ -2363,13 +2544,24 @@ function updateStats() {
   ui.revealedStat.textContent = String(state.stats.revealed);
 }
 
-async function playSequence(withAnswer) {
+async function playSequence(withAnswer, requestedRange = null) {
   if (state.playing || (withAnswer && !state.revealed)) return;
   if (state.previewOptionIndex !== null) cancelPlayback();
   if (!await ensureAudioContext()) return;
 
+  const exercise = currentExercise();
+  const playbackRange = requestedRange
+    ? {
+      start: Math.max(0, requestedRange.start),
+      end: Math.min(exercise.sequence.length, requestedRange.end),
+    }
+    : { start: 0, end: exercise.sequence.length };
+  const playbackItems = exercise.sequence.slice(playbackRange.start, playbackRange.end);
+  if (playbackItems.length === 0) return;
+
   state.playing = true;
   state.playbackMode = withAnswer ? "review" : "blind";
+  state.playbackRange = requestedRange ? playbackRange : null;
   state.activePosition = null;
   render();
 
@@ -2390,50 +2582,62 @@ async function playSequence(withAnswer) {
   const sequenceStart = startAt + referenceDuration + referenceGap;
 
   if (withAnswer) {
-    setFeedback("Опорный аккорд: I — тоника.", "playing");
+    setFeedback("Reference chord: I — tonic.", "playing");
   }
   scheduleChord(tonicReferenceChord(), startAt, referenceDuration);
 
-  currentExercise().sequence.forEach((item, index) => {
+  playbackItems.forEach((item, relativeIndex) => {
+    const absoluteIndex = playbackRange.start + relativeIndex;
     scheduleChord(
       item,
-      sequenceStart + index * secondsPerChord,
+      sequenceStart + relativeIndex * secondsPerChord,
       chordDuration,
     );
 
-    if (withAnswer) {
-      const delay = Math.max(
-        0,
-        sequenceStart + index * secondsPerChord - audioContext.currentTime,
-      );
-      const timer = window.setTimeout(() => {
-        state.activePosition = index;
+    const delay = Math.max(
+      0,
+      sequenceStart + relativeIndex * secondsPerChord - audioContext.currentTime,
+    );
+    const timer = window.setTimeout(() => {
+      state.activePosition = absoluteIndex;
+      if (withAnswer) {
         setFeedback(
-          `Сейчас звучит ${item.degree} · позиция ${index + 1}.`,
+          `Now playing ${item.degree} · position ${absoluteIndex + 1}.`,
           "playing",
         );
-        render();
-      }, delay * 1000);
-      highlightTimers.push(timer);
-    }
+      } else {
+        setFeedback(
+          `Now playing position ${absoluteIndex + 1} of ${exercise.sequence.length}.`,
+          "playing",
+        );
+      }
+      render();
+    }, delay * 1000);
+    highlightTimers.push(timer);
   });
 
   window.clearTimeout(stopTimer);
   stopTimer = window.setTimeout(() => {
     const wasReview = state.playbackMode === "review";
+    const completedRange = state.playbackRange;
     state.playing = false;
     state.playbackMode = null;
+    state.playbackRange = null;
     state.activePosition = null;
     clearHighlightTimers();
-    releaseAudioContext();
+    parkAudioContext();
     if (wasReview) {
-      setFeedback("Разбор завершён. Можно прослушать его ещё раз.");
+      setFeedback("Review complete. You can play it again.");
+    } else if (completedRange) {
+      setFeedback(`Part ${playbackRangeLabel(completedRange)} complete.`);
+    } else {
+      setFeedback("Full sequence complete.");
     }
     render();
   }, (
     referenceDuration
     + referenceGap
-    + Math.max(0, currentExercise().sequence.length - 1) * secondsPerChord
+    + Math.max(0, playbackItems.length - 1) * secondsPerChord
     + chordDuration
     + releaseTail
     + 0.25
@@ -2443,11 +2647,25 @@ async function playSequence(withAnswer) {
 function toggleMainPlayback() {
   if (state.playing || state.previewOptionIndex !== null) {
     cancelPlayback();
-    setFeedback("Воспроизведение остановлено. Следующий запуск начнется сначала.");
+    setFeedback("Playback stopped. The next play starts from the beginning.");
     render();
     return;
   }
   playSequence(false);
+}
+
+function toggleSegmentPlayback(segmentIndex) {
+  if (state.playing || state.previewOptionIndex !== null) {
+    cancelPlayback();
+    setFeedback("Playback stopped. The next play starts from the beginning.");
+    render();
+    return;
+  }
+
+  const range = segmentedPlaybackRanges(currentExercise().sequence.length)[segmentIndex];
+  if (!range) return;
+  setFeedback(`Part ${playbackRangeLabel(range)}: tonic first, then the chords.`, "playing");
+  playSequence(false, range);
 }
 
 async function previewChord(item, optionIndex) {
@@ -2458,13 +2676,13 @@ async function previewChord(item, optionIndex) {
     ? 2.25
     : (isSampledKeyboardSound() ? 1.65 : 1.15);
   state.previewOptionIndex = optionIndex;
-  setFeedback(`Прослушивание: ${optionLabel(item)}.`, "playing");
+  setFeedback(`Preview: ${optionLabel(item)}.`, "playing");
   render();
   scheduleChord(item, audioContext.currentTime + 0.04, duration);
 
   previewTimer = window.setTimeout(() => {
     state.previewOptionIndex = null;
-    releaseAudioContext();
+    parkAudioContext();
     render();
   }, (
     duration
@@ -2515,26 +2733,39 @@ function buildPianoKeyboard() {
 async function triggerPianoKey(button, midi) {
   const AudioEngine = window.AudioContext || window.webkitAudioContext;
   if (!AudioEngine) {
-    setFeedback("Этот браузер не поддерживает воспроизведение Web Audio.", "error");
+    setFeedback("This browser does not support Web Audio playback.", "error");
     return;
   }
 
   configurePlaybackAudioSession();
   await unlockMobileAudio();
   window.clearTimeout(pianoIdleTimer);
-  pianoAudioContext ||= new AudioEngine();
+  const now = Date.now();
+  const createdContext = !pianoAudioContext || pianoAudioContext.state === "closed";
+  if (createdContext) pianoAudioContext = new AudioEngine();
+  const wasSuspended = pianoAudioContext.state !== "running";
+  const idleFor = now - pianoAudioContextLastUsedAt;
   try {
     await pianoAudioContext.resume();
   } catch {
-    setFeedback("Не удалось включить звук. Проверьте беззвучный режим iPhone.", "error");
+    setFeedback("Audio could not start. Check the iPhone silent-mode setting.", "error");
     return;
   }
+  if (
+    createdContext
+    || wasSuspended
+    || idleFor >= AUDIO_HARDWARE_IDLE_THRESHOLD_MS
+  ) {
+    await warmUpAudioHardware(pianoAudioContext);
+  }
+  pianoAudioContextLastUsedAt = Date.now();
 
   const context = pianoAudioContext;
-  const startAt = context.currentTime + 0.01;
+  const startAt = context.currentTime + 0.04;
   const isPiano = isPianoSound();
   const isElectricPiano = isElectricPianoSound();
   const isSampledKeyboard = isPiano || isElectricPiano;
+  const outputGain = isElectricPiano ? ELECTRIC_PIANO_OUTPUT_GAIN : 1;
   const duration = isPianoLegato()
     ? 2.85
     : (isSampledKeyboard ? 2.15 : 1.55);
@@ -2562,6 +2793,7 @@ async function triggerPianoKey(button, midi) {
       startAt,
       duration,
       {
+        outputGain: ELECTRIC_PIANO_OUTPUT_GAIN,
         releaseSeconds: ELECTRIC_PIANO_RELEASE_SECONDS,
         sampleManifest: ELECTRIC_PIANO_SAMPLE_MANIFEST,
         sampleBuffers: electricPianoSampleBuffers,
@@ -2601,15 +2833,18 @@ async function triggerPianoKey(button, midi) {
   voice.filter.Q.setValueAtTime(0.65, startAt);
   voice.gain.gain.setValueAtTime(0.0001, startAt);
   voice.gain.gain.exponentialRampToValueAtTime(
-    isSampledKeyboard ? 0.28 : 0.2,
+    (isSampledKeyboard ? 0.28 : 0.2) * outputGain,
     startAt + 0.012,
   );
   voice.gain.gain.exponentialRampToValueAtTime(
-    isSampledKeyboard ? 0.055 : 0.075,
+    (isSampledKeyboard ? 0.055 : 0.075) * outputGain,
     startAt + 0.52,
   );
   voice.gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-  voice.overtoneGain.gain.setValueAtTime(isSampledKeyboard ? 0.14 : 0.08, startAt);
+  voice.overtoneGain.gain.setValueAtTime(
+    (isSampledKeyboard ? 0.14 : 0.08) * outputGain,
+    startAt,
+  );
   voice.overtoneGain.gain.exponentialRampToValueAtTime(
     0.0001,
     startAt + (isSampledKeyboard ? 0.72 : 0.48),
@@ -2646,9 +2881,10 @@ function flashPianoKey(button) {
 function schedulePianoContextRelease() {
   if (pianoVoices.size || !pianoAudioContext) return;
   window.clearTimeout(pianoIdleTimer);
+  pianoAudioContextLastUsedAt = Date.now();
   pianoIdleTimer = window.setTimeout(() => {
     if (!pianoVoices.size) releasePianoContext();
-  }, 500);
+  }, AUDIO_CONTEXT_IDLE_CLOSE_MS);
 }
 
 function stopPianoVoices() {
@@ -2665,28 +2901,73 @@ function releasePianoContext() {
   window.clearTimeout(pianoIdleTimer);
   const context = pianoAudioContext;
   pianoAudioContext = null;
+  pianoAudioContextLastUsedAt = 0;
   if (context && context.state !== "closed") {
     context.close().catch(() => {});
   }
 }
 
+async function warmUpAudioHardware(context) {
+  if (!context || context.state !== "running") return;
+
+  try {
+    const startAt = context.currentTime + 0.005;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(220, startAt);
+    gain.gain.setValueAtTime(0.00003, startAt);
+    gain.gain.exponentialRampToValueAtTime(0.00001, startAt + 0.055);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    };
+    oscillator.start(startAt);
+    oscillator.stop(startAt + 0.06);
+  } catch {
+    // The ordinary scheduling lead-in below still protects the first attack.
+  }
+
+  await new Promise((resolve) => {
+    window.setTimeout(resolve, AUDIO_HARDWARE_WARMUP_MS);
+  });
+}
+
 async function ensureAudioContext() {
   const AudioEngine = window.AudioContext || window.webkitAudioContext;
   if (!AudioEngine) {
-    setFeedback("Этот браузер не поддерживает воспроизведение Web Audio.", "error");
+    setFeedback("This browser does not support Web Audio playback.", "error");
     return false;
   }
   configurePlaybackAudioSession();
   await unlockMobileAudio();
-  audioContext ||= new AudioEngine();
+  window.clearTimeout(audioContextIdleTimer);
+  const now = Date.now();
+  const createdContext = !audioContext || audioContext.state === "closed";
+  if (createdContext) audioContext = new AudioEngine();
+  const wasSuspended = audioContext.state !== "running";
+  const idleFor = now - audioContextLastUsedAt;
   try {
     await audioContext.resume();
   } catch {
-    setFeedback("Не удалось включить звук. Проверьте беззвучный режим iPhone.", "error");
+    setFeedback("Audio could not start. Check the iPhone silent-mode setting.", "error");
     return false;
   }
+  if (
+    createdContext
+    || wasSuspended
+    || idleFor >= AUDIO_HARDWARE_IDLE_THRESHOLD_MS
+  ) {
+    await warmUpAudioHardware(audioContext);
+  }
+  audioContextLastUsedAt = Date.now();
   if (isPianoSound()) {
     await ensurePianoSamples(audioContext);
+    if (isUprightBassSound()) {
+      await ensureUprightBassSamples(audioContext);
+    }
   } else if (isElectricPianoSound()) {
     await ensureElectricPianoSamples(audioContext);
   }
@@ -2711,7 +2992,7 @@ async function ensurePianoSamples(context) {
       console.error(error);
       pianoSamplePromise = null;
       setFeedback(
-        "Сэмплы пианино не загрузились; временно используется синтезированный тембр.",
+        "Piano samples did not load; a synthesized sound is being used temporarily.",
         "error",
       );
       return false;
@@ -2745,13 +3026,47 @@ async function ensureElectricPianoSamples(context) {
       console.error(error);
       electricPianoSamplePromise = null;
       setFeedback(
-        "Сэмплы электропианино не загрузились; временно используется синтезированный тембр.",
+        "Electric-piano samples did not load; a synthesized sound is being used temporarily.",
         "error",
       );
       return false;
     });
 
   return electricPianoSamplePromise;
+}
+
+async function ensureUprightBassSamples(context) {
+  if (
+    uprightBassSampleBuffers.size
+    === UPRIGHT_BASS_SAMPLE_MANIFEST.length
+  ) return true;
+
+  uprightBassSamplePromise ||= Promise.all(
+    UPRIGHT_BASS_SAMPLE_MANIFEST.map(async (sample) => {
+      const encoded = await loadPianoSampleBytes(sample.url);
+      const buffer = await new Promise((resolve, reject) => {
+        context.decodeAudioData(encoded, resolve, reject);
+      });
+      return [sample.midi, buffer];
+    }),
+  )
+    .then((samples) => {
+      samples.forEach(([midi, buffer]) => (
+        uprightBassSampleBuffers.set(midi, buffer)
+      ));
+      return true;
+    })
+    .catch((error) => {
+      console.error(error);
+      uprightBassSamplePromise = null;
+      setFeedback(
+        "Upright-bass samples did not load; the piano will continue without bass reinforcement.",
+        "error",
+      );
+      return false;
+    });
+
+  return uprightBassSamplePromise;
 }
 
 async function loadPianoSampleBytes(url) {
@@ -2810,6 +3125,7 @@ function scheduleSampledPianoNotes(
   {
     bassVoiceCount = 0,
     bassGain = 1,
+    outputGain = 1,
     releaseSeconds = pianoReleaseSeconds(),
     sampleManifest = PIANO_SAMPLE_MANIFEST,
     sampleBuffers = pianoSampleBuffers,
@@ -2817,7 +3133,7 @@ function scheduleSampledPianoNotes(
 ) {
   const master = context.createGain();
   const compressor = context.createDynamicsCompressor();
-  const level = Math.min(0.92, 1.28 / Math.sqrt(notes.length));
+  const level = Math.min(0.92, 1.28 / Math.sqrt(notes.length)) * outputGain;
   master.gain.setValueAtTime(level, startAt);
   compressor.threshold.setValueAtTime(-14, startAt);
   compressor.knee.setValueAtTime(9, startAt);
@@ -2856,6 +3172,56 @@ function scheduleSampledPianoNotes(
     source.stop(releaseAt + releaseSeconds + 0.05);
     return source;
   });
+}
+
+function scheduleSampledUprightBassNote(context, midi, startAt, duration) {
+  const sample = nearestPianoSample(
+    midi,
+    UPRIGHT_BASS_SAMPLE_MANIFEST,
+    uprightBassSampleBuffers,
+  );
+  if (!sample.buffer) return null;
+
+  const source = context.createBufferSource();
+  const lowpass = context.createBiquadFilter();
+  const envelope = context.createGain();
+  const playbackRate = 2 ** ((midi - sample.midi) / 12);
+  const naturalDuration = sample.buffer.duration / playbackRate;
+  const tempoAwareDuration = Math.max(
+    0.7,
+    Math.min(UPRIGHT_BASS_MAX_DURATION_SECONDS, duration * 0.62),
+  );
+  const soundingDuration = Math.min(
+    naturalDuration,
+    tempoAwareDuration,
+  );
+  const settleAt = startAt + Math.min(0.28, soundingDuration * 0.36);
+  const fadeAt = startAt + Math.max(0.34, soundingDuration - 0.22);
+  const stopAt = startAt + soundingDuration;
+
+  source.buffer = sample.buffer;
+  source.playbackRate.setValueAtTime(playbackRate, startAt);
+  lowpass.type = "lowpass";
+  lowpass.frequency.setValueAtTime(UPRIGHT_BASS_FILTER_HZ, startAt);
+  lowpass.Q.setValueAtTime(0.62, startAt);
+  envelope.gain.setValueAtTime(0.0001, startAt);
+  envelope.gain.exponentialRampToValueAtTime(
+    UPRIGHT_BASS_OUTPUT_GAIN,
+    startAt + 0.006,
+  );
+  envelope.gain.exponentialRampToValueAtTime(
+    UPRIGHT_BASS_OUTPUT_GAIN * 0.68,
+    settleAt,
+  );
+  envelope.gain.setValueAtTime(UPRIGHT_BASS_OUTPUT_GAIN * 0.68, fadeAt);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, stopAt);
+
+  source.connect(lowpass);
+  lowpass.connect(envelope);
+  envelope.connect(context.destination);
+  source.start(startAt);
+  source.stop(stopAt + 0.02);
+  return source;
 }
 
 function isAppleMobileDevice() {
@@ -2949,14 +3315,35 @@ function cancelPlayback() {
   clearHighlightTimers();
   state.playing = false;
   state.playbackMode = null;
+  state.playbackRange = null;
   state.activePosition = null;
   state.previewOptionIndex = null;
   releaseAudioContext();
 }
 
+function parkAudioContext() {
+  const context = audioContext;
+  if (!context || context.state === "closed") return;
+
+  audioContextLastUsedAt = Date.now();
+  window.clearTimeout(audioContextIdleTimer);
+  audioContextIdleTimer = window.setTimeout(() => {
+    if (
+      audioContext !== context
+      || state.playing
+      || state.previewOptionIndex !== null
+    ) return;
+    audioContext = null;
+    audioContextLastUsedAt = 0;
+    context.close().catch(() => {});
+  }, AUDIO_CONTEXT_IDLE_CLOSE_MS);
+}
+
 function releaseAudioContext() {
+  window.clearTimeout(audioContextIdleTimer);
   const context = audioContext;
   audioContext = null;
+  audioContextLastUsedAt = 0;
   if (context && context.state !== "closed") {
     context.close().catch(() => {});
   }
@@ -2993,11 +3380,277 @@ function playbackNotesForChord(item, sound = state.sound) {
   };
 }
 
+function midiNoteInfo(midi, spelling = state.key.spelling) {
+  const pitchClass = ((midi % 12) + 12) % 12;
+  const name = NOTE_NAMES[spelling][pitchClass];
+  const octave = Math.floor(midi / 12) - 1;
+  const letterIndex = "CDEFGAB".indexOf(name[0]);
+  return {
+    midi,
+    name: `${name}${octave}`,
+    accidental: name.slice(1),
+    diatonic: octave * 7 + letterIndex,
+  };
+}
+
+function voicingNotationData(item, sound = state.sound) {
+  const playback = playbackNotesForChord(item, sound);
+  const sourceVoicing = midiNotesForChord(item);
+  const spelling = item.spelling || state.key.spelling;
+  const notes = [...new Set(playback.notes)]
+    .sort((left, right) => left - right)
+    .map((midi) => midiNoteInfo(midi, spelling));
+  const lowestName = notes[0]?.name || "";
+  const reinforcedMidi = isUprightBassSound(sound)
+    || sourceVoicing.hasIndependentBass
+    ? notes[0]?.midi ?? null
+    : null;
+  const details = [];
+
+  if (isBassSound(sound)) {
+    details.push(`only ${lowestName} sounds`);
+  } else {
+    details.push("exact playback voicing");
+  }
+  if (isUprightBassSound(sound)) {
+    details.push(`${lowestName} reinforced by upright bass`);
+  }
+  if (sourceVoicing.hasIndependentBass) {
+    details.push(`independent ${lowestName} slash bass`);
+  }
+
+  return {
+    notes,
+    reinforcedMidi,
+    label: optionLabel(item),
+    meta: `${soundName(sound)} · ${details.join(" · ")}`,
+  };
+}
+
+function svgElement(tag, attributes = {}) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  Object.entries(attributes).forEach(([name, value]) => (
+    element.setAttribute(name, String(value))
+  ));
+  return element;
+}
+
+function staffY(note, staff) {
+  const bottomDiatonic = staff === "treble" ? 30 : 18;
+  const bottomY = staff === "treble" ? 70 : 148;
+  return bottomY - (note.diatonic - bottomDiatonic) * 4;
+}
+
+function appendLedgerLines(svg, note, staff, noteX) {
+  const bottomDiatonic = staff === "treble" ? 30 : 18;
+  const topDiatonic = staff === "treble" ? 38 : 26;
+  const lineIndexes = [];
+
+  for (
+    let diatonic = bottomDiatonic - 2;
+    diatonic >= note.diatonic;
+    diatonic -= 2
+  ) lineIndexes.push(diatonic);
+  for (
+    let diatonic = topDiatonic + 2;
+    diatonic <= note.diatonic;
+    diatonic += 2
+  ) lineIndexes.push(diatonic);
+
+  lineIndexes.forEach((diatonic) => {
+    const ledgerNote = { diatonic };
+    const y = staffY(ledgerNote, staff);
+    svg.append(svgElement("line", {
+      class: "voicing-ledger",
+      x1: noteX - 12,
+      x2: noteX + 15,
+      y1: y,
+      y2: y,
+    }));
+  });
+}
+
+function renderVoicingSvg(item, sound = state.sound) {
+  const data = voicingNotationData(item, sound);
+  const svg = svgElement("svg", {
+    viewBox: "0 0 360 188",
+    role: "img",
+    "aria-label": `${data.label}: ${data.notes.map((note) => note.name).join(", ")}`,
+  });
+  svg.classList.add("voicing-score");
+
+  ["treble", "bass"].forEach((staff) => {
+    const firstY = staff === "treble" ? 38 : 116;
+    for (let line = 0; line < 5; line += 1) {
+      const y = firstY + line * 8;
+      svg.append(svgElement("line", {
+        class: "voicing-staff-line",
+        x1: 72,
+        x2: 326,
+        y1: y,
+        y2: y,
+      }));
+    }
+  });
+
+  const trebleClef = svgElement("text", {
+    class: "voicing-clef voicing-treble-clef",
+    x: 77,
+    y: 70,
+  });
+  trebleClef.textContent = "𝄞";
+  const bassClef = svgElement("text", {
+    class: "voicing-clef voicing-bass-clef",
+    x: 78,
+    y: 145,
+  });
+  bassClef.textContent = "𝄢";
+  svg.append(trebleClef, bassClef);
+
+  const groupedNotes = {
+    treble: data.notes.filter((note) => note.midi >= 60),
+    bass: data.notes.filter((note) => note.midi < 60),
+  };
+  Object.entries(groupedNotes).forEach(([staff, notes]) => {
+    let previousDiatonic = null;
+    notes.forEach((note) => {
+      const adjacent = previousDiatonic !== null
+        && note.diatonic - previousDiatonic === 1;
+      const noteX = adjacent ? 226 : 216;
+      const y = staffY(note, staff);
+      appendLedgerLines(svg, note, staff, noteX);
+
+      if (note.accidental) {
+        const accidental = svgElement("text", {
+          class: "voicing-accidental",
+          x: noteX - 21,
+          y: y + 5,
+        });
+        accidental.textContent = note.accidental;
+        svg.append(accidental);
+      }
+
+      svg.append(svgElement("ellipse", {
+        class: note.midi === data.reinforcedMidi
+          ? "voicing-note reinforced"
+          : "voicing-note",
+        cx: noteX,
+        cy: y,
+        rx: 7.2,
+        ry: 5.1,
+        transform: `rotate(-18 ${noteX} ${y})`,
+      }));
+      previousDiatonic = note.diatonic;
+    });
+  });
+
+  return svg;
+}
+
+function createChordNotesButton(item) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "chord-notes-button";
+  button.title = `Show sounding notes for ${optionLabel(item)}`;
+  button.setAttribute("aria-label", button.title);
+  button.setAttribute("aria-haspopup", "dialog");
+  button.setAttribute("aria-expanded", "false");
+
+  const icon = svgElement("svg", {
+    viewBox: "0 0 28 28",
+    "aria-hidden": "true",
+  });
+  [8, 11, 14, 17, 20].forEach((y) => {
+    icon.append(svgElement("line", {
+      x1: 3.5,
+      x2: 24.5,
+      y1: y,
+      y2: y,
+    }));
+  });
+  icon.append(
+    svgElement("ellipse", {
+      cx: 14.5,
+      cy: 14,
+      rx: 3.2,
+      ry: 2.25,
+      transform: "rotate(-18 14.5 14)",
+    }),
+    svgElement("line", {
+      x1: 17.4,
+      x2: 17.4,
+      y1: 13.3,
+      y2: 5.5,
+    }),
+  );
+  button.append(icon);
+  button.addEventListener("pointerdown", (event) => event.stopPropagation());
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openVoicingPopover(item, button);
+  });
+  return button;
+}
+
+function positionVoicingPopover(anchor) {
+  const anchorRect = anchor.getBoundingClientRect();
+  const popoverRect = ui.voicingPopover.getBoundingClientRect();
+  const edge = 12;
+  const preferredLeft = (
+    anchorRect.left
+    + anchorRect.width / 2
+    - popoverRect.width / 2
+  );
+  const left = Math.min(
+    window.innerWidth - popoverRect.width - edge,
+    Math.max(edge, preferredLeft),
+  );
+  let top = anchorRect.bottom + 10;
+  if (top + popoverRect.height > window.innerHeight - edge) {
+    top = Math.max(edge, anchorRect.top - popoverRect.height - 10);
+  }
+  ui.voicingPopover.style.left = `${left}px`;
+  ui.voicingPopover.style.top = `${top}px`;
+}
+
+function openVoicingPopover(item, anchor) {
+  closeVoicingPopover(false);
+  const data = voicingNotationData(item);
+  ui.voicingTitle.textContent = data.label;
+  ui.voicingStaff.replaceChildren(renderVoicingSvg(item));
+  ui.voicingNotes.textContent = data.notes.map((note) => note.name).join(" · ");
+  ui.voicingMeta.textContent = data.meta;
+  ui.voicingPopover.hidden = false;
+  voicingPopoverAnchor = anchor;
+  anchor.setAttribute("aria-expanded", "true");
+  positionVoicingPopover(anchor);
+}
+
+function closeVoicingPopover(restoreFocus = false) {
+  const anchor = voicingPopoverAnchor;
+  if (anchor) anchor.setAttribute("aria-expanded", "false");
+  ui.voicingPopover.hidden = true;
+  voicingPopoverAnchor = null;
+  if (restoreFocus) anchor?.focus?.();
+}
+
 function scheduleChord(item, startAt, duration) {
   const isPiano = isPianoSound();
   const isElectricPiano = isElectricPianoSound();
   const isSampledKeyboard = isPiano || isElectricPiano;
   const { notes, hasIndependentBass } = playbackNotesForChord(item);
+
+  if (
+    isUprightBassSound()
+    && uprightBassSampleBuffers.size === UPRIGHT_BASS_SAMPLE_MANIFEST.length
+  ) {
+    scheduleSampledUprightBassNote(
+      audioContext,
+      notes[0],
+      startAt,
+      duration,
+    );
+  }
 
   if (
     isPiano
@@ -3029,6 +3682,7 @@ function scheduleChord(item, startAt, duration) {
       {
         bassVoiceCount: hasIndependentBass ? 2 : 1,
         bassGain: hasIndependentBass ? 1.22 : 1.06,
+        outputGain: ELECTRIC_PIANO_OUTPUT_GAIN,
         releaseSeconds: ELECTRIC_PIANO_RELEASE_SECONDS,
         sampleManifest: ELECTRIC_PIANO_SAMPLE_MANIFEST,
         sampleBuffers: electricPianoSampleBuffers,
@@ -3039,6 +3693,7 @@ function scheduleChord(item, startAt, duration) {
 
   const master = audioContext.createGain();
   const filter = audioContext.createBiquadFilter();
+  const outputGain = isElectricPiano ? ELECTRIC_PIANO_OUTPUT_GAIN : 1;
   filter.type = "lowpass";
   filter.frequency.setValueAtTime(isSampledKeyboard ? 5400 : 2600, startAt);
   if (isSampledKeyboard) {
@@ -3050,11 +3705,11 @@ function scheduleChord(item, startAt, duration) {
   filter.Q.setValueAtTime(0.7, startAt);
   master.gain.setValueAtTime(0.0001, startAt);
   master.gain.exponentialRampToValueAtTime(
-    (isSampledKeyboard ? 0.36 : 0.24) / Math.sqrt(notes.length),
+    ((isSampledKeyboard ? 0.36 : 0.24) * outputGain) / Math.sqrt(notes.length),
     startAt + 0.018,
   );
   master.gain.exponentialRampToValueAtTime(
-    (isSampledKeyboard ? 0.035 : 0.08) / Math.sqrt(notes.length),
+    ((isSampledKeyboard ? 0.035 : 0.08) * outputGain) / Math.sqrt(notes.length),
     startAt + duration * (isSampledKeyboard ? 0.72 : 0.48),
   );
   master.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);

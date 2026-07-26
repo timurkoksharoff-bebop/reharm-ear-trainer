@@ -1,14 +1,14 @@
 {
   "name": "Reharm Ear Trainer",
   "short_name": "Reharm Ear",
-  "description": "Тренажер слухового анализа аккордовых последовательностей.",
-  "lang": "ru",
+  "description": "An elegant ear-training app for harmonic progressions.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#090b0e",
-  "theme_color": "#12273b",
+  "background_color": "#f2efe9",
+  "theme_color": "#eef1ed",
   "icons": [
     {
       "src": "icon-192.png",

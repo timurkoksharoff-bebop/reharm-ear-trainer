@@ -2,10 +2,10 @@
 
 ## Purpose
 
-Ear Reharm Trainer is a Russian-language ear-training application based on
-the chord progressions in `Reharmonization Techniques`. Its current scope is
-deliberately narrow: chord progressions only. It does not reproduce melodies,
-rhythmic figures, or complete arrangements from the book.
+Ear Reharm Trainer is an ear-training application based on the chord
+progressions in `Reharmonization Techniques`. Its scope is deliberately
+narrow: chord progressions only. It does not reproduce the textbook melodies,
+rhythmic figures, or complete arrangements.
 
 The student hears a tonic reference followed by a progression and identifies
 each chord either as a scale degree or as a chord symbol. The main pedagogical
@@ -19,11 +19,16 @@ than absolute chord names.
   `https://github.com/timurkoksharoff-bebop/reharm-ear-trainer`
 - Production PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
-- Current published cache version: `0.17`
+- Current published cache version: `0.23`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
 the former nested copy under the large Tomaro/arranging task.
+
+Experimental notation-editor work now lives separately in
+`/Users/tim/Documents/Ear Reharm Arranger`. Do not add the Arranger workspace,
+its script, or its stylesheet back to the public Trainer unless the user
+explicitly decides to reunify the applications.
 
 ## Reference Material
 
@@ -47,6 +52,10 @@ When adding or correcting a progression:
 ## Current Product Behavior
 
 - The shipping interface is English-only.
+- First-time users see a concise visual `How to` tour that spotlights playback,
+  answer entry, reveal/review, navigation, favorites, statistics, keyboard, and
+  settings. Completing or skipping it removes the temporary top-bar info
+  button, and the tour remains replayable from Settings.
 - Chapter, exercise, tempo, sound, and notation controls live in the top-right
   settings panel so the main screen opens directly on the listening grid.
 - Short exercises keep the complete chord grid and primary action row within
@@ -81,7 +90,9 @@ When adding or correcting a progression:
   voicing without taking horizontal space from the label; bass-only, upright
   reinforcement, and independent slash basses are represented explicitly.
 - The lower two-octave keyboard is available for manual checking.
-- Portrait mobile layout is primary; long progressions use compact dots.
+- Portrait mobile layout is primary; long progressions use progressively
+  smaller, separated dots and always fit the answer matrix without horizontal
+  scrolling.
 
 ## Audio Decisions
 
@@ -210,9 +221,9 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.17` includes 239 progressions: 107 core examples and
+- Production PWA `0.23` includes 239 progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
-- The local working copy uses cache `0.17`. Localhost previews
+- The standalone Trainer release uses cache `0.23`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
 - GitHub Pages and the repository are working.

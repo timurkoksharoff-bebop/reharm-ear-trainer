@@ -33,6 +33,14 @@
         <h1>Chord Progressions</h1>
       </div>
       <button
+        class="icon-button help-button"
+        id="helpButton"
+        type="button"
+        title="How to use"
+        aria-label="Open quick guide"
+        hidden
+      >i</button>
+      <button
         class="icon-button settings-button"
         id="settingsButton"
         type="button"
@@ -93,6 +101,9 @@
           </div>
         </div>
       </section>
+      <button class="settings-guide" id="replayGuideButton" type="button">
+        Replay quick guide
+      </button>
       <button class="settings-reset" id="resetStatsButton" type="button">Reset statistics</button>
     </aside>
 
@@ -172,8 +183,29 @@
         <div class="piano" id="pianoKeyboard" aria-label="Piano keyboard from C3 to C5"></div>
       </div>
     </section>
-
   </main>
+
+  <div class="onboarding-layer" id="onboardingLayer" hidden>
+    <div class="onboarding-blocker" aria-hidden="true"></div>
+    <div class="onboarding-spotlight" id="onboardingSpotlight" aria-hidden="true"></div>
+    <section
+      class="onboarding-card"
+      id="onboardingCard"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboardingTitle"
+      aria-describedby="onboardingBody"
+    >
+      <p class="onboarding-count" id="onboardingCount">How to · 1 / 9</p>
+      <h2 id="onboardingTitle">Listen</h2>
+      <p class="onboarding-body" id="onboardingBody"></p>
+      <div class="onboarding-progress" id="onboardingProgress" aria-hidden="true"></div>
+      <div class="onboarding-actions">
+        <button class="onboarding-skip" id="onboardingSkipButton" type="button">Skip</button>
+        <button class="onboarding-next" id="onboardingNextButton" type="button">Next</button>
+      </div>
+    </section>
+  </div>
 
   <aside
     class="voicing-popover"

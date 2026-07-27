@@ -1483,6 +1483,7 @@ const QUALITY = {
 
 const FAVORITES_STORAGE_KEY = "reharm-ear-favorites-v2";
 const LEGACY_FAVORITES_STORAGE_KEY = "reharm-ear-favorites-v1";
+const ONBOARDING_STORAGE_KEY = "reharm-ear-onboarding-v1";
 
 const state = {
   exerciseIndex: 0,
@@ -1513,11 +1514,14 @@ const ui = {
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsScrim: document.querySelector("#settingsScrim"),
   settingsCloseButton: document.querySelector("#settingsCloseButton"),
+  helpButton: document.querySelector("#helpButton"),
+  replayGuideButton: document.querySelector("#replayGuideButton"),
   sourceLabel: document.querySelector("#sourceLabel"),
   promptLabel: document.querySelector("#promptLabel"),
   chapterLabel: document.querySelector("#chapterLabel"),
   keyBadge: document.querySelector("#keyBadge"),
   favoriteButton: document.querySelector("#favoriteButton"),
+  exerciseTools: document.querySelector(".exercise-tools"),
   matrixScroll: document.querySelector("#matrixScroll"),
   positionLegend: document.querySelector("#positionLegend"),
   answerGrid: document.querySelector("#answerGrid"),
@@ -1529,7 +1533,10 @@ const ui = {
   reviewButton: document.querySelector("#reviewButton"),
   previousButton: document.querySelector("#previousButton"),
   nextButton: document.querySelector("#nextButton"),
+  actionBar: document.querySelector(".actions"),
+  statsPanel: document.querySelector(".stats"),
   resetStatsButton: document.querySelector("#resetStatsButton"),
+  pianoPanel: document.querySelector(".piano-panel"),
   pianoKeyboard: document.querySelector("#pianoKeyboard"),
   pianoStopButton: document.querySelector("#pianoStopButton"),
   completedStat: document.querySelector("#completedStat"),
@@ -1543,6 +1550,15 @@ const ui = {
   voicingNotes: document.querySelector("#voicingNotes"),
   voicingMeta: document.querySelector("#voicingMeta"),
   voicingCloseButton: document.querySelector("#voicingCloseButton"),
+  onboardingLayer: document.querySelector("#onboardingLayer"),
+  onboardingSpotlight: document.querySelector("#onboardingSpotlight"),
+  onboardingCard: document.querySelector("#onboardingCard"),
+  onboardingCount: document.querySelector("#onboardingCount"),
+  onboardingTitle: document.querySelector("#onboardingTitle"),
+  onboardingBody: document.querySelector("#onboardingBody"),
+  onboardingProgress: document.querySelector("#onboardingProgress"),
+  onboardingSkipButton: document.querySelector("#onboardingSkipButton"),
+  onboardingNextButton: document.querySelector("#onboardingNextButton"),
 };
 
 let audioContext = null;
@@ -1568,6 +1584,9 @@ const pianoKeyTimers = new Map();
 const chapterQueues = new Map();
 const exerciseHistory = [];
 let voicingPopoverAnchor = null;
+let onboardingStepIndex = -1;
+let onboardingTarget = null;
+let onboardingPositionTimer = null;
 const PIANO_SUSTAIN_RATIO = 1.1;
 const PIANO_LEGATO_SUSTAIN_RATIO = 1.35;
 const PIANO_RELEASE_SECONDS = 0.7;
@@ -1584,6 +1603,63 @@ const SEGMENTED_PLAYBACK_MIN_LENGTH = 8;
 const CHORD_NOTES_HOLD_MS = 520;
 const CHORD_NOTES_HOLD_MOVE_PX = 12;
 const EXERCISE_HISTORY_LIMIT = 50;
+const ONBOARDING_STEPS = [
+  {
+    title: "Listen",
+    body: "Center Play runs the whole sequence. Long sequences add first-half and second-half buttons. The sounding position lights up.",
+    action: "Play & next",
+    target: () => ui.playbackControls,
+    play: true,
+  },
+  {
+    title: "Choose",
+    body: "Tap circles to build your answer. Tap a chord name to preview it; hold the name to see its notes.",
+    action: "Next",
+    target: () => document.querySelector(".answer-row") || ui.answerGrid,
+  },
+  {
+    title: "Reveal",
+    body: "Show answer fills in the complete progression when you need a hint.",
+    action: "Next",
+    target: () => ui.showButton,
+  },
+  {
+    title: "Review",
+    body: "After revealing, Review plays the answer again with each position highlighted.",
+    action: "Next",
+    target: () => ui.reviewButton,
+  },
+  {
+    title: "Navigate",
+    body: "← returns to the previous sequence. Skip moves forward without changing your statistics.",
+    action: "Next",
+    target: () => ui.actionBar,
+  },
+  {
+    title: "Save",
+    body: "♡ saves a progression to Favorites. Its key stays hidden until the answer is revealed.",
+    action: "Next",
+    target: () => ui.exerciseTools,
+  },
+  {
+    title: "Progress",
+    body: "Attempts, first-try accuracy, streak, and revealed answers are tracked here.",
+    action: "Next",
+    target: () => ui.statsPanel,
+  },
+  {
+    title: "Keyboard",
+    body: "Use the keyboard to check notes and chords without leaving the exercise.",
+    action: "Next",
+    target: () => ui.pianoPanel,
+  },
+  {
+    title: "Settings",
+    body: "Choose chapter, sequence, tempo, sound, and chord notation here. You can also replay this guide.",
+    action: "Start training",
+    target: () => ui.settingsButton,
+  },
+];
 const PIANO_SAMPLE_MANIFEST = [
   [36, "C2"],
   [39, "Ds2"],
@@ -1879,6 +1955,10 @@ function init() {
     resumeAudioAfterInterruption();
   });
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !ui.onboardingLayer.hidden) {
+      completeOnboarding();
+      return;
+    }
     if (event.key === "Escape" && !ui.voicingPopover.hidden) {
       closeVoicingPopover(true);
       return;
@@ -1901,6 +1981,13 @@ function init() {
   ui.settingsButton.addEventListener("click", () => {
     setSettingsOpen(ui.settingsPanel.hidden);
   });
+  ui.helpButton.addEventListener("click", startOnboarding);
+  ui.replayGuideButton.addEventListener("click", () => {
+    setSettingsOpen(false);
+    startOnboarding();
+  });
+  ui.onboardingSkipButton.addEventListener("click", completeOnboarding);
+  ui.onboardingNextButton.addEventListener("click", advanceOnboarding);
   ui.settingsCloseButton.addEventListener("click", () => setSettingsOpen(false));
   ui.settingsScrim.addEventListener("click", () => setSettingsOpen(false));
   setSettingsOpen(false);
@@ -1992,7 +2079,121 @@ function init() {
   buildPianoKeyboard();
 
   startExercise(true);
+  updateOnboardingHelpVisibility();
+  window.setTimeout(maybeStartOnboarding, 420);
 }
+
+function hasCompletedOnboarding() {
+  try {
+    return localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function updateOnboardingHelpVisibility() {
+  ui.helpButton.hidden = hasCompletedOnboarding();
+}
+
+function maybeStartOnboarding() {
+  if (!hasCompletedOnboarding()) startOnboarding();
+}
+
+function startOnboarding() {
+  cancelPlayback();
+  closeVoicingPopover(false);
+  setSettingsOpen(false);
+  onboardingStepIndex = 0;
+  ui.onboardingLayer.hidden = false;
+  document.body.classList.add("onboarding-open");
+  showOnboardingStep();
+}
+
+function showOnboardingStep() {
+  const step = ONBOARDING_STEPS[onboardingStepIndex];
+  if (!step) {
+    completeOnboarding();
+    return;
+  }
+
+  onboardingTarget = step.target();
+  ui.onboardingCount.textContent = (
+    `How to · ${onboardingStepIndex + 1} / ${ONBOARDING_STEPS.length}`
+  );
+  ui.onboardingTitle.textContent = step.title;
+  ui.onboardingBody.textContent = step.body;
+  ui.onboardingNextButton.textContent = step.action;
+  ui.onboardingProgress.replaceChildren();
+  ONBOARDING_STEPS.forEach((unused, index) => {
+    const dot = document.createElement("span");
+    dot.className = index === onboardingStepIndex ? "active" : "";
+    ui.onboardingProgress.append(dot);
+  });
+
+  onboardingTarget?.scrollIntoView?.({
+    behavior: "smooth",
+    block: "center",
+    inline: "nearest",
+  });
+  positionOnboarding();
+  window.clearTimeout(onboardingPositionTimer);
+  onboardingPositionTimer = window.setTimeout(positionOnboarding, 280);
+  ui.onboardingNextButton.focus?.();
+}
+
+function positionOnboarding() {
+  if (ui.onboardingLayer.hidden) return;
+  const currentStep = ONBOARDING_STEPS[onboardingStepIndex];
+  onboardingTarget = currentStep?.target?.() || onboardingTarget;
+  if (!onboardingTarget) return;
+  const targetRect = onboardingTarget.getBoundingClientRect();
+  const padding = 8;
+  const left = Math.max(8, targetRect.left - padding);
+  const top = Math.max(8, targetRect.top - padding);
+  const right = Math.min(window.innerWidth - 8, targetRect.right + padding);
+  const bottom = Math.min(window.innerHeight - 8, targetRect.bottom + padding);
+
+  ui.onboardingSpotlight.style.left = `${left}px`;
+  ui.onboardingSpotlight.style.top = `${top}px`;
+  ui.onboardingSpotlight.style.width = `${Math.max(40, right - left)}px`;
+  ui.onboardingSpotlight.style.height = `${Math.max(40, bottom - top)}px`;
+  ui.onboardingCard.style.top = "";
+  ui.onboardingCard.style.bottom = "";
+  if (targetRect.top > window.innerHeight * 0.48) {
+    ui.onboardingCard.style.top = "max(14px, env(safe-area-inset-top))";
+  } else {
+    ui.onboardingCard.style.bottom = "max(14px, env(safe-area-inset-bottom))";
+  }
+}
+
+function advanceOnboarding() {
+  const step = ONBOARDING_STEPS[onboardingStepIndex];
+  if (step?.play && !state.playing) toggleMainPlayback();
+  if (onboardingStepIndex >= ONBOARDING_STEPS.length - 1) {
+    completeOnboarding();
+    return;
+  }
+  onboardingStepIndex += 1;
+  showOnboardingStep();
+}
+
+function completeOnboarding() {
+  window.clearTimeout(onboardingPositionTimer);
+  onboardingPositionTimer = null;
+  onboardingTarget = null;
+  onboardingStepIndex = -1;
+  ui.onboardingLayer.hidden = true;
+  document.body.classList.remove("onboarding-open");
+  try {
+    localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+  } catch {
+    // The guide remains dismissible even when storage is unavailable.
+  }
+  updateOnboardingHelpVisibility();
+}
+
+window.addEventListener?.("resize", positionOnboarding);
+window.addEventListener?.("scroll", positionOnboarding, true);
 
 function refreshExerciseSelect() {
   ui.exerciseSelect.replaceChildren();
@@ -2154,6 +2355,13 @@ function visualMoodForExercise(exercise) {
   return ["dawn", "meadow", "lake"][hash % 3];
 }
 
+function matrixDensity(positionCount) {
+  if (positionCount >= 16) return "ultra";
+  if (positionCount >= 13) return "dense";
+  if (positionCount >= 10) return "compact";
+  return "regular";
+}
+
 function render() {
   if (!ui.voicingPopover.hidden) closeVoicingPopover(false);
   const exercise = currentExercise();
@@ -2164,6 +2372,7 @@ function render() {
     && state.playbackMode !== "review"
   );
   ui.matrixScroll.dataset.compact = String(positionCount >= 10);
+  ui.matrixScroll.dataset.density = matrixDensity(positionCount);
   document.body.dataset.atmosphere = visualMoodForExercise(exercise);
 
   ui.chapterLabel.textContent = `Reharmonization Techniques · Chapter ${exercise.chapter}`;
@@ -2182,7 +2391,6 @@ function render() {
 
   ui.positionLegend.replaceChildren();
   ui.positionLegend.style.setProperty("--positions", positionCount);
-  ui.positionLegend.style.setProperty("--matrix-width", `${98 + positionCount * 35}px`);
   ui.positionLegend.append(document.createElement("span"));
   for (let position = 0; position < positionCount; position += 1) {
     const number = document.createElement("span");
@@ -2201,7 +2409,6 @@ function render() {
     const row = document.createElement("div");
     row.className = "answer-row";
     row.style.setProperty("--positions", positionCount);
-    row.style.setProperty("--matrix-width", `${98 + positionCount * 35}px`);
     row.tabIndex = 0;
     row.setAttribute("role", "button");
     row.setAttribute(
@@ -3829,5 +4036,4 @@ function scheduleChord(item, startAt, duration) {
     overtone.stop(startAt + duration + 0.02);
   });
 }
-
 init();

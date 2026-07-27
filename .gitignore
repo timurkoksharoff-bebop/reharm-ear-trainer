@@ -10,6 +10,10 @@ STOP.command
 serve.py
 server.py
 
+# Experimental notation editor now lives in ../Ear Reharm Arranger.
+/arranger.css
+/arranger.js
+
 # Local visual checks and developer tests.
 qa/
 tests/

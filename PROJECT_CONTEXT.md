@@ -19,7 +19,10 @@ than absolute chord names.
   `https://github.com/timurkoksharoff-bebop/reharm-ear-trainer`
 - Production PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
+- Lite PWA:
+  `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
 - Current published cache version: `0.24`
+- Current Lite cache version: `0.1`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -138,6 +141,8 @@ When adding or correcting a progression:
 - `Reharm Ear Trainer.app`: offline macOS wrapper. It is local-only and ignored
   by Git.
 - `README.md`: short user/developer overview.
+- `tools/build-lite.cjs`: reproducibly creates the standalone Lite PWA.
+- `lite/`: generated portable Lite build containing Chapters 1–4 only.
 
 ## Exercise Data Model
 
@@ -226,6 +231,9 @@ embedded cache version.
 - The standalone Trainer release uses cache `0.24`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
+- Lite `0.1` is built from the same interface and audio engine, but its shipped
+  catalog physically contains only Chapters 1–4. Its storage and cache names
+  are isolated from the full Trainer.
 - GitHub Pages and the repository are working.
 - Favorites and statistics are device-local.
 - The catalog is manually encoded from the book and still benefits from

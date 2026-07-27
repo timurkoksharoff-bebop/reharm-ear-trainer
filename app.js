@@ -2966,9 +2966,10 @@ function buildPianoKeyboard() {
   const sharpNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
   const flatNames = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
   const blackPitchClasses = new Set([1, 3, 6, 8, 10]);
+  const whiteKeyCount = 22;
   let whiteIndex = 0;
 
-  for (let midi = 48; midi <= 72; midi += 1) {
+  for (let midi = 36; midi <= 72; midi += 1) {
     const pitchClass = midi % 12;
     const octave = Math.floor(midi / 12) - 1;
     const isBlack = blackPitchClasses.has(pitchClass);
@@ -2983,7 +2984,7 @@ function buildPianoKeyboard() {
     button.setAttribute("aria-label", button.title);
 
     if (isBlack) {
-      button.style.setProperty("--white-index", String(whiteIndex - 1));
+      button.style.setProperty("--black-left", `${(whiteIndex / whiteKeyCount) * 100}%`);
     } else {
       button.textContent = sharpName;
       whiteIndex += 1;

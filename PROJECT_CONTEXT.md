@@ -19,7 +19,7 @@ than absolute chord names.
   `https://github.com/timurkoksharoff-bebop/reharm-ear-trainer`
 - Production PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
-- Current published cache version: `0.23`
+- Current published cache version: `0.24`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -89,7 +89,7 @@ When adding or correcting a progression:
 - Holding a chord label opens a grand-staff popover with the exact playback
   voicing without taking horizontal space from the label; bass-only, upright
   reinforcement, and independent slash basses are represented explicitly.
-- The lower two-octave keyboard is available for manual checking.
+- The lower three-octave keyboard (C2–C5) is available for manual checking.
 - Portrait mobile layout is primary; long progressions use progressively
   smaller, separated dots and always fit the answer matrix without horizontal
   scrolling.
@@ -221,9 +221,9 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.23` includes 239 progressions: 107 core examples and
+- Production PWA `0.24` includes 239 progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
-- The standalone Trainer release uses cache `0.23`. Localhost previews
+- The standalone Trainer release uses cache `0.24`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
 - GitHub Pages and the repository are working.

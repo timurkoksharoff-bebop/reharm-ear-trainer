@@ -1256,10 +1256,10 @@ select:focus-visible {
 }
 
 .piano {
-  --white-key-width: 46px;
-  --black-key-width: 28px;
+  --black-key-width: 24px;
   position: relative;
-  width: calc(15 * var(--white-key-width));
+  width: 100%;
+  min-width: 690px;
   height: 116px;
   display: flex;
   user-select: none;
@@ -1277,7 +1277,7 @@ select:focus-visible {
 
 .piano-key.white {
   z-index: 1;
-  flex: 0 0 var(--white-key-width);
+  flex: 0 0 4.5454545%;
   height: 112px;
   padding: 0 0 8px;
   background: rgba(255, 254, 249, 0.9);
@@ -1293,7 +1293,7 @@ select:focus-visible {
   z-index: 2;
   position: absolute;
   top: 0;
-  left: calc((var(--white-index) + 1) * var(--white-key-width) - var(--black-key-width) / 2);
+  left: calc(var(--black-left) - var(--black-key-width) / 2);
   width: var(--black-key-width);
   height: 70px;
   padding: 0;
@@ -1507,8 +1507,9 @@ select:focus-visible {
   }
 
   .piano {
-    --white-key-width: 39px;
     --black-key-width: 24px;
+    width: 858px;
+    min-width: 858px;
     height: 106px;
   }
 

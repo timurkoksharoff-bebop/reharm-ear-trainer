@@ -1,4 +1,4 @@
-const CACHE_NAME = "ear-reharm-lite-v0.3";
+const CACHE_NAME = "ear-reharm-lite-v0.4";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -6,11 +6,10 @@ const APP_FILES = [
   "./app.js",
   "./manifest.webmanifest",
   "./build-info.json",
-  "./favicon.svg",
-  "./favicon-32.png",
-  "./icon-180.png",
-  "./icon-192.png",
-  "./icon-512.png",
+  "./favicon-32.png?v=0.33",
+  "./icon-180.png?v=0.33",
+  "./icon-192.png?v=0.33",
+  "./icon-512.png?v=0.33",
   "./assets/atmospheres/air-dawn.jpg",
   "./assets/atmospheres/air-meadow.jpg",
   "./assets/atmospheres/air-lake.jpg",

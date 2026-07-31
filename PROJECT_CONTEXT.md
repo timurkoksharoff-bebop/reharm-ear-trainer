@@ -21,8 +21,8 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current published cache version: `0.32`
-- Current Lite cache version: `0.3`
+- Current full cache version: `0.33`
+- Current Lite cache version: `0.4`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -266,17 +266,20 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.32` includes 239 built-in progressions: 107 core examples and
+- Production PWA `0.33` includes 239 built-in progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
-- Release `0.32` adds the Progression Builder, audited
+- Release `0.33` adds the approved sage-green Bodoni application icon and makes
+  the Builder editing state explicit: a selected chord can be updated or added
+  as a new chord, and deleting it returns the composer to Add mode.
+- Release `0.32` added the Progression Builder, audited
   functional/tertian note spelling, stable mobile viewport behavior, and
   ascending/descending arpeggio playback while retaining the same 239-item
   canonical catalog. User-created progressions live in a separate local
   library and are not counted as textbook content.
-- The published standalone Trainer uses cache `0.32`. Localhost previews
+- The published standalone Trainer uses cache `0.33`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
-- Lite `0.3` is built from the same interface, Builder, and
+- Lite `0.4` is built from the same interface, Builder, and
   audio engine, but its shipped
   catalog physically contains only Chapters 1–4. Its storage and cache names
   are isolated from the full Trainer.

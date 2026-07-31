@@ -24,8 +24,8 @@ assert.match(index, /REHARM TRAINER · LITE/);
 assert.equal(manifest.name, "Reharm Ear Trainer Lite");
 assert.equal(manifest.short_name, "Reharm Lite");
 assert.equal(manifest.id, "./");
-assert.match(serviceWorker, /ear-reharm-lite-v0\.3/);
-assert.doesNotMatch(serviceWorker, /reharm-ear-trainer-v0\.32/);
+assert.match(serviceWorker, /ear-reharm-lite-v0\.4/);
+assert.doesNotMatch(serviceWorker, /reharm-ear-trainer-v0\.33/);
 assert.match(app, /reharm-ear-lite-favorites-v2/);
 assert.match(app, /reharm-ear-lite-stats/);
 assert.match(app, /reharm-ear-lite-custom-progressions-v1/);
@@ -59,7 +59,7 @@ const appFiles = vm.runInNewContext(appFilesSource[1]);
 for (const relativeUrl of appFiles) {
   const relativePath = relativeUrl === "./"
     ? "index.html"
-    : relativeUrl.replace(/^\.\//, "");
+    : relativeUrl.replace(/^\.\//, "").split("?")[0];
   assert.ok(
     fs.existsSync(path.join(liteRoot, relativePath)),
     `Missing Lite offline file: ${relativeUrl}`,

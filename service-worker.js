@@ -1,15 +1,14 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.32";
+const CACHE_NAME = "reharm-ear-trainer-v0.33";
 const APP_FILES = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
-  "./favicon.svg",
-  "./favicon-32.png",
-  "./icon-180.png",
-  "./icon-192.png",
-  "./icon-512.png",
+  "./favicon-32.png?v=0.33",
+  "./icon-180.png?v=0.33",
+  "./icon-192.png?v=0.33",
+  "./icon-512.png?v=0.33",
   "./assets/atmospheres/air-dawn.jpg",
   "./assets/atmospheres/air-meadow.jpg",
   "./assets/atmospheres/air-lake.jpg",

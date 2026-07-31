@@ -1,8 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="84" fill="#12273b"/>
-  <path d="M92 115h328v258H92z" fill="#edf0f2"/>
-  <path d="M92 115h328v92H92z" fill="#5db8eb"/>
-  <path d="M139 115h37v169h-37zm84 0h37v169h-37zm84 0h37v169h-37z" fill="#161b20"/>
-  <path d="M89 373h334" stroke="#e3ad42" stroke-width="18"/>
-  <circle cx="346" cy="108" r="28" fill="#e3ad42"/>
+  <!-- Shipping PNGs are rendered with Bodoni Moda at the exact settings below. -->
+  <rect width="512" height="512" fill="#bacdc1"/>
+  <circle cx="256" cy="256" r="235" fill="none" stroke="#111312" stroke-width="1"/>
+  <text
+    x="256"
+    y="441"
+    text-anchor="middle"
+    font-family="Bodoni Moda, Libre Bodoni, Bodoni 72, serif"
+    font-size="490"
+    font-weight="400"
+    fill="#111312"
+    transform="translate(256 0) scale(.76 1) translate(-256 0)"
+  >E</text>
 </svg>

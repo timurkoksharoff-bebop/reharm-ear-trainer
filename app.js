@@ -1648,6 +1648,7 @@ const ui = {
   builderChordPreview: document.querySelector("#builderChordPreview"),
   builderCountLabel: document.querySelector("#builderCountLabel"),
   builderAddButton: document.querySelector("#builderAddButton"),
+  builderAddNewButton: document.querySelector("#builderAddNewButton"),
   builderMoveLeftButton: document.querySelector("#builderMoveLeftButton"),
   builderMoveRightButton: document.querySelector("#builderMoveRightButton"),
   builderDuplicateButton: document.querySelector("#builderDuplicateButton"),
@@ -2470,6 +2471,7 @@ function initBuilder() {
     renderBuilder();
   });
   ui.builderAddButton.addEventListener("click", addOrUpdateBuilderChord);
+  ui.builderAddNewButton.addEventListener("click", addBuilderChordAsNew);
   ui.builderMoveLeftButton.addEventListener("click", () => moveBuilderChord(-1));
   ui.builderMoveRightButton.addEventListener("click", () => moveBuilderChord(1));
   ui.builderDuplicateButton.addEventListener("click", duplicateBuilderChord);
@@ -2514,6 +2516,8 @@ function renderBuilder() {
     builderState.sequence.length >= BUILDER_MAX_CHORDS
     && builderState.selectedIndex === null
   );
+  ui.builderAddNewButton.hidden = builderState.selectedIndex === null;
+  ui.builderAddNewButton.disabled = builderState.sequence.length >= BUILDER_MAX_CHORDS;
 
   ui.builderTimeline.replaceChildren();
   if (builderState.sequence.length === 0) {
@@ -2645,6 +2649,12 @@ function renderBuilderLibrary() {
 function selectBuilderChord(index) {
   const item = builderState.sequence[index];
   if (!item) return;
+  if (builderState.selectedIndex === index) {
+    builderState.selectedIndex = null;
+    setBuilderFeedback("Ready to add a new chord.");
+    renderBuilder();
+    return;
+  }
   builderState.selectedIndex = index;
   const controls = builderControlsForChord(item);
   builderState.rootDegreeIndex = controls.rootDegreeIndex;
@@ -2655,18 +2665,29 @@ function selectBuilderChord(index) {
   renderBuilder();
 }
 
-function addOrUpdateBuilderChord() {
+function appendBuilderChord() {
   const nextChord = builderChordFromState();
+  if (builderState.sequence.length >= BUILDER_MAX_CHORDS) {
+    setBuilderFeedback("A progression can contain up to 20 chords.");
+    renderBuilder();
+    return;
+  }
+  builderState.sequence.push(nextChord);
+  builderState.selectedIndex = null;
+  setBuilderFeedback(`Added ${nextChord.degree}.`);
+  renderBuilder();
+}
+
+function addBuilderChordAsNew() {
+  appendBuilderChord();
+}
+
+function addOrUpdateBuilderChord() {
   if (builderState.selectedIndex === null) {
-    if (builderState.sequence.length >= BUILDER_MAX_CHORDS) {
-      setBuilderFeedback("A progression can contain up to 20 chords.");
-      renderBuilder();
-      return;
-    }
-    builderState.sequence.push(nextChord);
-    builderState.selectedIndex = null;
-    setBuilderFeedback(`Added ${nextChord.degree}.`);
+    appendBuilderChord();
+    return;
   } else {
+    const nextChord = builderChordFromState();
     const updatedIndex = builderState.selectedIndex;
     builderState.sequence[updatedIndex] = nextChord;
     builderState.selectedIndex = null;
@@ -2714,9 +2735,7 @@ function duplicateBuilderChord() {
 function deleteSelectedBuilderChord() {
   if (builderState.selectedIndex === null) return;
   const [removed] = builderState.sequence.splice(builderState.selectedIndex, 1);
-  builderState.selectedIndex = builderState.sequence.length
-    ? Math.min(builderState.selectedIndex, builderState.sequence.length - 1)
-    : null;
+  builderState.selectedIndex = null;
   setBuilderFeedback(`Removed ${removed.degree}.`);
   renderBuilder();
 }

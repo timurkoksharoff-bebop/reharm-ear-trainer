@@ -1593,9 +1593,23 @@ select:focus-visible {
   cursor: pointer;
 }
 
-.builder-add-button {
-  width: 100%;
+.builder-compose-actions {
   margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.builder-add-button {
+  flex: 1 1 auto;
+  width: 100%;
+  margin-top: 0;
+}
+
+.builder-add-new-button {
+  flex: 0.72 1 auto;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 252, 0.42);
+  color: var(--ink-soft);
 }
 
 .builder-add-button:disabled,

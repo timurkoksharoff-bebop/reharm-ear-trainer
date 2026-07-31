@@ -1,5 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#f1e4d7"/>
-  <rect x="3" y="3" width="58" height="58" rx="13" fill="none" stroke="#fffaf3" stroke-width="2"/>
-  <path d="M21 17v30M21 17h24M21 32h19M21 47h24" fill="none" stroke="#34515d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#bacdc1"/>
+  <circle cx="256" cy="256" r="235" fill="none" stroke="#111312" stroke-width="1"/>
+  <text
+    x="256"
+    y="441"
+    text-anchor="middle"
+    font-family="Bodoni Moda, Libre Bodoni, Bodoni 72, serif"
+    font-size="490"
+    font-weight="400"
+    fill="#111312"
+    transform="translate(256 0) scale(.76 1) translate(-256 0)"
+  >E</text>
 </svg>

@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..");
 const outputRoot = path.join(projectRoot, "lite");
-const liteVersion = "0.1";
+const liteVersion = "0.3";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(projectRoot, relativePath), "utf8");
@@ -77,6 +77,12 @@ liteApp = replaceRequired(
   '"reharm-ear-onboarding-v1"',
   '"reharm-ear-lite-onboarding-v1"',
   "onboarding storage key",
+);
+liteApp = replaceRequired(
+  liteApp,
+  '"reharm-ear-custom-progressions-v1"',
+  '"reharm-ear-lite-custom-progressions-v1"',
+  "custom progression storage key",
 );
 liteApp = liteApp.replaceAll('"reharm-ear-stats"', '"reharm-ear-lite-stats"');
 liteApp = replaceRequired(
@@ -174,6 +180,8 @@ write("build-info.json", `${JSON.stringify({
 }, null, 2)}\n`);
 
 [
+  "favicon.svg",
+  "favicon-32.png",
   "icon-180.png",
   "icon-192.png",
   "icon-512.png",

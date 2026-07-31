@@ -17,6 +17,7 @@ server.py
 # Local visual checks and developer tests.
 qa/
 tests/
+tmp/
 
 # Purchased/reference study materials stay local and must not be published.
 reference/*.pdf

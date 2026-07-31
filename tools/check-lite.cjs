@@ -24,12 +24,16 @@ assert.match(index, /REHARM TRAINER · LITE/);
 assert.equal(manifest.name, "Reharm Ear Trainer Lite");
 assert.equal(manifest.short_name, "Reharm Lite");
 assert.equal(manifest.id, "./");
-assert.match(serviceWorker, /ear-reharm-lite-v0\.1/);
-assert.doesNotMatch(serviceWorker, /reharm-ear-trainer-v0\.24/);
+assert.match(serviceWorker, /ear-reharm-lite-v0\.3/);
+assert.doesNotMatch(serviceWorker, /reharm-ear-trainer-v0\.32/);
 assert.match(app, /reharm-ear-lite-favorites-v2/);
 assert.match(app, /reharm-ear-lite-stats/);
+assert.match(app, /reharm-ear-lite-custom-progressions-v1/);
+assert.doesNotMatch(app, /"reharm-ear-custom-progressions-v1"/);
 assert.match(app, /Lite chapters 1–4 · shuffle/);
 assert.match(app, /Reharmonization Techniques · Lite · Chapter/);
+assert.match(index, /id="builderWorkspace"/);
+assert.match(index, /id="builderTimeline"/);
 
 const coreSection = app.slice(
   app.indexOf("const CORE_EXERCISES = ["),
@@ -63,5 +67,5 @@ for (const relativeUrl of appFiles) {
 }
 
 console.log(
-  "Lite check passed: 62 exercises, Chapters 1–4 only, isolated storage and offline cache.",
+  "Lite check passed: 62 exercises, Builder, Chapters 1–4 only, isolated storage and offline cache.",
 );

@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+  >
   <meta name="theme-color" content="#eef1ed">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -11,14 +14,12 @@
   <meta name="screen-orientation" content="portrait">
   <title>Reharm Ear Trainer Lite</title>
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.svg?v=0.32" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png?v=0.32" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body data-atmosphere="dawn" data-edition="lite">
-  <div class="orientation-guard" role="status">
-    <strong>Turn your iPhone upright</strong>
-  </div>
-
   <main class="app-shell">
     <header class="topbar">
       <div class="brand-lockup" aria-label="Ear Reharm Trainer Lite">
@@ -30,7 +31,7 @@
       </div>
       <div class="topbar-title">
         <p class="eyebrow" id="chapterLabel">Reharmonization Techniques · Lite</p>
-        <h1>Chord Progressions</h1>
+        <h1 id="appTitle">Chord Progressions</h1>
       </div>
       <button
         class="icon-button help-button"
@@ -55,6 +56,27 @@
         </svg>
       </button>
     </header>
+
+    <nav class="workspace-tabs" role="tablist" aria-label="Application mode">
+      <button
+        class="workspace-tab active"
+        id="trainerTab"
+        type="button"
+        role="tab"
+        aria-selected="true"
+        aria-controls="trainerWorkspace"
+        data-workspace="trainer"
+      >Trainer</button>
+      <button
+        class="workspace-tab"
+        id="builderTab"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="builderWorkspace"
+        data-workspace="builder"
+      >Builder</button>
+    </nav>
 
     <button class="settings-scrim" id="settingsScrim" type="button" aria-label="Close settings" hidden></button>
     <aside class="settings-panel" id="settingsPanel" aria-label="Settings" hidden>
@@ -107,7 +129,13 @@
       <button class="settings-reset" id="resetStatsButton" type="button">Reset statistics</button>
     </aside>
 
-    <section class="exercise">
+    <div
+      class="workspace-panel"
+      id="trainerWorkspace"
+      role="tabpanel"
+      aria-labelledby="trainerTab"
+    >
+      <section class="exercise">
       <div class="exercise-heading">
         <div>
           <p class="source" id="sourceLabel"></p>
@@ -134,9 +162,9 @@
       <p class="feedback" id="feedback" aria-live="polite">
         Tonic first, then the progression.
       </p>
-    </section>
+      </section>
 
-    <section class="actions" aria-label="Exercise actions">
+      <section class="actions" aria-label="Exercise actions">
       <button
         class="history-button"
         id="previousButton"
@@ -146,16 +174,52 @@
         disabled
       >←</button>
       <button class="secondary" id="showButton" type="button">Show answer</button>
-      <button class="secondary" id="reviewButton" type="button" title="Play with highlighting" disabled>▶ Review</button>
       <div class="playback-controls" id="playbackControls" aria-label="Sequence playback">
         <button class="segment-play-button" type="button" data-play-segment="0" hidden></button>
-        <button class="play-button" id="playButton" type="button" title="Play full sequence" aria-label="Play full sequence">▶</button>
+        <div class="playback-primary">
+          <button
+            class="arpeggio-button"
+            id="arpeggioUpButton"
+            type="button"
+            title="Arpeggio up"
+            aria-label="Toggle ascending arpeggio"
+            aria-pressed="false"
+          >Arp ↑</button>
+          <button class="play-button" id="playButton" type="button" title="Play full sequence" aria-label="Play full sequence">▶</button>
+          <button
+            class="arpeggio-button"
+            id="arpeggioDownButton"
+            type="button"
+            title="Arpeggio down"
+            aria-label="Toggle descending arpeggio"
+            aria-pressed="false"
+          >Arp ↓</button>
+        </div>
         <button class="segment-play-button" type="button" data-play-segment="1" hidden></button>
       </div>
       <button class="primary" id="nextButton" type="button" title="Skip without changing statistics">Skip</button>
-    </section>
+      </section>
 
-    <section class="stats" aria-label="Statistics">
+      <section
+        class="playback-answer"
+        id="playbackAnswer"
+        aria-live="polite"
+        aria-label="Now playing"
+        hidden
+      >
+        <p class="playback-answer-eyebrow" id="playbackAnswerEyebrow">Tonic reference</p>
+        <strong class="playback-answer-primary" id="playbackAnswerPrimary">I</strong>
+        <span class="playback-answer-secondary" id="playbackAnswerSecondary"></span>
+        <span class="playback-answer-position" id="playbackAnswerPosition"></span>
+        <button
+          class="playback-answer-stop"
+          id="playbackAnswerStop"
+          type="button"
+          aria-label="Stop playback"
+        >■ Stop</button>
+      </section>
+
+      <section class="stats" aria-label="Statistics">
       <div>
         <strong id="completedStat">0</strong>
         <span>Attempts</span>
@@ -172,9 +236,9 @@
         <strong id="revealedStat">0</strong>
         <span>Revealed</span>
       </div>
-    </section>
+      </section>
 
-    <section class="piano-panel" aria-label="Keyboard for checking chords">
+      <section class="piano-panel" aria-label="Keyboard for checking chords">
       <div class="piano-panel-heading">
         <strong>Keyboard</strong>
         <button class="piano-stop" id="pianoStopButton" type="button" title="Stop keyboard sounds" aria-label="Stop keyboard sounds">■</button>
@@ -182,6 +246,162 @@
       <div class="piano-scroll">
         <div class="piano" id="pianoKeyboard" aria-label="Piano keyboard from C2 to C5"></div>
       </div>
+      </section>
+    </div>
+
+    <section
+      class="builder-workspace workspace-panel"
+      id="builderWorkspace"
+      role="tabpanel"
+      aria-labelledby="builderTab"
+      hidden
+    >
+      <header class="builder-heading">
+        <div>
+          <p class="eyebrow">My progressions</p>
+          <h2>Progression Builder</h2>
+          <p>Build by scale degree, listen, save, and train.</p>
+        </div>
+        <div class="builder-heading-actions">
+          <button class="builder-subtle-button" id="builderTemplateButton" type="button">
+            Use current exercise
+          </button>
+          <button class="builder-subtle-button" id="builderNewButton" type="button">
+            New
+          </button>
+        </div>
+      </header>
+
+      <section class="builder-card builder-details" aria-label="Progression details">
+        <label>
+          <span>Name</span>
+          <input
+            id="builderNameInput"
+            type="text"
+            maxlength="64"
+            autocomplete="off"
+            placeholder="My progression"
+          >
+        </label>
+        <label>
+          <span>Key</span>
+          <select id="builderKeySelect"></select>
+        </label>
+      </section>
+
+      <section class="builder-card builder-composer" aria-label="Build a chord">
+        <div class="builder-section-heading">
+          <div>
+            <p class="eyebrow">Build chord</p>
+            <h3 id="builderChordPreview">IMaj7</h3>
+          </div>
+          <span id="builderCountLabel">0 / 20</span>
+        </div>
+
+        <div class="builder-field">
+          <span>Scale degree</span>
+          <div class="builder-degree-grid" role="group" aria-label="Scale degree">
+            <button class="active" type="button" data-builder-degree="0">I</button>
+            <button type="button" data-builder-degree="1">II</button>
+            <button type="button" data-builder-degree="2">III</button>
+            <button type="button" data-builder-degree="3">IV</button>
+            <button type="button" data-builder-degree="4">V</button>
+            <button type="button" data-builder-degree="5">VI</button>
+            <button type="button" data-builder-degree="6">VII</button>
+          </div>
+        </div>
+
+        <div class="builder-chord-options">
+          <div class="builder-field">
+            <span>Accidental</span>
+            <div class="builder-accidental-grid" role="group" aria-label="Root accidental">
+              <button type="button" data-builder-accidental="-1">♭</button>
+              <button class="active" type="button" data-builder-accidental="0">♮</button>
+              <button type="button" data-builder-accidental="1">♯</button>
+            </div>
+          </div>
+          <label class="builder-field">
+            <span>Quality</span>
+            <select id="builderQualitySelect">
+              <option value="maj">Major</option>
+              <option value="min">Minor</option>
+              <option value="6">Major 6</option>
+              <option value="maj7" selected>Major 7</option>
+              <option value="m7">Minor 7</option>
+              <option value="m7b5">Minor 7 ♭5</option>
+              <option value="m6">Minor 6</option>
+              <option value="7">Dominant 7</option>
+              <option value="7b9">Dominant 7 ♭9</option>
+              <option value="7sus4">Dominant 7 sus4</option>
+              <option value="dim7">Diminished 7</option>
+              <option value="aug">Augmented</option>
+              <option value="maj7sharp11">Major 7 #11</option>
+              <option value="7alt">Dominant 7 alt</option>
+            </select>
+          </label>
+          <label class="builder-field">
+            <span>Slash bass</span>
+            <select id="builderBassSelect">
+              <option value="">No slash bass</option>
+            </select>
+          </label>
+        </div>
+
+        <button class="builder-add-button" id="builderAddButton" type="button">
+          Add chord
+        </button>
+      </section>
+
+      <section class="builder-card builder-sequence-card" aria-label="Progression">
+        <div class="builder-section-heading">
+          <div>
+            <p class="eyebrow">Sequence</p>
+            <h3>Your progression</h3>
+          </div>
+          <div class="builder-sequence-tools">
+            <button id="builderMoveLeftButton" type="button" title="Move selected chord left" disabled>←</button>
+            <button id="builderMoveRightButton" type="button" title="Move selected chord right" disabled>→</button>
+            <button id="builderDuplicateButton" type="button" title="Duplicate selected chord" disabled>＋</button>
+            <button id="builderDeleteChordButton" type="button" title="Delete selected chord" disabled>×</button>
+          </div>
+        </div>
+        <div class="builder-timeline" id="builderTimeline">
+          <p class="builder-empty">Add the first chord above.</p>
+        </div>
+        <div class="builder-playback">
+          <button class="builder-clear-button" id="builderClearButton" type="button">Clear</button>
+          <button
+            class="builder-play-button"
+            id="builderPlayButton"
+            type="button"
+            aria-label="Play custom progression"
+            disabled
+          >▶</button>
+          <button class="builder-save-button" id="builderSaveButton" type="button" disabled>
+            Save progression
+          </button>
+        </div>
+        <p class="builder-feedback" id="builderFeedback" aria-live="polite">
+          Add at least two chords to save and train.
+        </p>
+      </section>
+
+      <section class="builder-card builder-library" aria-label="Saved progressions">
+        <div class="builder-section-heading">
+          <div>
+            <p class="eyebrow">Device library</p>
+            <h3>My Progressions</h3>
+          </div>
+          <div class="builder-library-actions">
+            <button id="builderImportButton" type="button">Import</button>
+            <button id="builderExportButton" type="button">Export</button>
+            <input id="builderImportInput" type="file" accept="application/json" hidden>
+          </div>
+        </div>
+        <div class="builder-saved-list" id="builderSavedList">
+          <p class="builder-empty">Saved progressions will appear here.</p>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -196,7 +416,7 @@
       aria-labelledby="onboardingTitle"
       aria-describedby="onboardingBody"
     >
-      <p class="onboarding-count" id="onboardingCount">How to · 1 / 9</p>
+      <p class="onboarding-count" id="onboardingCount">How to · 1 / 8</p>
       <h2 id="onboardingTitle">Listen</h2>
       <p class="onboarding-body" id="onboardingBody"></p>
       <div class="onboarding-progress" id="onboardingProgress" aria-hidden="true"></div>

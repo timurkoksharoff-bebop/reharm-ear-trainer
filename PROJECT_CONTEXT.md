@@ -21,8 +21,8 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current published cache version: `0.24`
-- Current Lite cache version: `0.1`
+- Current published cache version: `0.32`
+- Current Lite cache version: `0.3`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -56,8 +56,8 @@ When adding or correcting a progression:
 
 - The shipping interface is English-only.
 - First-time users see a concise visual `How to` tour that spotlights playback,
-  answer entry, reveal/review, navigation, favorites, statistics, keyboard, and
-  settings. Completing or skipping it removes the temporary top-bar info
+  answer entry, reveal/answer playback, navigation, favorites, statistics,
+  keyboard, and settings. Completing or skipping it removes the temporary top-bar info
   button, and the tour remains replayable from Settings.
 - Chapter, exercise, tempo, sound, and notation controls live in the top-right
   settings panel so the main screen opens directly on the listening grid.
@@ -72,12 +72,35 @@ When adding or correcting a progression:
 - Favorites use a versioned record with stable exercise metadata and request
   persistent browser storage when supported, so normal PWA rebuilds and
   catalog-ID migrations do not discard them.
-- Before every exercise, a tonic reference chord sounds first.
+- The `Builder` workspace creates independent progressions of 2–20 chords by
+  scale degree, accidental, quality, and optional slash bass. A textbook
+  exercise can be copied into the Builder as a template, but the canonical
+  catalog entry is never modified.
+- Custom progressions can be named, transposed to a chosen key, reordered,
+  previewed, saved locally, reopened, deleted, and launched in the normal
+  Trainer. JSON export/import provides an explicit cross-device backup.
+- Full and Lite editions use separate custom-progression storage keys. Custom
+  progressions are device-local and work offline after the application has
+  loaded successfully.
+- Before every exercise, a tonic reference chord sounds first. It always
+  remains a block chord, even when arpeggio mode is active, and a short true
+  silence separates it from the progression.
+- Two compact controls beside Play switch between block chords, ascending
+  arpeggios, and descending arpeggios; the selected articulation is stored
+  locally. Arpeggio notes are separated by up to 250 ms so chord tones can be
+  identified individually, with automatic compression only when a very dense
+  chord must remain inside its original tempo slot. Earlier tones keep
+  sustaining as later tones enter, and the complete assembled chord is held
+  for at least 450 ms before the next chord.
 - Progressions with eight or more chords keep a full-sequence round Play button
   and add two compact numbered playback ranges; each half starts with its own
   tonic reference.
 - During blind playback, the current position number is highlighted without
-  revealing the correct chord row. Review mode may highlight both.
+  revealing the correct chord row. After `Show answer`, the regular Play
+  control automatically follows and highlights the sounding answer.
+- On phone-sized screens, revealed-answer playback opens a full-screen chord
+  display with a large current chord, its alternate notation, position, and a
+  Stop control.
 - Wrong choices turn red and remain unavailable; the student keeps trying
   until the correct chord is found.
 - Correct choices turn blue.
@@ -86,16 +109,23 @@ When adding or correcting a progression:
   current session, restoring its chapter filter and transposed key.
 - `Skip` advances without affecting statistics.
 - `Show answer` reveals the solution.
-- `Review` replays the revealed progression while highlighting the sounding
-  scale degree.
 - Every answer row can be pressed to audition that chord independently.
 - Holding a chord label opens a grand-staff popover with the exact playback
   voicing without taking horizontal space from the label; bass-only, upright
   reinforcement, and independent slash basses are represented explicitly.
+- Chord symbols and popover notes use functional root spelling plus
+  quality-aware tertian spelling for every chord tone. Diminished sevenths
+  therefore retain stacked thirds (for example `C♯–E–G–B♭`, not
+  `C♯–E–G–A♯`). If a transposition would require a triple accidental, the
+  entire chord is respelled to one readable enharmonic root instead of mixing
+  incompatible note letters.
 - The lower three-octave keyboard (C2–C5) is available for manual checking.
 - Portrait mobile layout is primary; long progressions use progressively
   smaller, separated dots and always fit the answer matrix without horizontal
   scrolling.
+- Installed PWAs request portrait orientation where the platform supports it.
+  The web interface remains usable in landscape instead of covering the app
+  with a rotation warning, and browser gesture zoom is suppressed.
 
 ## Audio Decisions
 
@@ -129,8 +159,8 @@ When adding or correcting a progression:
 
 ## Source Layout
 
-- `app.js`: exercise catalog, state, grading, randomization, favorites, audio,
-  piano keyboard, and rendering.
+- `app.js`: exercise catalog, state, grading, randomization, favorites,
+  Progression Builder, audio, piano keyboard, and rendering.
 - `index.html`: application structure and controls.
 - `styles.css`: desktop and mobile presentation.
 - `samples/piano/`: local piano samples and their license.
@@ -164,6 +194,13 @@ Each chord contains:
 - optional enharmonic spelling preference;
 - optional independent slash-bass offset.
 
+The printed `#I` functions in core examples are source-verified and must not be
+globally converted to `♭II`: Fig. 3.2 (printed p. 29), Fig. 3.7 (p. 31), Fig.
+3.16 (p. 33), Exercise 5.1 (p. 50), Figs. 7.15/7.17 (pp. 69–70), Fig. 12.2
+(p. 113), and Fig. 12.13 (p. 116). In Fig. 3.16 the printed `F#7` is an
+extended-dominant link resolving to `B7`; the diminished examples use `#I°7`
+as a leading-tone/rootless-dominant function resolving upward to II.
+
 `app.js` is currently a single-file application. Keep changes focused unless
 the catalog or UI becomes too large to maintain safely.
 
@@ -193,6 +230,9 @@ Then open `http://127.0.0.1:8103/` and verify at least:
 6. favorites across a page reload;
 7. iPhone-width layout;
 8. offline cache version.
+9. Builder add/edit/reorder/save/reload/delete flow;
+10. launching a saved progression in Trainer;
+11. Lite Builder storage remains isolated from the full edition.
 
 ## Publishing
 
@@ -226,12 +266,18 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.24` includes 239 progressions: 107 core examples and
+- Production PWA `0.32` includes 239 built-in progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
-- The standalone Trainer release uses cache `0.24`. Localhost previews
+- Release `0.32` adds the Progression Builder, audited
+  functional/tertian note spelling, stable mobile viewport behavior, and
+  ascending/descending arpeggio playback while retaining the same 239-item
+  canonical catalog. User-created progressions live in a separate local
+  library and are not counted as textbook content.
+- The published standalone Trainer uses cache `0.32`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
-- Lite `0.1` is built from the same interface and audio engine, but its shipped
+- Lite `0.3` is built from the same interface, Builder, and
+  audio engine, but its shipped
   catalog physically contains only Chapters 1–4. Its storage and cache names
   are isolated from the full Trainer.
 - GitHub Pages and the repository are working.

@@ -702,6 +702,7 @@ const EXERCISES = [
   ...CORE_EXERCISES,
   ...REFERENCE_ANSWER_SPECS.map(referenceAnswerExercise),
 ];
+const BUILT_IN_EXERCISE_COUNT = EXERCISES.length;
 
 const KEY_CHOICES = [
   { name: "C", tonic: 0, spelling: "sharp" },
@@ -717,6 +718,16 @@ const KEY_CHOICES = [
 const NOTE_NAMES = {
   sharp: ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"],
   flat: ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"],
+};
+const NOTE_LETTERS = ["C", "D", "E", "F", "G", "A", "B"];
+const NATURAL_PITCH_CLASSES = {
+  C: 0,
+  D: 2,
+  E: 4,
+  F: 5,
+  G: 7,
+  A: 9,
+  B: 11,
 };
 
 const QUALITY = {
@@ -743,10 +754,48 @@ const QUALITY = {
   minSharp5: { suffix: "−(#5)", intervals: [0, 3, 8] },
   augMaj7: { suffix: "+(Maj7)", intervals: [0, 4, 8, 11] },
 };
+const QUALITY_DIATONIC_STEPS = {
+  maj: [0, 2, 4],
+  min: [0, 2, 4],
+  aug: [0, 2, 4],
+  "6": [0, 2, 4, 5],
+  maj7: [0, 2, 4, 6],
+  maj7sharp11: [0, 2, 4, 6, 10],
+  m7: [0, 2, 4, 6],
+  m7b5: [0, 2, 4, 6],
+  m7natural9: [0, 2, 4, 6, 8],
+  m7b5natural9: [0, 2, 4, 6, 8],
+  m6: [0, 2, 4, 5],
+  "7": [0, 2, 4, 6],
+  "7b9": [0, 2, 4, 6, 8],
+  "7b9b13": [0, 2, 4, 6, 8, 12],
+  dim7: [0, 2, 4, 6],
+  "7sus4": [0, 3, 4, 6],
+  "7b5": [0, 2, 4, 6],
+  "7sharp5": [0, 2, 4, 6],
+  "7alt": [0, 2, 4, 6, 8],
+  m7b9: [0, 2, 4, 6, 8],
+  minSharp5: [0, 2, 4],
+  augMaj7: [0, 2, 4, 6],
+};
 
 const FAVORITES_STORAGE_KEY = "reharm-ear-lite-favorites-v2";
 const LEGACY_FAVORITES_STORAGE_KEY = "reharm-ear-lite-favorites-v1";
 const ONBOARDING_STORAGE_KEY = "reharm-ear-lite-onboarding-v1";
+const CUSTOM_PROGRESSIONS_STORAGE_KEY = "reharm-ear-lite-custom-progressions-v1";
+const ARPEGGIO_MODE_STORAGE_KEY = "reharm-ear-arpeggio-mode-v1";
+const BUILDER_MAX_CHORDS = 20;
+const BUILDER_DEGREES = [
+  { roman: "I", offset: 0 },
+  { roman: "II", offset: 2 },
+  { roman: "III", offset: 4 },
+  { roman: "IV", offset: 5 },
+  { roman: "V", offset: 7 },
+  { roman: "VI", offset: 9 },
+  { roman: "VII", offset: 11 },
+];
+let customProgressions = loadCustomProgressions();
+EXERCISES.push(...customProgressions.map(customProgressionExercise));
 
 const state = {
   exerciseIndex: 0,
@@ -754,6 +803,7 @@ const state = {
   favorites: loadFavorites(),
   mode: "degree",
   sound: "piano",
+  arpeggioMode: loadArpeggioMode(),
   key: KEY_CHOICES[4],
   answers: [],
   wrongAnswers: [],
@@ -768,7 +818,28 @@ const state = {
   stats: loadStats(),
 };
 
+const builderState = {
+  workspace: "trainer",
+  recordId: null,
+  name: "",
+  keyIndex: 0,
+  sequence: [],
+  selectedIndex: null,
+  rootDegreeIndex: 0,
+  accidental: 0,
+  quality: "maj7",
+  bassValue: "",
+  playing: false,
+  activePosition: null,
+  feedback: "Add at least two chords to save and train.",
+};
+
 const ui = {
+  appTitle: document.querySelector("#appTitle"),
+  trainerTab: document.querySelector("#trainerTab"),
+  builderTab: document.querySelector("#builderTab"),
+  trainerWorkspace: document.querySelector("#trainerWorkspace"),
+  builderWorkspace: document.querySelector("#builderWorkspace"),
   chapterSelect: document.querySelector("#chapterSelect"),
   exerciseSelect: document.querySelector("#exerciseSelect"),
   tempoSelect: document.querySelector("#tempoSelect"),
@@ -791,11 +862,18 @@ const ui = {
   feedback: document.querySelector("#feedback"),
   playbackControls: document.querySelector("#playbackControls"),
   playButton: document.querySelector("#playButton"),
+  arpeggioUpButton: document.querySelector("#arpeggioUpButton"),
+  arpeggioDownButton: document.querySelector("#arpeggioDownButton"),
   segmentPlayButtons: [...document.querySelectorAll("[data-play-segment]")],
   showButton: document.querySelector("#showButton"),
-  reviewButton: document.querySelector("#reviewButton"),
   previousButton: document.querySelector("#previousButton"),
   nextButton: document.querySelector("#nextButton"),
+  playbackAnswer: document.querySelector("#playbackAnswer"),
+  playbackAnswerEyebrow: document.querySelector("#playbackAnswerEyebrow"),
+  playbackAnswerPrimary: document.querySelector("#playbackAnswerPrimary"),
+  playbackAnswerSecondary: document.querySelector("#playbackAnswerSecondary"),
+  playbackAnswerPosition: document.querySelector("#playbackAnswerPosition"),
+  playbackAnswerStop: document.querySelector("#playbackAnswerStop"),
   actionBar: document.querySelector(".actions"),
   statsPanel: document.querySelector(".stats"),
   resetStatsButton: document.querySelector("#resetStatsButton"),
@@ -822,6 +900,30 @@ const ui = {
   onboardingProgress: document.querySelector("#onboardingProgress"),
   onboardingSkipButton: document.querySelector("#onboardingSkipButton"),
   onboardingNextButton: document.querySelector("#onboardingNextButton"),
+  builderTemplateButton: document.querySelector("#builderTemplateButton"),
+  builderNewButton: document.querySelector("#builderNewButton"),
+  builderNameInput: document.querySelector("#builderNameInput"),
+  builderKeySelect: document.querySelector("#builderKeySelect"),
+  builderDegreeButtons: [...document.querySelectorAll("[data-builder-degree]")],
+  builderAccidentalButtons: [...document.querySelectorAll("[data-builder-accidental]")],
+  builderQualitySelect: document.querySelector("#builderQualitySelect"),
+  builderBassSelect: document.querySelector("#builderBassSelect"),
+  builderChordPreview: document.querySelector("#builderChordPreview"),
+  builderCountLabel: document.querySelector("#builderCountLabel"),
+  builderAddButton: document.querySelector("#builderAddButton"),
+  builderMoveLeftButton: document.querySelector("#builderMoveLeftButton"),
+  builderMoveRightButton: document.querySelector("#builderMoveRightButton"),
+  builderDuplicateButton: document.querySelector("#builderDuplicateButton"),
+  builderDeleteChordButton: document.querySelector("#builderDeleteChordButton"),
+  builderTimeline: document.querySelector("#builderTimeline"),
+  builderClearButton: document.querySelector("#builderClearButton"),
+  builderPlayButton: document.querySelector("#builderPlayButton"),
+  builderSaveButton: document.querySelector("#builderSaveButton"),
+  builderFeedback: document.querySelector("#builderFeedback"),
+  builderImportButton: document.querySelector("#builderImportButton"),
+  builderExportButton: document.querySelector("#builderExportButton"),
+  builderImportInput: document.querySelector("#builderImportInput"),
+  builderSavedList: document.querySelector("#builderSavedList"),
 };
 
 let audioContext = null;
@@ -850,6 +952,9 @@ let voicingPopoverAnchor = null;
 let onboardingStepIndex = -1;
 let onboardingTarget = null;
 let onboardingPositionTimer = null;
+let builderStopTimer = null;
+let builderPreviewTimer = null;
+let builderHighlightTimers = [];
 const PIANO_SUSTAIN_RATIO = 1.1;
 const PIANO_LEGATO_SUSTAIN_RATIO = 1.35;
 const PIANO_RELEASE_SECONDS = 0.7;
@@ -862,6 +967,9 @@ const UPRIGHT_BASS_FILTER_HZ = 2600;
 const AUDIO_HARDWARE_IDLE_THRESHOLD_MS = 6000;
 const AUDIO_HARDWARE_WARMUP_MS = 110;
 const AUDIO_CONTEXT_IDLE_CLOSE_MS = 120000;
+const ARPEGGIO_STEP_SECONDS = 0.25;
+const ARPEGGIO_MIN_HOLD_SECONDS = 0.45;
+const REFERENCE_SEQUENCE_GAP_SECONDS = 0.28;
 const SEGMENTED_PLAYBACK_MIN_LENGTH = 8;
 const CHORD_NOTES_HOLD_MS = 520;
 const CHORD_NOTES_HOLD_MOVE_PX = 12;
@@ -882,15 +990,8 @@ const ONBOARDING_STEPS = [
   },
   {
     title: "Reveal",
-    body: "Show answer fills in the complete progression when you need a hint.",
-    action: "Next",
+    body: "Show answer fills in the progression. After that, the regular Play button follows every sounding chord and opens a large chord view on phones.",
     target: () => ui.showButton,
-  },
-  {
-    title: "Review",
-    body: "After revealing, Review plays the answer again with each position highlighted.",
-    action: "Next",
-    target: () => ui.reviewButton,
   },
   {
     title: "Navigate",
@@ -1196,6 +1297,1005 @@ function currentExercise() {
   return EXERCISES[state.exerciseIndex];
 }
 
+function normalizedPitchClass(value) {
+  return ((Number(value) % 12) + 12) % 12;
+}
+
+function functionalDegreeInfo(label, exact = false) {
+  const normalized = String(label || "").replace(/^b/, "♭");
+  const romanMatch = normalized.match(
+    exact
+      ? /^([♭#]?)(VII|VI|IV|V|III|II|I)$/
+      : /^([♭#]?)(VII|VI|IV|V|III|II|I)(?=$|[^IV])/,
+  );
+  if (romanMatch) {
+    return {
+      accidental: romanMatch[1],
+      degreeIndex: ["I", "II", "III", "IV", "V", "VI", "VII"]
+        .indexOf(romanMatch[2]),
+    };
+  }
+  if (!exact) return null;
+  const arabicMatch = normalized.match(/^([♭#]?)([1-7])$/);
+  if (!arabicMatch) return null;
+  return {
+    accidental: arabicMatch[1],
+    degreeIndex: Number(arabicMatch[2]) - 1,
+  };
+}
+
+function accidentalText(semitones) {
+  if (semitones < 0) return "♭".repeat(Math.abs(semitones));
+  if (semitones > 0) return "♯".repeat(semitones);
+  return "";
+}
+
+function writtenNotePitchClass(noteName) {
+  const match = String(noteName).match(/^([A-G])([♭♯]*)$/);
+  if (!match) return null;
+  const accidental = [...match[2]].reduce(
+    (total, symbol) => total + (symbol === "♯" ? 1 : -1),
+    0,
+  );
+  return normalizedPitchClass(NATURAL_PITCH_CLASSES[match[1]] + accidental);
+}
+
+function spellPitchClassWithLetter(pitchClass, letter) {
+  const naturalPitchClass = NATURAL_PITCH_CLASSES[letter];
+  if (naturalPitchClass === undefined) return NOTE_NAMES.sharp[pitchClass];
+  let accidental = normalizedPitchClass(pitchClass - naturalPitchClass);
+  if (accidental > 6) accidental -= 12;
+  return `${letter}${accidentalText(accidental)}`;
+}
+
+function functionalPitchName(pitchClass, degreeInfo, key) {
+  if (!degreeInfo) return null;
+  const tonicLetterIndex = NOTE_LETTERS.indexOf(String(key.name)[0]);
+  if (tonicLetterIndex < 0) return null;
+  const letter = NOTE_LETTERS[
+    (tonicLetterIndex + degreeInfo.degreeIndex) % NOTE_LETTERS.length
+  ];
+  return spellPitchClassWithLetter(pitchClass, letter);
+}
+
+function analyticalRootDegreeInfo(item) {
+  const parts = String(item.degree).split("/");
+  const hasFunctionalTarget = (
+    (item.bassOffset === null && parts.length >= 2)
+    || parts.length >= 3
+  );
+  if (!hasFunctionalTarget) return null;
+  const target = functionalDegreeInfo(parts[1], true);
+  if (!target) return null;
+  if (parts[0].startsWith("SubV7")) {
+    return { degreeIndex: (target.degreeIndex + 1) % 7 };
+  }
+  if (parts[0].startsWith("V7")) {
+    return { degreeIndex: (target.degreeIndex + 4) % 7 };
+  }
+  return null;
+}
+
+function spelledChordRootName(item, key = state.key) {
+  const pitchClass = normalizedPitchClass(key.tonic + item.offset);
+  const degreeInfo = analyticalRootDegreeInfo(item)
+    || functionalDegreeInfo(String(item.degree).split("/")[0]);
+  return functionalPitchName(pitchClass, degreeInfo, key)
+    || NOTE_NAMES[item.spelling || key.spelling][pitchClass];
+}
+
+function accidentalMagnitude(noteName) {
+  return [...String(noteName).slice(1)].length;
+}
+
+function chordToneSpellingsFromRoot(item, key, rootName) {
+  const rootLetterIndex = NOTE_LETTERS.indexOf(rootName[0]);
+  const diatonicSteps = QUALITY_DIATONIC_STEPS[item.quality];
+  const intervals = QUALITY[item.quality]?.intervals;
+  if (
+    rootLetterIndex < 0
+    || !Array.isArray(diatonicSteps)
+    || !Array.isArray(intervals)
+    || diatonicSteps.length !== intervals.length
+  ) return [];
+  return intervals.map((interval, index) => {
+    const pitchClass = normalizedPitchClass(key.tonic + item.offset + interval);
+    const letter = NOTE_LETTERS[
+      (rootLetterIndex + diatonicSteps[index]) % NOTE_LETTERS.length
+    ];
+    return spellPitchClassWithLetter(pitchClass, letter);
+  });
+}
+
+function chordToneSpellings(item, key = state.key) {
+  const preferredRoot = spelledChordRootName(item, key);
+  const preferred = chordToneSpellingsFromRoot(item, key, preferredRoot);
+  if (preferred.every((name) => accidentalMagnitude(name) <= 2)) {
+    return preferred;
+  }
+
+  const rootPitchClass = normalizedPitchClass(key.tonic + item.offset);
+  const candidates = NOTE_LETTERS.map((letter) => {
+    const rootName = spellPitchClassWithLetter(rootPitchClass, letter);
+    const spellings = chordToneSpellingsFromRoot(item, key, rootName);
+    return {
+      spellings,
+      maximum: Math.max(...spellings.map(accidentalMagnitude)),
+      total: spellings.reduce(
+        (sum, name) => sum + accidentalMagnitude(name),
+        0,
+      ),
+      rootDistance: letter === preferredRoot[0] ? 0 : 1,
+    };
+  }).filter(({ maximum }) => maximum <= 2);
+
+  candidates.sort((left, right) => (
+    left.maximum - right.maximum
+    || left.total - right.total
+    || left.rootDistance - right.rootDistance
+  ));
+  return candidates[0]?.spellings || preferred;
+}
+
+function spelledBassName(item, key = state.key, toneNames = null) {
+  if (item.bassOffset === null || item.bassOffset === undefined) {
+    return toneNames?.[0] || spelledChordRootName(item, key);
+  }
+  const bassPitchClass = normalizedPitchClass(key.tonic + item.bassOffset);
+  const chordPitchClass = normalizedPitchClass(key.tonic + item.offset);
+  const intervals = QUALITY[item.quality]?.intervals || [];
+  const spellings = toneNames || chordToneSpellings(item, key);
+  const chordToneIndex = intervals.findIndex(
+    (interval) => normalizedPitchClass(chordPitchClass + interval) === bassPitchClass,
+  );
+  if (chordToneIndex >= 0 && spellings[chordToneIndex]) {
+    return spellings[chordToneIndex];
+  }
+  const slashToken = String(item.degree).includes("/")
+    ? String(item.degree).split("/").at(-1)
+    : "";
+  const functionalName = functionalPitchName(
+    bassPitchClass,
+    functionalDegreeInfo(slashToken, true),
+    key,
+  );
+  return functionalName || NOTE_NAMES[key.spelling][bassPitchClass];
+}
+
+function cloneChordItem(item) {
+  return chord(
+    String(item.degree),
+    normalizedPitchClass(item.offset),
+    String(item.quality),
+    item.spelling === "flat" || item.spelling === "sharp" ? item.spelling : null,
+    item.bassOffset === null || item.bassOffset === undefined
+      ? null
+      : normalizedPitchClass(item.bassOffset),
+  );
+}
+
+function sanitizeCustomChord(item) {
+  if (!item || typeof item !== "object") return null;
+  if (!QUALITY[item.quality]) return null;
+  const degree = String(item.degree || "").trim().slice(0, 32);
+  if (!degree) return null;
+  const offset = Number(item.offset);
+  if (!Number.isFinite(offset)) return null;
+  const bassOffset = item.bassOffset === null || item.bassOffset === undefined
+    ? null
+    : Number(item.bassOffset);
+  if (bassOffset !== null && !Number.isFinite(bassOffset)) return null;
+  return chord(
+    degree,
+    normalizedPitchClass(offset),
+    item.quality,
+    item.spelling === "flat" || item.spelling === "sharp" ? item.spelling : null,
+    bassOffset === null ? null : normalizedPitchClass(bassOffset),
+  );
+}
+
+function sanitizeCustomProgression(record, fallbackIndex = 0) {
+  if (!record || typeof record !== "object") return null;
+  const sequence = Array.isArray(record.sequence)
+    ? record.sequence.map(sanitizeCustomChord).filter(Boolean).slice(0, BUILDER_MAX_CHORDS)
+    : [];
+  if (sequence.length < 2) return null;
+  const name = String(record.name || `My progression ${fallbackIndex + 1}`)
+    .trim()
+    .slice(0, 64) || `My progression ${fallbackIndex + 1}`;
+  const baseTonic = normalizedPitchClass(record.baseTonic ?? 0);
+  const keyChoice = KEY_CHOICES.find((key) => key.tonic === baseTonic) || KEY_CHOICES[0];
+  return {
+    id: String(record.id || createCustomProgressionId()).slice(0, 80),
+    name,
+    baseTonic: keyChoice.tonic,
+    keyName: String(record.keyName || keyChoice.name).slice(0, 8),
+    sequence,
+    createdAt: String(record.createdAt || new Date().toISOString()),
+    updatedAt: String(record.updatedAt || new Date().toISOString()),
+  };
+}
+
+function loadCustomProgressions() {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(CUSTOM_PROGRESSIONS_STORAGE_KEY) || "[]",
+    );
+    if (!Array.isArray(stored)) return [];
+    return stored
+      .map((record, index) => sanitizeCustomProgression(record, index))
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomProgressions() {
+  try {
+    localStorage.setItem(
+      CUSTOM_PROGRESSIONS_STORAGE_KEY,
+      JSON.stringify(customProgressions),
+    );
+  } catch {
+    setBuilderFeedback("Could not save on this device. Export a backup file.");
+    return false;
+  }
+  requestPersistentFavoritesStorage();
+  return true;
+}
+
+function customProgressionExercise(record) {
+  return makeExercise({
+    id: `custom-${record.id}`,
+    chapter: 0,
+    name: record.name,
+    source: `My Progression · ${record.sequence.length} chords`,
+    baseTonic: record.baseTonic,
+    sequence: record.sequence.map(cloneChordItem),
+    distractors: [
+      chord("IMaj7", 0, "maj7"),
+      chord("II−7", 2, "m7"),
+      chord("IVMaj7", 5, "maj7"),
+      chord("V7", 7, "7"),
+      chord("VI−7", 9, "m7"),
+      chord("♭VIIMaj7", 10, "maj7", "flat"),
+    ],
+    isCustom: true,
+    customId: record.id,
+  });
+}
+
+function syncCustomExercises() {
+  EXERCISES.splice(
+    BUILT_IN_EXERCISE_COUNT,
+    EXERCISES.length - BUILT_IN_EXERCISE_COUNT,
+    ...customProgressions.map(customProgressionExercise),
+  );
+  let eligibleIndexes = eligibleExerciseIndexes();
+  if (state.chapterFilter === "custom" && eligibleIndexes.length === 0) {
+    state.chapterFilter = "all";
+    eligibleIndexes = eligibleExerciseIndexes();
+  }
+  if (!eligibleIndexes.includes(state.exerciseIndex)) {
+    state.exerciseIndex = eligibleIndexes[0] ?? 0;
+  }
+  if (ui?.chapterSelect) ui.chapterSelect.value = state.chapterFilter;
+  updateCustomChapterOption();
+}
+
+function createCustomProgressionId() {
+  const randomId = globalThis.crypto?.randomUUID?.();
+  if (randomId) return randomId;
+  return `progression-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function builderKeyChoice() {
+  return KEY_CHOICES[builderState.keyIndex] || KEY_CHOICES[0];
+}
+
+function builderChordFromState() {
+  const degree = BUILDER_DEGREES[builderState.rootDegreeIndex] || BUILDER_DEGREES[0];
+  const accidental = Number(builderState.accidental);
+  const prefix = accidental < 0 ? "♭" : (accidental > 0 ? "#" : "");
+  const quality = QUALITY[builderState.quality] ? builderState.quality : "maj";
+  const bassParts = String(builderState.bassValue || "").split("|");
+  const bassOffset = bassParts.length === 2
+    ? normalizedPitchClass(Number(bassParts[0]))
+    : null;
+  const bassLabel = bassOffset === null ? "" : `/${bassParts[1]}`;
+  return chord(
+    `${prefix}${degree.roman}${QUALITY[quality].suffix}${bassLabel}`,
+    normalizedPitchClass(degree.offset + accidental),
+    quality,
+    accidental < 0 ? "flat" : (accidental > 0 ? "sharp" : null),
+    bassOffset,
+  );
+}
+
+function builderControlsForChord(item) {
+  const rootLabel = String(item.degree).split("/")[0];
+  const accidental = rootLabel.startsWith("♭")
+    ? -1
+    : (rootLabel.startsWith("#") ? 1 : 0);
+  const withoutAccidental = rootLabel.replace(/^[♭#]/, "");
+  const rootDegreeIndex = BUILDER_DEGREES
+    .map((degree, index) => ({ degree, index }))
+    .sort((left, right) => right.degree.roman.length - left.degree.roman.length)
+    .find(({ degree }) => withoutAccidental.startsWith(degree.roman))?.index ?? 0;
+  let bassValue = "";
+  if (item.bassOffset !== null) {
+    const printedBass = String(item.degree).split("/")[1];
+    const naturalBass = BUILDER_DEGREES.find(
+      (degree) => degree.offset === normalizedPitchClass(item.bassOffset),
+    );
+    bassValue = `${normalizedPitchClass(item.bassOffset)}|${
+      printedBass || naturalBass?.roman || NOTE_NAMES.flat[item.bassOffset]
+    }`;
+  }
+  return {
+    rootDegreeIndex,
+    accidental,
+    quality: QUALITY[item.quality] ? item.quality : "maj",
+    bassValue,
+  };
+}
+
+function chordSymbolForKey(item, key = builderKeyChoice()) {
+  const toneNames = chordToneSpellings(item, key);
+  const root = `${toneNames[0] || spelledChordRootName(item, key)}${QUALITY[item.quality].suffix}`;
+  if (item.bassOffset === null) return root;
+  return `${root}/${spelledBassName(item, key, toneNames)}`;
+}
+
+function setWorkspace(workspace) {
+  const nextWorkspace = workspace === "builder" ? "builder" : "trainer";
+  cancelBuilderPlayback();
+  cancelPlayback();
+  setSettingsOpen(false);
+  builderState.workspace = nextWorkspace;
+  ui.trainerWorkspace.hidden = nextWorkspace !== "trainer";
+  ui.builderWorkspace.hidden = nextWorkspace !== "builder";
+  ui.trainerTab.classList.toggle("active", nextWorkspace === "trainer");
+  ui.builderTab.classList.toggle("active", nextWorkspace === "builder");
+  ui.trainerTab.setAttribute("aria-selected", String(nextWorkspace === "trainer"));
+  ui.builderTab.setAttribute("aria-selected", String(nextWorkspace === "builder"));
+  document.body.dataset.workspace = nextWorkspace;
+  if (nextWorkspace === "builder") {
+    ui.chapterLabel.textContent = "My Progressions · Offline workspace";
+    ui.appTitle.textContent = "Progression Builder";
+    renderBuilder();
+  } else {
+    render();
+  }
+}
+
+function setBuilderFeedback(message) {
+  builderState.feedback = message;
+  if (ui.builderFeedback) ui.builderFeedback.textContent = message;
+}
+
+function populateBuilderControls() {
+  ui.builderKeySelect.replaceChildren();
+  KEY_CHOICES.forEach((key, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = key.name;
+    ui.builderKeySelect.append(option);
+  });
+
+  ui.builderBassSelect.replaceChildren();
+  const noBass = document.createElement("option");
+  noBass.value = "";
+  noBass.textContent = "No slash bass";
+  ui.builderBassSelect.append(noBass);
+  BUILDER_DEGREES.forEach((degree) => {
+    [-1, 0, 1].forEach((accidental) => {
+      const prefix = accidental < 0 ? "♭" : (accidental > 0 ? "#" : "");
+      const label = `${prefix}${degree.roman}`;
+      const option = document.createElement("option");
+      option.value = `${normalizedPitchClass(degree.offset + accidental)}|${label}`;
+      option.textContent = label;
+      ui.builderBassSelect.append(option);
+    });
+  });
+}
+
+function initBuilder() {
+  populateBuilderControls();
+  syncCustomExercises();
+  ui.trainerTab.addEventListener("click", () => setWorkspace("trainer"));
+  ui.builderTab.addEventListener("click", () => setWorkspace("builder"));
+  ui.builderNameInput.addEventListener("input", () => {
+    builderState.name = ui.builderNameInput.value.slice(0, 64);
+  });
+  ui.builderKeySelect.addEventListener("change", () => {
+    builderState.keyIndex = Number(ui.builderKeySelect.value) || 0;
+    renderBuilder();
+  });
+  ui.builderDegreeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      builderState.rootDegreeIndex = Number(button.dataset.builderDegree);
+      renderBuilder();
+    });
+  });
+  ui.builderAccidentalButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      builderState.accidental = Number(button.dataset.builderAccidental);
+      renderBuilder();
+    });
+  });
+  ui.builderQualitySelect.addEventListener("change", () => {
+    builderState.quality = ui.builderQualitySelect.value;
+    renderBuilder();
+  });
+  ui.builderBassSelect.addEventListener("change", () => {
+    builderState.bassValue = ui.builderBassSelect.value;
+    renderBuilder();
+  });
+  ui.builderAddButton.addEventListener("click", addOrUpdateBuilderChord);
+  ui.builderMoveLeftButton.addEventListener("click", () => moveBuilderChord(-1));
+  ui.builderMoveRightButton.addEventListener("click", () => moveBuilderChord(1));
+  ui.builderDuplicateButton.addEventListener("click", duplicateBuilderChord);
+  ui.builderDeleteChordButton.addEventListener("click", deleteSelectedBuilderChord);
+  ui.builderClearButton.addEventListener("click", clearBuilderSequence);
+  ui.builderPlayButton.addEventListener("click", toggleBuilderPlayback);
+  ui.builderSaveButton.addEventListener("click", saveBuilderProgression);
+  ui.builderNewButton.addEventListener("click", () => newBuilderProgression(true));
+  ui.builderTemplateButton.addEventListener("click", useCurrentExerciseAsTemplate);
+  ui.builderExportButton.addEventListener("click", exportCustomProgressions);
+  ui.builderImportButton.addEventListener("click", () => ui.builderImportInput.click());
+  ui.builderImportInput.addEventListener("change", importCustomProgressions);
+  renderBuilder();
+}
+
+function renderBuilder() {
+  ui.builderNameInput.value = builderState.name;
+  ui.builderKeySelect.value = String(builderState.keyIndex);
+  ui.builderQualitySelect.value = builderState.quality;
+  ui.builderBassSelect.value = builderState.bassValue;
+  ui.builderDegreeButtons.forEach((button) => {
+    button.classList.toggle(
+      "active",
+      Number(button.dataset.builderDegree) === builderState.rootDegreeIndex,
+    );
+  });
+  ui.builderAccidentalButtons.forEach((button) => {
+    button.classList.toggle(
+      "active",
+      Number(button.dataset.builderAccidental) === builderState.accidental,
+    );
+  });
+
+  const previewChord = builderChordFromState();
+  ui.builderChordPreview.textContent = previewChord.degree;
+  ui.builderChordPreview.title = chordSymbolForKey(previewChord);
+  ui.builderCountLabel.textContent = `${builderState.sequence.length} / ${BUILDER_MAX_CHORDS}`;
+  ui.builderAddButton.textContent = builderState.selectedIndex === null
+    ? "Add chord"
+    : `Update chord ${builderState.selectedIndex + 1}`;
+  ui.builderAddButton.disabled = (
+    builderState.sequence.length >= BUILDER_MAX_CHORDS
+    && builderState.selectedIndex === null
+  );
+
+  ui.builderTimeline.replaceChildren();
+  if (builderState.sequence.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "builder-empty";
+    empty.textContent = "Add the first chord above.";
+    ui.builderTimeline.append(empty);
+  } else {
+    builderState.sequence.forEach((item, index) => {
+      const chip = document.createElement("div");
+      chip.className = "builder-chord-chip";
+      chip.classList.toggle("selected", builderState.selectedIndex === index);
+      chip.classList.toggle("playing", builderState.activePosition === index);
+      chip.tabIndex = 0;
+      chip.setAttribute("role", "button");
+      chip.setAttribute("aria-label", `Edit chord ${index + 1}: ${item.degree}`);
+      chip.draggable = true;
+      chip.dataset.builderIndex = String(index);
+
+      const number = document.createElement("span");
+      number.className = "builder-chord-number";
+      number.textContent = String(index + 1);
+      const label = document.createElement("strong");
+      label.className = "builder-chord-label";
+      label.textContent = item.degree;
+      const symbol = document.createElement("span");
+      symbol.className = "builder-chord-symbol";
+      symbol.textContent = chordSymbolForKey(item);
+      const audition = document.createElement("button");
+      audition.className = "builder-chord-audition";
+      audition.type = "button";
+      audition.textContent = "▶";
+      audition.title = `Preview ${item.degree}`;
+      audition.setAttribute("aria-label", `Preview ${item.degree}`);
+      audition.addEventListener("click", (event) => {
+        event.stopPropagation();
+        previewBuilderChord(index);
+      });
+
+      chip.append(number, label, symbol, audition);
+      chip.addEventListener("click", () => selectBuilderChord(index));
+      chip.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        selectBuilderChord(index);
+      });
+      chip.addEventListener("dragstart", (event) => {
+        event.dataTransfer?.setData("text/plain", String(index));
+      });
+      chip.addEventListener("dragover", (event) => event.preventDefault());
+      chip.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const sourceIndex = Number(event.dataTransfer?.getData("text/plain"));
+        reorderBuilderChord(sourceIndex, index);
+      });
+      ui.builderTimeline.append(chip);
+    });
+  }
+
+  const selectedIndex = builderState.selectedIndex;
+  const hasSelection = selectedIndex !== null;
+  ui.builderMoveLeftButton.disabled = !hasSelection || selectedIndex <= 0;
+  ui.builderMoveRightButton.disabled = (
+    !hasSelection || selectedIndex >= builderState.sequence.length - 1
+  );
+  ui.builderDuplicateButton.disabled = (
+    !hasSelection || builderState.sequence.length >= BUILDER_MAX_CHORDS
+  );
+  ui.builderDeleteChordButton.disabled = !hasSelection;
+  ui.builderClearButton.disabled = builderState.sequence.length === 0;
+  ui.builderPlayButton.disabled = builderState.sequence.length === 0;
+  ui.builderPlayButton.textContent = builderState.playing ? "■" : "▶";
+  ui.builderPlayButton.classList.toggle("playing", builderState.playing);
+  ui.builderPlayButton.setAttribute(
+    "aria-label",
+    builderState.playing ? "Stop custom progression" : "Play custom progression",
+  );
+  ui.builderSaveButton.disabled = builderState.sequence.length < 2;
+  ui.builderSaveButton.textContent = builderState.recordId
+    ? "Update progression"
+    : "Save progression";
+  ui.builderFeedback.textContent = builderState.feedback;
+  renderBuilderLibrary();
+}
+
+function renderBuilderLibrary() {
+  ui.builderSavedList.replaceChildren();
+  ui.builderExportButton.disabled = customProgressions.length === 0;
+  if (customProgressions.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "builder-empty";
+    empty.textContent = "Saved progressions will appear here.";
+    ui.builderSavedList.append(empty);
+    return;
+  }
+
+  customProgressions.forEach((record) => {
+    const item = document.createElement("article");
+    item.className = "builder-saved-item";
+    const copy = document.createElement("div");
+    const name = document.createElement("h4");
+    name.textContent = record.name;
+    const meta = document.createElement("p");
+    const key = KEY_CHOICES.find((choice) => choice.tonic === record.baseTonic);
+    meta.textContent = `${record.sequence.length} chords · Key ${key?.name || record.keyName}`;
+    copy.append(name, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "builder-saved-actions";
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.textContent = "Edit";
+    edit.addEventListener("click", () => loadBuilderProgression(record.id));
+    const train = document.createElement("button");
+    train.className = "train";
+    train.type = "button";
+    train.textContent = "Train";
+    train.addEventListener("click", () => trainCustomProgression(record.id));
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "Delete";
+    remove.addEventListener("click", () => deleteCustomProgression(record.id));
+    actions.append(edit, train, remove);
+    item.append(copy, actions);
+    ui.builderSavedList.append(item);
+  });
+}
+
+function selectBuilderChord(index) {
+  const item = builderState.sequence[index];
+  if (!item) return;
+  builderState.selectedIndex = index;
+  const controls = builderControlsForChord(item);
+  builderState.rootDegreeIndex = controls.rootDegreeIndex;
+  builderState.accidental = controls.accidental;
+  builderState.quality = controls.quality;
+  builderState.bassValue = controls.bassValue;
+  setBuilderFeedback(`Editing chord ${index + 1}.`);
+  renderBuilder();
+}
+
+function addOrUpdateBuilderChord() {
+  const nextChord = builderChordFromState();
+  if (builderState.selectedIndex === null) {
+    if (builderState.sequence.length >= BUILDER_MAX_CHORDS) {
+      setBuilderFeedback("A progression can contain up to 20 chords.");
+      renderBuilder();
+      return;
+    }
+    builderState.sequence.push(nextChord);
+    builderState.selectedIndex = null;
+    setBuilderFeedback(`Added ${nextChord.degree}.`);
+  } else {
+    const updatedIndex = builderState.selectedIndex;
+    builderState.sequence[updatedIndex] = nextChord;
+    builderState.selectedIndex = null;
+    setBuilderFeedback(`Updated chord ${updatedIndex + 1}.`);
+  }
+  renderBuilder();
+}
+
+function moveBuilderChord(direction) {
+  if (builderState.selectedIndex === null) return;
+  const targetIndex = builderState.selectedIndex + direction;
+  reorderBuilderChord(builderState.selectedIndex, targetIndex);
+}
+
+function reorderBuilderChord(sourceIndex, targetIndex) {
+  if (
+    !Number.isInteger(sourceIndex)
+    || !Number.isInteger(targetIndex)
+    || sourceIndex < 0
+    || targetIndex < 0
+    || sourceIndex >= builderState.sequence.length
+    || targetIndex >= builderState.sequence.length
+    || sourceIndex === targetIndex
+  ) return;
+  const [item] = builderState.sequence.splice(sourceIndex, 1);
+  builderState.sequence.splice(targetIndex, 0, item);
+  builderState.selectedIndex = targetIndex;
+  setBuilderFeedback(`Moved chord to position ${targetIndex + 1}.`);
+  renderBuilder();
+}
+
+function duplicateBuilderChord() {
+  if (
+    builderState.selectedIndex === null
+    || builderState.sequence.length >= BUILDER_MAX_CHORDS
+  ) return;
+  const source = builderState.sequence[builderState.selectedIndex];
+  const targetIndex = builderState.selectedIndex + 1;
+  builderState.sequence.splice(targetIndex, 0, cloneChordItem(source));
+  builderState.selectedIndex = targetIndex;
+  setBuilderFeedback(`Duplicated ${source.degree}.`);
+  renderBuilder();
+}
+
+function deleteSelectedBuilderChord() {
+  if (builderState.selectedIndex === null) return;
+  const [removed] = builderState.sequence.splice(builderState.selectedIndex, 1);
+  builderState.selectedIndex = builderState.sequence.length
+    ? Math.min(builderState.selectedIndex, builderState.sequence.length - 1)
+    : null;
+  setBuilderFeedback(`Removed ${removed.degree}.`);
+  renderBuilder();
+}
+
+function clearBuilderSequence() {
+  if (
+    builderState.sequence.length
+    && !window.confirm("Clear every chord from this progression?")
+  ) return;
+  cancelBuilderPlayback();
+  builderState.sequence = [];
+  builderState.selectedIndex = null;
+  setBuilderFeedback("Add at least two chords to save and train.");
+  renderBuilder();
+}
+
+function newBuilderProgression(confirmDiscard = false) {
+  if (
+    confirmDiscard
+    && builderState.sequence.length
+    && !window.confirm("Start a new progression and clear the current draft?")
+  ) return;
+  cancelBuilderPlayback();
+  builderState.recordId = null;
+  builderState.name = "";
+  builderState.keyIndex = 0;
+  builderState.sequence = [];
+  builderState.selectedIndex = null;
+  builderState.rootDegreeIndex = 0;
+  builderState.accidental = 0;
+  builderState.quality = "maj7";
+  builderState.bassValue = "";
+  setBuilderFeedback("Add at least two chords to save and train.");
+  renderBuilder();
+}
+
+function useCurrentExerciseAsTemplate() {
+  const exercise = currentExercise();
+  const existingRecord = exercise.isCustom
+    ? customProgressions.find((record) => record.id === exercise.customId)
+    : null;
+  if (existingRecord) {
+    loadBuilderProgression(existingRecord.id);
+    return;
+  }
+  cancelBuilderPlayback();
+  builderState.recordId = null;
+  builderState.name = `${exercise.name} variation`.slice(0, 64);
+  builderState.keyIndex = Math.max(
+    0,
+    KEY_CHOICES.findIndex((key) => key.tonic === state.key.tonic),
+  );
+  builderState.sequence = exercise.sequence
+    .slice(0, BUILDER_MAX_CHORDS)
+    .map(cloneChordItem);
+  builderState.selectedIndex = null;
+  setBuilderFeedback("Template copied. Edit any chord, then save it as your own.");
+  setWorkspace("builder");
+}
+
+function loadBuilderProgression(recordId) {
+  const record = customProgressions.find((item) => item.id === recordId);
+  if (!record) return;
+  cancelBuilderPlayback();
+  builderState.recordId = record.id;
+  builderState.name = record.name;
+  builderState.keyIndex = Math.max(
+    0,
+    KEY_CHOICES.findIndex((key) => key.tonic === record.baseTonic),
+  );
+  builderState.sequence = record.sequence.map(cloneChordItem);
+  builderState.selectedIndex = null;
+  setBuilderFeedback("Saved progression loaded.");
+  setWorkspace("builder");
+}
+
+function saveBuilderProgression() {
+  if (builderState.sequence.length < 2) {
+    setBuilderFeedback("Add at least two chords before saving.");
+    renderBuilder();
+    return;
+  }
+  const now = new Date().toISOString();
+  const existingIndex = customProgressions.findIndex(
+    (record) => record.id === builderState.recordId,
+  );
+  const key = builderKeyChoice();
+  const record = sanitizeCustomProgression({
+    id: builderState.recordId || createCustomProgressionId(),
+    name: builderState.name.trim() || `My progression ${customProgressions.length + 1}`,
+    baseTonic: key.tonic,
+    keyName: key.name,
+    sequence: builderState.sequence,
+    createdAt: existingIndex >= 0 ? customProgressions[existingIndex].createdAt : now,
+    updatedAt: now,
+  });
+  if (!record) return;
+  const previousProgressions = customProgressions;
+  customProgressions = existingIndex >= 0
+    ? customProgressions.map((item, index) => (index === existingIndex ? record : item))
+    : [...customProgressions, record];
+  if (!saveCustomProgressions()) {
+    customProgressions = previousProgressions;
+    renderBuilder();
+    return;
+  }
+  builderState.recordId = record.id;
+  builderState.name = record.name;
+  syncCustomExercises();
+  updateCustomChapterOption();
+  setBuilderFeedback("Saved on this device. Export a backup for another device.");
+  renderBuilder();
+}
+
+function deleteCustomProgression(recordId) {
+  const record = customProgressions.find((item) => item.id === recordId);
+  if (!record || !window.confirm(`Delete "${record.name}"?`)) return;
+  const previousProgressions = customProgressions;
+  customProgressions = customProgressions.filter((item) => item.id !== recordId);
+  if (!saveCustomProgressions()) {
+    customProgressions = previousProgressions;
+    renderBuilder();
+    return;
+  }
+  state.favorites.delete(`custom-${recordId}`);
+  saveFavorites();
+  syncCustomExercises();
+  if (builderState.recordId === recordId) newBuilderProgression(false);
+  updateCustomChapterOption();
+  setBuilderFeedback("Progression deleted.");
+  renderBuilder();
+}
+
+function trainCustomProgression(recordId) {
+  syncCustomExercises();
+  const exerciseIndex = EXERCISES.findIndex(
+    (exercise) => exercise.isCustom && exercise.customId === recordId,
+  );
+  const record = customProgressions.find((item) => item.id === recordId);
+  if (exerciseIndex < 0 || !record) return;
+  state.chapterFilter = "custom";
+  state.exerciseIndex = exerciseIndex;
+  state.key = KEY_CHOICES.find((key) => key.tonic === record.baseTonic) || KEY_CHOICES[0];
+  ui.chapterSelect.value = "custom";
+  refreshExerciseSelect();
+  setWorkspace("trainer");
+  startExercise(false);
+  setFeedback("Your progression is ready. Listen and identify every chord.");
+  render();
+}
+
+function updateCustomChapterOption() {
+  if (!ui?.chapterSelect?.children) return;
+  const option = [...ui.chapterSelect.children]
+    .find((item) => item.value === "custom");
+  if (option) option.textContent = `My progressions · ${customProgressions.length}`;
+}
+
+async function previewBuilderChord(index) {
+  const item = builderState.sequence[index];
+  if (!item) return;
+  cancelBuilderPlayback();
+  cancelPlayback();
+  state.key = { ...builderKeyChoice() };
+  if (!await ensureAudioContext()) return;
+  builderState.activePosition = index;
+  setBuilderFeedback(`Preview: ${item.degree}.`);
+  renderBuilder();
+  const duration = isPianoLegato()
+    ? 2.25
+    : (isSampledKeyboardSound() ? 1.65 : 1.15);
+  scheduleChord(item, audioContext.currentTime + 0.04, duration);
+  builderPreviewTimer = window.setTimeout(() => {
+    builderState.activePosition = null;
+    parkAudioContext();
+    renderBuilder();
+  }, (duration + keyboardReleaseSeconds() + 0.15) * 1000);
+}
+
+async function toggleBuilderPlayback() {
+  if (builderState.playing) {
+    cancelBuilderPlayback();
+    setBuilderFeedback("Playback stopped.");
+    renderBuilder();
+    return;
+  }
+  if (builderState.sequence.length === 0) return;
+  cancelPlayback();
+  state.key = { ...builderKeyChoice() };
+  if (!await ensureAudioContext()) return;
+
+  builderState.playing = true;
+  builderState.activePosition = null;
+  setBuilderFeedback("Reference chord: I — tonic.");
+  renderBuilder();
+
+  const secondsPerChord = Number(ui.tempoSelect.value) || 1.8;
+  const sampledKeyboardSound = isSampledKeyboardSound();
+  const sustainRatio = isPianoLegato()
+    ? PIANO_LEGATO_SUSTAIN_RATIO
+    : (sampledKeyboardSound ? PIANO_SUSTAIN_RATIO : 0.9);
+  const chordDuration = secondsPerChord * sustainRatio;
+  const referenceDuration = sampledKeyboardSound
+    ? secondsPerChord * PIANO_SUSTAIN_RATIO
+    : chordDuration;
+  const referenceGap = (
+    sampledKeyboardSound ? keyboardReleaseSeconds() : 0.02
+  ) + REFERENCE_SEQUENCE_GAP_SECONDS;
+  const startAt = audioContext.currentTime + 0.08;
+  const sequenceStart = startAt + referenceDuration + referenceGap;
+  scheduleChord(
+    tonicReferenceChord(),
+    startAt,
+    referenceDuration,
+    { arpeggioMode: "block" },
+  );
+
+  builderState.sequence.forEach((item, index) => {
+    scheduleChord(item, sequenceStart + index * secondsPerChord, chordDuration);
+    const delay = Math.max(
+      0,
+      sequenceStart + index * secondsPerChord - audioContext.currentTime,
+    );
+    builderHighlightTimers.push(window.setTimeout(() => {
+      builderState.activePosition = index;
+      setBuilderFeedback(`Now playing ${item.degree} · position ${index + 1}.`);
+      renderBuilder();
+    }, delay * 1000));
+  });
+
+  builderStopTimer = window.setTimeout(() => {
+    builderState.playing = false;
+    builderState.activePosition = null;
+    builderHighlightTimers = [];
+    setBuilderFeedback("Playback complete.");
+    parkAudioContext();
+    renderBuilder();
+  }, (
+    referenceDuration
+    + referenceGap
+    + Math.max(0, builderState.sequence.length - 1) * secondsPerChord
+    + chordDuration
+    + keyboardReleaseSeconds()
+    + 0.25
+  ) * 1000);
+}
+
+function cancelBuilderPlayback() {
+  window.clearTimeout(builderStopTimer);
+  window.clearTimeout(builderPreviewTimer);
+  builderHighlightTimers.forEach((timer) => window.clearTimeout(timer));
+  builderHighlightTimers = [];
+  builderState.playing = false;
+  builderState.activePosition = null;
+  if (audioContext) releaseAudioContext();
+}
+
+function exportCustomProgressions() {
+  if (customProgressions.length === 0) {
+    setBuilderFeedback("There are no saved progressions to export.");
+    renderBuilder();
+    return;
+  }
+  const payload = {
+    format: "reharm-ear-custom-progressions",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    progressions: customProgressions,
+  };
+  const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "reharm-ear-my-progressions.json";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  setBuilderFeedback("Backup exported.");
+  renderBuilder();
+}
+
+async function importCustomProgressions(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const payload = JSON.parse(await file.text());
+    const incoming = Array.isArray(payload) ? payload : payload.progressions;
+    if (!Array.isArray(incoming)) throw new Error("Invalid progression file.");
+    const sanitized = incoming
+      .map((record, index) => sanitizeCustomProgression(record, index))
+      .filter(Boolean);
+    if (sanitized.length === 0) throw new Error("No valid progressions found.");
+    const previousProgressions = customProgressions;
+    const recordsById = new Map(customProgressions.map((record) => [record.id, record]));
+    sanitized.forEach((record) => recordsById.set(record.id, record));
+    customProgressions = [...recordsById.values()];
+    if (!saveCustomProgressions()) {
+      customProgressions = previousProgressions;
+      renderBuilder();
+      return;
+    }
+    syncCustomExercises();
+    updateCustomChapterOption();
+    setBuilderFeedback(`Imported ${sanitized.length} progression${sanitized.length === 1 ? "" : "s"}.`);
+    renderBuilder();
+  } catch {
+    setBuilderFeedback("Import failed. Choose a Progression Builder JSON backup.");
+    renderBuilder();
+  } finally {
+    event.target.value = "";
+  }
+}
+
 function setSettingsOpen(open) {
   ui.settingsPanel.hidden = !open;
   ui.settingsScrim.hidden = !open;
@@ -1205,8 +2305,46 @@ function setSettingsOpen(open) {
   if (open) ui.settingsCloseButton.focus?.();
 }
 
+function loadArpeggioMode() {
+  try {
+    const stored = localStorage.getItem(ARPEGGIO_MODE_STORAGE_KEY);
+    return ["up", "down"].includes(stored) ? stored : "block";
+  } catch {
+    return "block";
+  }
+}
+
+function saveArpeggioMode() {
+  try {
+    localStorage.setItem(ARPEGGIO_MODE_STORAGE_KEY, state.arpeggioMode);
+  } catch {
+    // The selected articulation remains active for the current session.
+  }
+}
+
+function toggleArpeggioMode(mode) {
+  if (!["up", "down"].includes(mode)) return;
+  state.arpeggioMode = state.arpeggioMode === mode ? "block" : mode;
+  saveArpeggioMode();
+  setFeedback(
+    state.arpeggioMode === "block"
+      ? "Block chords."
+      : `${state.arpeggioMode === "up" ? "Ascending" : "Descending"} arpeggio.`,
+  );
+  render();
+}
+
+function preventInterfaceZoom() {
+  ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+    document.addEventListener(eventName, (event) => {
+      event.preventDefault();
+    }, { passive: false });
+  });
+}
+
 function init() {
   configurePlaybackAudioSession();
+  preventInterfaceZoom();
   document.addEventListener("pointerdown", () => {
     requestPortraitOrientation();
     unlockMobileAudio();
@@ -1254,6 +2392,7 @@ function init() {
   ui.settingsCloseButton.addEventListener("click", () => setSettingsOpen(false));
   ui.settingsScrim.addEventListener("click", () => setSettingsOpen(false));
   setSettingsOpen(false);
+  initBuilder();
 
   const allOption = document.createElement("option");
   allOption.value = "all";
@@ -1265,7 +2404,13 @@ function init() {
   ui.chapterSelect.append(favoritesOption);
   updateFavoriteChapterOption();
 
+  const customOption = document.createElement("option");
+  customOption.value = "custom";
+  customOption.textContent = `My progressions · ${customProgressions.length}`;
+  ui.chapterSelect.append(customOption);
+
   [...new Set(EXERCISES.map((exercise) => exercise.chapter))]
+    .filter((chapter) => Number.isInteger(chapter) && chapter > 0)
     .sort((left, right) => left - right)
     .forEach((chapter) => {
       const option = document.createElement("option");
@@ -1288,6 +2433,11 @@ function init() {
     if (requestedFilter === "favorites" && state.favorites.size === 0) {
       ui.chapterSelect.value = previousFilter;
       setFeedback("Favorites are empty. Tap ♡ on a progression to save it.");
+      return;
+    }
+    if (requestedFilter === "custom" && customProgressions.length === 0) {
+      ui.chapterSelect.value = previousFilter;
+      setFeedback("No custom progressions yet. Open Builder to create one.");
       return;
     }
 
@@ -1315,17 +2465,20 @@ function init() {
     button.addEventListener("click", () => {
       state.mode = button.dataset.mode;
       ui.modeButtons.forEach((item) => item.classList.toggle("active", item === button));
-      render();
+      if (builderState.workspace === "builder") renderBuilder();
+      else render();
     });
   });
 
   ui.playButton.addEventListener("click", toggleMainPlayback);
+  ui.arpeggioUpButton.addEventListener("click", () => toggleArpeggioMode("up"));
+  ui.arpeggioDownButton.addEventListener("click", () => toggleArpeggioMode("down"));
   ui.segmentPlayButtons.forEach((button) => {
     button.addEventListener("click", () => {
       toggleSegmentPlayback(Number(button.dataset.playSegment));
     });
   });
-  ui.reviewButton.addEventListener("click", () => playSequence(true));
+  ui.playbackAnswerStop.addEventListener("click", toggleMainPlayback);
   ui.showButton.addEventListener("click", showAnswer);
   ui.previousButton.addEventListener("click", previousExercise);
   ui.nextButton.addEventListener("click", nextExercise);
@@ -1335,8 +2488,13 @@ function init() {
     cancelPlayback();
     stopPianoVoices();
     state.sound = ui.soundSelect.value;
-    setFeedback(`Sound: ${soundName()}.`);
-    render();
+    if (builderState.workspace === "builder") {
+      setBuilderFeedback(`Sound: ${soundName()}.`);
+      renderBuilder();
+    } else {
+      setFeedback(`Sound: ${soundName()}.`);
+      render();
+    }
   });
   ui.pianoStopButton.addEventListener("click", stopPianoVoices);
   buildPianoKeyboard();
@@ -1464,7 +2622,9 @@ function refreshExerciseSelect() {
     const exercise = EXERCISES[index];
     const option = document.createElement("option");
     option.value = String(index);
-    option.textContent = state.chapterFilter === "all"
+    option.textContent = exercise.isCustom
+      ? exercise.name
+      : state.chapterFilter === "all"
       ? `Chapter ${exercise.chapter} · ${exercise.name}`
       : exercise.name;
     ui.exerciseSelect.append(option);
@@ -1477,7 +2637,8 @@ function eligibleExerciseIndexes() {
     .map((exercise, index) => ({ exercise, index }))
     .filter(({ exercise }) => (
       (state.chapterFilter === "favorites" && state.favorites.has(exercise.id))
-      || state.chapterFilter === "all"
+      || (state.chapterFilter === "custom" && exercise.isCustom)
+      || (state.chapterFilter === "all" && !exercise.isCustom)
       || String(exercise.chapter) === state.chapterFilter
     ))
     .map(({ index }) => index);
@@ -1638,7 +2799,10 @@ function render() {
   ui.matrixScroll.dataset.density = matrixDensity(positionCount);
   document.body.dataset.atmosphere = visualMoodForExercise(exercise);
 
-  ui.chapterLabel.textContent = `Reharmonization Techniques · Lite · Chapter ${exercise.chapter}`;
+  ui.appTitle.textContent = "Chord Progressions";
+  ui.chapterLabel.textContent = exercise.isCustom
+    ? "My Progressions · Custom training"
+    : `Reharmonization Techniques · Lite · Chapter ${exercise.chapter}`;
   ui.sourceLabel.textContent = exercise.source;
   ui.promptLabel.textContent = `Sequence · ${positionCount} chords`;
   ui.keyBadge.textContent = state.revealed ? `Key: ${state.key.name}` : "Key hidden";
@@ -1760,7 +2924,6 @@ function render() {
   });
 
   ui.showButton.disabled = state.revealed || state.completed || state.playing;
-  ui.reviewButton.disabled = !state.revealed || state.playing;
   ui.previousButton.disabled = exerciseHistory.length === 0;
   ui.playbackControls.classList.toggle("segmented", showSegmentPlayback);
   ui.playButton.hidden = false;
@@ -1772,6 +2935,17 @@ function render() {
     state.playing ? "Stop and reset playback" : "Play full sequence",
   );
   ui.playButton.title = state.playing ? "Stop" : "Play full sequence";
+  [
+    [ui.arpeggioUpButton, "up"],
+    [ui.arpeggioDownButton, "down"],
+  ].forEach(([button, mode]) => {
+    const active = state.arpeggioMode === mode;
+    button.setAttribute("aria-pressed", String(active));
+    button.disabled = state.playing || state.previewOptionIndex !== null;
+    button.title = active
+      ? `Turn ${mode === "up" ? "ascending" : "descending"} arpeggio off`
+      : `Arpeggio ${mode}`;
+  });
   ui.segmentPlayButtons.forEach((button, index) => {
     const range = playbackRanges[index];
     if (!range || !showSegmentPlayback) {
@@ -1798,6 +2972,31 @@ function render() {
     );
     button.title = isActive ? "Stop" : `Play chords ${label}`;
   });
+  const showPlaybackAnswer = (
+    state.playing
+    && state.playbackMode === "review"
+  );
+  ui.playbackAnswer.hidden = !showPlaybackAnswer;
+  document.body.classList.toggle("playback-answer-open", showPlaybackAnswer);
+  if (showPlaybackAnswer) {
+    const item = state.activePosition === null
+      ? tonicReferenceChord()
+      : exercise.sequence[state.activePosition];
+    const degreeLabel = state.activePosition === null ? "I" : item.degree;
+    const symbolLabel = chordSymbolLabel(item);
+    ui.playbackAnswerEyebrow.textContent = state.activePosition === null
+      ? "Tonic reference"
+      : "Now playing";
+    ui.playbackAnswerPrimary.textContent = state.mode === "degree"
+      ? degreeLabel
+      : symbolLabel;
+    ui.playbackAnswerSecondary.textContent = state.mode === "degree"
+      ? symbolLabel
+      : degreeLabel;
+    ui.playbackAnswerPosition.textContent = state.activePosition === null
+      ? "Reference · progression follows"
+      : `Position ${state.activePosition + 1} of ${positionCount}`;
+  }
   ui.nextButton.disabled = false;
   updateStats();
 }
@@ -1817,12 +3016,14 @@ function playbackRangeLabel(range) {
 
 function optionLabel(option) {
   if (state.mode === "degree") return option.degree;
-  const pitchClass = (state.key.tonic + option.offset) % 12;
-  const spelling = option.spelling || state.key.spelling;
-  const root = `${NOTE_NAMES[spelling][pitchClass]}${QUALITY[option.quality].suffix}`;
+  return chordSymbolLabel(option);
+}
+
+function chordSymbolLabel(option) {
+  const toneNames = chordToneSpellings(option, state.key);
+  const root = `${toneNames[0] || spelledChordRootName(option, state.key)}${QUALITY[option.quality].suffix}`;
   if (option.bassOffset === null) return root;
-  const bassPitchClass = (state.key.tonic + option.bassOffset) % 12;
-  return `${root}/${NOTE_NAMES[state.key.spelling][bassPitchClass]}`;
+  return `${root}/${spelledBassName(option, state.key, toneNames)}`;
 }
 
 function selectAnswer(position, optionIndex) {
@@ -2079,12 +3280,13 @@ function updateStats() {
   ui.revealedStat.textContent = String(state.stats.revealed);
 }
 
-async function playSequence(withAnswer, requestedRange = null) {
-  if (state.playing || (withAnswer && !state.revealed)) return;
+async function playSequence(requestedRange = null) {
+  if (state.playing) return;
   if (state.previewOptionIndex !== null) cancelPlayback();
   if (!await ensureAudioContext()) return;
 
   const exercise = currentExercise();
+  const withAnswer = state.revealed;
   const playbackRange = requestedRange
     ? {
       start: Math.max(0, requestedRange.start),
@@ -2111,15 +3313,20 @@ async function playSequence(withAnswer, requestedRange = null) {
   const referenceDuration = sampledKeyboardSound
     ? secondsPerChord * PIANO_SUSTAIN_RATIO
     : chordDuration;
-  const referenceGap = sampledKeyboardSound
-    ? keyboardReleaseSeconds() + 0.05
-    : 0.55;
+  const referenceGap = (
+    sampledKeyboardSound ? keyboardReleaseSeconds() : 0.02
+  ) + REFERENCE_SEQUENCE_GAP_SECONDS;
   const sequenceStart = startAt + referenceDuration + referenceGap;
 
   if (withAnswer) {
     setFeedback("Reference chord: I — tonic.", "playing");
   }
-  scheduleChord(tonicReferenceChord(), startAt, referenceDuration);
+  scheduleChord(
+    tonicReferenceChord(),
+    startAt,
+    referenceDuration,
+    { arpeggioMode: "block" },
+  );
 
   playbackItems.forEach((item, relativeIndex) => {
     const absoluteIndex = playbackRange.start + relativeIndex;
@@ -2162,7 +3369,7 @@ async function playSequence(withAnswer, requestedRange = null) {
     clearHighlightTimers();
     parkAudioContext();
     if (wasReview) {
-      setFeedback("Review complete. You can play it again.");
+      setFeedback("Answer playback complete. You can play it again.");
     } else if (completedRange) {
       setFeedback(`Part ${playbackRangeLabel(completedRange)} complete.`);
     } else {
@@ -2186,7 +3393,7 @@ function toggleMainPlayback() {
     render();
     return;
   }
-  playSequence(false);
+  playSequence();
 }
 
 function toggleSegmentPlayback(segmentIndex) {
@@ -2200,7 +3407,7 @@ function toggleSegmentPlayback(segmentIndex) {
   const range = segmentedPlaybackRanges(currentExercise().sequence.length)[segmentIndex];
   if (!range) return;
   setFeedback(`Part ${playbackRangeLabel(range)}: tonic first, then the chords.`, "playing");
-  playSequence(false, range);
+  playSequence(range);
 }
 
 async function previewChord(item, optionIndex) {
@@ -2665,6 +3872,7 @@ function scheduleSampledPianoNotes(
     releaseSeconds = pianoReleaseSeconds(),
     sampleManifest = PIANO_SAMPLE_MANIFEST,
     sampleBuffers = pianoSampleBuffers,
+    arpeggioMode = state.arpeggioMode,
   } = {},
 ) {
   const master = context.createGain();
@@ -2679,7 +3887,18 @@ function scheduleSampledPianoNotes(
   master.connect(compressor);
   compressor.connect(context.destination);
 
-  return notes.map((midi, noteIndex) => {
+  return playbackNoteSchedule(
+    notes,
+    startAt,
+    duration,
+    arpeggioMode,
+  ).map((scheduledNote) => {
+    const {
+      midi,
+      originalIndex,
+      startAt: noteStartAt,
+      endAt: releaseAt,
+    } = scheduledNote;
     const sample = nearestPianoSample(midi, sampleManifest, sampleBuffers);
     const source = context.createBufferSource();
     const envelope = context.createGain();
@@ -2689,14 +3908,16 @@ function scheduleSampledPianoNotes(
         + (sample.tuneCents ?? 0)
       ) / 1200
     );
-    const releaseAt = startAt + duration;
 
     source.buffer = sample.buffer;
-    source.playbackRate.setValueAtTime(playbackRate, startAt);
-    envelope.gain.setValueAtTime(0.0001, startAt);
-    const peakGain = noteIndex < bassVoiceCount ? bassGain : 1;
-    envelope.gain.exponentialRampToValueAtTime(peakGain, startAt + 0.008);
-    envelope.gain.setValueAtTime(0.9, startAt + Math.min(0.35, duration * 0.4));
+    source.playbackRate.setValueAtTime(playbackRate, noteStartAt);
+    envelope.gain.setValueAtTime(0.0001, noteStartAt);
+    const peakGain = originalIndex < bassVoiceCount ? bassGain : 1;
+    envelope.gain.exponentialRampToValueAtTime(peakGain, noteStartAt + 0.008);
+    envelope.gain.setValueAtTime(
+      0.9,
+      noteStartAt + Math.min(0.35, Math.max(0.08, releaseAt - noteStartAt) * 0.4),
+    );
     envelope.gain.exponentialRampToValueAtTime(
       0.0001,
       releaseAt + releaseSeconds,
@@ -2704,7 +3925,7 @@ function scheduleSampledPianoNotes(
 
     source.connect(envelope);
     envelope.connect(master);
-    source.start(startAt);
+    source.start(noteStartAt);
     source.stop(releaseAt + releaseSeconds + 0.05);
     return source;
   });
@@ -2785,7 +4006,9 @@ function resumeAudioAfterInterruption() {
 function requestPortraitOrientation() {
   const orientation = window.screen?.orientation;
   if (!orientation?.lock) return;
-  orientation.lock("portrait-primary").catch(() => {});
+  orientation.lock("portrait-primary").catch(() => {
+    orientation.lock("portrait").catch(() => {});
+  });
 }
 
 async function unlockMobileAudio() {
@@ -2916,10 +4139,63 @@ function playbackNotesForChord(item, sound = state.sound) {
   };
 }
 
-function midiNoteInfo(midi, spelling = state.key.spelling) {
+function playbackNoteSchedule(
+  notes,
+  startAt,
+  duration,
+  mode = state.arpeggioMode,
+) {
+  const scheduled = notes.map((midi, originalIndex) => ({
+    midi,
+    originalIndex,
+  }));
+  if (mode === "up") {
+    scheduled.sort((left, right) => (
+      left.midi - right.midi || left.originalIndex - right.originalIndex
+    ));
+  } else if (mode === "down") {
+    scheduled.sort((left, right) => (
+      right.midi - left.midi || left.originalIndex - right.originalIndex
+    ));
+  }
+
+  const availableSpread = Math.max(0, duration - ARPEGGIO_MIN_HOLD_SECONDS);
+  const stepSeconds = mode === "block" || scheduled.length < 2
+    ? 0
+    : Math.min(
+      ARPEGGIO_STEP_SECONDS,
+      availableSpread / (scheduled.length - 1),
+    );
+  const endAt = startAt + duration;
+  return scheduled.map((note, index) => ({
+    ...note,
+    startAt: startAt + index * stepSeconds,
+    endAt,
+  }));
+}
+
+function midiNoteInfo(midi, spellingOrName = state.key.spelling) {
   const pitchClass = ((midi % 12) + 12) % 12;
-  const name = NOTE_NAMES[spelling][pitchClass];
-  const octave = Math.floor(midi / 12) - 1;
+  const name = NOTE_NAMES[spellingOrName]
+    ? NOTE_NAMES[spellingOrName][pitchClass]
+    : String(spellingOrName);
+  const writtenPitchClass = writtenNotePitchClass(name);
+  const naturalPitchClass = NATURAL_PITCH_CLASSES[name[0]];
+  let accidentalSemitones = 0;
+  if (writtenPitchClass !== null && naturalPitchClass !== undefined) {
+    accidentalSemitones = [...name.slice(1)].reduce(
+      (total, symbol) => total + (symbol === "♯" ? 1 : -1),
+      0,
+    );
+  }
+  const writtenOctave = (
+    midi
+    - naturalPitchClass
+    - accidentalSemitones
+  ) / 12 - 1;
+  const octave = Number.isInteger(writtenOctave)
+    ? writtenOctave
+    : Math.floor(midi / 12) - 1;
   const letterIndex = "CDEFGAB".indexOf(name[0]);
   return {
     midi,
@@ -2932,10 +4208,46 @@ function midiNoteInfo(midi, spelling = state.key.spelling) {
 function voicingNotationData(item, sound = state.sound) {
   const playback = playbackNotesForChord(item, sound);
   const sourceVoicing = midiNotesForChord(item);
-  const spelling = item.spelling || state.key.spelling;
+  const toneNames = chordToneSpellings(item, state.key);
+  const rootName = toneNames[0] || spelledChordRootName(item, state.key);
+  const bassName = spelledBassName(item, state.key, toneNames);
+  const rootPitchClass = normalizedPitchClass(state.key.tonic + item.offset);
+  const bassPitchClass = normalizedPitchClass(
+    state.key.tonic + (item.bassOffset ?? item.offset),
+  );
+  const bassMidi = 36 + bassPitchClass;
+  let upperRootMidi = 60 + rootPitchClass;
+  if (upperRootMidi > 67) upperRootMidi -= 12;
+  const toneNameByMidi = new Map(
+    QUALITY[item.quality].intervals.map(
+      (interval, index) => [upperRootMidi + interval, toneNames[index]],
+    ),
+  );
   const notes = [...new Set(playback.notes)]
     .sort((left, right) => left - right)
-    .map((midi) => midiNoteInfo(midi, spelling));
+    .map((midi) => {
+      let writtenName = toneNameByMidi.get(midi);
+      if (!writtenName && (
+        midi === bassMidi
+        || (sourceVoicing.hasIndependentBass && midi === bassMidi + 12)
+      )) {
+        writtenName = bassName;
+      }
+      if (!writtenName && normalizedPitchClass(midi) === rootPitchClass) {
+        writtenName = rootName;
+      }
+      if (!writtenName) {
+        const toneIndex = QUALITY[item.quality].intervals.findIndex(
+          (interval) => (
+            normalizedPitchClass(rootPitchClass + interval)
+            === normalizedPitchClass(midi)
+          ),
+        );
+        writtenName = toneNames[toneIndex]
+          || NOTE_NAMES[item.spelling || state.key.spelling][normalizedPitchClass(midi)];
+      }
+      return midiNoteInfo(midi, writtenName);
+    });
   const lowestName = notes[0]?.name || "";
   const reinforcedMidi = isUprightBassSound(sound)
     || sourceVoicing.hasIndependentBass
@@ -3176,7 +4488,12 @@ function closeVoicingPopover(restoreFocus = false) {
   if (restoreFocus) anchor?.focus?.();
 }
 
-function scheduleChord(item, startAt, duration) {
+function scheduleChord(
+  item,
+  startAt,
+  duration,
+  { arpeggioMode = state.arpeggioMode } = {},
+) {
   const isPiano = isPianoSound();
   const isElectricPiano = isElectricPianoSound();
   const isSampledKeyboard = isPiano || isElectricPiano;
@@ -3207,6 +4524,7 @@ function scheduleChord(item, startAt, duration) {
         bassVoiceCount: hasIndependentBass ? 2 : 1,
         bassGain: hasIndependentBass ? 1.34 : 1.12,
         releaseSeconds: pianoReleaseSeconds(),
+        arpeggioMode,
       },
     );
     return;
@@ -3228,6 +4546,7 @@ function scheduleChord(item, startAt, duration) {
         releaseSeconds: ELECTRIC_PIANO_RELEASE_SECONDS,
         sampleManifest: ELECTRIC_PIANO_SAMPLE_MANIFEST,
         sampleBuffers: electricPianoSampleBuffers,
+        arpeggioMode,
       },
     );
     return;
@@ -3258,7 +4577,18 @@ function scheduleChord(item, startAt, duration) {
   filter.connect(master);
   master.connect(audioContext.destination);
 
-  notes.forEach((midi, noteIndex) => {
+  playbackNoteSchedule(
+    notes,
+    startAt,
+    duration,
+    arpeggioMode,
+  ).forEach((scheduledNote) => {
+    const {
+      midi,
+      originalIndex,
+      startAt: noteStartAt,
+      endAt: noteEndAt,
+    } = scheduledNote;
     const frequency = 440 * (2 ** ((midi - 69) / 12));
     const oscillator = audioContext.createOscillator();
     const overtone = audioContext.createOscillator();
@@ -3267,26 +4597,29 @@ function scheduleChord(item, startAt, duration) {
 
     oscillator.type = isSampledKeyboard
       ? "triangle"
-      : (noteIndex === 0 ? "sine" : "triangle");
-    oscillator.frequency.setValueAtTime(frequency, startAt);
+      : (originalIndex === 0 ? "sine" : "triangle");
+    oscillator.frequency.setValueAtTime(frequency, noteStartAt);
     overtone.type = isSampledKeyboard ? "triangle" : "sine";
     overtone.frequency.setValueAtTime(
       frequency * (isSampledKeyboard ? 2.014 : 2.01),
-      startAt,
+      noteStartAt,
     );
     noteGain.gain.setValueAtTime(
       isSampledKeyboard
-        ? (noteIndex === 0 ? 0.72 : 0.58)
-        : (noteIndex === 0 ? 0.82 : 0.64),
-      startAt,
+        ? (originalIndex === 0 ? 0.72 : 0.58)
+        : (originalIndex === 0 ? 0.82 : 0.64),
+      noteStartAt,
     );
     overtoneGain.gain.setValueAtTime(
       isSampledKeyboard ? 0.19 : 0.13,
-      startAt,
+      noteStartAt,
     );
     overtoneGain.gain.exponentialRampToValueAtTime(
       0.0001,
-      startAt + duration * (isSampledKeyboard ? 0.34 : 0.45),
+      Math.min(
+        noteEndAt,
+        noteStartAt + duration * (isSampledKeyboard ? 0.34 : 0.45),
+      ),
     );
 
     oscillator.connect(noteGain);
@@ -3294,10 +4627,10 @@ function scheduleChord(item, startAt, duration) {
     noteGain.connect(filter);
     overtoneGain.connect(filter);
 
-    oscillator.start(startAt);
-    overtone.start(startAt);
-    oscillator.stop(startAt + duration + 0.02);
-    overtone.stop(startAt + duration + 0.02);
+    oscillator.start(noteStartAt);
+    overtone.start(noteStartAt);
+    oscillator.stop(noteEndAt + 0.02);
+    overtone.stop(noteEndAt + 0.02);
   });
 }
 init();

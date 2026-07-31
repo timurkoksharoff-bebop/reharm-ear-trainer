@@ -1,10 +1,12 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.24";
+const CACHE_NAME = "reharm-ear-trainer-v0.32";
 const APP_FILES = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
+  "./favicon.svg",
+  "./favicon-32.png",
   "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png",

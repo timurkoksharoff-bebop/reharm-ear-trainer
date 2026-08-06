@@ -1521,6 +1521,80 @@ const LEGACY_FAVORITES_STORAGE_KEY = "reharm-ear-favorites-v1";
 const ONBOARDING_STORAGE_KEY = "reharm-ear-onboarding-v1";
 const CUSTOM_PROGRESSIONS_STORAGE_KEY = "reharm-ear-custom-progressions-v1";
 const ARPEGGIO_MODE_STORAGE_KEY = "reharm-ear-arpeggio-mode-v1";
+const QUEST_STORAGE_KEY = "reharm-ear-quest-v1";
+const QUEST_MAX_WRONG_ANSWERS = 5;
+const QUEST_MISSIONS = [
+  {
+    id: "first-light",
+    level: 1,
+    emblem: "✦",
+    title: "First Light",
+    subtitle: "Hear the first three-chord paths",
+    minLength: 3,
+    maxLength: 3,
+    requiredClears: 3,
+  },
+  {
+    id: "four-corners",
+    level: 2,
+    emblem: "◇",
+    title: "Four Corners",
+    subtitle: "Hold a complete four-chord form",
+    minLength: 4,
+    maxLength: 4,
+    requiredClears: 4,
+  },
+  {
+    id: "harmonic-current",
+    level: 3,
+    emblem: "≈",
+    title: "Harmonic Current",
+    subtitle: "Follow five- and six-chord motion",
+    minLength: 5,
+    maxLength: 6,
+    requiredClears: 4,
+  },
+  {
+    id: "open-sky",
+    level: 4,
+    emblem: "△",
+    title: "Open Sky",
+    subtitle: "Navigate seven- and eight-chord forms",
+    minLength: 7,
+    maxLength: 8,
+    requiredClears: 5,
+  },
+  {
+    id: "deep-water",
+    level: 5,
+    emblem: "◌",
+    title: "Deep Water",
+    subtitle: "Keep nine to twelve harmonies in memory",
+    minLength: 9,
+    maxLength: 12,
+    requiredClears: 4,
+  },
+  {
+    id: "long-form",
+    level: 6,
+    emblem: "∞",
+    title: "Long Form",
+    subtitle: "Hear the architecture of thirteen to sixteen chords",
+    minLength: 13,
+    maxLength: 16,
+    requiredClears: 3,
+  },
+  {
+    id: "master-path",
+    level: 7,
+    emblem: "✺",
+    title: "Master Path",
+    subtitle: "Complete the longest reharmonization routes",
+    minLength: 17,
+    maxLength: 20,
+    requiredClears: 3,
+  },
+];
 const BUILDER_MAX_CHORDS = 20;
 const BUILDER_DEGREES = [
   { roman: "I", offset: 0 },
@@ -1555,8 +1629,15 @@ const state = {
   stats: loadStats(),
 };
 
+const questState = {
+  progress: loadQuestProgress(),
+  attempt: freshQuestAttempt(),
+  result: null,
+  mapOpen: false,
+};
+
 const builderState = {
-  workspace: "trainer",
+  workspace: "quest",
   recordId: null,
   name: "",
   keyIndex: 0,
@@ -1573,6 +1654,7 @@ const builderState = {
 
 const ui = {
   appTitle: document.querySelector("#appTitle"),
+  questTab: document.querySelector("#questTab"),
   trainerTab: document.querySelector("#trainerTab"),
   builderTab: document.querySelector("#builderTab"),
   trainerWorkspace: document.querySelector("#trainerWorkspace"),
@@ -1614,6 +1696,33 @@ const ui = {
   actionBar: document.querySelector(".actions"),
   statsPanel: document.querySelector(".stats"),
   resetStatsButton: document.querySelector("#resetStatsButton"),
+  resetQuestButton: document.querySelector("#resetQuestButton"),
+  questHud: document.querySelector("#questHud"),
+  questMapButton: document.querySelector("#questMapButton"),
+  questEmblem: document.querySelector("#questEmblem"),
+  questKicker: document.querySelector("#questKicker"),
+  questTitle: document.querySelector("#questTitle"),
+  questProgressBar: document.querySelector("#questProgressBar"),
+  questProgressLabel: document.querySelector("#questProgressLabel"),
+  questRunScore: document.querySelector("#questRunScore"),
+  questTotalXp: document.querySelector("#questTotalXp"),
+  questMapLayer: document.querySelector("#questMapLayer"),
+  questMapScrim: document.querySelector("#questMapScrim"),
+  questMapCloseButton: document.querySelector("#questMapCloseButton"),
+  questMapRoute: document.querySelector("#questMapRoute"),
+  questMapPrimaryButton: document.querySelector("#questMapPrimaryButton"),
+  questResultLayer: document.querySelector("#questResultLayer"),
+  questCelebration: document.querySelector("#questCelebration"),
+  questResult: document.querySelector(".quest-result"),
+  questResultKicker: document.querySelector("#questResultKicker"),
+  questResultMedal: document.querySelector("#questResultMedal"),
+  questResultTitle: document.querySelector("#questResultTitle"),
+  questResultStars: document.querySelector("#questResultStars"),
+  questResultScore: document.querySelector("#questResultScore"),
+  questResultBody: document.querySelector("#questResultBody"),
+  questResultBadge: document.querySelector("#questResultBadge"),
+  questResultMapButton: document.querySelector("#questResultMapButton"),
+  questResultContinueButton: document.querySelector("#questResultContinueButton"),
   pianoPanel: document.querySelector(".piano-panel"),
   pianoKeyboard: document.querySelector("#pianoKeyboard"),
   pianoStopButton: document.querySelector("#pianoStopButton"),
@@ -2385,24 +2494,382 @@ function chordSymbolForKey(item, key = builderKeyChoice()) {
   return `${root}/${spelledBassName(item, key, toneNames)}`;
 }
 
+function freshQuestAttempt() {
+  return {
+    wrongCount: 0,
+    chordHints: 0,
+    pianoUsed: false,
+    failed: false,
+  };
+}
+
+function defaultQuestProgress() {
+  return {
+    missionIndex: 0,
+    totalXp: 0,
+    totalClears: 0,
+    bestScore: 0,
+    introSeen: false,
+    missions: {},
+    badges: [],
+  };
+}
+
+function loadQuestProgress() {
+  const fallback = defaultQuestProgress();
+  try {
+    const stored = JSON.parse(localStorage.getItem(QUEST_STORAGE_KEY) || "{}");
+    if (!stored || typeof stored !== "object") return fallback;
+    const missionIndex = Math.max(
+      0,
+      Math.min(QUEST_MISSIONS.length - 1, Number(stored.missionIndex) || 0),
+    );
+    const missions = {};
+    QUEST_MISSIONS.forEach((mission) => {
+      const record = stored.missions?.[mission.id];
+      missions[mission.id] = {
+        clears: Math.max(0, Number(record?.clears) || 0),
+        bestStars: Math.max(0, Math.min(3, Number(record?.bestStars) || 0)),
+        bestScore: Math.max(0, Number(record?.bestScore) || 0),
+      };
+    });
+    return {
+      missionIndex,
+      totalXp: Math.max(0, Number(stored.totalXp) || 0),
+      totalClears: Math.max(0, Number(stored.totalClears) || 0),
+      bestScore: Math.max(0, Number(stored.bestScore) || 0),
+      introSeen: Boolean(stored.introSeen),
+      missions,
+      badges: Array.isArray(stored.badges)
+        ? stored.badges.filter((badge) => typeof badge === "string")
+        : [],
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function saveQuestProgress() {
+  try {
+    localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify(questState.progress));
+  } catch {
+    // Quest progress remains available for the current session.
+  }
+}
+
+function isQuestMode() {
+  return builderState.workspace === "quest";
+}
+
+function currentQuestMission() {
+  return QUEST_MISSIONS[questState.progress.missionIndex] || QUEST_MISSIONS[0];
+}
+
+function questMissionRecord(mission = currentQuestMission()) {
+  if (!questState.progress.missions[mission.id]) {
+    questState.progress.missions[mission.id] = {
+      clears: 0,
+      bestStars: 0,
+      bestScore: 0,
+    };
+  }
+  return questState.progress.missions[mission.id];
+}
+
+function questExerciseIndexes(mission = currentQuestMission()) {
+  return EXERCISES
+    .map((exercise, index) => ({ exercise, index }))
+    .filter(({ exercise }) => (
+      !exercise.isCustom
+      && exercise.sequence.length >= mission.minLength
+      && exercise.sequence.length <= mission.maxLength
+    ))
+    .map(({ index }) => index);
+}
+
+function questRunScore() {
+  return Math.max(
+    100,
+    1000
+      - questState.attempt.wrongCount * 80
+      - questState.attempt.chordHints * 170,
+  );
+}
+
+function registerQuestChordHint() {
+  if (!isQuestMode() || questState.attempt.failed || state.completed) return;
+  questState.attempt.chordHints += 1;
+  renderQuestHud();
+}
+
+function registerQuestPianoUse() {
+  if (!isQuestMode() || questState.attempt.failed || state.completed) return;
+  questState.attempt.pianoUsed = true;
+}
+
+function renderQuestHud() {
+  if (!ui.questHud) return;
+  const mission = currentQuestMission();
+  const record = questMissionRecord(mission);
+  const clears = Math.min(record.clears, mission.requiredClears);
+  ui.questEmblem.textContent = mission.emblem;
+  ui.questKicker.textContent = `Level ${mission.level} · ${mission.title}`;
+  ui.questTitle.textContent = mission.subtitle;
+  ui.questProgressBar.style.width = `${(clears / mission.requiredClears) * 100}%`;
+  ui.questProgressLabel.textContent = `${clears} / ${mission.requiredClears} clear · ${"★".repeat(record.bestStars)}${"☆".repeat(3 - record.bestStars)}`;
+  ui.questRunScore.textContent = String(questRunScore());
+  ui.questTotalXp.textContent = `${questState.progress.totalXp} XP`;
+}
+
+function renderQuestMap() {
+  if (!ui.questMapRoute) return;
+  ui.questMapRoute.replaceChildren();
+  QUEST_MISSIONS.forEach((mission, index) => {
+    const record = questMissionRecord(mission);
+    const node = document.createElement("article");
+    const unlocked = index <= questState.progress.missionIndex;
+    const complete = record.clears >= mission.requiredClears;
+    node.className = `quest-node${index === questState.progress.missionIndex ? " current" : ""}${complete ? " complete" : ""}${unlocked ? "" : " locked"}`;
+    node.dataset.emblem = complete ? "✓" : (unlocked ? mission.emblem : "·");
+
+    const title = document.createElement("strong");
+    title.textContent = `${mission.level}. ${mission.title}`;
+    const subtitle = document.createElement("span");
+    subtitle.textContent = mission.subtitle;
+    const meta = document.createElement("small");
+    meta.textContent = unlocked
+      ? `${Math.min(record.clears, mission.requiredClears)} / ${mission.requiredClears} clear · ${"★".repeat(record.bestStars)}${"☆".repeat(3 - record.bestStars)}`
+      : "Locked";
+    node.append(title, subtitle, meta);
+    ui.questMapRoute.append(node);
+  });
+}
+
+function setQuestMapOpen(open) {
+  questState.mapOpen = open;
+  if (open && !questState.progress.introSeen) {
+    questState.progress.introSeen = true;
+    saveQuestProgress();
+  }
+  ui.questMapLayer.hidden = !open;
+  document.body.classList.toggle("quest-layer-open", open || !ui.questResultLayer.hidden);
+  if (open) {
+    renderQuestMap();
+    ui.questMapCloseButton.focus?.();
+  }
+}
+
+function addQuestBadge(id, label) {
+  if (questState.progress.badges.includes(id)) return "";
+  questState.progress.badges.push(id);
+  return label;
+}
+
+function questBadgeForClear({ perfect, stars, sequenceLength }) {
+  return (
+    (questState.progress.totalClears === 1 && addQuestBadge("first-light", "Badge unlocked · First Light"))
+    || (perfect && addQuestBadge("clean-hearing", "Badge unlocked · Clean Hearing"))
+    || (questState.attempt.chordHints === 0 && addQuestBadge("pure-ear", "Badge unlocked · Pure Ear"))
+    || (stars === 3 && addQuestBadge("three-stars", "Badge unlocked · Three Stars"))
+    || (sequenceLength >= 8 && addQuestBadge("long-memory", "Badge unlocked · Long Memory"))
+    || ""
+  );
+}
+
+function playQuestStinger(success = true) {
+  if (!audioContext || audioContext.state !== "running") return;
+  const now = audioContext.currentTime + 0.03;
+  const notes = success ? [60, 64, 67, 72] : [62, 59, 55];
+  notes.forEach((midi, index) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const startAt = now + index * (success ? 0.09 : 0.14);
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(440 * (2 ** ((midi - 69) / 12)), startAt);
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.exponentialRampToValueAtTime(success ? 0.065 : 0.045, startAt + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.52);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + 0.55);
+  });
+}
+
+function renderQuestParticles() {
+  ui.questCelebration.replaceChildren();
+  const colors = ["#829c8b", "#7d9eae", "#c98c78", "#d3b46d", "#c9838e"];
+  for (let index = 0; index < 28; index += 1) {
+    const particle = document.createElement("i");
+    particle.className = "quest-particle";
+    particle.style.setProperty("--x", `${4 + Math.random() * 92}%`);
+    particle.style.setProperty("--size", `${4 + Math.random() * 7}px`);
+    particle.style.setProperty("--color", colors[index % colors.length]);
+    particle.style.setProperty("--duration", `${1.8 + Math.random() * 1.5}s`);
+    particle.style.setProperty("--delay", `${Math.random() * 0.8}s`);
+    particle.style.setProperty("--drift", `${-55 + Math.random() * 110}px`);
+    ui.questCelebration.append(particle);
+  }
+}
+
+function showQuestResult(result) {
+  questState.result = result;
+  ui.questResult.classList.toggle("failed", !result.success);
+  ui.questResultKicker.textContent = result.success
+    ? (result.missionUnlocked ? "New level unlocked" : "Mission clear")
+    : "Try again";
+  ui.questResultMedal.textContent = result.success ? result.mission.emblem : "↺";
+  ui.questResultTitle.textContent = result.success ? result.mission.title : "Listening reset";
+  ui.questResultStars.textContent = result.success
+    ? `${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`
+    : "···";
+  ui.questResultScore.textContent = result.success ? `+${result.xp} XP` : "No points lost";
+  ui.questResultBody.textContent = result.body;
+  ui.questResultBadge.hidden = !result.badge;
+  ui.questResultBadge.textContent = result.badge || "";
+  ui.questResultContinueButton.textContent = result.success ? "Continue" : "Retry";
+  ui.questResultLayer.hidden = false;
+  document.body.classList.add("quest-layer-open");
+  if (result.success) renderQuestParticles();
+  else ui.questCelebration.replaceChildren();
+  playQuestStinger(result.success);
+  ui.questResultContinueButton.focus?.();
+}
+
+function finishQuestClear({ firstTryPositions, perfect }) {
+  const mission = currentQuestMission();
+  const record = questMissionRecord(mission);
+  const accuracy = firstTryPositions / state.answers.length;
+  const stars = 1 + Number(accuracy >= 0.8) + Number(questState.attempt.chordHints === 0);
+  const score = questRunScore();
+  const xp = score + stars * 100;
+
+  record.clears += 1;
+  record.bestStars = Math.max(record.bestStars, stars);
+  record.bestScore = Math.max(record.bestScore, score);
+  questState.progress.totalXp += xp;
+  questState.progress.totalClears += 1;
+  questState.progress.bestScore = Math.max(questState.progress.bestScore, score);
+  const badge = questBadgeForClear({
+    perfect,
+    stars,
+    sequenceLength: state.answers.length,
+  });
+  const missionUnlocked = (
+    record.clears >= mission.requiredClears
+    && questState.progress.missionIndex < QUEST_MISSIONS.length - 1
+  );
+  if (missionUnlocked) questState.progress.missionIndex += 1;
+  saveQuestProgress();
+  renderQuestHud();
+
+  const details = [];
+  if (perfect) details.push("Every position was correct on the first try.");
+  else details.push(`${firstTryPositions} of ${state.answers.length} positions were first-try correct.`);
+  if (questState.attempt.chordHints === 0) details.push("No ready-made chord previews used.");
+  else details.push(`${questState.attempt.chordHints} chord preview${questState.attempt.chordHints === 1 ? "" : "s"} lowered the rank.`);
+  if (questState.attempt.pianoUsed) details.push("Keyboard checking was allowed and recorded.");
+  if (missionUnlocked) details.push(`Level ${mission.level + 1} is now open.`);
+
+  showQuestResult({
+    success: true,
+    mission,
+    stars,
+    xp,
+    score,
+    badge,
+    missionUnlocked,
+    body: details.join(" "),
+  });
+}
+
+function failQuestAttempt(reason) {
+  if (!isQuestMode() || questState.attempt.failed || state.completed) return;
+  questState.attempt.failed = true;
+  cancelPlayback();
+  render();
+  showQuestResult({
+    success: false,
+    mission: currentQuestMission(),
+    stars: 0,
+    xp: 0,
+    badge: "",
+    missionUnlocked: false,
+    body: `${reason} Listen once more, then rebuild the progression. Your route progress is safe.`,
+  });
+}
+
+function continueQuestResult() {
+  const result = questState.result;
+  ui.questResultLayer.hidden = true;
+  document.body.classList.toggle("quest-layer-open", questState.mapOpen);
+  questState.result = null;
+  questState.attempt = freshQuestAttempt();
+  if (!result?.success) {
+    startExercise(false);
+    return;
+  }
+  nextExercise();
+}
+
+function resetQuestProgress() {
+  if (!window.confirm("Reset the complete quest path, XP, stars, and badges?")) return;
+  questState.progress = defaultQuestProgress();
+  questState.attempt = freshQuestAttempt();
+  questState.result = null;
+  saveQuestProgress();
+  if (isQuestMode()) {
+    const indexes = questExerciseIndexes();
+    state.exerciseIndex = nextRandomIndex("quest-first-light", indexes, -1);
+    refreshExerciseSelect();
+    startExercise(true);
+    setQuestMapOpen(true);
+  }
+}
+
 function setWorkspace(workspace) {
-  const nextWorkspace = workspace === "builder" ? "builder" : "trainer";
+  const nextWorkspace = ["quest", "trainer", "builder"].includes(workspace)
+    ? workspace
+    : "quest";
   cancelBuilderPlayback();
   cancelPlayback();
   setSettingsOpen(false);
   builderState.workspace = nextWorkspace;
-  ui.trainerWorkspace.hidden = nextWorkspace !== "trainer";
+  ui.trainerWorkspace.hidden = nextWorkspace === "builder";
+  ui.trainerWorkspace.setAttribute(
+    "aria-labelledby",
+    nextWorkspace === "quest" ? "questTab" : "trainerTab",
+  );
   ui.builderWorkspace.hidden = nextWorkspace !== "builder";
+  ui.questTab.classList.toggle("active", nextWorkspace === "quest");
   ui.trainerTab.classList.toggle("active", nextWorkspace === "trainer");
   ui.builderTab.classList.toggle("active", nextWorkspace === "builder");
+  ui.questTab.setAttribute("aria-selected", String(nextWorkspace === "quest"));
   ui.trainerTab.setAttribute("aria-selected", String(nextWorkspace === "trainer"));
   ui.builderTab.setAttribute("aria-selected", String(nextWorkspace === "builder"));
+  ui.chapterSelect.disabled = nextWorkspace === "quest";
+  ui.exerciseSelect.disabled = nextWorkspace === "quest";
   document.body.dataset.workspace = nextWorkspace;
   if (nextWorkspace === "builder") {
     ui.chapterLabel.textContent = "My Progressions · Offline workspace";
     ui.appTitle.textContent = "Progression Builder";
     renderBuilder();
   } else {
+    if (nextWorkspace === "quest") {
+      const indexes = questExerciseIndexes();
+      if (!indexes.includes(state.exerciseIndex)) {
+        state.exerciseIndex = nextRandomIndex(
+          `quest-${currentQuestMission().id}`,
+          indexes,
+          state.exerciseIndex,
+        );
+      }
+      questState.attempt = freshQuestAttempt();
+      refreshExerciseSelect();
+      startExercise(true);
+    } else {
+      refreshExerciseSelect();
+    }
     render();
   }
 }
@@ -2441,6 +2908,7 @@ function populateBuilderControls() {
 function initBuilder() {
   populateBuilderControls();
   syncCustomExercises();
+  ui.questTab.addEventListener("click", () => setWorkspace("quest"));
   ui.trainerTab.addEventListener("click", () => setWorkspace("trainer"));
   ui.builderTab.addEventListener("click", () => setWorkspace("builder"));
   ui.builderNameInput.addEventListener("input", () => {
@@ -3112,6 +3580,18 @@ function init() {
     resumeAudioAfterInterruption();
   });
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !ui.questResultLayer.hidden) {
+      continueQuestResult();
+      return;
+    }
+    if (event.key === "Escape" && !ui.questMapLayer.hidden) {
+      setQuestMapOpen(false);
+      if (questState.result) {
+        ui.questResultLayer.hidden = false;
+        document.body.classList.add("quest-layer-open");
+      }
+      return;
+    }
     if (event.key === "Escape" && !ui.onboardingLayer.hidden) {
       completeOnboarding();
       return;
@@ -3147,8 +3627,29 @@ function init() {
   ui.onboardingNextButton.addEventListener("click", advanceOnboarding);
   ui.settingsCloseButton.addEventListener("click", () => setSettingsOpen(false));
   ui.settingsScrim.addEventListener("click", () => setSettingsOpen(false));
+  ui.questMapButton.addEventListener("click", () => setQuestMapOpen(true));
+  const closeQuestMap = () => {
+    setQuestMapOpen(false);
+    if (questState.result) {
+      ui.questResultLayer.hidden = false;
+      document.body.classList.add("quest-layer-open");
+    }
+  };
+  ui.questMapScrim.addEventListener("click", closeQuestMap);
+  ui.questMapCloseButton.addEventListener("click", closeQuestMap);
+  ui.questMapPrimaryButton.addEventListener("click", () => {
+    setQuestMapOpen(false);
+    if (questState.result) continueQuestResult();
+  });
+  ui.questResultMapButton.addEventListener("click", () => {
+    ui.questResultLayer.hidden = true;
+    setQuestMapOpen(true);
+  });
+  ui.questResultContinueButton.addEventListener("click", continueQuestResult);
+  ui.resetQuestButton.addEventListener("click", resetQuestProgress);
   setSettingsOpen(false);
   initBuilder();
+  document.body.dataset.workspace = builderState.workspace;
 
   const allOption = document.createElement("option");
   allOption.value = "all";
@@ -3256,6 +3757,12 @@ function init() {
   buildPianoKeyboard();
 
   startExercise(true);
+  ui.chapterSelect.disabled = isQuestMode();
+  ui.exerciseSelect.disabled = isQuestMode();
+  renderQuestHud();
+  if (!questState.progress.introSeen) {
+    window.setTimeout(() => setQuestMapOpen(true), 520);
+  }
   updateOnboardingHelpVisibility();
   window.setTimeout(maybeStartOnboarding, 420);
 }
@@ -3378,7 +3885,9 @@ function refreshExerciseSelect() {
     const exercise = EXERCISES[index];
     const option = document.createElement("option");
     option.value = String(index);
-    option.textContent = exercise.isCustom
+    option.textContent = isQuestMode()
+      ? `${exercise.sequence.length} chords · ${exercise.name}`
+      : exercise.isCustom
       ? exercise.name
       : state.chapterFilter === "all"
       ? `Chapter ${exercise.chapter} · ${exercise.name}`
@@ -3389,6 +3898,7 @@ function refreshExerciseSelect() {
 }
 
 function eligibleExerciseIndexes() {
+  if (isQuestMode()) return questExerciseIndexes();
   return EXERCISES
     .map((exercise, index) => ({ exercise, index }))
     .filter(({ exercise }) => (
@@ -3404,6 +3914,7 @@ function startExercise(randomizeKey) {
   const exercise = currentExercise();
   cancelPlayback();
   window.clearTimeout(autoNextTimer);
+  if (isQuestMode()) questState.attempt = freshQuestAttempt();
   if (randomizeKey) state.key = pickKey();
   state.answers = Array(exercise.sequence.length).fill(null);
   state.wrongAnswers = Array.from(
@@ -3555,8 +4066,10 @@ function render() {
   ui.matrixScroll.dataset.density = matrixDensity(positionCount);
   document.body.dataset.atmosphere = visualMoodForExercise(exercise);
 
-  ui.appTitle.textContent = "Chord Progressions";
-  ui.chapterLabel.textContent = exercise.isCustom
+  ui.appTitle.textContent = isQuestMode() ? "The Harmonic Path" : "Chord Progressions";
+  ui.chapterLabel.textContent = isQuestMode()
+    ? `Ear Quest · Level ${currentQuestMission().level}`
+    : exercise.isCustom
     ? "My Progressions · Custom training"
     : `Reharmonization Techniques · Chapter ${exercise.chapter}`;
   ui.sourceLabel.textContent = exercise.source;
@@ -3611,6 +4124,7 @@ function render() {
       if (event.target !== row) return;
       if (event.key.toLowerCase() === "n") {
         event.preventDefault();
+        registerQuestChordHint();
         openVoicingPopover(option, row);
         return;
       }
@@ -3680,7 +4194,7 @@ function render() {
   });
 
   ui.showButton.disabled = state.revealed || state.completed || state.playing;
-  ui.previousButton.disabled = exerciseHistory.length === 0;
+  ui.previousButton.disabled = isQuestMode() || exerciseHistory.length === 0;
   ui.playbackControls.classList.toggle("segmented", showSegmentPlayback);
   ui.playButton.hidden = false;
   ui.playButton.disabled = false;
@@ -3753,7 +4267,12 @@ function render() {
       ? "Reference · progression follows"
       : `Position ${state.activePosition + 1} of ${positionCount}`;
   }
-  ui.nextButton.disabled = false;
+  ui.nextButton.disabled = Boolean(questState.result);
+  ui.nextButton.textContent = isQuestMode() ? "New trial" : "Skip";
+  ui.nextButton.title = isQuestMode()
+    ? "Try another progression without quest progress"
+    : "Skip without changing statistics";
+  renderQuestHud();
   updateStats();
 }
 
@@ -3786,16 +4305,28 @@ function selectAnswer(position, optionIndex) {
   if (
     state.completed
     || state.revealed
+    || (isQuestMode() && questState.attempt.failed)
     || state.answers[position] !== null
   ) return;
 
   if (!isCorrectOption(position, optionIndex)) {
     state.wrongAnswers[position].add(optionIndex);
+    if (isQuestMode()) questState.attempt.wrongCount += 1;
     setFeedback(
-      `Position ${position + 1}: not quite. Choose another chord.`,
+      isQuestMode()
+        ? `Position ${position + 1}: not quite · ${questState.attempt.wrongCount} / ${QUEST_MAX_WRONG_ANSWERS} misses.`
+        : `Position ${position + 1}: not quite. Choose another chord.`,
       "error",
     );
     render();
+    if (
+      isQuestMode()
+      && questState.attempt.wrongCount >= QUEST_MAX_WRONG_ANSWERS
+    ) {
+      window.setTimeout(() => {
+        failQuestAttempt("Five misses ended this run.");
+      }, 180);
+    }
     return;
   }
 
@@ -3855,6 +4386,11 @@ function completeExercise() {
   }
   render();
 
+  if (isQuestMode()) {
+    finishQuestClear({ firstTryPositions, perfect });
+    return;
+  }
+
   autoNextTimer = window.setTimeout(() => {
     nextExercise();
   }, 1200);
@@ -3868,6 +4404,11 @@ function showAnswer() {
   saveStats();
   setFeedback("The correct progression is shown in blue.", "success");
   render();
+  if (isQuestMode()) {
+    window.setTimeout(() => {
+      failQuestAttempt("The answer was revealed, so this became a study run.");
+    }, 220);
+  }
 }
 
 function setFeedback(message, type = "") {
@@ -4167,6 +4708,7 @@ function toggleSegmentPlayback(segmentIndex) {
 }
 
 async function previewChord(item, optionIndex) {
+  registerQuestChordHint();
   cancelPlayback();
   if (!await ensureAudioContext()) return;
 
@@ -4230,6 +4772,7 @@ function buildPianoKeyboard() {
 }
 
 async function triggerPianoKey(button, midi) {
+  registerQuestPianoUse();
   const AudioEngine = window.AudioContext || window.webkitAudioContext;
   if (!AudioEngine) {
     setFeedback("This browser does not support Web Audio playback.", "error");
@@ -5177,6 +5720,7 @@ function attachChordNotesHold(target, item, focusTarget = target) {
       holdTimer = null;
       holdTriggered = true;
       target.classList.remove("holding");
+      registerQuestChordHint();
       openVoicingPopover(item, focusTarget);
     }, CHORD_NOTES_HOLD_MS);
   });

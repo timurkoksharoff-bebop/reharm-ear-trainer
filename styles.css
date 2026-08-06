@@ -147,7 +147,7 @@ button {
   border-radius: 16px;
   background: rgba(255, 253, 248, 0.6);
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
 }
 
@@ -173,6 +173,411 @@ button {
 
 .workspace-panel[hidden] {
   display: none;
+}
+
+.quest-hud {
+  min-width: 0;
+  max-width: calc(100% - 36px);
+  width: min(1240px, calc(100% - 36px));
+  margin: 10px auto 0;
+  padding: 14px 18px;
+  border: 1px solid rgba(84, 116, 102, 0.28);
+  border-radius: 21px;
+  background:
+    radial-gradient(circle at 8% 22%, rgba(255, 255, 255, 0.72), transparent 28%),
+    linear-gradient(120deg, rgba(229, 238, 231, 0.9), rgba(239, 235, 223, 0.82));
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 15px;
+  overflow: hidden;
+}
+
+body:not([data-workspace="quest"]) .quest-hud {
+  display: none;
+}
+
+.quest-emblem {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 1px solid rgba(84, 116, 102, 0.42);
+  border-radius: 50%;
+  background: rgba(255, 254, 249, 0.58);
+  color: var(--sage-deep);
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: 27px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 5px rgba(130, 156, 139, 0.08);
+}
+
+.quest-copy {
+  min-width: 0;
+}
+
+.quest-kicker,
+.quest-progress-label,
+.quest-score span,
+.quest-score small {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.quest-copy h2 {
+  margin: 3px 0 8px;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quest-progress-track {
+  width: min(460px, 100%);
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(84, 116, 102, 0.13);
+  overflow: hidden;
+}
+
+.quest-progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--sage), var(--sky));
+  transition: width 420ms ease;
+}
+
+.quest-progress-label {
+  margin-top: 5px;
+  letter-spacing: 0.12em;
+}
+
+.quest-score {
+  min-width: 88px;
+  text-align: right;
+}
+
+.quest-score strong {
+  display: block;
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: 29px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.quest-score span,
+.quest-score small {
+  display: block;
+  margin-top: 3px;
+  letter-spacing: 0.11em;
+}
+
+.quest-score small {
+  color: var(--sage-deep);
+}
+
+.quest-layer[hidden] {
+  display: none;
+}
+
+.quest-layer {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+}
+
+.quest-layer-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(32, 44, 48, 0.38);
+  backdrop-filter: blur(17px) saturate(0.75);
+  -webkit-backdrop-filter: blur(17px) saturate(0.75);
+}
+
+.quest-map,
+.quest-result {
+  position: relative;
+  z-index: 1;
+  width: min(660px, 100%);
+  max-height: min(760px, calc(100dvh - 32px));
+  padding: 28px;
+  border: 1px solid rgba(49, 67, 72, 0.2);
+  border-radius: 28px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at 15% 5%, rgba(255, 255, 255, 0.88), transparent 35%),
+    linear-gradient(145deg, rgba(247, 248, 241, 0.98), rgba(242, 232, 224, 0.98));
+  box-shadow: 0 30px 100px rgba(34, 47, 48, 0.25);
+}
+
+.quest-map-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.quest-map-heading h2,
+.quest-result h2 {
+  margin: 3px 0 0;
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.quest-map-heading button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: rgba(255, 255, 252, 0.55);
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.quest-map-intro {
+  margin: 15px 0 20px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.quest-map-route {
+  display: grid;
+  gap: 8px;
+}
+
+.quest-node {
+  position: relative;
+  min-height: 74px;
+  padding: 12px 14px 12px 68px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 252, 0.52);
+}
+
+.quest-node::before {
+  content: attr(data-emblem);
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 39px;
+  height: 39px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  color: var(--ink-faint);
+  background: rgba(249, 247, 239, 0.72);
+}
+
+.quest-node.current {
+  border-color: rgba(84, 116, 102, 0.5);
+  background: rgba(226, 237, 228, 0.72);
+  box-shadow: 0 8px 24px rgba(84, 116, 102, 0.1);
+}
+
+.quest-node.complete::before {
+  color: #fff;
+  border-color: var(--sage-deep);
+  background: var(--sage-deep);
+}
+
+.quest-node.locked {
+  opacity: 0.48;
+}
+
+.quest-node strong,
+.quest-node span,
+.quest-node small {
+  display: block;
+}
+
+.quest-node strong {
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.quest-node span {
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.quest-node small {
+  margin-top: 5px;
+  color: var(--sage-deep);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.quest-map-primary,
+.quest-result-primary,
+.quest-result-secondary {
+  min-height: 47px;
+  padding: 10px 22px;
+  border: 1px solid rgba(84, 116, 102, 0.42);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.quest-map-primary {
+  width: 100%;
+  margin-top: 20px;
+  background: rgba(199, 218, 205, 0.82);
+  color: var(--sage-deep);
+}
+
+.quest-result-layer {
+  overflow: hidden;
+  background: rgba(225, 233, 228, 0.32);
+  backdrop-filter: blur(20px) saturate(0.82);
+  -webkit-backdrop-filter: blur(20px) saturate(0.82);
+}
+
+.quest-result {
+  width: min(520px, 100%);
+  overflow: visible;
+  text-align: center;
+  animation: quest-result-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+.quest-result-kicker {
+  margin: 0;
+  color: var(--sage-deep);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.23em;
+  text-transform: uppercase;
+}
+
+.quest-result-medal {
+  width: 86px;
+  height: 86px;
+  margin: 16px auto;
+  border: 1px solid rgba(84, 116, 102, 0.45);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--sage-deep);
+  background: radial-gradient(circle at 35% 25%, #fff, #dce8dd 64%, #c4d3c8);
+  font-family: Georgia, serif;
+  font-size: 42px;
+  box-shadow: 0 14px 35px rgba(84, 116, 102, 0.18), inset 0 0 0 7px rgba(255, 255, 255, 0.45);
+}
+
+.quest-result.failed .quest-result-medal {
+  color: var(--clay-deep);
+  border-color: rgba(152, 93, 77, 0.38);
+  background: radial-gradient(circle at 35% 25%, #fff, #eedbd3 64%, #dfbbae);
+}
+
+.quest-stars {
+  margin-top: 15px;
+  color: #b8893f;
+  font-size: 34px;
+  letter-spacing: 0.13em;
+  text-shadow: 0 3px 12px rgba(184, 137, 63, 0.2);
+}
+
+.quest-result-score {
+  display: block;
+  margin-top: 7px;
+  color: var(--sage-deep);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quest-result-body {
+  max-width: 390px;
+  margin: 14px auto 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.quest-badge {
+  width: fit-content;
+  margin: 15px auto 0;
+  padding: 7px 13px;
+  border: 1px solid rgba(125, 158, 174, 0.38);
+  border-radius: 999px;
+  background: rgba(223, 235, 239, 0.62);
+  color: var(--sky-deep);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quest-result-actions {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 9px;
+}
+
+.quest-result-primary {
+  background: rgba(199, 218, 205, 0.88);
+  color: var(--sage-deep);
+}
+
+.quest-result-secondary {
+  background: rgba(255, 255, 252, 0.48);
+  color: var(--ink-soft);
+}
+
+.quest-celebration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.quest-particle {
+  position: absolute;
+  left: var(--x);
+  top: -8vh;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: var(--color);
+  opacity: 0;
+  animation: quest-particle-fall var(--duration) var(--delay) ease-in both;
+}
+
+@keyframes quest-result-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes quest-particle-fall {
+  0% { opacity: 0; transform: translate3d(0, -5vh, 0) rotate(0); }
+  12% { opacity: 0.82; }
+  100% { opacity: 0; transform: translate3d(var(--drift), 112vh, 0) rotate(420deg); }
 }
 
 .topbar {
@@ -1819,6 +2224,72 @@ select:focus-visible {
 @media (max-width: 760px) {
   .app-shell {
     padding-top: 10px;
+  }
+
+  .workspace-tabs {
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .workspace-tab {
+    min-height: 36px;
+    padding-inline: 6px;
+    font-size: 8px;
+    letter-spacing: 0.13em;
+  }
+
+  .quest-hud {
+    max-width: calc(100% - 18px);
+    width: min(100% - 18px, 1240px);
+    grid-template-columns: 43px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 18px;
+  }
+
+  .quest-emblem {
+    width: 42px;
+    height: 42px;
+    font-size: 21px;
+  }
+
+  .quest-copy h2 {
+    margin-bottom: 6px;
+    font-size: 17px;
+  }
+
+  .quest-kicker,
+  .quest-progress-label,
+  .quest-score span,
+  .quest-score small {
+    font-size: 7px;
+  }
+
+  .quest-score {
+    min-width: 58px;
+  }
+
+  .quest-score strong {
+    font-size: 22px;
+  }
+
+  .quest-map,
+  .quest-result {
+    padding: 22px 18px;
+    border-radius: 23px;
+  }
+
+  .quest-map-heading h2,
+  .quest-result h2 {
+    font-size: 32px;
+  }
+
+  .quest-node {
+    padding-left: 62px;
+  }
+
+  .quest-result-actions {
+    grid-template-columns: 1fr;
   }
 
   .topbar,

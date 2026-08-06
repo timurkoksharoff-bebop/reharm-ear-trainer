@@ -14,8 +14,8 @@
   <meta name="screen-orientation" content="portrait">
   <title>Reharm Ear Trainer</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="favicon-32.png?v=0.33" type="image/png" sizes="32x32">
-  <link rel="apple-touch-icon" href="icon-180.png?v=0.33">
+  <link rel="icon" href="favicon-32.png?v=0.34" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icon-180.png?v=0.34">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body data-atmosphere="dawn">
@@ -59,13 +59,22 @@
     <nav class="workspace-tabs" role="tablist" aria-label="Application mode">
       <button
         class="workspace-tab active"
-        id="trainerTab"
+        id="questTab"
         type="button"
         role="tab"
         aria-selected="true"
         aria-controls="trainerWorkspace"
+        data-workspace="quest"
+      >Quest</button>
+      <button
+        class="workspace-tab"
+        id="trainerTab"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="trainerWorkspace"
         data-workspace="trainer"
-      >Trainer</button>
+      >Practice</button>
       <button
         class="workspace-tab"
         id="builderTab"
@@ -125,6 +134,9 @@
       <button class="settings-guide" id="replayGuideButton" type="button">
         Replay quick guide
       </button>
+      <button class="settings-guide" id="resetQuestButton" type="button">
+        Reset quest progress
+      </button>
       <button class="settings-reset" id="resetStatsButton" type="button">Reset statistics</button>
     </aside>
 
@@ -132,8 +144,27 @@
       class="workspace-panel"
       id="trainerWorkspace"
       role="tabpanel"
-      aria-labelledby="trainerTab"
+      aria-labelledby="questTab"
     >
+      <section class="quest-hud" id="questHud" aria-label="Quest progress">
+        <button class="quest-emblem" id="questMapButton" type="button" aria-label="Open quest map">
+          <span id="questEmblem">✦</span>
+        </button>
+        <div class="quest-copy">
+          <p class="quest-kicker" id="questKicker">Level 1 · First Light</p>
+          <h2 id="questTitle">Hear the first three-chord paths</h2>
+          <div class="quest-progress-track" aria-hidden="true">
+            <span id="questProgressBar"></span>
+          </div>
+          <p class="quest-progress-label" id="questProgressLabel">0 / 3 clear</p>
+        </div>
+        <div class="quest-score" aria-label="Quest score">
+          <strong id="questRunScore">1000</strong>
+          <span>run score</span>
+          <small id="questTotalXp">0 XP</small>
+        </div>
+      </section>
+
       <section class="exercise">
       <div class="exercise-heading">
         <div>
@@ -413,6 +444,39 @@
       </section>
     </section>
   </main>
+
+  <div class="quest-layer" id="questMapLayer" hidden>
+    <button class="quest-layer-scrim" id="questMapScrim" type="button" aria-label="Close quest map"></button>
+    <section class="quest-map" role="dialog" aria-modal="true" aria-labelledby="questMapTitle">
+      <div class="quest-map-heading">
+        <div>
+          <p class="eyebrow">Listening journey</p>
+          <h2 id="questMapTitle">The Harmonic Path</h2>
+        </div>
+        <button id="questMapCloseButton" type="button" aria-label="Close quest map">×</button>
+      </div>
+      <p class="quest-map-intro">Clear each listening gate to unlock longer progressions. Piano checking is allowed; ready-made chord previews lower the rank.</p>
+      <div class="quest-map-route" id="questMapRoute"></div>
+      <button class="quest-map-primary" id="questMapPrimaryButton" type="button">Continue quest</button>
+    </section>
+  </div>
+
+  <div class="quest-layer quest-result-layer" id="questResultLayer" hidden>
+    <div class="quest-celebration" id="questCelebration" aria-hidden="true"></div>
+    <section class="quest-result" role="dialog" aria-modal="true" aria-labelledby="questResultTitle">
+      <p class="quest-result-kicker" id="questResultKicker">Mission clear</p>
+      <div class="quest-result-medal" id="questResultMedal">✦</div>
+      <h2 id="questResultTitle">First Light</h2>
+      <div class="quest-stars" id="questResultStars" aria-label="Mission rating">☆☆☆</div>
+      <strong class="quest-result-score" id="questResultScore">+1000 XP</strong>
+      <p class="quest-result-body" id="questResultBody"></p>
+      <div class="quest-badge" id="questResultBadge" hidden></div>
+      <div class="quest-result-actions">
+        <button class="quest-result-secondary" id="questResultMapButton" type="button">View path</button>
+        <button class="quest-result-primary" id="questResultContinueButton" type="button">Continue</button>
+      </div>
+    </section>
+  </div>
 
   <div class="onboarding-layer" id="onboardingLayer" hidden>
     <div class="onboarding-blocker" aria-hidden="true"></div>

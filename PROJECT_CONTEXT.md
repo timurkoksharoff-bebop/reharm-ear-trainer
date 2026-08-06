@@ -21,7 +21,7 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current full cache version: `0.33`
+- Current full cache version: `0.34`
 - Current Lite cache version: `0.4`
 - Main branch: `main`
 
@@ -55,6 +55,13 @@ When adding or correcting a progression:
 ## Current Product Behavior
 
 - The shipping interface is English-only.
+- `Quest` is the default learning path. Seven locally saved mission gates move
+  from three-chord examples through the longest 17–20 chord progressions.
+  Each clear awards a one-to-three-star rank and XP; five misses reset only
+  the current run. Auditioning a ready-made chord lowers the run score, while
+  checking individual notes on the piano is allowed and recorded. `Practice`
+  preserves the unrestricted chapter/exercise workflow, and `Builder` remains
+  independent from both modes.
 - First-time users see a concise visual `How to` tour that spotlights playback,
   answer entry, reveal/answer playback, navigation, favorites, statistics,
   keyboard, and settings. Completing or skipping it removes the temporary top-bar info

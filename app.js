@@ -1521,80 +1521,44 @@ const LEGACY_FAVORITES_STORAGE_KEY = "reharm-ear-favorites-v1";
 const ONBOARDING_STORAGE_KEY = "reharm-ear-onboarding-v1";
 const CUSTOM_PROGRESSIONS_STORAGE_KEY = "reharm-ear-custom-progressions-v1";
 const ARPEGGIO_MODE_STORAGE_KEY = "reharm-ear-arpeggio-mode-v1";
-const QUEST_STORAGE_KEY = "reharm-ear-quest-v1";
+const QUEST_STORAGE_KEY = "reharm-ear-quest-v2";
 const QUEST_MAX_WRONG_ANSWERS = 5;
-const QUEST_MISSIONS = [
-  {
-    id: "first-light",
-    level: 1,
-    emblem: "✦",
-    title: "First Light",
-    subtitle: "Hear the first three-chord paths",
-    minLength: 3,
-    maxLength: 3,
-    requiredClears: 3,
-  },
-  {
-    id: "four-corners",
-    level: 2,
-    emblem: "◇",
-    title: "Four Corners",
-    subtitle: "Hold a complete four-chord form",
-    minLength: 4,
-    maxLength: 4,
-    requiredClears: 4,
-  },
-  {
-    id: "harmonic-current",
-    level: 3,
-    emblem: "≈",
-    title: "Harmonic Current",
-    subtitle: "Follow five- and six-chord motion",
-    minLength: 5,
-    maxLength: 6,
-    requiredClears: 4,
-  },
-  {
-    id: "open-sky",
-    level: 4,
-    emblem: "△",
-    title: "Open Sky",
-    subtitle: "Navigate seven- and eight-chord forms",
-    minLength: 7,
-    maxLength: 8,
-    requiredClears: 5,
-  },
-  {
-    id: "deep-water",
-    level: 5,
-    emblem: "◌",
-    title: "Deep Water",
-    subtitle: "Keep nine to twelve harmonies in memory",
-    minLength: 9,
-    maxLength: 12,
-    requiredClears: 4,
-  },
-  {
-    id: "long-form",
-    level: 6,
-    emblem: "∞",
-    title: "Long Form",
-    subtitle: "Hear the architecture of thirteen to sixteen chords",
-    minLength: 13,
-    maxLength: 16,
-    requiredClears: 3,
-  },
-  {
-    id: "master-path",
-    level: 7,
-    emblem: "✺",
-    title: "Master Path",
-    subtitle: "Complete the longest reharmonization routes",
-    minLength: 17,
-    maxLength: 20,
-    requiredClears: 3,
-  },
+const QUEST_CHAPTER_NAMES = [
+  "First Light",
+  "Turning Point",
+  "Inner Motion",
+  "Open Ground",
+  "Colour Shift",
+  "Crossroads",
+  "New Current",
+  "Hidden Route",
+  "Wide Horizon",
+  "Night Garden",
+  "Changing Light",
+  "Deep Focus",
+  "Long View",
+  "Sideways Motion",
+  "Suspended Air",
+  "Arrival",
 ];
+const QUEST_EMBLEMS = ["✦", "◇", "≈", "△", "◌", "∞", "✺", "✧"];
+const QUEST_STAGES = [
+  { label: "Opening forms", subtitle: "Start with the shortest paths in this chapter." },
+  { label: "Developing motion", subtitle: "Build memory through the chapter’s middle ground." },
+  { label: "Chapter summit", subtitle: "Complete this chapter’s longest listening routes." },
+];
+const QUEST_CLEARS_PER_STAGE = 2;
+const QUEST_MISSIONS = Array.from({ length: 16 }, (_, index) => {
+  const chapter = index + 1;
+  return {
+    id: `chapter-${chapter}`,
+    level: chapter,
+    chapter,
+    emblem: QUEST_EMBLEMS[index % QUEST_EMBLEMS.length],
+    title: QUEST_CHAPTER_NAMES[index],
+    requiredClears: QUEST_STAGES.length * QUEST_CLEARS_PER_STAGE,
+  };
+});
 const BUILDER_MAX_CHORDS = 20;
 const BUILDER_DEGREES = [
   { roman: "I", offset: 0 },
@@ -2576,15 +2540,35 @@ function questMissionRecord(mission = currentQuestMission()) {
   return questState.progress.missions[mission.id];
 }
 
-function questExerciseIndexes(mission = currentQuestMission()) {
+function questStageForMission(mission = currentQuestMission()) {
+  const clears = questMissionRecord(mission).clears;
+  return QUEST_STAGES[Math.min(
+    QUEST_STAGES.length - 1,
+    Math.floor(clears / QUEST_CLEARS_PER_STAGE),
+  )];
+}
+
+function questChapterExerciseIndexes(mission = currentQuestMission()) {
   return EXERCISES
     .map((exercise, index) => ({ exercise, index }))
-    .filter(({ exercise }) => (
-      !exercise.isCustom
-      && exercise.sequence.length >= mission.minLength
-      && exercise.sequence.length <= mission.maxLength
-    ))
+    .filter(({ exercise }) => !exercise.isCustom && exercise.chapter === mission.chapter)
     .map(({ index }) => index);
+}
+
+function questExerciseIndexes(mission = currentQuestMission()) {
+  const chapterIndexes = questChapterExerciseIndexes(mission);
+  const lengths = [...new Set(chapterIndexes.map((index) => EXERCISES[index].sequence.length))]
+    .sort((left, right) => left - right);
+  if (lengths.length <= 1) return chapterIndexes;
+
+  const stageIndex = QUEST_STAGES.indexOf(questStageForMission(mission));
+  const start = Math.floor((stageIndex * lengths.length) / QUEST_STAGES.length);
+  const end = Math.max(
+    start,
+    Math.floor(((stageIndex + 1) * lengths.length) / QUEST_STAGES.length) - 1,
+  );
+  const allowedLengths = new Set(lengths.slice(start, end + 1));
+  return chapterIndexes.filter((index) => allowedLengths.has(EXERCISES[index].sequence.length));
 }
 
 function questRunScore() {
@@ -2611,10 +2595,11 @@ function renderQuestHud() {
   if (!ui.questHud) return;
   const mission = currentQuestMission();
   const record = questMissionRecord(mission);
+  const stage = questStageForMission(mission);
   const clears = Math.min(record.clears, mission.requiredClears);
   ui.questEmblem.textContent = mission.emblem;
-  ui.questKicker.textContent = `Level ${mission.level} · ${mission.title}`;
-  ui.questTitle.textContent = mission.subtitle;
+  ui.questKicker.textContent = `Chapter ${mission.chapter} of ${QUEST_MISSIONS.length} · ${mission.title}`;
+  ui.questTitle.textContent = stage.subtitle;
   ui.questProgressBar.style.width = `${(clears / mission.requiredClears) * 100}%`;
   ui.questProgressLabel.textContent = `${clears} / ${mission.requiredClears} clear · ${"★".repeat(record.bestStars)}${"☆".repeat(3 - record.bestStars)}`;
   ui.questRunScore.textContent = String(questRunScore());
@@ -2626,6 +2611,7 @@ function renderQuestMap() {
   ui.questMapRoute.replaceChildren();
   QUEST_MISSIONS.forEach((mission, index) => {
     const record = questMissionRecord(mission);
+    const stage = questStageForMission(mission);
     const node = document.createElement("article");
     const unlocked = index <= questState.progress.missionIndex;
     const complete = record.clears >= mission.requiredClears;
@@ -2633,12 +2619,12 @@ function renderQuestMap() {
     node.dataset.emblem = complete ? "✓" : (unlocked ? mission.emblem : "·");
 
     const title = document.createElement("strong");
-    title.textContent = `${mission.level}. ${mission.title}`;
+    title.textContent = `Chapter ${mission.chapter} · ${mission.title}`;
     const subtitle = document.createElement("span");
-    subtitle.textContent = mission.subtitle;
+    subtitle.textContent = unlocked ? stage.label : "Complete the previous chapter to unlock.";
     const meta = document.createElement("small");
     meta.textContent = unlocked
-      ? `${Math.min(record.clears, mission.requiredClears)} / ${mission.requiredClears} clear · ${"★".repeat(record.bestStars)}${"☆".repeat(3 - record.bestStars)}`
+      ? `${Math.min(record.clears, mission.requiredClears)} / ${mission.requiredClears} clears · ${"★".repeat(record.bestStars)}${"☆".repeat(3 - record.bestStars)}`
       : "Locked";
     node.append(title, subtitle, meta);
     ui.questMapRoute.append(node);
@@ -2716,10 +2702,12 @@ function showQuestResult(result) {
   questState.result = result;
   ui.questResult.classList.toggle("failed", !result.success);
   ui.questResultKicker.textContent = result.success
-    ? (result.missionUnlocked ? "New level unlocked" : "Mission clear")
+    ? (result.missionUnlocked ? "New chapter unlocked" : "Chapter clear")
     : "Try again";
   ui.questResultMedal.textContent = result.success ? result.mission.emblem : "↺";
-  ui.questResultTitle.textContent = result.success ? result.mission.title : "Listening reset";
+  ui.questResultTitle.textContent = result.success
+    ? `Chapter ${result.mission.chapter} · ${result.mission.title}`
+    : "Listening reset";
   ui.questResultStars.textContent = result.success
     ? `${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`
     : "···";
@@ -2769,7 +2757,7 @@ function finishQuestClear({ firstTryPositions, perfect }) {
   if (questState.attempt.chordHints === 0) details.push("No ready-made chord previews used.");
   else details.push(`${questState.attempt.chordHints} chord preview${questState.attempt.chordHints === 1 ? "" : "s"} lowered the rank.`);
   if (questState.attempt.pianoUsed) details.push("Keyboard checking was allowed and recorded.");
-  if (missionUnlocked) details.push(`Level ${mission.level + 1} is now open.`);
+  if (missionUnlocked) details.push(`Chapter ${mission.chapter + 1} is now open.`);
 
   showQuestResult({
     success: true,
@@ -2820,7 +2808,7 @@ function resetQuestProgress() {
   saveQuestProgress();
   if (isQuestMode()) {
     const indexes = questExerciseIndexes();
-    state.exerciseIndex = nextRandomIndex("quest-first-light", indexes, -1);
+    state.exerciseIndex = nextRandomIndex("quest-chapter-1", indexes, -1);
     refreshExerciseSelect();
     startExercise(true);
     setQuestMapOpen(true);

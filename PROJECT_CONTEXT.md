@@ -21,7 +21,7 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current full cache version: `0.35`
+- Current local full cache version: `0.36`
 - Current Lite cache version: `0.4`
 - Main branch: `main`
 
@@ -64,6 +64,11 @@ When adding or correcting a progression:
   individual notes on the piano is allowed and recorded. `Practice` preserves
   the unrestricted chapter/exercise workflow, and `Builder` remains independent
   from both modes.
+- Quest includes a low-contrast, flat-color bear that lives behind the interface
+  rather than reading as a foreground illustration. It listens during playback,
+  reacts briefly to correct and incorrect choices, rests after inactivity, and
+  mirrors the success/failure state on the result card. Practice and Builder do
+  not show this experimental character layer.
 - First-time users see a concise visual `How to` tour that spotlights playback,
   answer entry, reveal/answer playback, navigation, favorites, statistics,
   keyboard, and settings. Completing or skipping it removes the temporary top-bar info
@@ -275,7 +280,10 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Production PWA `0.33` includes 239 built-in progressions: 107 core examples and
+- Local PWA `0.36` adds the first integrated Quest bear study as lightweight
+  inline SVG, with no network or sample-loading dependency. Production remains
+  on the previously published build until this version is explicitly pushed.
+- Production PWA `0.35` includes 239 built-in progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
 - Release `0.33` adds the approved sage-green Bodoni application icon and makes
   the Builder editing state explicit: a selected chord can be updated or added
@@ -285,7 +293,7 @@ embedded cache version.
   ascending/descending arpeggio playback while retaining the same 239-item
   canonical catalog. User-created progressions live in a separate local
   library and are not counted as textbook content.
-- The published standalone Trainer uses cache `0.33`. Localhost previews
+- The published standalone Trainer uses cache `0.35`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
 - Lite `0.4` is built from the same interface, Builder, and

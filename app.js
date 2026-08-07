@@ -1598,7 +1598,19 @@ const questState = {
   attempt: freshQuestAttempt(),
   result: null,
   mapOpen: false,
+  bearPose: "idle",
 };
+
+const QUEST_BEAR_POSES = {
+  idle: { symbol: "questBearIdle", viewBox: "0 0 360 440" },
+  listen: { symbol: "questBearListen", viewBox: "0 0 360 440" },
+  rest: { symbol: "questBearRest", viewBox: "0 0 440 360" },
+  wrong: { symbol: "questBearWrong", viewBox: "0 0 360 440" },
+  victory: { symbol: "questBearVictory", viewBox: "0 0 420 440" },
+};
+const QUEST_BEAR_IDLE_DELAY_MS = 16000;
+let questBearReturnTimer = null;
+let questBearIdleTimer = null;
 
 const builderState = {
   workspace: "quest",
@@ -1687,6 +1699,10 @@ const ui = {
   questResultBadge: document.querySelector("#questResultBadge"),
   questResultMapButton: document.querySelector("#questResultMapButton"),
   questResultContinueButton: document.querySelector("#questResultContinueButton"),
+  questBearScene: document.querySelector("#questBearScene"),
+  questBearUse: document.querySelector("#questBearUse"),
+  questResultBear: document.querySelector(".quest-result-bear"),
+  questResultBearUse: document.querySelector("#questResultBearUse"),
   pianoPanel: document.querySelector(".piano-panel"),
   pianoKeyboard: document.querySelector("#pianoKeyboard"),
   pianoStopButton: document.querySelector("#pianoStopButton"),
@@ -2591,6 +2607,60 @@ function registerQuestPianoUse() {
   questState.attempt.pianoUsed = true;
 }
 
+function applyQuestBearPose(pose) {
+  const config = QUEST_BEAR_POSES[pose] || QUEST_BEAR_POSES.idle;
+  questState.bearPose = pose;
+  if (!ui.questBearScene || !ui.questBearUse) return;
+
+  ui.questBearScene.dataset.pose = pose;
+  const svg = ui.questBearScene.querySelector?.("svg");
+  svg?.setAttribute("viewBox", config.viewBox);
+  ui.questBearUse.setAttribute("href", `#${config.symbol}`);
+  ui.questBearScene.classList.remove("is-changing");
+  void ui.questBearScene.offsetWidth;
+  ui.questBearScene.classList.add("is-changing");
+}
+
+function scheduleQuestBearRest() {
+  window.clearTimeout(questBearIdleTimer);
+  if (!isQuestMode() || state.playing || questState.result) return;
+  questBearIdleTimer = window.setTimeout(() => {
+    if (!isQuestMode() || state.playing || questState.result) return;
+    applyQuestBearPose("rest");
+  }, QUEST_BEAR_IDLE_DELAY_MS);
+}
+
+function setQuestBearPose(pose, temporaryMs = 0) {
+  window.clearTimeout(questBearReturnTimer);
+  window.clearTimeout(questBearIdleTimer);
+  applyQuestBearPose(pose);
+
+  if (temporaryMs > 0) {
+    questBearReturnTimer = window.setTimeout(() => {
+      if (!isQuestMode() || questState.result) return;
+      applyQuestBearPose(state.playing ? "listen" : "idle");
+      if (!state.playing) scheduleQuestBearRest();
+    }, temporaryMs);
+    return;
+  }
+
+  if (pose === "idle") scheduleQuestBearRest();
+}
+
+function wakeQuestBear() {
+  if (!isQuestMode() || questState.result || state.playing) return;
+  if (questState.bearPose === "rest") applyQuestBearPose("idle");
+  scheduleQuestBearRest();
+}
+
+function setQuestResultBear(success) {
+  if (!ui.questResultBear || !ui.questResultBearUse) return;
+  const pose = success ? "victory" : "wrong";
+  const config = QUEST_BEAR_POSES[pose];
+  ui.questResultBear.setAttribute("viewBox", config.viewBox);
+  ui.questResultBearUse.setAttribute("href", `#${config.symbol}`);
+}
+
 function renderQuestHud() {
   if (!ui.questHud) return;
   const mission = currentQuestMission();
@@ -2700,6 +2770,8 @@ function renderQuestParticles() {
 
 function showQuestResult(result) {
   questState.result = result;
+  setQuestBearPose(result.success ? "victory" : "wrong");
+  setQuestResultBear(result.success);
   ui.questResult.classList.toggle("failed", !result.success);
   ui.questResultKicker.textContent = result.success
     ? (result.missionUnlocked ? "New chapter unlocked" : "Chapter clear")
@@ -3557,6 +3629,9 @@ function preventInterfaceZoom() {
 function init() {
   configurePlaybackAudioSession();
   preventInterfaceZoom();
+  ui.trainerWorkspace.addEventListener("pointerdown", wakeQuestBear, {
+    capture: true,
+  });
   document.addEventListener("pointerdown", () => {
     requestPortraitOrientation();
     unlockMobileAudio();
@@ -3913,6 +3988,7 @@ function startExercise(randomizeKey) {
   state.revealed = false;
   state.activePosition = null;
   setFeedback("Tonic first, then the progression.");
+  if (isQuestMode()) setQuestBearPose("idle");
   render();
 }
 
@@ -4300,6 +4376,7 @@ function selectAnswer(position, optionIndex) {
   if (!isCorrectOption(position, optionIndex)) {
     state.wrongAnswers[position].add(optionIndex);
     if (isQuestMode()) questState.attempt.wrongCount += 1;
+    if (isQuestMode()) setQuestBearPose("wrong", 1450);
     setFeedback(
       isQuestMode()
         ? `Position ${position + 1}: not quite · ${questState.attempt.wrongCount} / ${QUEST_MAX_WRONG_ANSWERS} misses.`
@@ -4326,6 +4403,7 @@ function selectAnswer(position, optionIndex) {
   }
 
   const solvedCount = state.answers.filter((answer) => answer !== null).length;
+  if (isQuestMode()) setQuestBearPose("victory", 850);
   setFeedback(
     `Position ${position + 1}: correct. ${solvedCount} of ${state.answers.length} solved.`,
     "success",
@@ -4391,6 +4469,7 @@ function showAnswer() {
   state.stats.streak = 0;
   saveStats();
   setFeedback("The correct progression is shown in blue.", "success");
+  if (isQuestMode()) setQuestBearPose("wrong");
   render();
   if (isQuestMode()) {
     window.setTimeout(() => {
@@ -4585,6 +4664,7 @@ async function playSequence(requestedRange = null) {
   state.playbackMode = withAnswer ? "review" : "blind";
   state.playbackRange = requestedRange ? playbackRange : null;
   state.activePosition = null;
+  if (isQuestMode()) setQuestBearPose("listen");
   render();
 
   const secondsPerChord = Number(ui.tempoSelect.value);
@@ -4660,6 +4740,7 @@ async function playSequence(requestedRange = null) {
     } else {
       setFeedback("Full sequence complete.");
     }
+    if (isQuestMode() && !questState.result) setQuestBearPose("idle");
     render();
   }, (
     referenceDuration
@@ -4704,6 +4785,7 @@ async function previewChord(item, optionIndex) {
     ? 2.25
     : (isSampledKeyboardSound() ? 1.65 : 1.15);
   state.previewOptionIndex = optionIndex;
+  if (isQuestMode()) setQuestBearPose("listen");
   setFeedback(`Preview: ${optionLabel(item)}.`, "playing");
   render();
   scheduleChord(item, audioContext.currentTime + 0.04, duration);
@@ -4711,6 +4793,7 @@ async function previewChord(item, optionIndex) {
   previewTimer = window.setTimeout(() => {
     state.previewOptionIndex = null;
     parkAudioContext();
+    if (isQuestMode() && !questState.result) setQuestBearPose("idle");
     render();
   }, (
     duration
@@ -5365,6 +5448,7 @@ function cancelPlayback() {
   state.activePosition = null;
   state.previewOptionIndex = null;
   releaseAudioContext();
+  if (isQuestMode() && !questState.result) setQuestBearPose("idle");
 }
 
 function parkAudioContext() {

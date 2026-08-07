@@ -773,6 +773,64 @@ body:not([data-workspace="quest"]) .quest-hud {
   letter-spacing: 0.31em;
 }
 
+.brand-lockup--bear {
+  min-width: 255px;
+  gap: 7px;
+}
+
+.brand-emblem--bear {
+  width: 64px;
+  height: 64px;
+  border-radius: 0;
+  box-shadow: none;
+  mix-blend-mode: normal;
+  object-fit: contain;
+}
+
+.brand-wordmark--bear {
+  align-content: center;
+  gap: 1px;
+  transform: translateY(1px);
+}
+
+.brand-wordmark--bear .brand-kicker,
+.brand-wordmark--bear .brand-tagline,
+.brand-wordmark--bear .brand-name,
+.brand-wordmark--bear .brand-subtitle {
+  font-family: "Bodoni 72", Didot, "Iowan Old Style", Baskerville, serif;
+  color: var(--ink);
+  font-weight: 400;
+  margin: 0;
+}
+
+.brand-wordmark--bear .brand-kicker {
+  font-size: 6px;
+  letter-spacing: 0.25em;
+  line-height: 1.1;
+  padding-left: 2px;
+}
+
+.brand-wordmark--bear .brand-name {
+  font-size: 31px;
+  letter-spacing: 0.13em;
+  line-height: 0.83;
+}
+
+.brand-wordmark--bear .brand-subtitle {
+  font-size: 16px;
+  letter-spacing: 0.18em;
+  line-height: 0.9;
+}
+
+.brand-wordmark--bear .brand-tagline {
+  color: var(--ink-faint);
+  font-size: 5.5px;
+  letter-spacing: 0.20em;
+  line-height: 1;
+  margin-top: 3px;
+  padding-left: 3px;
+}
+
 .topbar-title {
   margin: 0 14px;
   text-align: center;
@@ -2515,6 +2573,32 @@ select:focus-visible {
 
   .brand-name {
     font-size: 27px;
+  }
+
+  .brand-lockup--bear {
+    min-width: 186px;
+    gap: 5px;
+  }
+
+  .brand-emblem--bear {
+    width: 49px;
+    height: 49px;
+  }
+
+  .brand-wordmark--bear .brand-kicker {
+    font-size: 4.7px;
+  }
+
+  .brand-wordmark--bear .brand-name {
+    font-size: 24px;
+  }
+
+  .brand-wordmark--bear .brand-subtitle {
+    font-size: 12px;
+  }
+
+  .brand-wordmark--bear .brand-tagline {
+    font-size: 4.3px;
   }
 
   .topbar-title {

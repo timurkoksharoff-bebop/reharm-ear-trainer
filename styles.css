@@ -725,7 +725,7 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .topbar {
-  min-height: 88px;
+  min-height: 108px;
   padding: 11px 20px;
   border-radius: 24px;
   background: rgba(255, 253, 248, 0.66);
@@ -774,13 +774,13 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .brand-lockup--bear {
-  min-width: 255px;
-  gap: 7px;
+  min-width: 292px;
+  gap: 9px;
 }
 
 .brand-emblem--bear {
-  width: 64px;
-  height: 64px;
+  width: 82px;
+  height: 82px;
   border-radius: 0;
   box-shadow: none;
   mix-blend-mode: normal;
@@ -790,7 +790,7 @@ body:not([data-workspace="quest"]) .quest-hud {
 .brand-wordmark--bear {
   align-content: center;
   gap: 1px;
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .brand-wordmark--bear .brand-kicker,
@@ -804,30 +804,30 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .brand-wordmark--bear .brand-kicker {
-  font-size: 6px;
-  letter-spacing: 0.25em;
+  font-size: 7px;
+  letter-spacing: 0.23em;
   line-height: 1.1;
   padding-left: 2px;
 }
 
 .brand-wordmark--bear .brand-name {
-  font-size: 31px;
-  letter-spacing: 0.13em;
-  line-height: 0.83;
+  font-size: 41px;
+  letter-spacing: 0.12em;
+  line-height: 0.79;
 }
 
 .brand-wordmark--bear .brand-subtitle {
-  font-size: 16px;
-  letter-spacing: 0.18em;
-  line-height: 0.9;
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  line-height: 0.96;
 }
 
 .brand-wordmark--bear .brand-tagline {
   color: var(--ink-faint);
-  font-size: 5.5px;
-  letter-spacing: 0.20em;
+  font-size: 6px;
+  letter-spacing: 0.19em;
   line-height: 1;
-  margin-top: 3px;
+  margin-top: 2px;
   padding-left: 3px;
 }
 
@@ -2555,7 +2555,7 @@ select:focus-visible {
   }
 
   .topbar {
-    min-height: 108px;
+    min-height: 121px;
     padding: 13px 15px 15px;
     grid-template-columns: 1fr 40px 44px;
     gap: 10px;
@@ -2576,29 +2576,29 @@ select:focus-visible {
   }
 
   .brand-lockup--bear {
-    min-width: 186px;
+    min-width: 207px;
     gap: 5px;
   }
 
   .brand-emblem--bear {
-    width: 49px;
-    height: 49px;
+    width: 58px;
+    height: 58px;
   }
 
   .brand-wordmark--bear .brand-kicker {
-    font-size: 4.7px;
+    font-size: 5.1px;
   }
 
   .brand-wordmark--bear .brand-name {
-    font-size: 24px;
+    font-size: 28px;
   }
 
   .brand-wordmark--bear .brand-subtitle {
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .brand-wordmark--bear .brand-tagline {
-    font-size: 4.3px;
+    font-size: 4.6px;
   }
 
   .topbar-title {

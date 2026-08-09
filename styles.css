@@ -774,61 +774,16 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .brand-lockup--bear {
-  min-width: 292px;
-  gap: 9px;
+  min-width: 290px;
+  display: block;
 }
 
-.brand-emblem--bear {
-  width: 82px;
-  height: 82px;
-  border-radius: 0;
-  box-shadow: none;
-  mix-blend-mode: normal;
+.brand-lockup-art {
+  display: block;
+  width: 290px;
+  height: 103px;
   object-fit: contain;
-}
-
-.brand-wordmark--bear {
-  align-content: center;
-  gap: 1px;
-  transform: translateY(0);
-}
-
-.brand-wordmark--bear .brand-kicker,
-.brand-wordmark--bear .brand-tagline,
-.brand-wordmark--bear .brand-name,
-.brand-wordmark--bear .brand-subtitle {
-  font-family: "Bodoni 72", Didot, "Iowan Old Style", Baskerville, serif;
-  color: var(--ink);
-  font-weight: 400;
-  margin: 0;
-}
-
-.brand-wordmark--bear .brand-kicker {
-  font-size: 7px;
-  letter-spacing: 0.23em;
-  line-height: 1.1;
-  padding-left: 2px;
-}
-
-.brand-wordmark--bear .brand-name {
-  font-size: 41px;
-  letter-spacing: 0.12em;
-  line-height: 0.79;
-}
-
-.brand-wordmark--bear .brand-subtitle {
-  font-size: 20px;
-  letter-spacing: 0.14em;
-  line-height: 0.96;
-}
-
-.brand-wordmark--bear .brand-tagline {
-  color: var(--ink-faint);
-  font-size: 6px;
-  letter-spacing: 0.19em;
-  line-height: 1;
-  margin-top: 2px;
-  padding-left: 3px;
+  object-position: left center;
 }
 
 .topbar-title {
@@ -2576,29 +2531,13 @@ select:focus-visible {
   }
 
   .brand-lockup--bear {
-    min-width: 207px;
+    min-width: 224px;
     gap: 5px;
   }
 
-  .brand-emblem--bear {
-    width: 58px;
-    height: 58px;
-  }
-
-  .brand-wordmark--bear .brand-kicker {
-    font-size: 5.1px;
-  }
-
-  .brand-wordmark--bear .brand-name {
-    font-size: 28px;
-  }
-
-  .brand-wordmark--bear .brand-subtitle {
-    font-size: 14px;
-  }
-
-  .brand-wordmark--bear .brand-tagline {
-    font-size: 4.6px;
+  .brand-lockup-art {
+    width: 224px;
+    height: 79px;
   }
 
   .topbar-title {

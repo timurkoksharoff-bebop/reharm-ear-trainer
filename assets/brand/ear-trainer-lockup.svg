@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 220" role="img" aria-label="Ear Trainer — Functional Listening">
+  <g transform="translate(0 3) scale(.86)">
+    <path fill="#111516" d="M45 27h86c49 0 79 22 79 57 0 24-14 40-38 49 31 9 48 28 48 56 0 39-33 61-91 61H45V27Zm43 34v54h39c23 0 36-10 36-27 0-18-13-27-38-27H88Zm0 87v57h43c28 0 41-9 41-28 0-20-15-29-45-29H88Z"/>
+    <path fill="#fffdf8" d="M84 129c11-25 28-41 53-47 2-13 9-23 20-31 5 10 6 19 3 29 16 5 29 15 37 29-9 3-18 4-27 2-4 21-16 37-35 48 14 7 26 20 35 39h-31c-8-14-19-23-33-28-10-4-17-11-21-22-7-7-8-13-1-19Z"/>
+    <path fill="#fffdf8" d="M91 155c-8 11-12 27-11 49h31c-1-15 1-28 7-38l-27-11Z"/>
+    <path fill="#9cab88" d="M83 169c28-11 49-7 66 7 14 12 29 16 48 10-21 25-51 30-77 14-14-9-26-15-37-18v-13Z"/>
+  </g>
+  <g fill="#243842" font-family="Bodoni 72, Didot, Iowan Old Style, Baskerville, serif" font-weight="400">
+    <text x="214" y="47" font-size="18" letter-spacing="4.3">FUNCTIONAL LISTENING</text>
+    <text x="210" y="115" font-size="82" textLength="255" lengthAdjust="spacingAndGlyphs">EAR</text>
+    <text x="210" y="170" font-size="49" textLength="255" lengthAdjust="spacingAndGlyphs">TRAINER</text>
+    <text x="216" y="202" fill="#697b80" font-size="15" letter-spacing="4.2">HEAR THE CHANGE</text>
+  </g>
+</svg>

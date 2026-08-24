@@ -283,6 +283,37 @@ body:not([data-workspace="quest"]) .quest-bear-scene {
   stroke-linejoin: round;
 }
 
+.quest-bear-floss-shadow {
+  fill: currentColor;
+  opacity: 0.34;
+}
+
+.quest-bear-floss-muzzle {
+  fill: rgba(255, 253, 248, 0.72);
+}
+
+.quest-bear-floss-arm > path:first-child {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 56;
+  stroke-linecap: round;
+}
+
+.quest-bear-floss-arm ellipse {
+  fill: currentColor;
+}
+
+.quest-bear-floss-arm--rear {
+  opacity: 0.72;
+}
+
+.quest-bear-floss-claws {
+  fill: none;
+  stroke: var(--quest-bear-mark);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
 @keyframes quest-bear-emerge {
   from {
     opacity: 0;

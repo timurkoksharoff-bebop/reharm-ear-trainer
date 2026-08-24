@@ -1606,13 +1606,11 @@ const QUEST_BEAR_POSES = {
   listen: { symbol: "questBearListen", viewBox: "0 0 360 440" },
   rest: { symbol: "questBearRest", viewBox: "0 0 440 360" },
   wrong: { symbol: "questBearWrong", viewBox: "0 0 360 440" },
-  victory: { symbol: "questBearVictory", viewBox: "0 0 520 740" },
+  victory: { symbol: "questBearVictory", viewBox: "0 0 420 440" },
 };
 const QUEST_BEAR_IDLE_DELAY_MS = 16000;
 let questBearReturnTimer = null;
 let questBearIdleTimer = null;
-let questBearFlossFrame = null;
-let questBearFlossStartedAt = 0;
 
 const builderState = {
   workspace: "quest",
@@ -2609,80 +2607,6 @@ function registerQuestPianoUse() {
   questState.attempt.pianoUsed = true;
 }
 
-const QUEST_BEAR_FLOSS_POSES = [
-  { front: -58, rear: -72, frontAlpha: 1, rearAlpha: 0.72, hip: -29, chest: 4.6, waist: 6.8 },
-  { front: 72, rear: 58, frontAlpha: 1, rearAlpha: 0.72, hip: 29, chest: -4.6, waist: -6.8 },
-  { front: -60, rear: -18, frontAlpha: 1, rearAlpha: 0, hip: -30, chest: 4.8, waist: 7.1 },
-  { front: 70, rear: 56, frontAlpha: 1, rearAlpha: 0.72, hip: 28, chest: -4.5, waist: -6.6 },
-  { front: -57, rear: -71, frontAlpha: 1, rearAlpha: 0.72, hip: -29, chest: 4.6, waist: 6.8 },
-  { front: 18, rear: 60, frontAlpha: 0, rearAlpha: 0.88, hip: 30, chest: -4.8, waist: -7.1 },
-  { front: -57, rear: -71, frontAlpha: 1, rearAlpha: 0.72, hip: -29, chest: 4.6, waist: 6.8 },
-  { front: 82, rear: 67, frontAlpha: 1, rearAlpha: 0.78, hip: 30, chest: -4.9, waist: -7.2 },
-  { front: -60, rear: -18, frontAlpha: 1, rearAlpha: 0, hip: -30, chest: 4.8, waist: 7.1 },
-  { front: 71, rear: 57, frontAlpha: 1, rearAlpha: 0.72, hip: 29, chest: -4.6, waist: -6.8 },
-  { front: -58, rear: -72, frontAlpha: 1, rearAlpha: 0.72, hip: -29, chest: 4.6, waist: 6.8 },
-  { front: 18, rear: 60, frontAlpha: 0, rearAlpha: 0.88, hip: 30, chest: -4.8, waist: -7.1 },
-];
-const QUEST_BEAR_FLOSS_HOLDS = new Set([2, 5, 8, 11]);
-const QUEST_BEAR_FLOSS_WEIGHTS = QUEST_BEAR_FLOSS_POSES.map((_, index) => (
-  QUEST_BEAR_FLOSS_HOLDS.has(index) ? 1.72 : 1
-));
-const QUEST_BEAR_FLOSS_TOTAL = QUEST_BEAR_FLOSS_WEIGHTS.reduce((sum, weight) => sum + weight, 0);
-
-function renderQuestBearFloss(now) {
-  const source = document.querySelector("#questBearVictory");
-  if (!source || questState.bearPose !== "victory") {
-    questBearFlossFrame = null;
-    return;
-  }
-
-  const elapsed = ((now - questBearFlossStartedAt) / 330) % QUEST_BEAR_FLOSS_TOTAL;
-  let phaseStart = 0;
-  let index = QUEST_BEAR_FLOSS_POSES.length - 1;
-  for (let candidate = 0; candidate < QUEST_BEAR_FLOSS_WEIGHTS.length; candidate += 1) {
-    const phaseEnd = phaseStart + QUEST_BEAR_FLOSS_WEIGHTS[candidate];
-    if (elapsed < phaseEnd) {
-      index = candidate;
-      break;
-    }
-    phaseStart = phaseEnd;
-  }
-
-  const raw = (elapsed - phaseStart) / QUEST_BEAR_FLOSS_WEIGHTS[index];
-  const held = QUEST_BEAR_FLOSS_HOLDS.has(index);
-  const linear = held ? (raw < 0.44 ? 0 : (raw - 0.44) / 0.56) : Math.min(raw / 0.88, 1);
-  const amount = linear * linear * (3 - 2 * linear);
-  const current = QUEST_BEAR_FLOSS_POSES[index];
-  const next = QUEST_BEAR_FLOSS_POSES[(index + 1) % QUEST_BEAR_FLOSS_POSES.length];
-  const mix = (key) => current[key] + (next[key] - current[key]) * amount;
-  const hip = mix("hip");
-  const upper = source.querySelector("[data-floss-upper]");
-  const lower = source.querySelector("[data-floss-lower]");
-  const front = source.querySelector("[data-floss-front-arm]");
-  const rear = source.querySelector("[data-floss-rear-arm]");
-  const shadow = source.querySelector("[data-floss-shadow]");
-  const setArm = (node, x, angle, opacity) => {
-    node?.setAttribute("transform", `translate(${x} 365) rotate(${angle})`);
-    if (node) node.style.opacity = String(opacity);
-  };
-
-  upper?.setAttribute(
-    "transform",
-    `translate(${hip * 0.42} 0) rotate(${mix("chest")} 260 372) translate(260 370) skewX(${mix("waist")}) translate(-260 -370)`,
-  );
-  lower?.setAttribute("transform", `translate(${hip * 0.1} 0)`);
-  setArm(rear, 184 + hip * 0.44, mix("rear"), mix("rearAlpha"));
-  setArm(front, 336 + hip * 0.44, mix("front"), mix("frontAlpha"));
-  shadow?.setAttribute("rx", String(165 - Math.abs(hip) * 0.45));
-  questBearFlossFrame = window.requestAnimationFrame(renderQuestBearFloss);
-}
-
-function startQuestBearFloss() {
-  if (questBearFlossFrame !== null) return;
-  questBearFlossStartedAt = performance.now();
-  questBearFlossFrame = window.requestAnimationFrame(renderQuestBearFloss);
-}
-
 function applyQuestBearPose(pose) {
   const config = QUEST_BEAR_POSES[pose] || QUEST_BEAR_POSES.idle;
   questState.bearPose = pose;
@@ -2695,7 +2619,6 @@ function applyQuestBearPose(pose) {
   ui.questBearScene.classList.remove("is-changing");
   void ui.questBearScene.offsetWidth;
   ui.questBearScene.classList.add("is-changing");
-  if (pose === "victory") startQuestBearFloss();
 }
 
 function scheduleQuestBearRest() {
@@ -4480,7 +4403,7 @@ function selectAnswer(position, optionIndex) {
   }
 
   const solvedCount = state.answers.filter((answer) => answer !== null).length;
-  if (isQuestMode()) setQuestBearPose("victory", 6200);
+  if (isQuestMode()) setQuestBearPose("victory", 850);
   setFeedback(
     `Position ${position + 1}: correct. ${solvedCount} of ${state.answers.length} solved.`,
     "success",

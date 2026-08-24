@@ -6,9 +6,9 @@
     <path fill="#9cab88" d="M83 169c28-11 49-7 66 7 14 12 29 16 48 10-21 25-51 30-77 14-14-9-26-15-37-18v-13Z"/>
   </g>
   <g fill="#243842" font-family="Bodoni 72, Didot, Iowan Old Style, Baskerville, serif" font-weight="400">
-    <text x="172" y="49" font-size="18" letter-spacing="4.3">FUNCTIONAL LISTENING</text>
-    <text x="168" y="117" font-size="82" textLength="255" lengthAdjust="spacingAndGlyphs">EAR</text>
-    <text x="168" y="172" font-size="49" textLength="255" lengthAdjust="spacingAndGlyphs">TRAINER</text>
-    <text x="174" y="204" fill="#697b80" font-size="15" letter-spacing="4.2">HEAR THE CHANGE</text>
+    <text x="174" y="34" fill="#697b80" font-family="Manrope, Avenir Next, Helvetica Neue, sans-serif" font-size="13" font-weight="600" letter-spacing="3.25">HEAR THE CHANGE</text>
+    <text x="168" y="87" font-size="48" textLength="255" lengthAdjust="spacingAndGlyphs">TRAINER</text>
+    <text x="164" y="166" font-size="96" textLength="270" lengthAdjust="spacingAndGlyphs">EAR</text>
+    <text x="174" y="201" font-family="Manrope, Avenir Next, Helvetica Neue, sans-serif" font-size="13" font-weight="600" letter-spacing="3.25">FUNCTIONAL LISTENING</text>
   </g>
 </svg>

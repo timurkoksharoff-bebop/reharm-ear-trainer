@@ -1,0 +1,107 @@
+{
+  "rewards": [
+    {
+      "level": 1,
+      "slug": "triangle",
+      "name": "Triangle",
+      "src": "level-01-triangle.webp"
+    },
+    {
+      "level": 2,
+      "slug": "cymbals",
+      "name": "Orchestral cymbals",
+      "src": "level-02-cymbals.webp"
+    },
+    {
+      "level": 3,
+      "slug": "tuba",
+      "name": "Tuba",
+      "src": "level-03-tuba.webp"
+    },
+    {
+      "level": 4,
+      "slug": "harp",
+      "name": "Harp",
+      "src": "level-04-harp.webp"
+    },
+    {
+      "level": 5,
+      "slug": "bass-guitar",
+      "name": "Bass guitar",
+      "src": "level-05-bass-guitar.webp"
+    },
+    {
+      "level": 6,
+      "slug": "drum-kit",
+      "name": "Drum kit",
+      "src": "level-06-drum-kit.webp"
+    },
+    {
+      "level": 7,
+      "slug": "keytar",
+      "name": "Keytar",
+      "src": "level-07-keytar.webp"
+    },
+    {
+      "level": 8,
+      "slug": "upright-bass",
+      "name": "Upright bass",
+      "src": "level-08-upright-bass.webp"
+    },
+    {
+      "level": 9,
+      "slug": "flute",
+      "name": "Flute",
+      "src": "level-09-flute.webp"
+    },
+    {
+      "level": 10,
+      "slug": "violin",
+      "name": "Violin",
+      "src": "level-10-violin.webp"
+    },
+    {
+      "level": 11,
+      "slug": "vibraphone",
+      "name": "Vibraphone",
+      "src": "level-11-vibraphone.webp"
+    },
+    {
+      "level": 12,
+      "slug": "saxophone",
+      "name": "Saxophone",
+      "src": "level-12-saxophone.webp"
+    },
+    {
+      "level": 13,
+      "slug": "trumpet",
+      "name": "Trumpet",
+      "src": "level-13-trumpet.webp"
+    },
+    {
+      "level": 14,
+      "slug": "spoons",
+      "name": "Wooden spoons",
+      "src": "level-14-spoons.webp"
+    },
+    {
+      "level": 15,
+      "slug": "balalaika",
+      "name": "Balalaika",
+      "src": "level-15-balalaika.webp"
+    },
+    {
+      "level": 16,
+      "slug": "musical-saw",
+      "name": "Musical saw",
+      "src": "level-16-musical-saw.webp"
+    }
+  ],
+  "spares": [
+    {
+      "slug": "electric-guitar",
+      "name": "Spare electric guitar",
+      "src": "spare-electric-guitar.webp"
+    }
+  ]
+}

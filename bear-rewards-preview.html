@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bear chapter rewards</title>
+  <style>
+    :root { color-scheme: light; --ink: #243842; --sage: #9cab88; --paper: #f4f1e9; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font: 15px/1.45 Manrope, Avenir Next, sans-serif; }
+    header { position: sticky; z-index: 2; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px clamp(18px, 4vw, 54px); border-bottom: 1px solid rgba(36,56,66,.12); background: rgba(244,241,233,.92); backdrop-filter: blur(16px); }
+    .brand { position: relative; width: min(310px, 52vw); aspect-ratio: 2; flex: 0 0 auto; }
+    .brand-lockup { display: block; width: 100%; height: 100%; }
+    .brand-mark { position: absolute; top: 2.22%; left: 0; width: 32.64%; height: 86.67%; object-fit: contain; pointer-events: none; }
+    h1 { margin: 0; font: 400 clamp(22px, 3vw, 36px)/1.05 Iowan Old Style, Baskerville, serif; }
+    header p { margin: 5px 0 0; color: rgba(36,56,66,.65); }
+    button { border: 1px solid rgba(36,56,66,.25); border-radius: 999px; padding: 10px 16px; color: inherit; background: rgba(255,255,255,.55); font: inherit; cursor: pointer; }
+    main { padding: 28px clamp(18px, 4vw, 54px) 60px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+    article { overflow: hidden; border: 1px solid rgba(36,56,66,.12); border-radius: 24px; background: rgba(255,255,255,.62); box-shadow: 0 16px 38px rgba(36,56,66,.07); }
+    article img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #f7f2e9; }
+    .caption { display: flex; align-items: baseline; gap: 12px; padding: 14px 16px 17px; }
+    .level { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; color: #fff; background: var(--sage); font-weight: 700; }
+    h2 { margin: 0; font: 400 21px/1.1 Iowan Old Style, Baskerville, serif; }
+    .spares { margin-top: 40px; }
+    .spares h2 { margin-bottom: 16px; font-size: 28px; }
+    @media (max-width: 650px) { header { align-items: flex-start; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand" role="img" aria-label="Ear Trainer — Functional Listening">
+      <img class="brand-lockup" src="assets/brand/ear-trainer-lockup.svg" alt="" aria-hidden="true">
+      <img class="brand-mark" src="assets/brand/ear-bear-mark-approved.png" alt="" aria-hidden="true">
+    </div>
+    <div><h1>Chapter reward bears</h1><p>16 levels · four authored poses per animation</p></div>
+    <button id="replay" type="button">Replay all</button>
+  </header>
+  <main>
+    <section class="grid" id="rewards" aria-label="Chapter rewards"></section>
+    <section class="spares"><h2>Spare studies</h2><div class="grid" id="spares"></div></section>
+  </main>
+  <script>
+    const rewardData = {
+      rewards: [
+        { level: 1, name: "Triangle", src: "level-01-triangle.webp" },
+        { level: 2, name: "Orchestral cymbals", src: "level-02-cymbals.webp" },
+        { level: 3, name: "Tuba", src: "level-03-tuba.webp" },
+        { level: 4, name: "Harp", src: "level-04-harp.webp" },
+        { level: 5, name: "Bass guitar", src: "level-05-bass-guitar.webp" },
+        { level: 6, name: "Drum kit", src: "level-06-drum-kit.webp" },
+        { level: 7, name: "Keytar", src: "level-07-keytar.webp" },
+        { level: 8, name: "Upright bass", src: "level-08-upright-bass.webp" },
+        { level: 9, name: "Flute", src: "level-09-flute.webp" },
+        { level: 10, name: "Violin", src: "level-10-violin.webp" },
+        { level: 11, name: "Vibraphone", src: "level-11-vibraphone.webp" },
+        { level: 12, name: "Saxophone", src: "level-12-saxophone.webp" },
+        { level: 13, name: "Trumpet", src: "level-13-trumpet.webp" },
+        { level: 14, name: "Wooden spoons", src: "level-14-spoons.webp" },
+        { level: 15, name: "Balalaika", src: "level-15-balalaika.webp" },
+        { level: 16, name: "Musical saw", src: "level-16-musical-saw.webp" }
+      ],
+      spares: [
+        { name: "Spare electric guitar", src: "spare-electric-guitar.webp" }
+      ]
+    };
+
+    const render = (container, items, numbered) => {
+      container.replaceChildren(...items.map((item) => {
+        const card = document.createElement("article");
+        const image = document.createElement("img");
+        image.src = `assets/bears/rewards/${item.src}`;
+        image.alt = `Animated bear playing ${item.name.toLowerCase()}`;
+        const caption = document.createElement("div");
+        caption.className = "caption";
+        if (numbered) {
+          const level = document.createElement("span");
+          level.className = "level";
+          level.textContent = item.level;
+          caption.append(level);
+        }
+        const title = document.createElement("h2");
+        title.textContent = item.name;
+        caption.append(title);
+        card.append(image, caption);
+        return card;
+      }));
+    };
+
+    render(document.querySelector("#rewards"), rewardData.rewards, true);
+    render(document.querySelector("#spares"), rewardData.spares, false);
+
+    document.querySelector("#replay").addEventListener("click", () => {
+      document.querySelectorAll("article img").forEach((image) => {
+        const src = image.src.split("?")[0];
+        image.src = `${src}?replay=${Date.now()}`;
+      });
+    });
+  </script>
+</body>
+</html>

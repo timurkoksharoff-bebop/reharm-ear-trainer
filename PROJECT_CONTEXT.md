@@ -21,8 +21,8 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current local full cache version: `0.41`
-- Current Lite cache version: `0.4`
+- Current local full cache version: `0.43`
+- Current Lite cache version: `0.5`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -280,7 +280,7 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Local PWA `0.41` keeps the Quest bear study as a lightweight
+- Local PWA `0.43` keeps the Quest bear study as a lightweight
   inline SVG, with no network or sample-loading dependency. Production remains
   on the previously published build until this version is explicitly pushed.
 - Production PWA `0.35` includes 239 built-in progressions: 107 core examples and

@@ -774,16 +774,29 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .brand-lockup--bear {
-  min-width: 290px;
+  position: relative;
+  width: 300px;
+  height: 150px;
+  min-width: 300px;
   display: block;
 }
 
 .brand-lockup-art {
   display: block;
-  width: 290px;
-  height: 103px;
+  width: 300px;
+  height: 150px;
   object-fit: contain;
   object-position: left center;
+}
+
+.brand-lockup-mark {
+  position: absolute;
+  top: 2.22%;
+  left: 0;
+  width: 32.64%;
+  height: 86.67%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .topbar-title {
@@ -2531,13 +2544,15 @@ select:focus-visible {
   }
 
   .brand-lockup--bear {
+    width: 224px;
+    height: 112px;
     min-width: 224px;
     gap: 5px;
   }
 
   .brand-lockup-art {
     width: 224px;
-    height: 79px;
+    height: 112px;
   }
 
   .topbar-title {

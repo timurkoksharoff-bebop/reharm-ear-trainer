@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..");
 const outputRoot = path.join(projectRoot, "lite");
-const liteVersion = "0.4";
+const liteVersion = "0.5";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(projectRoot, relativePath), "utf8");
@@ -186,6 +186,7 @@ write("build-info.json", `${JSON.stringify({
   "icon-192.png",
   "icon-512.png",
   "icon.svg",
+  "assets/brand",
   "assets/atmospheres",
   "samples/piano",
   "samples/electric-piano",

@@ -1,107 +1,121 @@
 {
+  "intro": {
+    "src": "intro-bear-arrival.webp",
+    "durationMs": 1640
+  },
   "rewards": [
     {
       "level": 1,
       "slug": "triangle",
       "name": "Triangle",
-      "src": "level-01-triangle.webp"
+      "src": "level-01-triangle.webp",
+      "medal": "medals/level-01-triangle.png"
     },
     {
       "level": 2,
       "slug": "cymbals",
       "name": "Orchestral cymbals",
-      "src": "level-02-cymbals.webp"
+      "src": "level-02-cymbals.webp",
+      "medal": "medals/level-02-cymbals.png"
     },
     {
       "level": 3,
       "slug": "tuba",
       "name": "Tuba",
-      "src": "level-03-tuba.webp"
+      "src": "level-03-tuba.webp",
+      "medal": "medals/level-03-tuba.png"
     },
     {
       "level": 4,
       "slug": "harp",
       "name": "Harp",
-      "src": "level-04-harp.webp"
+      "src": "level-04-harp.webp",
+      "medal": "medals/level-04-harp.png"
     },
     {
       "level": 5,
       "slug": "bass-guitar",
       "name": "Bass guitar",
-      "src": "level-05-bass-guitar.webp"
+      "src": "level-05-bass-guitar.webp",
+      "medal": "medals/level-05-bass-guitar.png"
     },
     {
       "level": 6,
       "slug": "drum-kit",
       "name": "Drum kit",
-      "src": "level-06-drum-kit.webp"
+      "src": "level-06-drum-kit.webp",
+      "medal": "medals/level-06-drum-kit.png"
     },
     {
       "level": 7,
       "slug": "keytar",
       "name": "Keytar",
-      "src": "level-07-keytar.webp"
+      "src": "level-07-keytar.webp",
+      "medal": "medals/level-07-keytar.png"
     },
     {
       "level": 8,
       "slug": "upright-bass",
       "name": "Upright bass",
-      "src": "level-08-upright-bass.webp"
+      "src": "level-08-upright-bass.webp",
+      "medal": "medals/level-08-upright-bass.png"
     },
     {
       "level": 9,
       "slug": "flute",
       "name": "Flute",
-      "src": "level-09-flute.webp"
+      "src": "level-09-flute.webp",
+      "medal": "medals/level-09-flute.png"
     },
     {
       "level": 10,
       "slug": "violin",
       "name": "Violin",
-      "src": "level-10-violin.webp"
+      "src": "level-10-violin.webp",
+      "medal": "medals/level-10-violin.png"
     },
     {
       "level": 11,
-      "slug": "vibraphone",
-      "name": "Vibraphone",
-      "src": "level-11-vibraphone.webp"
+      "slug": "electric-guitar",
+      "name": "Electric guitar",
+      "src": "level-11-electric-guitar.webp",
+      "medal": "medals/level-11-electric-guitar.png"
     },
     {
       "level": 12,
-      "slug": "saxophone",
-      "name": "Saxophone",
-      "src": "level-12-saxophone.webp"
+      "slug": "vibraphone",
+      "name": "Vibraphone",
+      "src": "level-12-vibraphone.webp",
+      "medal": "medals/level-12-vibraphone.png"
     },
     {
       "level": 13,
-      "slug": "trumpet",
-      "name": "Trumpet",
-      "src": "level-13-trumpet.webp"
+      "slug": "saxophone",
+      "name": "Saxophone",
+      "src": "level-13-saxophone.webp",
+      "medal": "medals/level-13-saxophone.png"
     },
     {
       "level": 14,
-      "slug": "spoons",
-      "name": "Wooden spoons",
-      "src": "level-14-spoons.webp"
+      "slug": "trumpet",
+      "name": "Trumpet",
+      "src": "level-14-trumpet.webp",
+      "medal": "medals/level-14-trumpet.png"
     },
     {
       "level": 15,
       "slug": "balalaika",
       "name": "Balalaika",
-      "src": "level-15-balalaika.webp"
+      "src": "level-15-balalaika.webp",
+      "medal": "medals/level-15-balalaika.png"
     },
     {
       "level": 16,
       "slug": "musical-saw",
       "name": "Musical saw",
-      "src": "level-16-musical-saw.webp"
+      "src": "level-16-musical-saw.webp",
+      "medal": "medals/level-16-musical-saw.png"
     }
   ],
-  "spares": [
-    {
-      "slug": "electric-guitar",
-      "name": "Spare electric guitar",
-      "src": "spare-electric-guitar.webp"
-    }
-  ]
+  "spares": []
 }

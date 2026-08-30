@@ -21,8 +21,8 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current local full cache version: `0.43`
-- Current Lite cache version: `0.5`
+- Current local full cache version: `0.44`
+- Current Lite cache version: `0.6`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -32,6 +32,24 @@ Experimental notation-editor work now lives separately in
 `/Users/tim/Documents/Ear Reharm Arranger`. Do not add the Arranger workspace,
 its script, or its stylesheet back to the public Trainer unless the user
 explicitly decides to reunify the applications.
+
+## Chapter Reward Artwork
+
+The standalone reward study is `bear-rewards-preview.html`; it is not yet
+wired into Quest chapter completion. The approved active order is:
+
+1. triangle; 2. orchestral cymbals; 3. tuba; 4. harp; 5. bass guitar;
+6. drum kit; 7. keytar; 8. upright bass; 9. flute; 10. violin;
+11. electric guitar; 12. vibraphone; 13. saxophone; 14. trumpet;
+15. balalaika; 16. musical saw.
+
+Every reward is intentionally split into two parts: shared arrival `A`, where
+the fixed green clearing remains while the neutral bear grows out of a point,
+then authored instrument performance `B`. Do not redraw or bake the shared
+arrival into the four approved performance poses. Wooden spoons are inactive
+and preserved only as an archived source sheet so the study is not lost.
+Each active reward also has a circular achievement medal showing its bear and
+instrument.
 
 ## Reference Material
 
@@ -280,7 +298,7 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Local PWA `0.43` keeps the Quest bear study as a lightweight
+- Local PWA `0.44` keeps the Quest bear study as a lightweight
   inline SVG, with no network or sample-loading dependency. Production remains
   on the previously published build until this version is explicitly pushed.
 - Production PWA `0.35` includes 239 built-in progressions: 107 core examples and

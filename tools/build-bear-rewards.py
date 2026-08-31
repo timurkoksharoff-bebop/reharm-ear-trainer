@@ -17,7 +17,7 @@ FRAME_SIZE = 512
 MEDAL_SIZE = 320
 INTRO_SOURCE = SOURCE_DIR / "common-neutral-bear.png"
 INTRO_FILENAME = "intro-bear-arrival.webp"
-INTRO_DURATIONS = [260, 190, 180, 170, 160, 150, 170, 360]
+INTRO_DURATIONS = [260, 260, 260, 260, 360]
 
 # The authored four-pose sheets remain untouched. Level 11 promotes the saved
 # electric-guitar study; wooden spoons stay archived but are no longer active.
@@ -104,8 +104,8 @@ def intro_base() -> Image.Image:
 
 def build_intro() -> None:
     bear = neutral_bear_sprite()
-    scales = [0, 0.025, 0.075, 0.16, 0.31, 0.5, 0.73, 1.0]
-    bounces = [0, 0, -4, 2, -5, 2, -3, 0]
+    scales = [0.025, 0.14, 0.36, 0.68, 1.0]
+    bounces = [0, -4, 3, -3, 0]
     full_height = 418
     baseline = 459
     frames: list[Image.Image] = []

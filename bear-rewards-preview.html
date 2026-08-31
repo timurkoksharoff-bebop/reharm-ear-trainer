@@ -31,6 +31,8 @@
     article { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: rgba(255,255,255,.62); box-shadow: 0 16px 38px rgba(36,56,66,.07); }
     .animation-stage { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; background: #f7f2e9; }
     .animation-stage > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; transition: opacity 180ms ease; }
+    .animation-stage::after { position: absolute; z-index: 1; inset: 0; content: ""; opacity: 0; pointer-events: none; background: radial-gradient(circle at 50% 43%, rgba(255,250,218,.94) 0, rgba(255,242,188,.46) 30%, rgba(255,255,255,0) 68%); mix-blend-mode: screen; }
+    article.is-revealing .animation-stage::after { animation: spotlight-reveal 760ms ease-out; }
     .performance { opacity: 0; }
     article.is-performing .intro { opacity: 0; }
     article.is-performing .performance { opacity: 1; }
@@ -39,6 +41,7 @@
     .level { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; background: var(--sage); font-weight: 700; }
     h2 { overflow: hidden; margin: 0; text-overflow: ellipsis; white-space: nowrap; font: 400 21px/1.1 Iowan Old Style, Baskerville, serif; }
     .play-one { padding: 7px 11px; font-size: 13px; }
+    @keyframes spotlight-reveal { 0% { opacity: 0; } 12% { opacity: .92; } 42% { opacity: .38; } 100% { opacity: 0; } }
     @media (max-width: 760px) {
       header { position: relative; grid-template-columns: 1fr; gap: 10px; }
       .brand { width: min(300px, 78vw); }
@@ -72,7 +75,7 @@
   </main>
   <script>
     const rewardData = {
-      intro: { src: "intro-bear-arrival.webp", durationMs: 1640 },
+      intro: { src: "intro-bear-arrival.webp", durationMs: 1400 },
       rewards: [
         { level: 1, name: "Triangle", src: "level-01-triangle.webp", medal: "medals/level-01-triangle.png" },
         { level: 2, name: "Orchestral cymbals", src: "level-02-cymbals.webp", medal: "medals/level-02-cymbals.png" },
@@ -158,13 +161,17 @@
 
     const playCard = (card) => {
       window.clearTimeout(card._performanceTimer);
+      window.clearTimeout(card._revealTimer);
       card.classList.remove("is-performing");
+      card.classList.remove("is-revealing");
       const intro = card.querySelector(".intro");
       const performance = card.querySelector(".performance");
       refresh(intro);
       card._performanceTimer = window.setTimeout(() => {
         refresh(performance);
         card.classList.add("is-performing");
+        card.classList.add("is-revealing");
+        card._revealTimer = window.setTimeout(() => card.classList.remove("is-revealing"), 780);
       }, rewardData.intro.durationMs);
     };
 
@@ -203,7 +210,7 @@
       const context = audio();
       context.resume();
       const start = context.currentTime + .04;
-      [0.27, .46, .64, .81, .97, 1.12, 1.27].forEach((offset, index) => playCrunch(context, start + offset, 620 + index * 65));
+      [.22, .48, .74, 1].forEach((offset, index) => playCrunch(context, start + offset, 650 + index * 90));
       const reveal = start + rewardData.intro.durationMs / 1000 - .08;
       [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => playTone(context, reveal + index * .105, frequency, .34));
     };

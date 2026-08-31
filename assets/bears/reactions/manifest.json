@@ -1,0 +1,31 @@
+{
+  "integrationStatus": "approval-preview-only",
+  "victory": {
+    "streak": 0,
+    "src": "victory.webp",
+    "label": "Victory"
+  },
+  "gameOverStreak": [
+    {
+      "streak": 1,
+      "src": "failure-01-headslap.webp",
+      "label": "First consecutive Game Over"
+    },
+    {
+      "streak": 2,
+      "src": "failure-02-head-grab.webp",
+      "label": "Second consecutive Game Over"
+    },
+    {
+      "streak": 3,
+      "src": "failure-03-crying.webp",
+      "label": "Third consecutive Game Over"
+    },
+    {
+      "streak": 4,
+      "src": "failure-04-wrong-dance.gif",
+      "label": "Fourth consecutive Game Over",
+      "note": "Preserved early wrong dance with the rear paw visible."
+    }
+  ]
+}

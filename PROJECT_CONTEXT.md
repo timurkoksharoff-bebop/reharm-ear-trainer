@@ -303,6 +303,14 @@ embedded cache version.
 - Local PWA `0.45` keeps the Quest bear study as a lightweight
   inline SVG, with no network or sample-loading dependency. Production remains
   on the previously published build until this version is explicitly pushed.
+- `bear-reactions-awards-preview.html` is an approval-only study, not application
+  integration. It preserves the approved victory, one-paw headslap, two-paw
+  head-grab, and early incorrect loser-dance assets, and adds a new four-pose
+  crying reaction. The intended consecutive Game Over order is headslap,
+  head-grab, crying, then the deliberately uncorrected early dance. The same
+  page presents three restrained medal-treatment directions; choosing one is a
+  prerequisite to rebuilding all 16 reward medals and wiring reactions into
+  Quest state.
 - Production PWA `0.35` includes 239 built-in progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
 - Release `0.33` adds the approved sage-green Bodoni application icon and makes

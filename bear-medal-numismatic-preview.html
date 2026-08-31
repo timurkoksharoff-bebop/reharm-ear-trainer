@@ -238,6 +238,11 @@
       text-shadow: 0 1px rgba(255, 235, 188, .36);
     }
 
+    .legend text.lower-legend {
+      font-size: 6.5px;
+      letter-spacing: 1.9px;
+    }
+
     .legend .beads {
       fill: none;
       stroke: #4b3925;
@@ -527,11 +532,14 @@
           <div class="coin-face coin-back">
             <div class="reverse-field"><div class="reverse-copy"><strong>XI</strong><span>Chapter clear</span></div></div>
             <span class="relief-star" aria-hidden="true"></span>
-            <span class="mint-line">ONE OF XVI · KRASNOYARSK</span>
             <svg class="legend" viewBox="0 0 326 326" aria-hidden="true">
-              <defs><path id="backArc" d="M 27,163 A 136,136 0 1,1 299,163 A 136,136 0 1,1 27,163"></path></defs>
+              <defs>
+                <path id="backArc" d="M 27,163 A 136,136 0 1,1 299,163 A 136,136 0 1,1 27,163"></path>
+                <path id="backLowerArc" d="M 39,163 A 124,124 0 0,0 287,163"></path>
+              </defs>
               <circle class="beads" cx="163" cy="163" r="129"></circle>
               <text><textPath href="#backArc" startOffset="5%">HEAR THE CHANGE · HARMONY · MEMORY · EAR · </textPath></text>
+              <text class="lower-legend"><textPath href="#backLowerArc" startOffset="50%" text-anchor="middle">ONE OF XVI · KRASNOYARSK</textPath></text>
             </svg>
           </div>
         </div>

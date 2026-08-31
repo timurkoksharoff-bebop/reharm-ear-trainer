@@ -792,7 +792,7 @@ body:not([data-workspace="quest"]) .quest-hud {
 .brand-lockup-mark {
   position: absolute;
   top: 2.22%;
-  left: 0;
+  left: 3.33%;
   width: 32.64%;
   height: 86.67%;
   object-fit: contain;

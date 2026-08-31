@@ -24,7 +24,7 @@ assert.match(index, /assets\/brand\/ear-trainer-lockup\.svg/);
 assert.equal(manifest.name, "Reharm Ear Trainer Lite");
 assert.equal(manifest.short_name, "Reharm Lite");
 assert.equal(manifest.id, "./");
-assert.match(serviceWorker, /ear-reharm-lite-v0\.7/);
+assert.match(serviceWorker, /ear-reharm-lite-v0\.8/);
 assert.doesNotMatch(serviceWorker, /reharm-ear-trainer-v0\.33/);
 assert.match(app, /reharm-ear-lite-favorites-v2/);
 assert.match(app, /reharm-ear-lite-stats/);

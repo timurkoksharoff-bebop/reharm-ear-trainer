@@ -21,8 +21,8 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current local full cache version: `0.45`
-- Current Lite cache version: `0.7`
+- Current local full cache version: `0.46`
+- Current Lite cache version: `0.8`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -300,9 +300,13 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Local PWA `0.45` keeps the Quest bear study as a lightweight
+- Local PWA `0.46` keeps the Quest bear study as a lightweight
   inline SVG, with no network or sample-loading dependency. Production remains
   on the previously published build until this version is explicitly pushed.
+- The approved bear-shaped `B` artwork remains unchanged. Its compositing layer
+  is offset `3.33%` to the right inside the lockup so the visible mark and `EAR`
+  read as one word; do not recrop, redraw, or substitute the mark when changing
+  this spacing.
 - `bear-reactions-awards-preview.html` is an approval-only study, not application
   integration. It preserves the approved victory, one-paw headslap, two-paw
   head-grab, and early incorrect loser-dance assets, and adds a new four-pose

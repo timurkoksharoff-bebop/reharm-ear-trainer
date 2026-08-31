@@ -21,8 +21,8 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current local full cache version: `0.44`
-- Current Lite cache version: `0.6`
+- Current local full cache version: `0.45`
+- Current Lite cache version: `0.7`
 - Main branch: `main`
 
 This directory is the canonical working copy. Do not continue development in
@@ -77,7 +77,9 @@ When adding or correcting a progression:
   mirror Chapters 1–16 of the textbook. Every chapter begins with its shortest
   available forms, develops through its mid-length examples, and ends with its
   longest routes before the next chapter unlocks. Each clear awards a
-  one-to-three-star rank and XP; five misses reset only the current run.
+  one-to-three-star rank and XP. The allowed Quest misses scale with sequence
+  length: 0 for 3–4 chords, 1 for 5–6, 2 for 7–8, 3 for 9–10, and 4 for
+  12–14; the next miss resets only the current run.
   Auditioning a ready-made chord lowers the run score, while checking
   individual notes on the piano is allowed and recorded. `Practice` preserves
   the unrestricted chapter/exercise workflow, and `Builder` remains independent
@@ -298,7 +300,7 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Local PWA `0.44` keeps the Quest bear study as a lightweight
+- Local PWA `0.45` keeps the Quest bear study as a lightweight
   inline SVG, with no network or sample-loading dependency. Production remains
   on the previously published build until this version is explicitly pushed.
 - Production PWA `0.35` includes 239 built-in progressions: 107 core examples and

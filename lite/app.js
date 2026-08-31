@@ -785,7 +785,6 @@ const ONBOARDING_STORAGE_KEY = "reharm-ear-lite-onboarding-v1";
 const CUSTOM_PROGRESSIONS_STORAGE_KEY = "reharm-ear-lite-custom-progressions-v1";
 const ARPEGGIO_MODE_STORAGE_KEY = "reharm-ear-arpeggio-mode-v1";
 const QUEST_STORAGE_KEY = "reharm-ear-quest-v2";
-const QUEST_MAX_WRONG_ANSWERS = 5;
 const QUEST_CHAPTER_NAMES = [
   "First Light",
   "Turning Point",
@@ -1859,6 +1858,18 @@ function questRunScore() {
   );
 }
 
+function questAllowedMissesForLength(positionCount) {
+  if (positionCount <= 4) return 0;
+  if (positionCount <= 6) return 1;
+  if (positionCount <= 8) return 2;
+  if (positionCount <= 10) return 3;
+  return 4;
+}
+
+function questGameOverThresholdForLength(positionCount) {
+  return questAllowedMissesForLength(positionCount) + 1;
+}
+
 function registerQuestChordHint() {
   if (!isQuestMode() || questState.attempt.failed || state.completed) return;
   questState.attempt.chordHints += 1;
@@ -1930,11 +1941,17 @@ function renderQuestHud() {
   const record = questMissionRecord(mission);
   const stage = questStageForMission(mission);
   const clears = Math.min(record.clears, mission.requiredClears);
+  const allowedMisses = questAllowedMissesForLength(currentExercise().sequence.length);
+  const missAllowance = allowedMisses === 0
+    ? "no misses allowed"
+    : `${allowedMisses} miss${allowedMisses === 1 ? "" : "es"} allowed`;
   ui.questEmblem.textContent = mission.emblem;
   ui.questKicker.textContent = `Chapter ${mission.chapter} of ${QUEST_MISSIONS.length} · ${mission.title}`;
   ui.questTitle.textContent = stage.subtitle;
   ui.questProgressBar.style.width = `${(clears / mission.requiredClears) * 100}%`;
-  ui.questProgressLabel.textContent = `${clears} / ${mission.requiredClears} clear · ${"★".repeat(record.bestStars)}${"☆".repeat(3 - record.bestStars)}`;
+  ui.questProgressLabel.textContent = `${clears} / ${mission.requiredClears} clear · ${"★".repeat(record.bestStars)}${"☆".repeat(3 - record.bestStars)} · ${missAllowance}`;
+  ui.questHud.dataset.allowedMisses = String(allowedMisses);
+  ui.questHud.dataset.gameOverThreshold = String(allowedMisses + 1);
   ui.questRunScore.textContent = String(questRunScore());
   ui.questTotalXp.textContent = `${questState.progress.totalXp} XP`;
 }
@@ -3639,20 +3656,27 @@ function selectAnswer(position, optionIndex) {
   if (!isCorrectOption(position, optionIndex)) {
     state.wrongAnswers[position].add(optionIndex);
     if (isQuestMode()) questState.attempt.wrongCount += 1;
+    const progressionLength = currentExercise().sequence.length;
+    const gameOverThreshold = questGameOverThresholdForLength(progressionLength);
     if (isQuestMode()) setQuestBearPose("wrong", 1450);
     setFeedback(
       isQuestMode()
-        ? `Position ${position + 1}: not quite · ${questState.attempt.wrongCount} / ${QUEST_MAX_WRONG_ANSWERS} misses.`
+        ? `Position ${position + 1}: not quite · ${questState.attempt.wrongCount} / ${gameOverThreshold} misses.`
         : `Position ${position + 1}: not quite. Choose another chord.`,
       "error",
     );
     render();
     if (
       isQuestMode()
-      && questState.attempt.wrongCount >= QUEST_MAX_WRONG_ANSWERS
+      && questState.attempt.wrongCount >= gameOverThreshold
     ) {
       window.setTimeout(() => {
-        failQuestAttempt("Five misses ended this run.");
+        const missLabel = gameOverThreshold === 1
+          ? "The first miss"
+          : `${gameOverThreshold} misses`;
+        failQuestAttempt(
+          `${missLabel} ended this ${progressionLength}-chord run.`,
+        );
       }, 180);
     }
     return;

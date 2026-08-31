@@ -5,7 +5,7 @@ const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..");
 const outputRoot = path.join(projectRoot, "lite");
-const liteVersion = "0.6";
+const liteVersion = "0.7";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(projectRoot, relativePath), "utf8");

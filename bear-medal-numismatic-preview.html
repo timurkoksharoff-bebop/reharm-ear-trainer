@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Коллекционная медаль · нумизматический вариант</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #253943;
+      --muted: #66767a;
+      --sage: #708575;
+      --paper: #f4f1e9;
+      --line: rgba(37, 57, 67, .14);
+      --bronze-light: #d0b178;
+      --bronze-mid: #9a7847;
+      --bronze-dark: #55422c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 0%, rgba(255, 255, 255, .96), transparent 34rem),
+        var(--paper);
+      font: 15px/1.5 Manrope, Avenir Next, system-ui, sans-serif;
+    }
+
+    button { color: inherit; font: inherit; }
+    h1, h2, h3 { font-family: Iowan Old Style, Baskerville, Georgia, serif; font-weight: 400; }
+
+    header,
+    main {
+      width: min(1260px, calc(100% - 36px));
+      margin-inline: auto;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 28px;
+      padding: 42px 0 25px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #587064;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    h1 { max-width: 820px; margin: 0; font-size: clamp(34px, 5vw, 58px); line-height: 1.02; }
+    .intro { max-width: 790px; margin: 12px 0 0; color: var(--muted); }
+
+    .flip-button {
+      flex: none;
+      border: 1px solid rgba(37, 57, 67, .25);
+      border-radius: 999px;
+      padding: 11px 18px;
+      background: rgba(255, 255, 255, .68);
+      cursor: pointer;
+    }
+
+    .flip-button:hover { border-color: var(--sage); background: #fff; }
+    main { padding: 30px 0 74px; }
+
+    .note {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      overflow: hidden;
+      margin-bottom: 26px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .46);
+    }
+
+    .note div { padding: 14px 16px; }
+    .note div + div { border-left: 1px solid var(--line); }
+    .note strong { display: block; margin-bottom: 2px; color: #587064; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; }
+    .note span { color: var(--muted); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(420px, .9fr) minmax(340px, 1.1fr);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, .68);
+      box-shadow: 0 20px 48px rgba(37, 57, 67, .08);
+    }
+
+    .coin-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 520px;
+      overflow: hidden;
+      perspective: 1050px;
+      background:
+        radial-gradient(circle at 50% 43%, rgba(255, 255, 255, .92) 0, rgba(244, 239, 225, .34) 48%, transparent 69%);
+    }
+
+    .coin-stage::after {
+      position: absolute;
+      right: 50%;
+      bottom: 67px;
+      width: 285px;
+      height: 42px;
+      border-radius: 50%;
+      content: "";
+      transform: translateX(50%);
+      opacity: .26;
+      background: #263b43;
+      filter: blur(18px);
+    }
+
+    .coin3d {
+      position: relative;
+      z-index: 2;
+      width: 326px;
+      height: 326px;
+      transform-style: preserve-3d;
+      transition: transform 1.15s cubic-bezier(.2, .72, .24, 1);
+    }
+
+    .coin3d.is-back { transform: rotateY(180deg); }
+
+    .edge-slice,
+    .coin-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      transform-style: preserve-3d;
+    }
+
+    .edge-slice {
+      background:
+        repeating-conic-gradient(from .5deg, #55442e 0deg 1.15deg, #c4a66d 1.15deg 2.25deg, #755a37 2.25deg 3.25deg),
+        #8e7046;
+      transform: translateZ(calc((var(--depth) - 7) * 1px));
+      box-shadow: inset 0 0 15px rgba(50, 35, 20, .45);
+    }
+
+    .coin-face {
+      overflow: hidden;
+      backface-visibility: hidden;
+      background:
+        radial-gradient(circle at 33% 25%, rgba(255, 245, 211, .45), transparent 23%),
+        radial-gradient(circle at 62% 68%, rgba(63, 48, 30, .16), transparent 26%),
+        repeating-radial-gradient(circle at 55% 49%, rgba(255, 255, 255, .024) 0 1px, rgba(66, 46, 27, .02) 1px 3px),
+        linear-gradient(140deg, #c7a66b 0, #88663e 32%, #b79257 57%, #d2b579 78%, #765735 100%);
+      box-shadow:
+        inset 0 0 0 5px #5d492f,
+        inset 0 0 0 8px #c5a66e,
+        inset 0 0 0 11px rgba(74, 56, 34, .78),
+        inset 0 0 30px rgba(46, 34, 21, .38);
+    }
+
+    .coin-front { transform: translateZ(8px); }
+    .coin-back { transform: rotateY(180deg) translateZ(8px); }
+
+    .coin-face::before {
+      position: absolute;
+      z-index: 4;
+      inset: 13px;
+      border: 1px solid rgba(255, 239, 198, .72);
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+      box-shadow: inset 0 0 8px rgba(48, 35, 20, .28);
+    }
+
+    .coin-face::after {
+      position: absolute;
+      z-index: 8;
+      inset: 0;
+      border-radius: 50%;
+      content: "";
+      pointer-events: none;
+      background:
+        linear-gradient(112deg, transparent 0 33%, rgba(255, 245, 211, .2) 42%, transparent 50%),
+        radial-gradient(circle at 47% 53%, transparent 54%, rgba(48, 34, 20, .18) 100%);
+      mix-blend-mode: screen;
+    }
+
+    .coin-art {
+      position: absolute;
+      z-index: 1;
+      inset: 28px;
+      overflow: hidden;
+      border-radius: 50%;
+      background-image: url("assets/bears/rewards/source/level-11-electric-guitar-sheet.png");
+      background-repeat: no-repeat;
+      background-position: 0 0;
+      background-size: 200% 200%;
+      background-color: #ac8b56;
+      background-blend-mode: multiply;
+      filter: grayscale(1) sepia(.72) saturate(.75) contrast(1.26) brightness(.96);
+      box-shadow:
+        inset 0 0 0 2px rgba(68, 50, 29, .36),
+        inset 0 0 22px rgba(51, 37, 21, .28);
+    }
+
+    .coin-art::after {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      content: "";
+      background:
+        radial-gradient(circle at 50% 45%, transparent 42%, rgba(82, 61, 35, .25) 100%),
+        repeating-linear-gradient(24deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 4px);
+      mix-blend-mode: multiply;
+    }
+
+    .legend {
+      position: absolute;
+      z-index: 5;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .legend text {
+      fill: #3f3223;
+      font-family: Manrope, Avenir Next, system-ui, sans-serif;
+      font-size: 7px;
+      font-weight: 800;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      text-shadow: 0 1px rgba(255, 235, 188, .36);
+    }
+
+    .legend .beads {
+      fill: none;
+      stroke: #4b3925;
+      stroke-width: 2.4px;
+      stroke-linecap: round;
+      stroke-dasharray: .1 6.2;
+      opacity: .78;
+    }
+
+    .mint-line {
+      position: absolute;
+      z-index: 6;
+      right: 50%;
+      bottom: 33px;
+      width: max-content;
+      transform: translateX(50%);
+      color: #3b2d1e;
+      font-size: 7px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-shadow: 0 1px rgba(255, 235, 188, .45);
+    }
+
+    .relief-star {
+      position: absolute;
+      z-index: 6;
+      top: 33px;
+      right: 50%;
+      width: 12px;
+      height: 12px;
+      transform: translateX(50%) rotate(45deg);
+      border-radius: 2px 50%;
+      background: #795c37;
+      box-shadow: -1px -1px 0 rgba(255, 235, 188, .5), 1px 1px 1px rgba(47, 32, 17, .45);
+    }
+
+    .reverse-field {
+      position: absolute;
+      z-index: 2;
+      inset: 31px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(67, 49, 29, .52);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 44% 35%, rgba(230, 203, 144, .33), transparent 35%),
+        repeating-radial-gradient(circle, transparent 0 6px, rgba(65, 47, 28, .025) 7px 8px),
+        #a88752;
+      box-shadow: inset 0 0 22px rgba(50, 35, 19, .25);
+    }
+
+    .reverse-copy { transform: translateY(-4px); text-align: center; }
+    .reverse-copy strong {
+      display: block;
+      color: #4b3721;
+      font: 500 99px/.8 Iowan Old Style, Baskerville, serif;
+      letter-spacing: -.06em;
+      text-shadow: -1px -1px rgba(240, 211, 150, .44), 2px 2px 2px rgba(54, 38, 20, .35);
+    }
+
+    .reverse-copy span {
+      display: block;
+      margin-top: 15px;
+      color: #4a3824;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    .glint {
+      position: absolute;
+      z-index: 10;
+      top: 40px;
+      left: 98px;
+      width: 22px;
+      height: 245px;
+      opacity: 0;
+      transform: rotate(31deg);
+      background: linear-gradient(90deg, transparent, rgba(255, 247, 218, .76), transparent);
+      filter: blur(1px);
+      pointer-events: none;
+    }
+
+    .coin3d.is-settling { animation: coin-settle 1.2s cubic-bezier(.2, .74, .23, 1); }
+    .coin3d.is-settling .coin-front .glint { animation: glint 900ms 520ms ease-out; }
+
+    .description {
+      position: relative;
+      display: grid;
+      align-content: center;
+      padding: 46px clamp(30px, 5vw, 68px);
+      border-left: 1px solid var(--line);
+    }
+
+    .description h2 { margin: 0 0 10px; font-size: 38px; line-height: 1.05; }
+    .description > p { margin: 0 0 24px; color: var(--muted); }
+
+    .features {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .features div {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .features dt { color: #587064; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .features dd { margin: 0; color: var(--muted); }
+
+    .inspection {
+      display: grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .inspection article {
+      position: relative;
+      min-height: 220px;
+      overflow: hidden;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .58);
+    }
+
+    .inspection h3 { margin: 0 0 5px; font-size: 25px; }
+    .inspection p { max-width: 510px; margin: 0; color: var(--muted); }
+
+    .edge-sample {
+      position: absolute;
+      right: 24px;
+      bottom: 29px;
+      left: 24px;
+      height: 63px;
+      overflow: hidden;
+      border-radius: 8px;
+      color: rgba(51, 37, 21, .76);
+      background:
+        linear-gradient(rgba(255, 245, 211, .18), transparent 43%),
+        repeating-linear-gradient(90deg, #5c472f 0 3px, #c1a367 3px 6px, #80613b 6px 9px);
+      box-shadow: inset 0 7px 8px rgba(255, 231, 177, .25), inset 0 -8px 10px rgba(48, 33, 18, .38), 0 12px 18px rgba(37, 57, 67, .16);
+    }
+
+    .edge-sample::after {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      content: "EAR TRAINER  •  CHAPTER XI  •  011 / XVI  •  HEAR THE CHANGE";
+      transform: scaleY(.72);
+      color: #4a3825;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .24em;
+      text-shadow: 0 1px rgba(255, 232, 181, .48);
+      white-space: nowrap;
+    }
+
+    .small-stage {
+      display: grid;
+      place-items: center;
+      min-height: 132px;
+      padding-top: 9px;
+    }
+
+    .coin-mini {
+      position: relative;
+      width: 92px;
+      height: 92px;
+      border: 4px solid #654e31;
+      border-radius: 50%;
+      background:
+        url("assets/bears/rewards/source/level-11-electric-guitar-sheet.png") 0 0 / 200% 200% no-repeat,
+        #ac8a54;
+      background-blend-mode: multiply;
+      box-shadow:
+        inset 0 0 0 2px #c8a96e,
+        inset 0 0 0 5px rgba(68, 51, 31, .72),
+        inset 0 0 12px rgba(48, 34, 19, .38),
+        0 10px 16px rgba(37, 57, 67, .18);
+      filter: grayscale(.38) sepia(.35) contrast(1.12);
+    }
+
+    .coin-mini::after {
+      position: absolute;
+      inset: 7px;
+      border: 2px dotted rgba(64, 47, 28, .72);
+      border-radius: 50%;
+      content: "";
+    }
+
+    @keyframes coin-settle {
+      0% { opacity: 0; transform: translateY(38px) rotateX(18deg) rotateY(-106deg) scale(.76); }
+      68% { opacity: 1; transform: translateY(-5px) rotateX(-2deg) rotateY(9deg) scale(1.025); }
+      100% { transform: none; }
+    }
+
+    @keyframes glint {
+      0% { opacity: 0; transform: translateX(-80px) rotate(31deg); }
+      42% { opacity: .72; }
+      100% { opacity: 0; transform: translateX(170px) rotate(31deg); }
+    }
+
+    @media (max-width: 900px) {
+      header { align-items: start; flex-direction: column; }
+      .note { grid-template-columns: repeat(2, 1fr); }
+      .note div:nth-child(3) { border-top: 1px solid var(--line); border-left: 0; }
+      .note div:nth-child(4) { border-top: 1px solid var(--line); }
+      .hero { grid-template-columns: 1fr; }
+      .description { border-top: 1px solid var(--line); border-left: 0; }
+      .inspection { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .note { grid-template-columns: 1fr; }
+      .note div + div, .note div:nth-child(4) { border-top: 1px solid var(--line); border-left: 0; }
+      .coin-stage { min-height: 440px; }
+      .coin3d { width: 292px; height: 292px; }
+      .description { padding: 32px 24px; }
+      .features div { grid-template-columns: 1fr; gap: 3px; }
+      .edge-sample::after { font-size: 8px; letter-spacing: .14em; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .coin3d { transition: none; }
+      .coin3d.is-settling,
+      .coin3d.is-settling .glint { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">Нумизматический вариант · отдельный экран утверждения</p>
+      <h1>Коллекционная монета за пройденную главу</h1>
+      <p class="intro">Один предмет вместо набора декоративных рамок: большое поле с медведем, узкий защищающий кант, мелкая легенда, зубчатая кайма, патина и рифлёное ребро.</p>
+    </div>
+    <button class="flip-button" id="flipCoin" type="button">Показать оборот</button>
+  </header>
+
+  <main>
+    <section class="note" aria-label="Конструкция монеты">
+      <div><strong>Поле 83%</strong><span>Медведь занимает монету, кант больше не съедает изображение.</span></div>
+      <div><strong>Микролегенда</strong><span>Название, глава и номер выпуска идут по окружности.</span></div>
+      <div><strong>Чеканный рельеф</strong><span>Не наклейка: рисунок приглушён в цвет старой бронзы.</span></div>
+      <div><strong>Рифлёное ребро</strong><span>Насечка и отдельная надпись видны при повороте.</span></div>
+    </section>
+
+    <section class="hero">
+      <div class="coin-stage" id="coinStage">
+        <div class="coin3d" id="coin">
+          <span class="edge-slice" style="--depth:0"></span>
+          <span class="edge-slice" style="--depth:1"></span>
+          <span class="edge-slice" style="--depth:2"></span>
+          <span class="edge-slice" style="--depth:3"></span>
+          <span class="edge-slice" style="--depth:4"></span>
+          <span class="edge-slice" style="--depth:5"></span>
+          <span class="edge-slice" style="--depth:6"></span>
+          <span class="edge-slice" style="--depth:7"></span>
+          <span class="edge-slice" style="--depth:8"></span>
+          <span class="edge-slice" style="--depth:9"></span>
+          <span class="edge-slice" style="--depth:10"></span>
+          <span class="edge-slice" style="--depth:11"></span>
+          <span class="edge-slice" style="--depth:12"></span>
+          <span class="edge-slice" style="--depth:13"></span>
+
+          <div class="coin-face coin-front">
+            <div class="coin-art"></div>
+            <span class="relief-star" aria-hidden="true"></span>
+            <span class="mint-line">MMXXVI · № 011 / XVI</span>
+            <svg class="legend" viewBox="0 0 326 326" aria-hidden="true">
+              <defs><path id="frontArc" d="M 27,163 A 136,136 0 1,1 299,163 A 136,136 0 1,1 27,163"></path></defs>
+              <circle class="beads" cx="163" cy="163" r="129"></circle>
+              <text><textPath href="#frontArc" startOffset="1.5%">EAR TRAINER · FUNCTIONAL LISTENING · CHAPTER XI · </textPath></text>
+            </svg>
+            <span class="glint"></span>
+          </div>
+
+          <div class="coin-face coin-back">
+            <div class="reverse-field"><div class="reverse-copy"><strong>XI</strong><span>Chapter clear</span></div></div>
+            <span class="relief-star" aria-hidden="true"></span>
+            <span class="mint-line">ONE OF XVI · KRASNOYARSK</span>
+            <svg class="legend" viewBox="0 0 326 326" aria-hidden="true">
+              <defs><path id="backArc" d="M 27,163 A 136,136 0 1,1 299,163 A 136,136 0 1,1 27,163"></path></defs>
+              <circle class="beads" cx="163" cy="163" r="129"></circle>
+              <text><textPath href="#backArc" startOffset="5%">HEAR THE CHANGE · HARMONY · MEMORY · EAR · </textPath></text>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="description">
+        <h2>Старая бронза · глава XI</h2>
+        <p>Главное отличие от прошлых попыток — это уже не круглая рамка вокруг картинки. Вся поверхность работает как единый чеканный предмет.</p>
+        <dl class="features">
+          <div><dt>Кант</dt><dd>Только 8–9% диаметра, с внутренней «жемчужной» насечкой.</dd></div>
+          <div><dt>Легенда</dt><dd>Очень мелкая надпись по окружности и номер конкретной награды.</dd></div>
+          <div><dt>Поле</dt><dd>Медведь с инструментом занимает почти всю лицевую сторону.</dd></div>
+          <div><dt>Оборот</dt><dd>Крупный номер главы, короткая надпись и собственная круговая легенда.</dd></div>
+          <div><dt>Движение</dt><dd>Монета поворачивается только по нажатию; постоянной анимации нет.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="inspection" id="inspection" aria-label="Проверка деталей">
+      <article>
+        <h3>Ребро крупно</h3>
+        <p>Частая насечка даёт тактильность, а микротекст делает монету похожей на вещь, которую хочется рассматривать в руках.</p>
+        <div class="edge-sample" aria-label="Рифлёное ребро с надписью"></div>
+      </article>
+      <article>
+        <h3>Размер в коллекции</h3>
+        <p>92 пикселя — кант остаётся тонким, силуэт медведя не пропадает.</p>
+        <div class="small-stage"><div class="coin-mini" aria-label="Медаль в реальном интерфейсном размере"></div></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const coin = document.querySelector("#coin");
+    const button = document.querySelector("#flipCoin");
+
+    const settle = () => {
+      coin.classList.remove("is-settling");
+      requestAnimationFrame(() => requestAnimationFrame(() => coin.classList.add("is-settling")));
+    };
+
+    button.addEventListener("click", () => {
+      coin.classList.toggle("is-back");
+      button.textContent = coin.classList.contains("is-back") ? "Показать лицо" : "Показать оборот";
+      window.location.hash = "coinStage";
+    });
+
+    settle();
+  </script>
+</body>
+</html>

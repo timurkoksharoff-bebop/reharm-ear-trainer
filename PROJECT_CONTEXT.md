@@ -311,6 +311,12 @@ embedded cache version.
   page presents three restrained medal-treatment directions; choosing one is a
   prerequisite to rebuilding all 16 reward medals and wiring reactions into
   Quest state.
+- `bear-medal-numismatic-preview.html` is a later, more focused medal study and
+  is also approval-only. It replaces the decorative-ring idea with one antique
+  bronze coin construction: a narrow raised rim, micro-legend, beaded border,
+  numbered issue line, toned relief artwork, distinct reverse, and an inscribed
+  reeded edge. It includes a 92-pixel collection-size check. Do not rebuild the
+  16 active medals from it until the user approves this direction.
 - Production PWA `0.35` includes 239 built-in progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
 - Release `0.33` adds the approved sage-green Bodoni application icon and makes

@@ -1438,6 +1438,13 @@ body:not([data-workspace="quest"]) .quest-hud {
   margin-top: 9px;
 }
 
+.settings-guide.is-confirming,
+.settings-reset.is-confirming {
+  border-color: rgba(191, 113, 110, 0.72);
+  background: rgba(235, 211, 206, 0.58);
+  color: #7d4845;
+}
+
 body.settings-open {
   overflow: hidden;
 }

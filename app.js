@@ -1661,6 +1661,8 @@ const QUEST_BEAR_IDLE_DELAY_MS = 16000;
 let questBearReturnTimer = null;
 let questBearIdleTimer = null;
 let questRewardTimer = null;
+let settingsResetTimer = null;
+let settingsResetButton = null;
 let questCoinSequence = 0;
 
 const builderState = {
@@ -3128,11 +3130,11 @@ function continueQuestResult() {
 }
 
 function resetQuestProgress() {
-  if (!window.confirm("Reset the complete quest path, XP, stars, and badges?")) return;
   questState.progress = defaultQuestProgress();
   questState.attempt = freshQuestAttempt();
   questState.result = null;
   saveQuestProgress();
+  setSettingsOpen(false);
   if (isQuestMode()) {
     const indexes = questExerciseIndexes();
     state.exerciseIndex = nextRandomIndex("quest-chapter-1", indexes, -1);
@@ -3836,12 +3838,37 @@ async function importCustomProgressions(event) {
 }
 
 function setSettingsOpen(open) {
+  if (!open) cancelSettingsResetConfirmation();
   ui.settingsPanel.hidden = !open;
   ui.settingsScrim.hidden = !open;
   ui.settingsButton.setAttribute("aria-expanded", String(open));
   ui.settingsButton.setAttribute("aria-label", open ? "Close settings" : "Open settings");
   document.body.classList.toggle("settings-open", open);
   if (open) ui.settingsCloseButton.focus?.();
+}
+
+function cancelSettingsResetConfirmation() {
+  window.clearTimeout(settingsResetTimer);
+  settingsResetTimer = null;
+  if (!settingsResetButton) return;
+  settingsResetButton.textContent = settingsResetButton.dataset.defaultLabel;
+  settingsResetButton.classList.remove("is-confirming");
+  settingsResetButton = null;
+}
+
+function requestSettingsReset(button, confirmationLabel, resetAction) {
+  if (settingsResetButton === button) {
+    cancelSettingsResetConfirmation();
+    resetAction();
+    return;
+  }
+
+  cancelSettingsResetConfirmation();
+  button.dataset.defaultLabel = button.textContent;
+  button.textContent = confirmationLabel;
+  button.classList.add("is-confirming");
+  settingsResetButton = button;
+  settingsResetTimer = window.setTimeout(cancelSettingsResetConfirmation, 5000);
 }
 
 function loadArpeggioMode() {
@@ -4025,7 +4052,9 @@ function init() {
     setQuestMapOpen(true);
   });
   ui.questResultContinueButton.addEventListener("click", continueQuestResult);
-  ui.resetQuestButton.addEventListener("click", resetQuestProgress);
+  ui.resetQuestButton.addEventListener("click", () => {
+    requestSettingsReset(ui.resetQuestButton, "Click again to reset quest", resetQuestProgress);
+  });
   setSettingsOpen(false);
   initBuilder();
   document.body.dataset.workspace = builderState.workspace;
@@ -4119,7 +4148,9 @@ function init() {
   ui.previousButton.addEventListener("click", previousExercise);
   ui.nextButton.addEventListener("click", nextExercise);
   ui.favoriteButton.addEventListener("click", toggleFavorite);
-  ui.resetStatsButton.addEventListener("click", resetStats);
+  ui.resetStatsButton.addEventListener("click", () => {
+    requestSettingsReset(ui.resetStatsButton, "Click again to reset statistics", resetStats);
+  });
   ui.soundSelect.addEventListener("change", () => {
     cancelPlayback();
     stopPianoVoices();
@@ -4952,10 +4983,11 @@ function saveStats() {
 }
 
 function resetStats() {
-  if (!window.confirm("Reset all statistics for this trainer?")) return;
   state.stats = { completed: 0, positions: 0, correctPositions: 0, streak: 0, bestStreak: 0, revealed: 0 };
   saveStats();
   updateStats();
+  setFeedback("Practice statistics reset.", "success");
+  setSettingsOpen(false);
 }
 
 function updateStats() {

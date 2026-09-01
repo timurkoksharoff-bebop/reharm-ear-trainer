@@ -300,27 +300,23 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Local PWA `0.46` keeps the Quest bear study as a lightweight
-  inline SVG, with no network or sample-loading dependency. Production remains
-  on the previously published build until this version is explicitly pushed.
+- Local PWA `0.47` integrates the approved Quest result animations and chapter
+  rewards. Success uses the victory gesture; consecutive Game Overs use the
+  one-paw headslap, two-paw head-grab, crying reaction, then the deliberately
+  incorrect early dance. Production remains on the previously published build
+  until this version is explicitly pushed.
 - The approved bear-shaped `B` artwork remains unchanged. Its compositing layer
   is offset `3.33%` to the right inside the lockup so the visible mark and `EAR`
   read as one word; do not recrop, redraw, or substitute the mark when changing
   this spacing.
-- `bear-reactions-awards-preview.html` is an approval-only study, not application
-  integration. It preserves the approved victory, one-paw headslap, two-paw
-  head-grab, and early incorrect loser-dance assets, and adds a new four-pose
-  crying reaction. The intended consecutive Game Over order is headslap,
-  head-grab, crying, then the deliberately uncorrected early dance. The same
-  page presents three restrained medal-treatment directions; choosing one is a
-  prerequisite to rebuilding all 16 reward medals and wiring reactions into
-  Quest state.
-- `bear-medal-numismatic-preview.html` is a later, more focused medal study and
-  is also approval-only. It replaces the decorative-ring idea with one antique
-  bronze coin construction: a narrow raised rim, micro-legend, beaded border,
-  numbered issue line, toned relief artwork, distinct reverse, and an inscribed
-  reeded edge. It includes a 92-pixel collection-size check. Do not rebuild the
-  16 active medals from it until the user approves this direction.
+- `bear-reactions-awards-preview.html` remains the source study for the approved
+  victory and failure reactions; those assets are now wired into Quest state.
+- `bear-medal-numismatic-preview.html` documents the approved antique-bronze
+  medal construction: a narrow raised rim, micro-legend, beaded border,
+  numbered issue line, toned relief artwork, distinct reverse, and a thick
+  reeded edge. Quest now awards one of 16 instrument medals after each chapter,
+  persists the collection, and precedes the instrument performance with the
+  shared point-to-bear arrival animation.
 - Production PWA `0.35` includes 239 built-in progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
 - Release `0.33` adds the approved sage-green Bodoni application icon and makes
@@ -334,7 +330,7 @@ embedded cache version.
 - The published standalone Trainer uses cache `0.35`. Localhost previews
   unregister service workers automatically so iterative testing never mixes
   current HTML with stale cached JavaScript.
-- Lite `0.4` is built from the same interface, Builder, and
+- Lite `0.8` is built from the same interface, Builder, and
   audio engine, but its shipped
   catalog physically contains only Chapters 1–4. Its storage and cache names
   are isolated from the full Trainer.

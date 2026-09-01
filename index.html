@@ -518,6 +518,16 @@
         <button id="questMapCloseButton" type="button" aria-label="Close quest map">×</button>
       </div>
       <p class="quest-map-intro">Each chapter is its own campaign: short forms first, then longer routes from that chapter. Piano checking is allowed; ready-made chord previews lower the rank.</p>
+      <section class="quest-medal-cabinet" aria-labelledby="questMedalCabinetTitle">
+        <div class="quest-medal-cabinet-heading">
+          <div>
+            <p class="eyebrow">Earned collection</p>
+            <h3 id="questMedalCabinetTitle">Chapter medals</h3>
+          </div>
+          <strong id="questMedalCount">0 / 16</strong>
+        </div>
+        <div class="quest-medal-grid" id="questMedalCabinet"></div>
+      </section>
       <div class="quest-map-route" id="questMapRoute"></div>
       <button class="quest-map-primary" id="questMapPrimaryButton" type="button">Continue quest</button>
     </section>
@@ -526,11 +536,17 @@
   <div class="quest-layer quest-result-layer" id="questResultLayer" hidden>
     <div class="quest-celebration" id="questCelebration" aria-hidden="true"></div>
     <section class="quest-result" role="dialog" aria-modal="true" aria-labelledby="questResultTitle">
-      <svg class="quest-result-bear" viewBox="0 0 420 440" aria-hidden="true" focusable="false">
-        <use id="questResultBearUse" href="#questBearVictory" width="100%" height="100%"></use>
-      </svg>
+      <div class="quest-result-visual" id="questResultVisual" aria-hidden="true">
+        <img class="quest-result-reaction" id="questResultReaction" alt="">
+        <div class="quest-reward-stage" id="questRewardStage" hidden>
+          <span class="quest-reward-spotlight"></span>
+          <img class="quest-reward-animation" id="questRewardIntro" alt="">
+          <img class="quest-reward-animation" id="questRewardPerformance" alt="" hidden>
+          <p class="quest-reward-label" id="questRewardLabel"></p>
+        </div>
+      </div>
       <p class="quest-result-kicker" id="questResultKicker">Mission clear</p>
-      <div class="quest-result-medal" id="questResultMedal">✦</div>
+      <div class="quest-result-medal" id="questResultMedal" hidden></div>
       <h2 id="questResultTitle">First Light</h2>
       <div class="quest-stars" id="questResultStars" aria-label="Mission rating">☆☆☆</div>
       <strong class="quest-result-score" id="questResultScore">+1000 XP</strong>

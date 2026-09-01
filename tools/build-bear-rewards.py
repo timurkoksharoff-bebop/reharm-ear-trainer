@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "assets" / "bears" / "rewards" / "source"
 OUTPUT_DIR = SOURCE_DIR.parent
 MEDAL_DIR = OUTPUT_DIR / "medals"
+COIN_ART_DIR = OUTPUT_DIR / "coin-art"
 FRAME_SIZE = 512
 MEDAL_SIZE = 320
 INTRO_SOURCE = SOURCE_DIR / "common-neutral-bear.png"
@@ -148,17 +149,31 @@ def build_medal(source: str, filename: str) -> None:
     medal.save(MEDAL_DIR / filename, optimize=True)
 
 
+def build_coin_art(source: str, filename: str) -> None:
+    """Export the first authored pose for the numismatic in-app medal."""
+    artwork = sheet_frames(SOURCE_DIR / source)[0]
+    artwork.save(
+        COIN_ART_DIR / filename,
+        format="WEBP",
+        quality=88,
+        method=6,
+    )
+
+
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     MEDAL_DIR.mkdir(parents=True, exist_ok=True)
+    COIN_ART_DIR.mkdir(parents=True, exist_ok=True)
     build_intro()
 
     manifest = []
     for level, slug, name, source, order, durations in REWARDS:
         filename = f"level-{level:02d}-{slug}.webp"
         medal_filename = f"level-{level:02d}-{slug}.png"
+        coin_art_filename = f"level-{level:02d}-{slug}.webp"
         save_performance(source, filename, order, durations)
         build_medal(source, medal_filename)
+        build_coin_art(source, coin_art_filename)
         manifest.append(
             {
                 "level": level,
@@ -166,6 +181,7 @@ def main() -> None:
                 "name": name,
                 "src": filename,
                 "medal": f"medals/{medal_filename}",
+                "coinArt": f"coin-art/{coin_art_filename}",
             }
         )
 

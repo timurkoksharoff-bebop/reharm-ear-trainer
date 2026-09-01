@@ -1558,6 +1558,56 @@ const QUEST_MISSIONS = Array.from({ length: 16 }, (_, index) => {
     requiredClears: QUEST_STAGES.length * QUEST_CLEARS_PER_STAGE,
   };
 });
+const QUEST_REWARD_INTRO = {
+  src: "assets/bears/rewards/intro-bear-arrival.webp",
+  durationMs: 1400,
+};
+const QUEST_REWARDS = [
+  [1, "triangle", "Triangle"],
+  [2, "cymbals", "Orchestral cymbals"],
+  [3, "tuba", "Tuba"],
+  [4, "harp", "Harp"],
+  [5, "bass-guitar", "Bass guitar"],
+  [6, "drum-kit", "Drum kit"],
+  [7, "keytar", "Keytar"],
+  [8, "upright-bass", "Upright bass"],
+  [9, "flute", "Flute"],
+  [10, "violin", "Violin"],
+  [11, "electric-guitar", "Electric guitar"],
+  [12, "vibraphone", "Vibraphone"],
+  [13, "saxophone", "Saxophone"],
+  [14, "trumpet", "Trumpet"],
+  [15, "balalaika", "Balalaika"],
+  [16, "musical-saw", "Musical saw"],
+].map(([chapter, slug, name]) => ({
+  chapter,
+  slug,
+  name,
+  performance: `assets/bears/rewards/level-${String(chapter).padStart(2, "0")}-${slug}.webp`,
+  coinArt: `assets/bears/rewards/coin-art/level-${String(chapter).padStart(2, "0")}-${slug}.webp`,
+}));
+const QUEST_REACTIONS = {
+  victory: {
+    src: "assets/bears/reactions/victory.webp",
+    label: "Victory",
+  },
+  1: {
+    src: "assets/bears/reactions/failure-01-headslap.webp",
+    label: "First consecutive Game Over",
+  },
+  2: {
+    src: "assets/bears/reactions/failure-02-head-grab.webp",
+    label: "Second consecutive Game Over",
+  },
+  3: {
+    src: "assets/bears/reactions/failure-03-crying.webp",
+    label: "Third consecutive Game Over",
+  },
+  4: {
+    src: "assets/bears/reactions/failure-04-wrong-dance.gif",
+    label: "Fourth consecutive Game Over",
+  },
+};
 const BUILDER_MAX_CHORDS = 20;
 const BUILDER_DEGREES = [
   { roman: "I", offset: 0 },
@@ -1610,6 +1660,8 @@ const QUEST_BEAR_POSES = {
 const QUEST_BEAR_IDLE_DELAY_MS = 16000;
 let questBearReturnTimer = null;
 let questBearIdleTimer = null;
+let questRewardTimer = null;
+let questCoinSequence = 0;
 
 const builderState = {
   workspace: "quest",
@@ -1685,6 +1737,8 @@ const ui = {
   questMapScrim: document.querySelector("#questMapScrim"),
   questMapCloseButton: document.querySelector("#questMapCloseButton"),
   questMapRoute: document.querySelector("#questMapRoute"),
+  questMedalCabinet: document.querySelector("#questMedalCabinet"),
+  questMedalCount: document.querySelector("#questMedalCount"),
   questMapPrimaryButton: document.querySelector("#questMapPrimaryButton"),
   questResultLayer: document.querySelector("#questResultLayer"),
   questCelebration: document.querySelector("#questCelebration"),
@@ -1698,10 +1752,14 @@ const ui = {
   questResultBadge: document.querySelector("#questResultBadge"),
   questResultMapButton: document.querySelector("#questResultMapButton"),
   questResultContinueButton: document.querySelector("#questResultContinueButton"),
+  questResultVisual: document.querySelector("#questResultVisual"),
+  questResultReaction: document.querySelector("#questResultReaction"),
+  questRewardStage: document.querySelector("#questRewardStage"),
+  questRewardIntro: document.querySelector("#questRewardIntro"),
+  questRewardPerformance: document.querySelector("#questRewardPerformance"),
+  questRewardLabel: document.querySelector("#questRewardLabel"),
   questBearScene: document.querySelector("#questBearScene"),
   questBearUse: document.querySelector("#questBearUse"),
-  questResultBear: document.querySelector(".quest-result-bear"),
-  questResultBearUse: document.querySelector("#questResultBearUse"),
   pianoPanel: document.querySelector(".piano-panel"),
   pianoKeyboard: document.querySelector("#pianoKeyboard"),
   pianoStopButton: document.querySelector("#pianoStopButton"),
@@ -2489,6 +2547,8 @@ function defaultQuestProgress() {
     totalClears: 0,
     bestScore: 0,
     introSeen: false,
+    failureStreak: 0,
+    earnedRewards: [],
     missions: {},
     badges: [],
   };
@@ -2512,12 +2572,23 @@ function loadQuestProgress() {
         bestScore: Math.max(0, Number(record?.bestScore) || 0),
       };
     });
+    const completedRewards = QUEST_MISSIONS
+      .filter((mission) => missions[mission.id].clears >= mission.requiredClears)
+      .map((mission) => mission.chapter);
+    const storedRewards = Array.isArray(stored.earnedRewards)
+      ? stored.earnedRewards
+        .map(Number)
+        .filter((chapter) => Number.isInteger(chapter) && chapter >= 1 && chapter <= 16)
+      : [];
     return {
       missionIndex,
       totalXp: Math.max(0, Number(stored.totalXp) || 0),
       totalClears: Math.max(0, Number(stored.totalClears) || 0),
       bestScore: Math.max(0, Number(stored.bestScore) || 0),
       introSeen: Boolean(stored.introSeen),
+      failureStreak: Math.max(0, Number(stored.failureStreak) || 0),
+      earnedRewards: [...new Set([...completedRewards, ...storedRewards])]
+        .sort((left, right) => left - right),
       missions,
       badges: Array.isArray(stored.badges)
         ? stored.badges.filter((badge) => typeof badge === "string")
@@ -2664,12 +2735,139 @@ function wakeQuestBear() {
   scheduleQuestBearRest();
 }
 
-function setQuestResultBear(success) {
-  if (!ui.questResultBear || !ui.questResultBearUse) return;
-  const pose = success ? "victory" : "wrong";
-  const config = QUEST_BEAR_POSES[pose];
-  ui.questResultBear.setAttribute("viewBox", config.viewBox);
-  ui.questResultBearUse.setAttribute("href", `#${config.symbol}`);
+function questRewardForChapter(chapter) {
+  return QUEST_REWARDS.find((reward) => reward.chapter === Number(chapter)) || QUEST_REWARDS[0];
+}
+
+function questRomanNumeral(value) {
+  const numerals = [
+    [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"],
+  ];
+  let remaining = Math.max(1, Math.min(16, Number(value) || 1));
+  return numerals.reduce((label, [number, numeral]) => {
+    while (remaining >= number) {
+      label += numeral;
+      remaining -= number;
+    }
+    return label;
+  }, "");
+}
+
+function questCoinLegend(reward, side) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  const sequence = questCoinSequence += 1;
+  const topId = `quest-coin-top-${sequence}`;
+  const lowerId = `quest-coin-lower-${sequence}`;
+  const roman = questRomanNumeral(reward.chapter);
+  const topText = side === "front"
+    ? `EAR TRAINER · FUNCTIONAL LISTENING · CHAPTER ${roman} · `
+    : "HEAR THE CHANGE · HARMONY · MEMORY · EAR · ";
+  const lowerText = side === "front"
+    ? `MMXXVI · № ${String(reward.chapter).padStart(3, "0")} / XVI`
+    : "ONE OF XVI · KRASNOYARSK";
+  svg.classList.add("quest-coin-legend");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("aria-hidden", "true");
+  svg.innerHTML = `
+    <defs>
+      <path id="${topId}" d="M 7,50 A 43,43 0 1,1 93,50 A 43,43 0 1,1 7,50"></path>
+      <path id="${lowerId}" d="M 14,50 A 36,36 0 0,0 86,50"></path>
+    </defs>
+    <circle class="quest-coin-beads" cx="50" cy="50" r="40.5"></circle>
+    <text><textPath href="#${topId}" startOffset="2%">${topText}</textPath></text>
+    <text class="quest-coin-lower"><textPath href="#${lowerId}" startOffset="50%" text-anchor="middle">${lowerText}</textPath></text>
+  `;
+  return svg;
+}
+
+function createQuestCoin(reward, { locked = false, compact = false } = {}) {
+  const coin = document.createElement("button");
+  coin.type = "button";
+  coin.className = `quest-coin${compact ? " compact" : ""}${locked ? " locked" : ""}`;
+  coin.disabled = locked;
+  coin.setAttribute(
+    "aria-label",
+    locked
+      ? `Chapter ${reward.chapter} medal locked`
+      : `Chapter ${reward.chapter} medal · ${reward.name} · flip medal`,
+  );
+
+  const turn = document.createElement("span");
+  turn.className = "quest-coin-turn";
+  const edgeSlices = Array.from({ length: 17 }, (_, depth) => {
+    const slice = document.createElement("span");
+    slice.className = "quest-coin-edge";
+    slice.style.setProperty("--quest-edge-z", `${(depth - 8) * (compact ? 0.42 : 0.82)}px`);
+    return slice;
+  });
+
+  const front = document.createElement("span");
+  front.className = "quest-coin-face quest-coin-front";
+  const art = document.createElement("span");
+  art.className = "quest-coin-art";
+  if (!locked) art.style.backgroundImage = `url("${reward.coinArt}")`;
+  const relief = document.createElement("span");
+  relief.className = "quest-coin-relief";
+  front.append(art, questCoinLegend(reward, "front"), relief);
+
+  const back = document.createElement("span");
+  back.className = "quest-coin-face quest-coin-back";
+  const chapter = document.createElement("strong");
+  chapter.textContent = questRomanNumeral(reward.chapter);
+  const caption = document.createElement("small");
+  caption.textContent = locked ? "Locked" : reward.name;
+  back.append(chapter, caption, questCoinLegend(reward, "back"));
+
+  turn.append(...edgeSlices, front, back);
+  coin.append(turn);
+  if (!locked) {
+    coin.addEventListener("click", () => {
+      coin.classList.toggle("is-back");
+    });
+  }
+  return coin;
+}
+
+function restartQuestAnimationImage(image, source) {
+  if (!image) return;
+  image.removeAttribute("src");
+  void image.offsetWidth;
+  image.src = source;
+}
+
+function setQuestResultVisual(result) {
+  window.clearTimeout(questRewardTimer);
+  ui.questResultVisual.dataset.mode = result.reward ? "reward" : "reaction";
+  ui.questResultReaction.hidden = Boolean(result.reward);
+  ui.questRewardStage.hidden = !result.reward;
+  ui.questRewardIntro.hidden = true;
+  ui.questRewardPerformance.hidden = true;
+
+  if (!result.reward) {
+    const reaction = result.success
+      ? QUEST_REACTIONS.victory
+      : QUEST_REACTIONS[Math.min(4, Math.max(1, result.failureStreak || 1))];
+    ui.questResultReaction.setAttribute("aria-label", reaction.label);
+    restartQuestAnimationImage(ui.questResultReaction, reaction.src);
+    return;
+  }
+
+  ui.questRewardLabel.textContent = `${result.reward.name} · chapter ${result.reward.chapter}`;
+  ui.questRewardIntro.hidden = false;
+  restartQuestAnimationImage(ui.questRewardIntro, QUEST_REWARD_INTRO.src);
+  restartQuestAnimationImage(ui.questRewardPerformance, result.reward.performance);
+  ui.questResultMedal.classList.remove("is-earned");
+
+  const showPerformance = () => {
+    ui.questRewardIntro.hidden = true;
+    ui.questRewardPerformance.hidden = false;
+    ui.questResultMedal.classList.add("is-earned");
+  };
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    showPerformance();
+  } else {
+    questRewardTimer = window.setTimeout(showPerformance, QUEST_REWARD_INTRO.durationMs);
+  }
 }
 
 function renderQuestHud() {
@@ -2695,6 +2893,17 @@ function renderQuestHud() {
 
 function renderQuestMap() {
   if (!ui.questMapRoute) return;
+  const earnedRewards = new Set(questState.progress.earnedRewards);
+  ui.questMedalCabinet?.replaceChildren();
+  QUEST_REWARDS.forEach((reward) => {
+    ui.questMedalCabinet?.append(createQuestCoin(reward, {
+      locked: !earnedRewards.has(reward.chapter),
+      compact: true,
+    }));
+  });
+  if (ui.questMedalCount) {
+    ui.questMedalCount.textContent = `${earnedRewards.size} / ${QUEST_REWARDS.length}`;
+  }
   ui.questMapRoute.replaceChildren();
   QUEST_MISSIONS.forEach((mission, index) => {
     const record = questMissionRecord(mission);
@@ -2788,15 +2997,22 @@ function renderQuestParticles() {
 function showQuestResult(result) {
   questState.result = result;
   setQuestBearPose(result.success ? "victory" : "wrong");
-  setQuestResultBear(result.success);
+  setQuestResultVisual(result);
   ui.questResult.classList.toggle("failed", !result.success);
+  ui.questResult.classList.toggle("has-reward", Boolean(result.reward));
   ui.questResultKicker.textContent = result.success
-    ? (result.missionUnlocked ? "New chapter unlocked" : "Chapter clear")
-    : "Try again";
-  ui.questResultMedal.textContent = result.success ? result.mission.emblem : "↺";
+    ? (result.reward ? "Chapter reward earned" : "Exercise clear")
+    : `Game Over · attempt ${result.failureStreak}`;
+  ui.questResultMedal.replaceChildren();
+  ui.questResultMedal.hidden = !result.reward;
+  if (result.reward) {
+    ui.questResultMedal.append(createQuestCoin(result.reward));
+  }
   ui.questResultTitle.textContent = result.success
-    ? `Chapter ${result.mission.chapter} · ${result.mission.title}`
-    : "Listening reset";
+    ? (result.reward
+      ? `${result.reward.name} medal`
+      : `Chapter ${result.mission.chapter} · ${result.mission.title}`)
+    : (result.failureStreak >= 4 ? "The wrong dance returns" : "Listening reset");
   ui.questResultStars.textContent = result.success
     ? `${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`
     : "···";
@@ -2821,21 +3037,32 @@ function finishQuestClear({ firstTryPositions, perfect }) {
   const score = questRunScore();
   const xp = score + stars * 100;
 
+  const previousClears = record.clears;
   record.clears += 1;
   record.bestStars = Math.max(record.bestStars, stars);
   record.bestScore = Math.max(record.bestScore, score);
   questState.progress.totalXp += xp;
   questState.progress.totalClears += 1;
   questState.progress.bestScore = Math.max(questState.progress.bestScore, score);
+  questState.progress.failureStreak = 0;
   const badge = questBadgeForClear({
     perfect,
     stars,
     sequenceLength: state.answers.length,
   });
+  const chapterCompleted = (
+    previousClears < mission.requiredClears
+    && record.clears >= mission.requiredClears
+  );
   const missionUnlocked = (
-    record.clears >= mission.requiredClears
+    chapterCompleted
     && questState.progress.missionIndex < QUEST_MISSIONS.length - 1
   );
+  const reward = chapterCompleted ? questRewardForChapter(mission.chapter) : null;
+  if (reward && !questState.progress.earnedRewards.includes(reward.chapter)) {
+    questState.progress.earnedRewards.push(reward.chapter);
+    questState.progress.earnedRewards.sort((left, right) => left - right);
+  }
   if (missionUnlocked) questState.progress.missionIndex += 1;
   saveQuestProgress();
   renderQuestHud();
@@ -2847,6 +3074,7 @@ function finishQuestClear({ firstTryPositions, perfect }) {
   else details.push(`${questState.attempt.chordHints} chord preview${questState.attempt.chordHints === 1 ? "" : "s"} lowered the rank.`);
   if (questState.attempt.pianoUsed) details.push("Keyboard checking was allowed and recorded.");
   if (missionUnlocked) details.push(`Chapter ${mission.chapter + 1} is now open.`);
+  if (reward) details.push(`${reward.name} joined your chapter medal collection.`);
 
   showQuestResult({
     success: true,
@@ -2856,6 +3084,8 @@ function finishQuestClear({ firstTryPositions, perfect }) {
     score,
     badge,
     missionUnlocked,
+    chapterCompleted,
+    reward,
     body: details.join(" "),
   });
 }
@@ -2863,6 +3093,8 @@ function finishQuestClear({ firstTryPositions, perfect }) {
 function failQuestAttempt(reason) {
   if (!isQuestMode() || questState.attempt.failed || state.completed) return;
   questState.attempt.failed = true;
+  questState.progress.failureStreak += 1;
+  saveQuestProgress();
   cancelPlayback();
   render();
   showQuestResult({
@@ -2872,12 +3104,14 @@ function failQuestAttempt(reason) {
     xp: 0,
     badge: "",
     missionUnlocked: false,
+    failureStreak: questState.progress.failureStreak,
     body: `${reason} Listen once more, then rebuild the progression. Your route progress is safe.`,
   });
 }
 
 function continueQuestResult() {
   const result = questState.result;
+  window.clearTimeout(questRewardTimer);
   ui.questResultLayer.hidden = true;
   document.body.classList.toggle("quest-layer-open", questState.mapOpen);
   questState.result = null;
@@ -3643,6 +3877,67 @@ function preventInterfaceZoom() {
   });
 }
 
+function initQuestDebugPanel() {
+  const isLocal = ["127.0.0.1", "localhost"].includes(window.location.hostname);
+  if (!isLocal || !new URLSearchParams(window.location.search).has("questDebug")) return;
+
+  const panel = document.createElement("aside");
+  panel.className = "quest-debug-panel";
+  panel.setAttribute("aria-label", "Local quest preview controls");
+  const actions = [
+    ["Victory", () => showQuestResult({
+      success: true,
+      mission: currentQuestMission(),
+      stars: 3,
+      xp: 1300,
+      badge: "Badge unlocked · Three Stars",
+      missionUnlocked: false,
+      reward: null,
+      body: "Approved victory reaction preview.",
+    })],
+    ...[1, 2, 3, 4].map((failureStreak) => [
+      `Fail ${failureStreak}`,
+      () => showQuestResult({
+        success: false,
+        mission: currentQuestMission(),
+        stars: 0,
+        xp: 0,
+        badge: "",
+        missionUnlocked: false,
+        reward: null,
+        failureStreak,
+        body: `Consecutive Game Over reaction ${failureStreak} preview.`,
+      }),
+    ]),
+    ["Reward XI", () => showQuestResult({
+      success: true,
+      mission: QUEST_MISSIONS[10],
+      stars: 3,
+      xp: 1300,
+      badge: "Chapter complete · Electric guitar",
+      missionUnlocked: true,
+      chapterCompleted: true,
+      reward: QUEST_REWARDS[10],
+      body: "The shared arrival leads into the authored instrument performance and earned coin.",
+    })],
+    ["16 medals", () => {
+      const earnedRewards = questState.progress.earnedRewards;
+      questState.progress.earnedRewards = QUEST_REWARDS.map((reward) => reward.chapter);
+      ui.questResultLayer.hidden = true;
+      setQuestMapOpen(true);
+      questState.progress.earnedRewards = earnedRewards;
+    }],
+  ];
+  actions.forEach(([label, action]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", action);
+    panel.append(button);
+  });
+  document.body.append(panel);
+}
+
 function init() {
   configurePlaybackAudioSession();
   preventInterfaceZoom();
@@ -3840,6 +4135,7 @@ function init() {
   ui.chapterSelect.disabled = isQuestMode();
   ui.exerciseSelect.disabled = isQuestMode();
   renderQuestHud();
+  initQuestDebugPanel();
   if (!questState.progress.introSeen) {
     window.setTimeout(() => setQuestMapOpen(true), 520);
   }

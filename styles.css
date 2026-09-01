@@ -501,6 +501,45 @@ body:not([data-workspace="quest"]) .quest-hud {
   line-height: 1.55;
 }
 
+.quest-medal-cabinet {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid rgba(113, 88, 52, 0.22);
+  border-radius: 21px;
+  background:
+    radial-gradient(circle at 18% 5%, rgba(255, 255, 255, 0.66), transparent 36%),
+    linear-gradient(145deg, rgba(231, 222, 198, 0.56), rgba(244, 239, 225, 0.36));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.52);
+}
+
+.quest-medal-cabinet-heading {
+  margin-bottom: 13px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.quest-medal-cabinet-heading h3 {
+  margin: 2px 0 0;
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.quest-medal-cabinet-heading strong {
+  color: #715d3d;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+
+.quest-medal-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 9px 5px;
+  justify-items: center;
+}
+
 .quest-map-route {
   display: grid;
   gap: 8px;
@@ -609,6 +648,73 @@ body:not([data-workspace="quest"]) .quest-hud {
   animation: quest-result-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
 }
 
+.quest-result.has-reward {
+  width: min(690px, 100%);
+  display: grid;
+  grid-template-columns: minmax(280px, 1.06fr) minmax(250px, 0.94fr);
+  grid-template-areas:
+    "visual kicker"
+    "visual medal"
+    "visual title"
+    "visual stars"
+    "visual score"
+    "visual body"
+    "visual badge"
+    "actions actions";
+  align-items: center;
+  column-gap: 22px;
+}
+
+.quest-result.has-reward .quest-result-visual { grid-area: visual; }
+.quest-result.has-reward .quest-result-kicker { grid-area: kicker; }
+.quest-result.has-reward .quest-result-medal { grid-area: medal; }
+.quest-result.has-reward h2 { grid-area: title; }
+.quest-result.has-reward .quest-stars { grid-area: stars; }
+.quest-result.has-reward .quest-result-score { grid-area: score; }
+.quest-result.has-reward .quest-result-body { grid-area: body; }
+.quest-result.has-reward .quest-badge { grid-area: badge; }
+.quest-result.has-reward .quest-result-actions { grid-area: actions; }
+
+.quest-result.has-reward .quest-result-visual {
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+}
+
+.quest-result.has-reward .quest-reward-stage {
+  width: 296px;
+  height: 285px;
+}
+
+.quest-result.has-reward .quest-reward-animation {
+  inset: 0 8px 4px;
+  width: 280px;
+  height: 280px;
+}
+
+.quest-result.has-reward .quest-result-medal {
+  margin: 11px auto 7px;
+}
+
+.quest-result.has-reward .quest-coin {
+  --quest-coin-size: 98px;
+  --quest-face-depth: 8px;
+  --quest-rim-one: 2px;
+  --quest-rim-two: 4px;
+  --quest-rim-three: 7px;
+  --quest-face-glow: 11px;
+  --quest-drop-y: 9px;
+  --quest-drop-blur: 21px;
+  --quest-art-glow: 8px;
+  --quest-back-number: 30px;
+  --quest-back-label: 5px;
+  --quest-perspective: 440px;
+}
+
+.quest-result.has-reward .quest-result-actions {
+  margin-top: 17px;
+}
+
 .quest-result-kicker {
   margin: 0;
   color: var(--sage-deep);
@@ -619,24 +725,302 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .quest-result-medal {
-  width: 86px;
-  height: 86px;
-  margin: 16px auto;
-  border: 1px solid rgba(84, 116, 102, 0.45);
+  width: fit-content;
+  height: auto;
+  margin: 14px auto 8px;
+  opacity: 0.18;
+  transform: translateY(9px) scale(0.82);
+  transition: opacity 420ms ease, transform 560ms cubic-bezier(0.2, 0.9, 0.25, 1.15);
+}
+
+.quest-result-medal[hidden] {
+  display: none;
+}
+
+.quest-result-medal.is-earned {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.quest-result-visual {
+  position: relative;
+  width: min(300px, 80vw);
+  height: 214px;
+  margin: -8px auto 4px;
+  display: grid;
+  place-items: center;
+}
+
+.quest-result-visual[data-mode="reward"] {
+  height: 245px;
+}
+
+.quest-result-reaction,
+.quest-reward-animation {
+  display: block;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.quest-result-reaction {
+  width: 226px;
+  height: 226px;
+  border-radius: 44%;
+  filter: saturate(0.9) contrast(1.03);
+}
+
+.quest-reward-stage {
+  position: relative;
+  width: 270px;
+  height: 242px;
+  isolation: isolate;
+}
+
+.quest-reward-stage[hidden],
+.quest-result-reaction[hidden],
+.quest-reward-animation[hidden] {
+  display: none;
+}
+
+.quest-reward-spotlight {
+  position: absolute;
+  z-index: -1;
+  inset: 0 12px 10px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 255, 247, 0.96), rgba(226, 228, 197, 0.42) 48%, transparent 72%);
+  filter: blur(4px);
+}
+
+.quest-reward-animation {
+  position: absolute;
+  inset: -4px 13px 8px;
+  width: 244px;
+  height: 244px;
+  border-radius: 42%;
+  filter: saturate(0.92) contrast(1.04);
+}
+
+.quest-reward-label {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: -4px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #725b36;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.quest-coin {
+  --quest-coin-size: 120px;
+  --quest-face-depth: 7px;
+  --quest-rim-one: 3px;
+  --quest-rim-two: 5px;
+  --quest-rim-three: 8px;
+  --quest-face-glow: 13px;
+  --quest-drop-y: 12px;
+  --quest-drop-blur: 26px;
+  --quest-art-glow: 10px;
+  --quest-back-number: 36px;
+  --quest-back-label: 6px;
+  --quest-perspective: 540px;
+  position: relative;
+  width: var(--quest-coin-size);
+  height: var(--quest-coin-size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  appearance: none;
+  background: transparent;
+  perspective: var(--quest-perspective);
+  cursor: pointer;
+}
+
+.quest-coin.compact {
+  --quest-coin-size: 58px;
+  --quest-face-depth: 4px;
+  --quest-rim-one: 1px;
+  --quest-rim-two: 2px;
+  --quest-rim-three: 4px;
+  --quest-face-glow: 7px;
+  --quest-drop-y: 5px;
+  --quest-drop-blur: 12px;
+  --quest-art-glow: 5px;
+  --quest-back-number: 18px;
+  --quest-back-label: 4px;
+  --quest-perspective: 260px;
+}
+
+.quest-coin-turn,
+.quest-coin-edge,
+.quest-coin-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.quest-coin-edge {
+  background:
+    repeating-conic-gradient(from 0.5deg, #55442e 0deg 1.3deg, #c4a66d 1.3deg 2.5deg, #755a37 2.5deg 3.6deg),
+    #8e7046;
+  transform: translateZ(var(--quest-edge-z));
+  box-shadow: inset 0 0 var(--quest-art-glow) rgba(50, 35, 20, 0.45);
+  pointer-events: none;
+}
+
+.quest-coin-turn {
+  display: block;
+  transform-style: preserve-3d;
+  transition: transform 760ms cubic-bezier(0.2, 0.72, 0.24, 1);
+}
+
+.quest-coin.is-back .quest-coin-turn {
+  transform: rotateY(180deg);
+}
+
+.quest-coin-face {
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  backface-visibility: hidden;
+  background:
+    radial-gradient(circle at 31% 22%, rgba(255, 243, 204, 0.52), transparent 24%),
+    radial-gradient(circle at 64% 69%, rgba(53, 39, 23, 0.19), transparent 30%),
+    linear-gradient(140deg, #c7a66b 0, #88663e 34%, #b79257 58%, #d2b579 78%, #765735 100%);
+  box-shadow:
+    inset 0 0 0 var(--quest-rim-one) #5d492f,
+    inset 0 0 0 var(--quest-rim-two) #c5a66e,
+    inset 0 0 0 var(--quest-rim-three) rgba(74, 56, 34, 0.82),
+    inset 0 0 var(--quest-face-glow) rgba(46, 34, 21, 0.4),
+    0 var(--quest-drop-y) var(--quest-drop-blur) rgba(47, 38, 25, 0.24);
+}
+
+.quest-coin-face::before {
+  position: absolute;
+  z-index: 5;
+  inset: 4.4%;
+  border: 1px solid rgba(255, 239, 198, 0.72);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.quest-coin-front {
+  transform: translateZ(var(--quest-face-depth));
+}
+
+.quest-coin-back {
+  transform: rotateY(180deg) translateZ(var(--quest-face-depth));
+}
+
+.quest-coin-art {
+  position: absolute;
+  z-index: 1;
+  inset: 8.7%;
+  overflow: hidden;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: var(--sage-deep);
-  background: radial-gradient(circle at 35% 25%, #fff, #dce8dd 64%, #c4d3c8);
-  font-family: Georgia, serif;
-  font-size: 42px;
-  box-shadow: 0 14px 35px rgba(84, 116, 102, 0.18), inset 0 0 0 7px rgba(255, 255, 255, 0.45);
+  background-color: #ad8c58;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-blend-mode: multiply;
+  filter: grayscale(1) sepia(0.72) saturate(0.78) contrast(1.24) brightness(0.96);
+  box-shadow: inset 0 0 var(--quest-art-glow) rgba(51, 37, 21, 0.35);
 }
 
-.quest-result.failed .quest-result-medal {
-  color: var(--clay-deep);
-  border-color: rgba(152, 93, 77, 0.38);
-  background: radial-gradient(circle at 35% 25%, #fff, #eedbd3 64%, #dfbbae);
+.quest-coin.locked .quest-coin-art::after {
+  content: "?";
+  color: rgba(75, 60, 39, 0.6);
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: var(--quest-back-number);
+}
+
+.quest-coin-relief {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, transparent 0 34%, rgba(255, 245, 211, 0.22) 42%, transparent 51%),
+    radial-gradient(circle at 47% 53%, transparent 56%, rgba(48, 34, 20, 0.2));
+  mix-blend-mode: screen;
+}
+
+.quest-coin-legend {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  pointer-events: none;
+}
+
+.quest-coin-legend text {
+  fill: rgba(57, 42, 26, 0.88);
+  font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+  font-size: 3.25px;
+  font-weight: 800;
+  letter-spacing: 0.72px;
+}
+
+.quest-coin-legend .quest-coin-lower {
+  font-size: 3px;
+  letter-spacing: 0.42px;
+}
+
+.quest-coin-beads {
+  fill: none;
+  stroke: rgba(64, 48, 30, 0.66);
+  stroke-width: 0.72;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 2.35;
+}
+
+.quest-coin-back strong,
+.quest-coin-back small {
+  position: relative;
+  z-index: 2;
+  display: block;
+  color: rgba(70, 51, 30, 0.78);
+  text-align: center;
+  text-shadow: 0 1px rgba(255, 231, 176, 0.42), 0 -1px rgba(53, 38, 22, 0.34);
+}
+
+.quest-coin-back strong {
+  margin-top: -3%;
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: var(--quest-back-number);
+  font-weight: 500;
+}
+
+.quest-coin-back small {
+  position: absolute;
+  top: 64%;
+  width: 70%;
+  overflow: hidden;
+  font-size: var(--quest-back-label);
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.quest-coin.locked {
+  opacity: 0.3;
+  filter: grayscale(0.78);
+  cursor: default;
 }
 
 .quest-stars {
@@ -711,6 +1095,36 @@ body:not([data-workspace="quest"]) .quest-hud {
   background: var(--color);
   opacity: 0;
   animation: quest-particle-fall var(--duration) var(--delay) ease-in both;
+}
+
+.quest-debug-panel {
+  position: fixed;
+  z-index: 220;
+  left: 12px;
+  bottom: 12px;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  border: 1px solid rgba(49, 67, 72, 0.28);
+  border-radius: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: rgba(250, 248, 241, 0.92);
+  box-shadow: 0 10px 32px rgba(37, 46, 48, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.quest-debug-panel button {
+  min-height: 29px;
+  padding: 5px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 252, 0.75);
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
 }
 
 @keyframes quest-result-in {
@@ -2477,6 +2891,27 @@ select:focus-visible {
     border-radius: 23px;
   }
 
+  .quest-result.has-reward {
+    width: min(520px, 100%);
+    display: block;
+  }
+
+  .quest-result.has-reward .quest-result-visual {
+    width: min(270px, 76vw);
+    height: 220px;
+  }
+
+  .quest-result.has-reward .quest-reward-stage {
+    width: 260px;
+    height: 218px;
+  }
+
+  .quest-result.has-reward .quest-reward-animation {
+    inset: 0 21px 3px;
+    width: 218px;
+    height: 218px;
+  }
+
   .quest-map-heading h2,
   .quest-result h2 {
     font-size: 32px;
@@ -2484,6 +2919,18 @@ select:focus-visible {
 
   .quest-node {
     padding-left: 62px;
+  }
+
+  .quest-medal-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .quest-medal-cabinet {
+    padding: 14px 11px;
+  }
+
+  .quest-result-visual {
+    margin-top: -3px;
   }
 
   .quest-result-actions {

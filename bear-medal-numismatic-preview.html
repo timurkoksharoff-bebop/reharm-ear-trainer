@@ -131,6 +131,7 @@
 
     .coin3d.is-back { transform: rotateY(180deg); }
 
+    .edge-stack,
     .edge-slice,
     .coin-face {
       position: absolute;
@@ -139,11 +140,13 @@
       transform-style: preserve-3d;
     }
 
+    .edge-stack { pointer-events: none; }
+
     .edge-slice {
       background:
         repeating-conic-gradient(from .5deg, #55442e 0deg 1.15deg, #c4a66d 1.15deg 2.25deg, #755a37 2.25deg 3.25deg),
         #8e7046;
-      transform: translateZ(calc((var(--depth) - 7) * 1px));
+      transform: translateZ(calc((var(--depth) - 18) * 1px));
       box-shadow: inset 0 0 15px rgba(50, 35, 20, .45);
     }
 
@@ -162,8 +165,8 @@
         inset 0 0 30px rgba(46, 34, 21, .38);
     }
 
-    .coin-front { transform: translateZ(8px); }
-    .coin-back { transform: rotateY(180deg) translateZ(8px); }
+    .coin-front { transform: translateZ(20px); }
+    .coin-back { transform: rotateY(180deg) translateZ(20px); }
 
     .coin-face::before {
       position: absolute;
@@ -250,20 +253,6 @@
       stroke-linecap: round;
       stroke-dasharray: .1 6.2;
       opacity: .78;
-    }
-
-    .mint-line {
-      position: absolute;
-      z-index: 6;
-      right: 50%;
-      bottom: 33px;
-      width: max-content;
-      transform: translateX(50%);
-      color: #3b2d1e;
-      font-size: 7px;
-      font-weight: 800;
-      letter-spacing: .16em;
-      text-shadow: 0 1px rgba(255, 235, 188, .45);
     }
 
     .relief-star {
@@ -502,29 +491,19 @@
     <section class="hero">
       <div class="coin-stage" id="coinStage">
         <div class="coin3d" id="coin">
-          <span class="edge-slice" style="--depth:0"></span>
-          <span class="edge-slice" style="--depth:1"></span>
-          <span class="edge-slice" style="--depth:2"></span>
-          <span class="edge-slice" style="--depth:3"></span>
-          <span class="edge-slice" style="--depth:4"></span>
-          <span class="edge-slice" style="--depth:5"></span>
-          <span class="edge-slice" style="--depth:6"></span>
-          <span class="edge-slice" style="--depth:7"></span>
-          <span class="edge-slice" style="--depth:8"></span>
-          <span class="edge-slice" style="--depth:9"></span>
-          <span class="edge-slice" style="--depth:10"></span>
-          <span class="edge-slice" style="--depth:11"></span>
-          <span class="edge-slice" style="--depth:12"></span>
-          <span class="edge-slice" style="--depth:13"></span>
+          <span class="edge-stack" id="edgeStack" aria-hidden="true"></span>
 
           <div class="coin-face coin-front">
             <div class="coin-art"></div>
             <span class="relief-star" aria-hidden="true"></span>
-            <span class="mint-line">MMXXVI · № 011 / XVI</span>
             <svg class="legend" viewBox="0 0 326 326" aria-hidden="true">
-              <defs><path id="frontArc" d="M 27,163 A 136,136 0 1,1 299,163 A 136,136 0 1,1 27,163"></path></defs>
+              <defs>
+                <path id="frontArc" d="M 27,163 A 136,136 0 1,1 299,163 A 136,136 0 1,1 27,163"></path>
+                <path id="frontLowerArc" d="M 39,163 A 124,124 0 0,0 287,163"></path>
+              </defs>
               <circle class="beads" cx="163" cy="163" r="129"></circle>
               <text><textPath href="#frontArc" startOffset="1.5%">EAR TRAINER · FUNCTIONAL LISTENING · CHAPTER XI · </textPath></text>
+              <text class="lower-legend"><textPath href="#frontLowerArc" startOffset="50%" text-anchor="middle">MMXXVI · № 011 / XVI</textPath></text>
             </svg>
             <span class="glint"></span>
           </div>
@@ -574,7 +553,15 @@
 
   <script>
     const coin = document.querySelector("#coin");
+    const edgeStack = document.querySelector("#edgeStack");
     const button = document.querySelector("#flipCoin");
+
+    edgeStack.replaceChildren(...Array.from({ length: 37 }, (_, depth) => {
+      const slice = document.createElement("span");
+      slice.className = "edge-slice";
+      slice.style.setProperty("--depth", depth);
+      return slice;
+    }));
 
     const settle = () => {
       coin.classList.remove("is-settling");

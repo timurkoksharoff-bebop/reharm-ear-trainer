@@ -9,112 +9,128 @@
       "slug": "triangle",
       "name": "Triangle",
       "src": "level-01-triangle.webp",
-      "medal": "medals/level-01-triangle.png"
+      "medal": "medals/level-01-triangle.png",
+      "coinArt": "coin-art/level-01-triangle.webp"
     },
     {
       "level": 2,
       "slug": "cymbals",
       "name": "Orchestral cymbals",
       "src": "level-02-cymbals.webp",
-      "medal": "medals/level-02-cymbals.png"
+      "medal": "medals/level-02-cymbals.png",
+      "coinArt": "coin-art/level-02-cymbals.webp"
     },
     {
       "level": 3,
       "slug": "tuba",
       "name": "Tuba",
       "src": "level-03-tuba.webp",
-      "medal": "medals/level-03-tuba.png"
+      "medal": "medals/level-03-tuba.png",
+      "coinArt": "coin-art/level-03-tuba.webp"
     },
     {
       "level": 4,
       "slug": "harp",
       "name": "Harp",
       "src": "level-04-harp.webp",
-      "medal": "medals/level-04-harp.png"
+      "medal": "medals/level-04-harp.png",
+      "coinArt": "coin-art/level-04-harp.webp"
     },
     {
       "level": 5,
       "slug": "bass-guitar",
       "name": "Bass guitar",
       "src": "level-05-bass-guitar.webp",
-      "medal": "medals/level-05-bass-guitar.png"
+      "medal": "medals/level-05-bass-guitar.png",
+      "coinArt": "coin-art/level-05-bass-guitar.webp"
     },
     {
       "level": 6,
       "slug": "drum-kit",
       "name": "Drum kit",
       "src": "level-06-drum-kit.webp",
-      "medal": "medals/level-06-drum-kit.png"
+      "medal": "medals/level-06-drum-kit.png",
+      "coinArt": "coin-art/level-06-drum-kit.webp"
     },
     {
       "level": 7,
       "slug": "keytar",
       "name": "Keytar",
       "src": "level-07-keytar.webp",
-      "medal": "medals/level-07-keytar.png"
+      "medal": "medals/level-07-keytar.png",
+      "coinArt": "coin-art/level-07-keytar.webp"
     },
     {
       "level": 8,
       "slug": "upright-bass",
       "name": "Upright bass",
       "src": "level-08-upright-bass.webp",
-      "medal": "medals/level-08-upright-bass.png"
+      "medal": "medals/level-08-upright-bass.png",
+      "coinArt": "coin-art/level-08-upright-bass.webp"
     },
     {
       "level": 9,
       "slug": "flute",
       "name": "Flute",
       "src": "level-09-flute.webp",
-      "medal": "medals/level-09-flute.png"
+      "medal": "medals/level-09-flute.png",
+      "coinArt": "coin-art/level-09-flute.webp"
     },
     {
       "level": 10,
       "slug": "violin",
       "name": "Violin",
       "src": "level-10-violin.webp",
-      "medal": "medals/level-10-violin.png"
+      "medal": "medals/level-10-violin.png",
+      "coinArt": "coin-art/level-10-violin.webp"
     },
     {
       "level": 11,
       "slug": "electric-guitar",
       "name": "Electric guitar",
       "src": "level-11-electric-guitar.webp",
-      "medal": "medals/level-11-electric-guitar.png"
+      "medal": "medals/level-11-electric-guitar.png",
+      "coinArt": "coin-art/level-11-electric-guitar.webp"
     },
     {
       "level": 12,
       "slug": "vibraphone",
       "name": "Vibraphone",
       "src": "level-12-vibraphone.webp",
-      "medal": "medals/level-12-vibraphone.png"
+      "medal": "medals/level-12-vibraphone.png",
+      "coinArt": "coin-art/level-12-vibraphone.webp"
     },
     {
       "level": 13,
       "slug": "saxophone",
       "name": "Saxophone",
       "src": "level-13-saxophone.webp",
-      "medal": "medals/level-13-saxophone.png"
+      "medal": "medals/level-13-saxophone.png",
+      "coinArt": "coin-art/level-13-saxophone.webp"
     },
     {
       "level": 14,
       "slug": "trumpet",
       "name": "Trumpet",
       "src": "level-14-trumpet.webp",
-      "medal": "medals/level-14-trumpet.png"
+      "medal": "medals/level-14-trumpet.png",
+      "coinArt": "coin-art/level-14-trumpet.webp"
     },
     {
       "level": 15,
       "slug": "balalaika",
       "name": "Balalaika",
       "src": "level-15-balalaika.webp",
-      "medal": "medals/level-15-balalaika.png"
+      "medal": "medals/level-15-balalaika.png",
+      "coinArt": "coin-art/level-15-balalaika.webp"
     },
     {
       "level": 16,
       "slug": "musical-saw",
       "name": "Musical saw",
       "src": "level-16-musical-saw.webp",
-      "medal": "medals/level-16-musical-saw.png"
+      "medal": "medals/level-16-musical-saw.png",
+      "coinArt": "coin-art/level-16-musical-saw.webp"
     }
   ],
   "spares": []

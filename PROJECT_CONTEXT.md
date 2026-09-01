@@ -21,7 +21,7 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current local full cache version: `0.46`
+- Current local full cache version: `0.50`
 - Current Lite cache version: `0.8`
 - Main branch: `main`
 
@@ -300,11 +300,12 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- Local PWA `0.47` integrates the approved Quest result animations and chapter
+- PWA `0.50` integrates the approved Quest result animations and chapter
   rewards. Success uses the victory gesture; consecutive Game Overs use the
   one-paw headslap, two-paw head-grab, crying reaction, then the deliberately
-  incorrect early dance. Production remains on the previously published build
-  until this version is explicitly pushed.
+  incorrect early dance. Its phone header keeps Help and Settings inside the
+  three-column mobile grid, and reset actions use an in-app two-step confirmation
+  that also works in the macOS wrapper.
 - The approved bear-shaped `B` artwork remains unchanged. Its compositing layer
   is offset `3.33%` to the right inside the lockup so the visible mark and `EAR`
   read as one word; do not recrop, redraw, or substitute the mark when changing
@@ -317,7 +318,7 @@ embedded cache version.
   reeded edge. Quest now awards one of 16 instrument medals after each chapter,
   persists the collection, and precedes the instrument performance with the
   shared point-to-bear arrival animation.
-- Production PWA `0.35` includes 239 built-in progressions: 107 core examples and
+- Production PWA `0.50` includes 239 built-in progressions: 107 core examples and
   132 exercise-answer variants from printed pages 172–185.
 - Release `0.33` adds the approved sage-green Bodoni application icon and makes
   the Builder editing state explicit: a selected chord can be updated or added

@@ -3037,6 +3037,14 @@ select:focus-visible {
     height: 112px;
   }
 
+  .help-button {
+    grid-column: 2;
+  }
+
+  .settings-button {
+    grid-column: 3;
+  }
+
   .topbar-title {
     grid-column: 1 / -1;
     grid-row: 2;
@@ -3490,6 +3498,31 @@ select:focus-visible {
   .piano {
     --white-key-width: 36px;
     --black-key-width: 23px;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    padding-inline: 12px;
+    grid-template-columns: minmax(0, 1fr) 36px 40px;
+    gap: 6px;
+  }
+
+  .brand-lockup--bear,
+  .brand-lockup-art {
+    width: 180px;
+    height: 90px;
+    min-width: 180px;
+  }
+
+  .help-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .settings-button {
+    width: 40px;
+    height: 40px;
   }
 }
 

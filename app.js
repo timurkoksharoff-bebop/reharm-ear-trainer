@@ -3000,6 +3000,10 @@ function showQuestResult(result) {
   setQuestResultVisual(result);
   ui.questResult.classList.toggle("failed", !result.success);
   ui.questResult.classList.toggle("has-reward", Boolean(result.reward));
+  ui.questResult.classList.toggle(
+    "dance-only",
+    !result.success && result.failureStreak >= 4,
+  );
   ui.questResultKicker.textContent = result.success
     ? (result.reward ? "Chapter reward earned" : "Exercise clear")
     : `Game Over · attempt ${result.failureStreak}`;

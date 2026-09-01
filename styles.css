@@ -769,6 +769,34 @@ body:not([data-workspace="quest"]) .quest-hud {
   filter: saturate(0.9) contrast(1.03);
 }
 
+.quest-result.dance-only {
+  width: min(480px, 100%);
+}
+
+.quest-result.dance-only .quest-result-kicker,
+.quest-result.dance-only h2,
+.quest-result.dance-only .quest-stars,
+.quest-result.dance-only .quest-result-score,
+.quest-result.dance-only .quest-result-body,
+.quest-result.dance-only .quest-badge {
+  display: none;
+}
+
+.quest-result.dance-only .quest-result-visual {
+  width: min(300px, 78vw);
+  height: 300px;
+  margin: 0 auto;
+}
+
+.quest-result.dance-only .quest-result-reaction {
+  width: 292px;
+  height: 292px;
+}
+
+.quest-result.dance-only .quest-result-actions {
+  margin-top: 12px;
+}
+
 .quest-reward-stage {
   position: relative;
   width: 270px;

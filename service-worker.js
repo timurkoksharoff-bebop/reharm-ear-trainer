@@ -1,4 +1,4 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.50";
+const CACHE_NAME = "reharm-ear-trainer-v0.51";
 const APP_FILES = [
   "./",
   "./index.html",
@@ -10,8 +10,8 @@ const APP_FILES = [
   "./icon-192.png?v=0.33",
   "./icon-512.png?v=0.33",
   "./assets/brand/ear-bear-mark.svg",
-  "./assets/brand/ear-bear-mark-approved.png",
-  "./assets/brand/ear-trainer-lockup.svg",
+  "./assets/brand/ear-bear-mark-approved.png?v=0.51",
+  "./assets/brand/ear-trainer-lockup.svg?v=0.51",
   "./assets/bears/reactions/victory.webp",
   "./assets/bears/reactions/failure-01-headslap.webp",
   "./assets/bears/reactions/failure-02-head-grab.webp",
@@ -116,6 +116,20 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const requestURL = new URL(event.request.url);
   if (requestURL.origin !== self.location.origin) return;
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", response.clone()));
+          }
+          return response;
+        })
+        .catch(() => caches.match("./index.html").then((cached) => cached || caches.match("./"))),
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {

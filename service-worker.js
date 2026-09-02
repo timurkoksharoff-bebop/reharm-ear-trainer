@@ -1,17 +1,16 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.51";
+const CACHE_NAME = "reharm-ear-trainer-v0.52";
 const APP_FILES = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./manifest.webmanifest",
+  "./styles.css?v=0.52",
+  "./app.js?v=0.52",
+  "./manifest.webmanifest?v=0.52",
   "./favicon-32.png?v=0.33",
   "./icon-180.png?v=0.33",
   "./icon-192.png?v=0.33",
   "./icon-512.png?v=0.33",
-  "./assets/brand/ear-bear-mark.svg",
-  "./assets/brand/ear-bear-mark-approved.png?v=0.51",
-  "./assets/brand/ear-trainer-lockup.svg?v=0.51",
+  "./assets/brand/ear-trainer-lockup-approved.svg?v=0.52",
+  "./assets/bears/ambient/quest-bear-approved.webp?v=0.52",
   "./assets/bears/reactions/victory.webp",
   "./assets/bears/reactions/failure-01-headslap.webp",
   "./assets/bears/reactions/failure-02-head-grab.webp",

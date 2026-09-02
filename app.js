@@ -1650,13 +1650,6 @@ const questState = {
   bearPose: "idle",
 };
 
-const QUEST_BEAR_POSES = {
-  idle: { symbol: "questBearIdle", viewBox: "0 0 360 440" },
-  listen: { symbol: "questBearListen", viewBox: "0 0 360 440" },
-  rest: { symbol: "questBearRest", viewBox: "0 0 440 360" },
-  wrong: { symbol: "questBearWrong", viewBox: "0 0 360 440" },
-  victory: { symbol: "questBearVictory", viewBox: "0 0 420 440" },
-};
 const QUEST_BEAR_IDLE_DELAY_MS = 16000;
 let questBearReturnTimer = null;
 let questBearIdleTimer = null;
@@ -1761,7 +1754,6 @@ const ui = {
   questRewardPerformance: document.querySelector("#questRewardPerformance"),
   questRewardLabel: document.querySelector("#questRewardLabel"),
   questBearScene: document.querySelector("#questBearScene"),
-  questBearUse: document.querySelector("#questBearUse"),
   pianoPanel: document.querySelector(".piano-panel"),
   pianoKeyboard: document.querySelector("#pianoKeyboard"),
   pianoStopButton: document.querySelector("#pianoStopButton"),
@@ -2692,14 +2684,10 @@ function registerQuestPianoUse() {
 }
 
 function applyQuestBearPose(pose) {
-  const config = QUEST_BEAR_POSES[pose] || QUEST_BEAR_POSES.idle;
   questState.bearPose = pose;
-  if (!ui.questBearScene || !ui.questBearUse) return;
+  if (!ui.questBearScene) return;
 
   ui.questBearScene.dataset.pose = pose;
-  const svg = ui.questBearScene.querySelector?.("svg");
-  svg?.setAttribute("viewBox", config.viewBox);
-  ui.questBearUse.setAttribute("href", `#${config.symbol}`);
   ui.questBearScene.classList.remove("is-changing");
   void ui.questBearScene.offsetWidth;
   ui.questBearScene.classList.add("is-changing");

@@ -13,76 +13,16 @@
   <meta name="apple-mobile-web-app-title" content="Reharm Ear">
   <meta name="screen-orientation" content="portrait">
   <title>Reharm Ear Trainer</title>
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="manifest.webmanifest?v=0.52">
   <link rel="icon" href="favicon-32.png?v=0.35" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="icon-180.png?v=0.35">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=0.52">
 </head>
 <body data-atmosphere="dawn">
-  <svg class="quest-bear-sprite" aria-hidden="true">
-    <symbol id="questBearIdle" viewBox="0 0 360 440">
-      <circle class="quest-bear-fill" cx="128" cy="76" r="17"></circle>
-      <circle class="quest-bear-fill" cx="232" cy="76" r="17"></circle>
-      <path class="quest-bear-fill" d="M180 62c-57 0-88 39-93 111l-9 139c-4 58 12 96 43 108 17 7 33 1 38-14 5-14 2-48 21-48s16 34 21 48c5 15 21 21 38 14 31-12 47-50 43-108l-9-139c-5-72-36-111-93-111Z"></path>
-      <path class="quest-bear-mark" d="M116 216c3 54 5 90 4 127M244 216c-3 54-5 90-4 127"></path>
-      <circle class="quest-bear-feature" cx="158" cy="123" r="3.4"></circle>
-      <circle class="quest-bear-feature" cx="202" cy="123" r="3.4"></circle>
-      <path class="quest-bear-feature" d="M166 143c8-7 20-7 28 0-1 13-27 13-28 0Z"></path>
-      <path class="quest-bear-mark" d="M180 153v11m-12 2c8 7 16 7 24 0"></path>
-    </symbol>
-
-    <symbol id="questBearListen" viewBox="0 0 360 440">
-      <circle class="quest-bear-fill" cx="128" cy="76" r="17"></circle>
-      <circle class="quest-bear-fill" cx="232" cy="76" r="17"></circle>
-      <path class="quest-bear-fill" d="M180 62c-57 0-88 39-93 111l-9 139c-4 58 12 96 43 108 17 7 33 1 38-14 5-14 2-48 21-48s16 34 21 48c5 15 21 21 38 14 31-12 47-50 43-108l-9-139c-5-72-36-111-93-111Z"></path>
-      <path class="quest-bear-fill" d="M104 319c-26-14-33-54-23-99 8-37 28-78 52-101 17-16 38-14 48 3 10 18 0 34-15 50-19 21-30 52-31 83-1 29 6 50-6 61-7 7-16 8-25 3Z"></path>
-      <path class="quest-bear-mark" d="M239 218c-2 52-3 89-1 126M144 115c11 5 18 14 19 26"></path>
-      <circle class="quest-bear-feature" cx="158" cy="123" r="3.4"></circle>
-      <circle class="quest-bear-feature" cx="202" cy="123" r="3.4"></circle>
-      <path class="quest-bear-feature" d="M166 143c8-7 20-7 28 0-1 13-27 13-28 0Z"></path>
-      <path class="quest-bear-mark" d="M180 153v11m-12 2c8 7 16 7 24 0M151 106c-4-5-9-7-14-7m19 1c-3-7-8-11-15-13"></path>
-      <path class="quest-bear-wave" d="M258 103c16 15 16 41 0 56m20-76c28 27 28 71 0 97"></path>
-    </symbol>
-
-    <symbol id="questBearRest" viewBox="0 0 440 360">
-      <path class="quest-bear-fill" d="M43 239c7-81 67-135 160-138 102-4 184 37 203 105 11 40-5 73-43 87-49 18-254 16-293-4-23-12-31-28-27-50Z"></path>
-      <circle class="quest-bear-fill" cx="116" cy="155" r="67"></circle>
-      <circle class="quest-bear-fill" cx="79" cy="103" r="17"></circle>
-      <circle class="quest-bear-fill" cx="150" cy="94" r="17"></circle>
-      <path class="quest-bear-fill" d="M57 227c25-22 70-32 121-16 22 7 34 25 28 42-6 18-27 25-48 20-44-10-82 4-101-9-13-9-13-26 0-37Z"></path>
-      <circle class="quest-bear-feature" cx="96" cy="151" r="3.4"></circle>
-      <circle class="quest-bear-feature" cx="133" cy="151" r="3.4"></circle>
-      <path class="quest-bear-feature" d="M103 167c7-6 18-6 25 0-1 12-24 12-25 0Z"></path>
-      <path class="quest-bear-mark" d="M116 177v10m-11 2c7 6 14 6 22 0M74 236c35-10 67-6 96 10"></path>
-    </symbol>
-
-    <symbol id="questBearWrong" viewBox="0 0 360 440">
-      <circle class="quest-bear-fill" cx="128" cy="76" r="17"></circle>
-      <circle class="quest-bear-fill" cx="232" cy="76" r="17"></circle>
-      <path class="quest-bear-fill" d="M180 62c-57 0-88 39-93 111l-9 139c-4 58 12 96 43 108 17 7 33 1 38-14 5-14 2-48 21-48s16 34 21 48c5 15 21 21 38 14 31-12 47-50 43-108l-9-139c-5-72-36-111-93-111Z"></path>
-      <path class="quest-bear-limb" d="M116 279c20-79 49-122 83-157"></path>
-      <path class="quest-bear-mark" d="M239 218c-2 52-3 89-1 126M174 123c-6-4-12-4-18 0m48 0c-6-4-12-4-18 0"></path>
-      <path class="quest-bear-feature" d="M166 143c8-7 20-7 28 0-1 13-27 13-28 0Z"></path>
-      <path class="quest-bear-mark" d="M180 153v11m-12 5c8-4 16-4 24 0"></path>
-    </symbol>
-
-    <symbol id="questBearVictory" viewBox="0 0 420 440">
-      <circle class="quest-bear-fill" cx="156" cy="83" r="17"></circle>
-      <circle class="quest-bear-fill" cx="252" cy="83" r="17"></circle>
-      <path class="quest-bear-fill" d="M204 69c-56 0-87 38-92 108l-9 138c-4 57 12 94 42 106 17 7 32 1 37-14 5-14 2-47 22-47s17 33 22 47c5 15 20 21 37 14 30-12 46-49 42-106l-9-138c-5-70-36-108-92-108Z"></path>
-      <path class="quest-bear-limb" d="M151 194 73 132"></path>
-      <path class="quest-bear-limb" d="M257 185 365 70"></path>
-      <path class="quest-bear-mark" d="M188 128c-6-4-12-4-18 0m49 0c-6-4-12-4-18 0"></path>
-      <path class="quest-bear-feature" d="M181 147c8-7 20-7 28 0-1 13-27 13-28 0Z"></path>
-      <path class="quest-bear-mark" d="M195 157v11m-12 5c8-4 16-4 24 0"></path>
-    </symbol>
-  </svg>
-
   <main class="app-shell">
     <header class="topbar">
       <div class="brand-lockup brand-lockup--bear" aria-label="Ear Trainer — Functional Listening">
-        <img class="brand-lockup-art" src="assets/brand/ear-trainer-lockup.svg?v=0.51" alt="" aria-hidden="true">
-        <img class="brand-lockup-mark" src="assets/brand/ear-bear-mark-approved.png?v=0.51" alt="" aria-hidden="true">
+        <img class="brand-lockup-art" src="assets/brand/ear-trainer-lockup-approved.svg?v=0.52" alt="" aria-hidden="true">
       </div>
       <div class="topbar-title">
         <p class="eyebrow" id="chapterLabel">Reharmonization Techniques</p>
@@ -203,9 +143,7 @@
       aria-labelledby="questTab"
     >
       <div class="quest-bear-scene" id="questBearScene" data-pose="idle" aria-hidden="true">
-        <svg viewBox="0 0 360 440" focusable="false">
-          <use id="questBearUse" href="#questBearIdle" width="100%" height="100%"></use>
-        </svg>
+        <img src="assets/bears/ambient/quest-bear-approved.webp?v=0.52" alt="">
       </div>
 
       <section class="quest-hud" id="questHud" aria-label="Quest progress">
@@ -606,7 +544,7 @@
     <p class="voicing-meta" id="voicingMeta"></p>
   </aside>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=0.52"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       window.addEventListener("load", async () => {
@@ -627,7 +565,7 @@
           return;
         }
         sessionStorage.removeItem("reharm-local-sw-cleared");
-        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js?v=0.52").catch(() => {});
       });
     }
   </script>

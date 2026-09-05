@@ -1562,6 +1562,7 @@ const QUEST_REWARD_INTRO = {
   src: "assets/bears/rewards/intro-bear-arrival.webp",
   durationMs: 1400,
 };
+const QUEST_REWARD_PERFORMANCE_MS = 2600;
 const QUEST_REWARDS = [
   [1, "triangle", "Triangle"],
   [2, "cymbals", "Orchestral cymbals"],
@@ -1752,7 +1753,6 @@ const ui = {
   questRewardStage: document.querySelector("#questRewardStage"),
   questRewardIntro: document.querySelector("#questRewardIntro"),
   questRewardPerformance: document.querySelector("#questRewardPerformance"),
-  questRewardLabel: document.querySelector("#questRewardLabel"),
   questBearScene: document.querySelector("#questBearScene"),
   pianoPanel: document.querySelector(".piano-panel"),
   pianoKeyboard: document.querySelector("#pianoKeyboard"),
@@ -2770,10 +2770,10 @@ function questCoinLegend(reward, side) {
   return svg;
 }
 
-function createQuestCoin(reward, { locked = false, compact = false } = {}) {
+function createQuestCoin(reward, { locked = false, compact = false, ceremonial = false } = {}) {
   const coin = document.createElement("button");
   coin.type = "button";
-  coin.className = `quest-coin${compact ? " compact" : ""}${locked ? " locked" : ""}`;
+  coin.className = `quest-coin${compact ? " compact" : ""}${ceremonial ? " ceremonial" : ""}${locked ? " locked" : ""}`;
   coin.disabled = locked;
   coin.setAttribute(
     "aria-label",
@@ -2787,7 +2787,8 @@ function createQuestCoin(reward, { locked = false, compact = false } = {}) {
   const edgeSlices = Array.from({ length: 17 }, (_, depth) => {
     const slice = document.createElement("span");
     slice.className = "quest-coin-edge";
-    slice.style.setProperty("--quest-edge-z", `${(depth - 8) * (compact ? 0.42 : 0.82)}px`);
+    const edgeStep = compact ? 0.42 : (ceremonial ? 1.6 : 0.82);
+    slice.style.setProperty("--quest-edge-z", `${(depth - 8) * edgeStep}px`);
     return slice;
   });
 
@@ -2828,6 +2829,8 @@ function restartQuestAnimationImage(image, source) {
 function setQuestResultVisual(result) {
   window.clearTimeout(questRewardTimer);
   ui.questResultVisual.dataset.mode = result.reward ? "reward" : "reaction";
+  if (result.reward) ui.questResult.dataset.rewardPhase = "arrival";
+  else delete ui.questResult.dataset.rewardPhase;
   ui.questResultReaction.hidden = Boolean(result.reward);
   ui.questRewardStage.hidden = !result.reward;
   ui.questRewardIntro.hidden = true;
@@ -2842,19 +2845,26 @@ function setQuestResultVisual(result) {
     return;
   }
 
-  ui.questRewardLabel.textContent = `${result.reward.name} · chapter ${result.reward.chapter}`;
   ui.questRewardIntro.hidden = false;
   restartQuestAnimationImage(ui.questRewardIntro, QUEST_REWARD_INTRO.src);
   restartQuestAnimationImage(ui.questRewardPerformance, result.reward.performance);
-  ui.questResultMedal.classList.remove("is-earned");
+  ui.questResultMedal.classList.remove("is-earned", "is-dropping");
 
   const showPerformance = () => {
     ui.questRewardIntro.hidden = true;
     ui.questRewardPerformance.hidden = false;
-    ui.questResultMedal.classList.add("is-earned");
+    ui.questResult.dataset.rewardPhase = "performance";
+    questRewardTimer = window.setTimeout(showMedal, QUEST_REWARD_PERFORMANCE_MS);
+  };
+  const showMedal = () => {
+    ui.questResult.dataset.rewardPhase = "medal";
+    ui.questResultMedal.classList.add("is-earned", "is-dropping");
+    playQuestMedalFanfare();
   };
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
     showPerformance();
+    window.clearTimeout(questRewardTimer);
+    showMedal();
   } else {
     questRewardTimer = window.setTimeout(showPerformance, QUEST_REWARD_INTRO.durationMs);
   }
@@ -2968,6 +2978,26 @@ function playQuestStinger(success = true) {
   });
 }
 
+function playQuestMedalFanfare() {
+  if (!audioContext || audioContext.state !== "running") return;
+  const now = audioContext.currentTime + 0.03;
+  const note = (midi, startAt, duration, volume, type = "triangle") => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(440 * (2 ** ((midi - 69) / 12)), startAt);
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + duration + 0.02);
+  };
+  [72, 76, 79].forEach((midi, index) => note(midi, now + index * 0.11, 0.34, 0.042));
+  [72, 76, 79, 84].forEach((midi) => note(midi, now + 0.4, 0.82, 0.052, "sine"));
+}
+
 function renderQuestParticles() {
   ui.questCelebration.replaceChildren();
   const colors = ["#829c8b", "#7d9eae", "#c98c78", "#d3b46d", "#c9838e"];
@@ -3000,7 +3030,7 @@ function showQuestResult(result) {
   ui.questResultMedal.replaceChildren();
   ui.questResultMedal.hidden = !result.reward;
   if (result.reward) {
-    ui.questResultMedal.append(createQuestCoin(result.reward));
+    ui.questResultMedal.append(createQuestCoin(result.reward, { ceremonial: true }));
   }
   ui.questResultTitle.textContent = result.success
     ? (result.reward
@@ -3019,7 +3049,7 @@ function showQuestResult(result) {
   document.body.classList.add("quest-layer-open");
   if (result.success) renderQuestParticles();
   else ui.questCelebration.replaceChildren();
-  playQuestStinger(result.success);
+  if (!result.reward) playQuestStinger(result.success);
   ui.questResultContinueButton.focus?.();
 }
 
@@ -3106,6 +3136,7 @@ function failQuestAttempt(reason) {
 function continueQuestResult() {
   const result = questState.result;
   window.clearTimeout(questRewardTimer);
+  delete ui.questResult.dataset.rewardPhase;
   ui.questResultLayer.hidden = true;
   document.body.classList.toggle("quest-layer-open", questState.mapOpen);
   questState.result = null;
@@ -3937,7 +3968,7 @@ function initQuestDebugPanel() {
       missionUnlocked: true,
       chapterCompleted: true,
       reward: QUEST_REWARDS[10],
-      body: "The shared arrival leads into the authored instrument performance and earned coin.",
+      body: "A new chapter medal has joined your collection.",
     })],
     ["16 medals", () => {
       const earnedRewards = questState.progress.earnedRewards;

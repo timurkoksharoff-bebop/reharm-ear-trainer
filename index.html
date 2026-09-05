@@ -13,10 +13,10 @@
   <meta name="apple-mobile-web-app-title" content="Reharm Ear">
   <meta name="screen-orientation" content="portrait">
   <title>Reharm Ear Trainer</title>
-  <link rel="manifest" href="manifest.webmanifest?v=0.52">
+  <link rel="manifest" href="manifest.webmanifest?v=0.53">
   <link rel="icon" href="favicon-32.png?v=0.35" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="icon-180.png?v=0.35">
-  <link rel="stylesheet" href="styles.css?v=0.52">
+  <link rel="stylesheet" href="styles.css?v=0.53">
 </head>
 <body data-atmosphere="dawn">
   <main class="app-shell">
@@ -477,10 +477,8 @@
       <div class="quest-result-visual" id="questResultVisual" aria-hidden="true">
         <img class="quest-result-reaction" id="questResultReaction" alt="">
         <div class="quest-reward-stage" id="questRewardStage" hidden>
-          <span class="quest-reward-spotlight"></span>
           <img class="quest-reward-animation" id="questRewardIntro" alt="">
           <img class="quest-reward-animation" id="questRewardPerformance" alt="" hidden>
-          <p class="quest-reward-label" id="questRewardLabel"></p>
         </div>
       </div>
       <p class="quest-result-kicker" id="questResultKicker">Mission clear</p>
@@ -544,7 +542,7 @@
     <p class="voicing-meta" id="voicingMeta"></p>
   </aside>
 
-  <script src="app.js?v=0.52"></script>
+  <script src="app.js?v=0.53"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       window.addEventListener("load", async () => {
@@ -565,7 +563,7 @@
           return;
         }
         sessionStorage.removeItem("reharm-local-sw-cleared");
-        navigator.serviceWorker.register("./service-worker.js?v=0.52").catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js?v=0.53").catch(() => {});
       });
     }
   </script>

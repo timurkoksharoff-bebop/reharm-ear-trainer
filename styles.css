@@ -612,54 +612,31 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .quest-result.has-reward {
-  width: min(690px, 100%);
-  display: grid;
-  grid-template-columns: minmax(280px, 1.06fr) minmax(250px, 0.94fr);
-  grid-template-areas:
-    "visual kicker"
-    "visual medal"
-    "visual title"
-    "visual stars"
-    "visual score"
-    "visual body"
-    "visual badge"
-    "actions actions";
-  align-items: center;
-  column-gap: 22px;
+  width: min(530px, 100%);
 }
 
-.quest-result.has-reward .quest-result-visual { grid-area: visual; }
-.quest-result.has-reward .quest-result-kicker { grid-area: kicker; }
-.quest-result.has-reward .quest-result-medal { grid-area: medal; }
-.quest-result.has-reward h2 { grid-area: title; }
-.quest-result.has-reward .quest-stars { grid-area: stars; }
-.quest-result.has-reward .quest-result-score { grid-area: score; }
-.quest-result.has-reward .quest-result-body { grid-area: body; }
-.quest-result.has-reward .quest-badge { grid-area: badge; }
-.quest-result.has-reward .quest-result-actions { grid-area: actions; }
-
 .quest-result.has-reward .quest-result-visual {
-  width: 300px;
-  height: 300px;
+  width: 320px;
+  height: 310px;
   margin: 0 auto;
 }
 
 .quest-result.has-reward .quest-reward-stage {
-  width: 296px;
-  height: 285px;
+  width: 310px;
+  height: 300px;
 }
 
 .quest-result.has-reward .quest-reward-animation {
-  inset: 0 8px 4px;
-  width: 280px;
-  height: 280px;
+  inset: 0;
+  width: 310px;
+  height: 310px;
 }
 
 .quest-result.has-reward .quest-result-medal {
-  margin: 11px auto 7px;
+  margin: 2px auto 12px;
 }
 
-.quest-result.has-reward .quest-coin {
+.quest-result.has-reward .quest-coin:not(.ceremonial) {
   --quest-coin-size: 98px;
   --quest-face-depth: 8px;
   --quest-rim-one: 2px;
@@ -676,6 +653,31 @@ body:not([data-workspace="quest"]) .quest-hud {
 
 .quest-result.has-reward .quest-result-actions {
   margin-top: 17px;
+}
+
+.quest-result.has-reward[data-reward-phase="arrival"],
+.quest-result.has-reward[data-reward-phase="performance"] {
+  width: min(380px, 100%);
+}
+
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-kicker,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-medal,
+.quest-result.has-reward[data-reward-phase="arrival"] h2,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-stars,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-score,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-body,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-badge,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-actions,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-kicker,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-medal,
+.quest-result.has-reward[data-reward-phase="performance"] h2,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-stars,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-score,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-body,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-badge,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-actions,
+.quest-result.has-reward[data-reward-phase="medal"] .quest-result-visual {
+  display: none;
 }
 
 .quest-result-kicker {
@@ -703,6 +705,14 @@ body:not([data-workspace="quest"]) .quest-hud {
 .quest-result-medal.is-earned {
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+.quest-result-medal.is-earned.is-dropping {
+  animation: quest-medal-drop 1.85s cubic-bezier(0.15, 0.82, 0.2, 1) both;
+}
+
+.quest-result-medal.is-earned.is-dropping .quest-coin-turn {
+  animation: quest-medal-spin 1.25s cubic-bezier(0.2, 0.72, 0.24, 1) both;
 }
 
 .quest-result-visual {
@@ -773,39 +783,14 @@ body:not([data-workspace="quest"]) .quest-hud {
   display: none;
 }
 
-.quest-reward-spotlight {
-  position: absolute;
-  z-index: -1;
-  inset: 0 12px 10px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 46%, rgba(255, 255, 247, 0.96), rgba(226, 228, 197, 0.42) 48%, transparent 72%);
-  filter: blur(4px);
-}
-
 .quest-reward-animation {
   position: absolute;
   inset: -4px 13px 8px;
   width: 244px;
   height: 244px;
-  border-radius: 42%;
   filter: saturate(0.92) contrast(1.04);
-}
-
-.quest-reward-label {
-  position: absolute;
-  z-index: 2;
-  left: 50%;
-  bottom: -4px;
-  width: max-content;
-  max-width: 100%;
-  margin: 0;
-  transform: translateX(-50%);
-  color: #725b36;
-  font-size: 8px;
-  font-weight: 750;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  -webkit-mask-image: radial-gradient(ellipse 58% 66% at 50% 54%, #000 44%, transparent 70%);
+  mask-image: radial-gradient(ellipse 58% 66% at 50% 54%, #000 44%, transparent 70%);
 }
 
 .quest-coin {
@@ -846,6 +831,21 @@ body:not([data-workspace="quest"]) .quest-hud {
   --quest-back-number: 18px;
   --quest-back-label: 4px;
   --quest-perspective: 260px;
+}
+
+.quest-coin.ceremonial {
+  --quest-coin-size: clamp(196px, 52vw, 270px);
+  --quest-face-depth: 19px;
+  --quest-rim-one: 5px;
+  --quest-rim-two: 9px;
+  --quest-rim-three: 14px;
+  --quest-face-glow: 22px;
+  --quest-drop-y: 20px;
+  --quest-drop-blur: 34px;
+  --quest-art-glow: 16px;
+  --quest-back-number: 52px;
+  --quest-back-label: 8px;
+  --quest-perspective: 720px;
 }
 
 .quest-coin-turn,
@@ -1121,6 +1121,21 @@ body:not([data-workspace="quest"]) .quest-hud {
 @keyframes quest-result-in {
   from { opacity: 0; transform: translateY(18px) scale(0.94); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes quest-medal-drop {
+  0% { opacity: 0; transform: translateY(-210px) rotate(-24deg) scale(0.46); }
+  18% { opacity: 1; }
+  57% { transform: translateY(12px) rotate(8deg) scale(1.08); }
+  73% { transform: translateY(-12px) rotate(-4deg) scale(0.98); }
+  88% { transform: translateY(4px) rotate(1deg) scale(1.015); }
+  100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+
+@keyframes quest-medal-spin {
+  0% { transform: rotateY(0deg) rotateZ(0deg); }
+  62% { transform: rotateY(900deg) rotateZ(11deg); }
+  100% { transform: rotateY(1080deg) rotateZ(0deg); }
 }
 
 @keyframes quest-particle-fall {

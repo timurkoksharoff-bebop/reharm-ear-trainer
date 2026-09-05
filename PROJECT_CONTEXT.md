@@ -21,7 +21,7 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current local full cache version: `0.52`
+- Current local full cache version: `0.53`
 - Current Lite cache version: `0.8`
 - Main branch: `main`
 
@@ -300,7 +300,7 @@ embedded cache version.
 
 ## Current State and Known Constraints
 
-- PWA `0.52` integrates the approved Quest result animations and chapter
+- PWA `0.53` integrates the approved Quest result animations and chapter
   rewards. Success uses the victory gesture; consecutive Game Overs use the
   one-paw headslap, two-paw head-grab, crying reaction, then the deliberately
   incorrect early dance. Its phone header keeps Help and Settings inside the

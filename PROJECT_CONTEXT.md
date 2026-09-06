@@ -21,7 +21,7 @@ than absolute chord names.
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/`
 - Lite PWA:
   `https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/lite/`
-- Current local full cache version: `0.53`
+- Current local full cache version: `0.54`
 - Current Lite cache version: `0.8`
 - Main branch: `main`
 

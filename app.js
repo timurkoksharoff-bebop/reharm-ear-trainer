@@ -5465,16 +5465,27 @@ async function ensureAudioContext() {
 async function ensurePianoSamples(context) {
   if (pianoSampleBuffers.size === PIANO_SAMPLE_MANIFEST.length) return true;
 
-  pianoSamplePromise ||= Promise.all(PIANO_SAMPLE_MANIFEST.map(async (sample) => {
+  const pendingSamples = PIANO_SAMPLE_MANIFEST.filter(
+    (sample) => !pianoSampleBuffers.has(sample.midi),
+  );
+  pianoSamplePromise ||= Promise.allSettled(pendingSamples.map(async (sample) => {
     const encoded = await loadPianoSampleBytes(sample.url);
     const buffer = await new Promise((resolve, reject) => {
       context.decodeAudioData(encoded, resolve, reject);
     });
     return [sample.midi, buffer];
   }))
-    .then((samples) => {
-      samples.forEach(([midi, buffer]) => pianoSampleBuffers.set(midi, buffer));
-      return true;
+    .then((results) => {
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const [midi, buffer] = result.value;
+          pianoSampleBuffers.set(midi, buffer);
+        } else {
+          console.warn("Piano sample could not be decoded:", result.reason);
+        }
+      });
+      if (pianoSampleBuffers.size) return true;
+      throw new Error("No piano samples could be loaded.");
     })
     .catch((error) => {
       console.error(error);

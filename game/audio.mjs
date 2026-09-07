@@ -1,5 +1,6 @@
 import {cueEvents} from './music.mjs';
 import {intervalCue} from './intervals.mjs';
+import {polyEvents} from './expedition.mjs';
 // A sustained, pitch-stable two-oscillator arcade synth. No sample/network
 // dependency and no detuning/vibrato that could blur interval recognition.
 export class FlightAudio {
@@ -54,6 +55,53 @@ export class FlightAudio {
     this.lastCue={...cue,kind:'interval',base,semitones,mode,sound:'sustained synth'};
     for(const event of cue.events)for(const midi of event.notes)this.note(midi,start+event.at,event.duration,'synth',.5/Math.sqrt(event.notes.length));
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
+  }
+  chordOnly(root,intervals,onEnd,mode='together'){
+    this.stop();const token=this.token,start=this.context.currentTime;
+    const notes=intervals.map(n=>root+n),order=mode==='down'?[...notes].reverse():notes;
+    const step=mode==='together'?0:.24,duration=1.95+step*(notes.length-1);
+    this.lastCue={kind:'chord-only',root,notes,mode,sound:'sustained synth'};
+    order.forEach((note,i)=>this.note(note,start+.12+i*step,1.65,'synth',.6/Math.sqrt(notes.length)));
+    this.schedule(()=>{if(token===this.token)onEnd();},duration);
+  }
+  guide(root,target,onEnd){
+    this.stop();const token=this.token,start=this.context.currentTime;
+    [0,4,7,10].forEach(n=>this.note(root+n,start+.12,.85,'soft',.24));
+    this.note(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
+    this.schedule(()=>{if(token===this.token)onEnd();},2.6);
+  }
+  drum(voice,at){
+    const ctx=this.context,osc=ctx.createOscillator(),gain=ctx.createGain();
+    const freq={kick:120,snare:185,hat:7200,ride:4800,clave:1800,rim:1100}[voice];
+    const duration=voice==='ride'?.22:voice==='kick'?.18:.07;
+    osc.type=['hat','ride','snare'].includes(voice)?'square':'sine';
+    osc.frequency.setValueAtTime(freq,at);osc.frequency.exponentialRampToValueAtTime(voice==='kick'?42:freq*.78,at+duration);
+    gain.gain.setValueAtTime(voice==='kick'?.35:voice==='snare'?.13:voice==='clave'?.15:.035,at);
+    gain.gain.exponentialRampToValueAtTime(.00001,at+duration);
+    osc.connect(gain);gain.connect(this.master);osc.start(at);osc.stop(at+duration+.01);this.voices.add(osc);
+    osc.onended=()=>{this.voices.delete(osc);osc.disconnect();gain.disconnect();};
+  }
+  rhythm(pattern,onEnd,{loops=1,onBeat=()=>{}}={}){
+    this.stop();const token=this.token,start=this.context.currentTime+.15,beat=60/110;
+    const beats=pattern.beats||8;
+    for(let loop=0;loop<loops;loop++){
+      for(const event of pattern.events){const at=start+(loop*beats+event.beat)*beat;
+        if(event.voice==='bass')this.note(event.midi,at,.34,'synth',.42);
+        else if(event.voice==='keys')for(const midi of event.notes)this.note(midi,at,.26,'synth',.25);
+        else this.drum(event.voice,at);
+      }
+      for(let i=0;i<beats;i++)this.schedule(()=>{if(token===this.token)onBeat(i,loop);},.15+(loop*beats+i)*beat);
+    }
+    this.schedule(()=>{if(token===this.token)onEnd();},beats*loops*beat+.4);
+  }
+  poly(pattern,onEnd,{cycles=3,layer='both',onHit=()=>{}}={}){
+    this.stop();const token=this.token,start=this.context.currentTime+.15,beat=60/110;
+    for(const event of polyEvents(pattern,cycles,layer)){
+      this.drum(event.voice,start+event.beat*beat);
+      this.schedule(()=>{if(token===this.token)onHit(event);},.15+event.beat*beat);
+    }
+    this.lastCue={kind:'polyrhythm',a:pattern.a,b:pattern.b,cycles,layer};
+    this.schedule(()=>{if(token===this.token)onEnd();},cycles*4*beat+.4);
   }
   stop(){this.token++;this.timers.forEach(clearTimeout);this.timers.clear();this.voices.forEach(v=>{try{v.stop();}catch{}});this.voices.clear();}
 }

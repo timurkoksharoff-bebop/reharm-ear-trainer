@@ -87,3 +87,32 @@ pitch classes. Every arpeggio note sustains to the same chord end.
 Next musical work: physical listening tests, adaptive root/type confusion matrices,
 source-audited functional contexts beyond the two figures, inversions and slash
 bass, and transfer tests in unfamiliar timbres/registers outside the game.
+# Flight 002: listening library and rhythmic material
+
+The Rock Tongue scheduler was audited across all 22 catalog qualities × 12 roots:
+every chord member is scheduled, no tonic is inserted, and grading uses the same
+quality ID. For comparison: maj = 0/4/7; maj7 = 0/4/7/11; 7 = 0/4/7/10.
+The library uses this same sustained synth path. A UI defect that rebuilt answer
+buttons each timer second was fixed; button identity now lasts for the encounter.
+
+Twenty short rhythm studies are authored recognition examples, not recordings or
+transcriptions of a source arrangement. Styles encompass many variants; these
+examples teach the labeled pattern rather than exhaustively defining a genre.
+Tumbao Bass and Montuno Keys are explicitly instrument parts and form their own
+answer pool. Source context:
+
+- [Vic Firth Groove Essentials](https://ae.vicfirth.com/education/groove-essentials/)
+  and [Mambo](https://ae.vicfirth.com/education/groove-essentials/groove-essentials-41-mambo/).
+- [Smithsonian Calypso lesson](https://folkways-media.si.edu/docs/lesson_plans/FLP10072_caribbean_calypso_beat.pdf):
+  steady stepping pulse and syncopated strumming.
+- [Smithsonian bell-pattern teaching](https://folkways.si.edu/braiding-rhythms-the-role-of-bell-patterns-in-west-african-and-afro-caribbean-music/tools-for-teaching/smithsonian).
+- [Library of Congress: Daymé Arocena](https://www.loc.gov/item/2024697728/),
+  Afro-Cuban and rumba clave educational context.
+- [Berklee Time and Rhythm](https://online.berklee.edu/courses/time-and-rhythm-1):
+  2:3, 3:2, 3:4 and 4:3 learning progression.
+
+Polyrhythms are generated mathematically: A high rim hits and B low kick hits
+divide an identical four-beat cycle evenly. Labels always mean high:low, so 3:2
+and 2:3 are distinguishable. This is polyrhythm practice, not a claim to teach
+complete vocal konnakol vocabulary. Ratios include 2:3, 3:2, 3:4, 4:3, 5:4, 4:5,
+5:3, 3:5, 7:4 and 4:7. All examples use 110 BPM to avoid tempo-only answers.

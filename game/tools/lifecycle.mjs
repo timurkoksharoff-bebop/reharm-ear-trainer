@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import * as music from '../music.mjs';
 import * as intervals from '../intervals.mjs';
 import * as combat from '../combat.mjs';
+import * as expeditionModule from '../expedition.mjs';
 class Element {
   constructor(){this.children=[];this.dataset={};this.style={setProperty(){}};this.events={};this.hidden=false;this.disabled=false;this.textContent='';this.classList={add(){},remove(){},toggle(){}};}
   set innerHTML(v){this.html=v;this.children=[];if(v.includes('overlay-card'))this.children.push(new Element());}
@@ -18,10 +19,11 @@ class Element {
 const elements=new Map();
 const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 get('space').getContext=()=>({});get('enemy-label').append(new Element());
-class TestAudio {interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
+class TestAudio {rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
-const context=vm.createContext({...music,...combat,...intervals,FlightAudio:TestAudio,console,
-  document:{getElementById:get,createElement:()=>new Element(),querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
+const context=vm.createContext({...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
+  installLanguage(){},
+  document:{getElementById:get,createElement:()=>new Element(),querySelector:()=>null,querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
   window:{addEventListener(){}},localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
   Image:class{},ResizeObserver:class{observe(){}},matchMedia:()=>({matches:true}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},HTMLButtonElement:Element,
 });
@@ -40,7 +42,7 @@ run('answer("bass",s.enemy.chord.offset);');assert.equal(state().mode,'resolving
 const earned=state().score;run('answer("bass",s.enemy.chord.offset);');assert.equal(state().score,earned);
 run('pause();');const paused=JSON.stringify(state());run('update(1)');assert.equal(JSON.stringify(state()),paused);
 await run('resume()');assert.equal(state().mode,'resolving');
-run('s.capsuleTimer=.001;update(.02);audio.pending();s.capsule.heard=s.capsule.wanted;resolveCapsule(true);s.resolveTimer=.01;update(.02);audio.pending();');assert.equal(state().mode,'active');
+run('update(.02);audio.pending();expedition.collectNumber(expedition.snapshot().special.label);s.resolveTimer=.01;update(.02);audio.pending();');assert.equal(state().mode,'active');
 // Complete the actual progression/sector transition logic, preserving each chord.
 for(let sector=0;sector<3;sector++){
   if(sector>0)run(`beginSector(${sector});spawnEnemy();audio.pending();`);
@@ -68,22 +70,17 @@ assert.equal(combat.pressure(2,9,1),2);assert.equal(combat.pressure(0,0,1),0);
 await run('startRun(3);');run('spawnEnemy();audio.pending();');
 assert.equal(get('bass-pads').children.length,12);assert.equal(get('quality-pads').children.length,11);
 run('qualityBank=1;buildPads();');assert.equal(get('quality-pads').children[0].dataset.value,'maj7sharp11');
-run('answer("quality",s.enemy.chord.quality);answer("bass",s.enemy.chord.offset);s.capsuleTimer=.001;update(.02);');
-assert.equal(state().listening,true);const capsuleY=state().capsule.y;
-run('update(1);');assert.equal(state().capsule.y,capsuleY);assert.equal(state().mode,'resolving');
+run('answer("quality",s.enemy.chord.quality);answer("bass",s.enemy.chord.offset);update(.02);');
+assert.equal(state().listening,true);assert.equal(state().capsule,null);
+assert.equal(run('expedition.snapshot().special.kind'),'numbers');
+run('update(1);');assert.equal(state().mode,'resolving');
 run('pause();');await run('resume();');assert(state().listening);
-run('audio.pending();s.energy=80;s.capsule.heard=s.capsule.wanted;s.capsule.energy=40;resolveCapsule(true);');
-assert.equal(state().energy,20);assert.equal(state().intervalStats.caught,1);
-run('launchCapsule();audio.pending();s.capsule.heard=s.capsule.wanted+1;resolveCapsule(true);');
-assert.equal(state().energy,0);assert.equal(state().intervalStats.wrong,1);assert.equal(state().overdrive,0);
-run('launchCapsule();audio.pending();s.capsule.heard=s.capsule.wanted+1;resolveCapsule(false);');
-assert.equal(state().intervalStats.avoided,1);
-run('launchCapsule();audio.pending();s.capsule.heard=s.capsule.wanted;resolveCapsule(false);');
-assert.equal(state().intervalStats.missed,1);
+run('audio.pending();expedition.collectNumber(expedition.snapshot().special.label);');
+assert.equal(state().energy,30);assert.equal(run('expedition.busy'),false);
 while(state().cleared<12){
   if(state().mode==='resolving')run('advance();');
   if(state().mode==='finished')break;
   run('audio.pending();answer("bass",s.enemy.chord.offset);answer("quality",s.enemy.chord.quality);');
 }
 run('advance();');assert.equal(state().mode,'finished');assert.equal(state().totalCleared,12);
-console.log('Lifecycle checks passed: 12-enemy chromatic completion, all capsule outcomes, capsule pause/replay, calibration/pause, wrong/correct reward, 24-enemy completion, both shield orders, retry/storage, drone collision and adaptive pressure.');
+console.log('Lifecycle checks passed: 12-enemy chromatic and 24-enemy campaign completion, single-token interlude/pause/replay, calibration, shields, retry/storage, drones and pressure.');

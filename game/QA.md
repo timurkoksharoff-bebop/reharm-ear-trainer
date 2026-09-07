@@ -1,4 +1,24 @@
-# Flight 001 verification — 2026-09-07
+# Flight 001/002 verification — 2026-09-07
+
+## Flight 002 regression
+
+Final expansion adds 20 rhythm examples and ten ratio fixtures. Actual audio
+scheduling was checked for all 264 chord/root pairs, arpeggios, cancelled callbacks
+and repeated rhythms. Every ratio has exact evenly spaced high and low counts.
+Browser checked library tabs, Mambo, 3:4, Russian/English switching, the complete
+rhythm catalog and the separate quartet room. Generated classic script loads
+without ES module fetches; physical Safari/iPhone testing is still not claimed.
+
+All original checks and the 239-progression Trainer smoke test pass.
+`tools/expedition-check.mjs` additionally checks one-pickup interval recognition
+in both directions, enharmonics, exactly one correct token per field, wrong
+pickup ending an attempt, immediate cue replacement and stale callback rejection,
+obstacle-free first two difficulties, ten rhythm fixtures, full HP recovery,
+guide-tone neutralization, temporary effects, pause and timeout.
+
+Browser inspected the new four-level start, Skip and revised guide. A direct
+interval trial rendered brass gear tokens and the single-answer instruction;
+pause worked during its cue. Physical phone audio/touch testing remains pending.
 
 ## Automated checks
 

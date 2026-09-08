@@ -13,4 +13,5 @@ for(const name of ['hydra','enemyships','corvette','fortress','scout-art','cruis
   fs.copyFileSync(source,path.join(output,'assets',`${name}.png`));
 }
 for(const name of ['keytar-exact.svg','guitar-exact.svg'])fs.copyFileSync(path.join(root,'assets',name),path.join(output,'assets',name));
+for(const name of fs.readdirSync(path.join(root,'assets')).filter(name=>name.endsWith('.webp')))fs.copyFileSync(path.join(root,'assets',name),path.join(output,'assets',name));
 console.log('Static game build complete.');

@@ -1,5 +1,6 @@
 import {DEGREES,QUALITIES,INTERVALS,SECTORS,createRoute,answerResult,family,QUALITY_BANKS,chordSymbol} from './music.mjs';
 import {FlightAudio} from './audio.mjs';
+import {loadFlightImage} from './assets-loader.mjs';
 import {installLanguage} from './i18n.mjs';
 import {pressure,formation,stepDrone,hitCircle} from './combat.mjs';
 import {INTERVAL_TARGETS,INTERVAL_MODES,targetForSector,createCapsule,capsuleOutcome} from './intervals.mjs';
@@ -8,7 +9,14 @@ import {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,RHYTHMS,RHYTHM_HINTS,RHYTH
 const $=id=>document.getElementById(id);
 const canvas=$('space'),ctx=canvas.getContext('2d'),audio=new FlightAudio();
 const images=Object.fromEntries(['hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
-for(const [name,img] of Object.entries(images))img.src=['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:`assets/${name}.png`;
+const imageUrl=name=>['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:`assets/${name}.webp`;
+async function prepareFlightImages(onProgress=()=>{}){
+  let ready=0;const entries=Object.entries(images);
+  const results=await Promise.allSettled(entries.map(async([name,img])=>{await loadFlightImage(img,imageUrl(name));onProgress(++ready,entries.length);}));
+  const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+}
+// Warm the cache; startRun checks completion and offers a retry on failures.
+prepareFlightImages().catch(()=>{});
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[],runToken=0,qualityBank=0,weaponTab='bass';
@@ -104,9 +112,10 @@ function startScreen(){
 async function startRun(sector,level=sector===0?0:sector===2?1:2){
   const token=++runToken;s.mode='loading';overlay('<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Включаем звук…</h2><p>Запускаем синтезатор корабля.</p>');
   try{await audio.unlock();if(token!==runToken)return;
+    await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Загружаем графику · ${ready}/${total}</h2><p>Корабли, планеты и музыканты</p>`);});if(token!==runToken)return;
     Object.assign(s,{sector,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:5,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
     expedition.reset(level);beginSector(sector);
-  }catch(e){if(token!==runToken)return;s.mode='start';overlay(`<h2>Нужен звук</h2><p>${e.message}</p>`);action('Попробовать ещё',()=>startRun(sector,level));}
+  }catch(e){if(token!==runToken)return;s.mode='start';overlay(`<h2>Подготовка прервана</h2><p>${e.message}</p>`);action('Попробовать ещё',()=>startRun(sector,level));}
 }
 function beginSector(sector){
   weaponTab='bass';

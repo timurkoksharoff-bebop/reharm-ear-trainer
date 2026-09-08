@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300">
+  <defs>
+    <linearGradient id="body" x1="0" x2="1"><stop stop-color="#251c22"/><stop offset=".45" stop-color="#8a5425"/><stop offset="1" stop-color="#182f42"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <path d="M35 150 105 43 795 35 875 110 846 246 120 264Z" fill="url(#body)" stroke="#e7ad53" stroke-width="10"/>
+  <circle cx="90" cy="152" r="48" fill="#183c48" stroke="#74f6e0" stroke-width="8" filter="url(#glow)"/>
+  <circle cx="815" cy="139" r="37" fill="#341948" stroke="#c87aff" stroke-width="7" filter="url(#glow)"/>
+  <g fill="#f4ead4" stroke="#49372b" stroke-width="3">
+    <rect x="140" y="68" width="42" height="160"/><rect x="182" y="68" width="42" height="160"/><rect x="224" y="68" width="42" height="160"/><rect x="266" y="68" width="42" height="160"/><rect x="308" y="68" width="42" height="160"/><rect x="350" y="68" width="42" height="160"/><rect x="392" y="68" width="42" height="160"/>
+    <rect x="434" y="68" width="42" height="160"/><rect x="476" y="68" width="42" height="160"/><rect x="518" y="68" width="42" height="160"/><rect x="560" y="68" width="42" height="160"/><rect x="602" y="68" width="42" height="160"/><rect x="644" y="68" width="42" height="160"/><rect x="686" y="68" width="42" height="160"/>
+  </g>
+  <g fill="#111923" stroke="#9adfff" stroke-width="2">
+    <rect x="171" y="67" width="22" height="98" rx="4"/><rect x="213" y="67" width="22" height="98" rx="4"/>
+    <rect x="297" y="67" width="22" height="98" rx="4"/><rect x="339" y="67" width="22" height="98" rx="4"/><rect x="381" y="67" width="22" height="98" rx="4"/>
+    <rect x="465" y="67" width="22" height="98" rx="4"/><rect x="507" y="67" width="22" height="98" rx="4"/>
+    <rect x="591" y="67" width="22" height="98" rx="4"/><rect x="633" y="67" width="22" height="98" rx="4"/><rect x="675" y="67" width="22" height="98" rx="4"/>
+  </g>
+  <g fill="#76ffe0" filter="url(#glow)"><circle cx="754" cy="85" r="8"/><circle cx="779" cy="85" r="8"/><circle cx="754" cy="110" r="8"/></g>
+</svg>

@@ -7,8 +7,8 @@ import {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,RHYTHMS,RHYTHM_HINTS,RHYTH
 
 const $=id=>document.getElementById(id);
 const canvas=$('space'),ctx=canvas.getContext('2d'),audio=new FlightAudio();
-const images=Object.fromEntries(['hydra','enemyships','corvette','fortress','drummachine','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
-for(const [name,img] of Object.entries(images))img.src=`assets/${name}.png`;
+const images=Object.fromEntries(['hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
+for(const [name,img] of Object.entries(images))img.src=['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:`assets/${name}.png`;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[],runToken=0,qualityBank=0,weaponTab='bass';
@@ -18,7 +18,20 @@ const s={mode:'start',sector:0,route:null,routeNumber:0,position:0,cleared:0,tot
   drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,droneKills:0,
   capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0},
   player:{x:240,y:500,tx:240,ty:500},keys:new Set(),pointer:null,feedbackTimer:0};
-const expedition=createExpedition({s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,W,getH:()=>H,images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
+let activeRecognition=null;
+function listenTitle(){
+  const Engine=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!Engine){feedback('Голосовой ответ недоступен здесь. В Safari открой HTTPS-версию или выбери кнопку.',true);return;}
+  try{
+    activeRecognition?.abort();const recognition=new Engine();activeRecognition=recognition;recognition.lang='en-US';recognition.interimResults=false;recognition.maxAlternatives=3;
+    signal('🎙 Say the title in English',true);
+    recognition.onresult=event=>{const variants=Array.from(event.results[0]||[]).map(item=>item.transcript);if(!variants.some(text=>expedition.answerSpoken(text)))feedback(`Распознано: ${variants[0]||'—'}`,true);};
+    recognition.onerror=event=>feedback(event.error==='not-allowed'?'Safari не получил доступ к микрофону':'Не расслышал. Повтори или выбери кнопку.',true);
+    recognition.onend=()=>{if(activeRecognition===recognition){activeRecognition=null;signal('Выбери ответ или повтори');}};
+    recognition.start();
+  }catch{feedback('Не удалось запустить микрофон. Выбери ответ кнопкой.',true);}
+}
+const expedition=createExpedition({s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>H,images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
 const stars=Array.from({length:85},()=>({x:Math.random()*480,y:Math.random()*1100,z:.25+Math.random(),r:Math.random()*1.3+.3}));
 const MACHINES=['РАЗВЕДЧИК','КОРВЕТ','КРЕЙСЕР','КРЕПОСТЬ'];
 const MACHINE_CROPS=[[135,20,380,490],[675,20,490,505],[60,530,520,640],[588,515,666,720]];
@@ -74,7 +87,7 @@ function syncPads(){
     b.classList.toggle('selected',!!broken&&(b.dataset.kind==='bass'?Number(b.dataset.value)===s.enemy.chord.offset:b.dataset.value===family(s.enemy.chord.quality)));
   });
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening;
-  if(expedition.pausedCombat){$('dock-label').textContent='РИТМ-ПАУЗА · КВАРТЕТ НА ПОЛЕ';$('dock-tip').textContent='Узнай стиль или партию — и продолжим тот же полёт';}
+  if(expedition.pausedCombat){const labels={rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||labels.rhythm;$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
   $('interval-reference').disabled=s.mode!=='resolving'||s.listening;
   $('pause').disabled=['start','finished','gameover','loading'].includes(s.mode);
   if(s.enemy){$('shield-tags').innerHTML=`<span class="shield-tag ${s.enemy.shields.bass?'broken':''}">◇ БАС</span>${s.sector>=2?`<span class="shield-tag quality ${s.enemy.shields.quality?'broken':''}">✧ ТИП</span>`:''}`;}
@@ -197,7 +210,7 @@ async function playStudy(){
   }catch(e){feedback(e.message,true);}
 }
 function artifactGuide(){
-  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster — автомат. Keytar — невидимость. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: учителя нейтрализуются.<br><br>Красный язык — узнай тип аккорда без ступени для HP 100%. Тарелка Zildjian останавливает полёт: квартет появляется прямо на поле, играет бит, а ты узнаёшь стиль или партию.<br><br>Литература даёт подсказку, Математика — автомат, Химия — невидимость, Физ-ра — защиту, НВП — автомат + невидимость. Для нейтрализации также используй обычные заряды.</p>');
+  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster — автомат. Keytar — невидимость. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: учителя нейтрализуются.<br><br>Красный язык — узнай тип аккорда без ступени для HP 100%. Реликвия барабанщика останавливает полёт и запускает распознавание стиля или партии. Тарелка Zildjian запасает RHYTHM FOCUS: во время задания она убирает половину неверных вариантов.<br><br>Реликвии музыкантов — это светящиеся механические кубы. После захвата в кадр влетает трубач, клавишник, гитарист или барабанщик. Трубач просит BASIC, GUIDE или COLOR TONES; один чужой жетон гасит режим.<br><br>Литература даёт подсказку, Математика — автомат, Химия — невидимость, Физ-ра — защиту, НВП — автомат + невидимость. Для нейтрализации также используй обычные заряды.</p>');
   action('Сразу в бой →',()=>spawnEnemy());
   action('Попробовать сбор интервалов',()=>{spawnEnemy();audio.stop();s.listening=false;expedition.startChallenge('numbers');},true);
   ARTIFACTS.forEach((item,i)=>action(`Попробовать ${item.name}`,()=>{spawnEnemy();audio.stop();s.listening=false;expedition.artifact(i);if(i<2||i===3)playCue();},true));
@@ -438,7 +451,7 @@ function draw(){
   for(const r of s.rings){ctx.strokeStyle=`rgba(121,245,208,${1-r.age/.8})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*260,0,Math.PI*2);ctx.stroke();}
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
-  if(expedition.pausedCombat)expedition.drawBandOverlay();
+  if(expedition.pausedCombat)expedition.drawPauseOverlay();
   if(s.flash>0&&!reduced){ctx.fillStyle=`rgba(255,93,134,${s.flash*.3})`;ctx.fillRect(0,0,W,H);}
 }
 function frame(now){const dt=Math.min(.035,(now-last)/1000||.016);last=now;update(dt);draw();requestAnimationFrame(frame);}
@@ -463,7 +476,7 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>s.keys.delete(e.key.toLowerCase()));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
 window.addEventListener('blur',()=>{s.keys.clear();pause();});
-window.addEventListener('pagehide',()=>audio.stop());
+window.addEventListener('pagehide',()=>{audio.stop();activeRecognition?.abort();});
 ['bank-basic','bank-altered'].forEach((id,i)=>$(id).addEventListener('click',()=>{qualityBank=i;buildPads();}));
 ['weapon-root','weapon-type'].forEach((id,i)=>$(id).addEventListener('click',()=>{weaponTab=i?'quality':'bass';syncPads();}));
 $('hint').addEventListener('click',()=>expedition.hint());

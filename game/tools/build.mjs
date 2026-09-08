@@ -8,8 +8,9 @@ const output=path.join(root,'dist');fs.rmSync(output,{recursive:true,force:true}
 const files=['index.html','game.css','game.bundle.js'];
 for(const name of files)fs.copyFileSync(path.join(root,name),path.join(output,name));
 fs.mkdirSync(path.join(output,'assets'),{recursive:true});
-for(const name of ['hydra','enemyships','corvette','fortress','scout-art','cruiser-art','drummachine','band','ship','terrain','drone','moon','mars','teachers','artifacts']){
+for(const name of ['hydra','enemyships','corvette','fortress','scout-art','cruiser-art','drummachine','trumpeter','keytarist','guitarist','drummer','band','ship','terrain','drone','moon','mars','teachers','artifacts']){
   const source=path.join(root,'assets',`${name}.png`);if(!fs.existsSync(source))throw new Error(`Missing game art: ${name}`);
   fs.copyFileSync(source,path.join(output,'assets',`${name}.png`));
 }
+for(const name of ['keytar-exact.svg','guitar-exact.svg'])fs.copyFileSync(path.join(root,'assets',name),path.join(output,'assets',name));
 console.log('Static game build complete.');

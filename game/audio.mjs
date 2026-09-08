@@ -70,6 +70,35 @@ export class FlightAudio {
     this.note(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
     this.schedule(()=>{if(token===this.token)onEnd();},2.6);
   }
+  announce(text,onEnd){
+    this.stop();const token=this.token;
+    if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance){this.schedule(()=>{if(token===this.token)onEnd();},.1);return;}
+    const utterance=new window.SpeechSynthesisUtterance(text),voices=window.speechSynthesis.getVoices();
+    utterance.lang='en-US';utterance.rate=.78;utterance.pitch=.72;utterance.volume=.95;
+    utterance.voice=voices.find(v=>/Alex|Daniel|Reed|Ralph|Fred|Rocko/i.test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en[-_](US|GB)/i.test(v.lang))||null;
+    let finished=false;const finish=()=>{if(finished||token!==this.token)return;finished=true;onEnd();};
+    utterance.onend=finish;utterance.onerror=finish;window.speechSynthesis.cancel();window.speechSynthesis.speak(utterance);
+    this.schedule(finish,Math.max(3.2,text.length*.075));
+  }
+  trumpetChord(root,intervals,onEnd){
+    this.stop();const token=this.token,start=this.context.currentTime+.08,phrase=[0,7,10,12];
+    phrase.forEach((n,i)=>this.note(root+12+n,start+i*.18,.48,'synth',.34));
+    const chordAt=start+1.0,notes=intervals.map(n=>root+n);notes.forEach(note=>this.note(note,chordAt,1.75,'synth',.62/Math.sqrt(notes.length)));
+    this.lastCue={kind:'trumpeter-chord',root,notes,spoken:true,sound:'brass synth'};
+    this.schedule(()=>{if(token===this.token)onEnd();},2.9);
+  }
+  melody(root,pattern,onEnd){
+    this.stop();const token=this.token,start=this.context.currentTime+.12;let cursor=0;
+    pattern.notes.forEach((offset,i)=>{const beats=pattern.beats[i]||.5;this.note(root+offset,start+cursor,Math.max(.22,beats*.46),'soft',.44);cursor+=beats*.48;});
+    this.lastCue={kind:'melody-memory',root,name:pattern.name,notes:[...pattern.notes],sound:'keytar synth'};
+    this.schedule(()=>{if(token===this.token)onEnd();},cursor+.35);
+  }
+  scale(root,mode,direction,onEnd){
+    this.stop();const token=this.token,start=this.context.currentTime+.12,notes=(direction==='down'?[...mode.notes].reverse():mode.notes).map(n=>root+n);
+    notes.forEach((note,i)=>this.note(note,start+i*.25,.58,'synth',.36));
+    this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:'guitar synth'};
+    this.schedule(()=>{if(token===this.token)onEnd();},notes.length*.25+.55);
+  }
   drum(voice,at){
     const ctx=this.context,osc=ctx.createOscillator(),gain=ctx.createGain();
     const freq={kick:120,snare:185,hat:7200,ride:4800,clave:1800,rim:1100}[voice];
@@ -103,5 +132,5 @@ export class FlightAudio {
     this.lastCue={kind:'polyrhythm',a:pattern.a,b:pattern.b,cycles,layer};
     this.schedule(()=>{if(token===this.token)onEnd();},cycles*4*beat+.4);
   }
-  stop(){this.token++;this.timers.forEach(clearTimeout);this.timers.clear();this.voices.forEach(v=>{try{v.stop();}catch{}});this.voices.clear();}
+  stop(){this.token++;this.timers.forEach(clearTimeout);this.timers.clear();this.voices.forEach(v=>{try{v.stop();}catch{}});this.voices.clear();try{if(typeof window!=='undefined')window.speechSynthesis?.cancel();}catch{}}
 }

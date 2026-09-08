@@ -86,4 +86,5 @@ run('advance();');assert.equal(state().mode,'finished');assert.equal(state().tot
 // Book Flight starts with route context; Space uses only a HOME note and the target chord.
 await run('startBookRun(1,0);');run('spawnEnemy();audio.pending();playCue(true);');
 assert.equal(run('audio.referencePlayed'),true);assert.equal(state().listening,true);assert.equal(state().bullets.length,0);run('audio.pending();');assert.equal(state().listening,false);
+assert(get('bass-pads').children.length>=4);run('answerBookChord(s.enemy.chord.offset,s.enemy.chord.quality,document.getElementById("bass-pads").children[0]);');assert.equal(state().mode,'resolving');
 console.log('Lifecycle checks passed: 12-enemy chromatic and 24-enemy campaign completion, single-token interlude/pause/replay, calibration, shields, retry/storage, drones and pressure.');

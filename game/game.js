@@ -109,8 +109,8 @@ function syncPads(){
   const special=expedition.busy;
   document.querySelector('.cabinet')?.classList.toggle('rhythm-room',expedition.pausedCombat);
   $('enemy-label').hidden=expedition.pausedCombat||!s.enemy||s.mode==='resolving';
-  $('capsule-panel').hidden=!capsuleMode||special;$('bass-pads').hidden=capsuleMode||special||(s.sector>=2&&weaponTab!=='bass');$('quality-panel').hidden=capsuleMode||special||s.sector<2||weaponTab!=='quality';
-  $('weapon-tabs').hidden=capsuleMode||special||s.sector<2;
+  $('capsule-panel').hidden=!capsuleMode||special;$('bass-pads').hidden=capsuleMode||special||(!s.bookMission&&s.sector>=2&&weaponTab!=='bass');$('quality-panel').hidden=!!s.bookMission||capsuleMode||special||s.sector<2||weaponTab!=='quality';
+  $('weapon-tabs').hidden=!!s.bookMission||capsuleMode||special||s.sector<2;
   $('weapon-root').setAttribute('aria-pressed',String(weaponTab==='bass'));$('weapon-type').setAttribute('aria-pressed',String(weaponTab==='quality'));
   document.querySelectorAll('.pad').forEach(b=>{
     const broken=s.enemy?.shields[b.dataset.kind];b.disabled=s.mode!=='active'||s.listening||!!broken||special;
@@ -333,7 +333,23 @@ function spawnEnemy(){
   $('enemy-label').hidden=false;$('enemy-label').firstElementChild.textContent=s.bookMission?`${s.route.code} · HYDRA ${String(s.position+1).padStart(2,'0')}/${String(s.route.sequence.length).padStart(2,'0')}`:`HYDRA · ${MACHINES[s.enemy.model]} / ${String(s.totalCleared+1).padStart(2,'0')}`;
   $('dock-label').textContent=s.sector>=2?'ДВА ЩИТА · ДВА ВИДА ОРУЖИЯ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
   $('dock-tip').textContent=s.sector<2?'Выбери ступень относительно тоники I':s.sector===3?'Корень + тип → цифровка · m7 ≠ maj7':'Корень и точный тип — в любом порядке';
-  s.fireTimer=expedition.pilot.grace;renderHud();playCue();
+  s.fireTimer=expedition.pilot.grace;if(s.bookMission)buildBookPads();renderHud();playCue();
+}
+function buildBookPads(){
+  const target=s.enemy.chord,candidates=[target];
+  for(const chord of s.route.sequence)if(chord!==target)candidates.push(chord);
+  const contrast={maj:'min',min:'maj','7':'maj7',maj7:'7',m7:'7',m7b5:'m7','6':'maj',m6:'min','7sus4':'7'}[target.quality]||'maj';
+  candidates.push({offset:target.offset,quality:contrast},{offset:(target.offset+5)%12,quality:target.quality},{offset:(target.offset+7)%12,quality:target.quality},{offset:(target.offset+2)%12,quality:target.quality});
+  const unique=[];for(const chord of candidates){const key=`${chord.offset}:${chord.quality}`;if(!unique.some(item=>item.key===key))unique.push({key,chord});}
+  const correctKey=`${target.offset}:${target.quality}`,wrong=unique.filter(item=>item.key!==correctKey).sort(()=>Math.random()-.5).slice(0,5),choices=[{key:correctKey,chord:target},...wrong].sort(()=>Math.random()-.5);
+  const panel=$('bass-pads');panel.classList.add('book-chord-pads');panel.replaceChildren();
+  for(const {chord} of choices){const b=document.createElement('button');b.className='pad chord-choice';b.textContent=chordSymbol(chord);b.setAttribute('aria-label',`Ответ: ${chordSymbol(chord)}`);b.addEventListener('click',()=>answerBookChord(chord.offset,chord.quality,b));panel.append(b);}
+}
+function answerBookChord(offset,quality,button){
+  if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
+  const chord=s.enemy.chord,correct=offset===chord.offset&&quality===chord.quality;
+  if(correct){const attempts=s.attempts,recognized=s.correct;answer('bass',chord.offset,button);answer('quality',chord.quality,button);s.attempts=attempts+1;s.correct=recognized+1;return;}
+  s.attempts++;s.stats[offset!==chord.offset?'bass':'quality'].miss++;s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;button.classList.add('wrong');button.disabled=true;feedback(`${chordSymbol({offset,quality})} · чужой сигнал`,true);enemyVolley(true);renderHud();
 }
 function playCue(referenceOnly=false){
   if(s.mode!=='active'||!s.enemy)return;

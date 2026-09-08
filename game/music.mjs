@@ -1,3 +1,4 @@
+import {BOOK_CATALOG} from './book-catalog.mjs';
 // The canonical source remains ../app.js. These two small snapshots are checked
 // against it by tools/check.mjs; see MUSICAL_NOTES.md for the visual PDF audit.
 export const BOOK_ROUTES = [
@@ -66,33 +67,56 @@ export function createRoute(sector,previousKey=-1,rng=Math.random,routeIndex=0) 
   return {key,sequence,source:sector===2?book.source:sector===3?'Авторские независимые сигналы · не книжная прогрессия':'Авторская вводная фраза',id:sector===2?book.id:sector===3?'chromatic-lab':'primer',
     // Keep one timbre, register and articulation throughout each musical phrase.
     timbre:routeIndex%2?'soft':'synth',register:sector===0?60:48+(rng()<.5?0:12),
-    articulation:sector>=2?pick(['block','up','down'],rng):'block'};
+    articulation:'block'};
 }
+export function missionCode(exercise){
+  const raw=exercise.id.replace(/^fig-/,'F').replace(/^exercise-/,'E').replaceAll('-','·').toUpperCase();
+  return `C${String(exercise.chapter).padStart(2,'0')}·${raw}`;
+}
+export function createBookRoute(chapter,routeIndex=0,previousKey=-1,rng=Math.random){
+  const chapterRoutes=BOOK_CATALOG.filter(item=>item.chapter===chapter),exercise=chapterRoutes[routeIndex%chapterRoutes.length];
+  const keys=[0,2,3,5,7,9,10].filter(key=>key!==previousKey),key=pick(keys,rng);
+  return {...exercise,sequence:exercise.sequence.map(chord=>({...chord,answerOffset:chord.offset})),key,code:missionCode(exercise),catalogIndex:routeIndex%chapterRoutes.length,catalogCount:chapterRoutes.length,timbre:'synth',register:48,articulation:'block'};
+}
+export const bookRoutesForChapter=chapter=>BOOK_CATALOG.filter(item=>item.chapter===chapter);
 export function chordNotes(chord,tonic,spread=false) {
   const root=tonic+chord.offset;
   const notes=INTERVALS[chord.quality].map(i=>root+12+i);
   if(spread) notes[1]+=12;
-  return [root,...notes];
+  return [tonic+(chord.bassOffset??chord.offset),...notes];
 }
 export function cueEvents(route,chord,sector) {
   const tonic=route.register+route.key;
   const events=[{at:.12,duration:.82,notes:[tonic,tonic+4,tonic+7],part:'home'}];
-  // Envelopes end at .94, then .34 seconds of actual silence before the target.
-  events.push({at:1.28,duration:sector>=2?.65:1.15,notes:[tonic+chord.offset],part:'bass'});
   if(sector>=2){
     const notes=chordNotes(chord,tonic,route.articulation==='down');
-    if(route.articulation==='block') events.push({at:2.16,duration:1.40,notes,part:'chord'});
-    else {
-      // Bass stays lowest; all upper pitch classes are retained, in either order.
-      const upper=notes.slice(1).sort((a,b)=>route.articulation==='up'?a-b:b-a);
-      [notes[0],...upper].forEach((note,i)=>events.push({at:2.16+i*.12,duration:1.40-i*.12,notes:[note],part:i===0?'chord':'tone'}));
-    }
+    events.push({at:1.28,duration:1.40,notes,part:'chord'});
+  }else events.push({at:1.28,duration:1.15,notes:[tonic+chord.offset],part:'bass'});
+  return {events,duration:sector>=2?2.84:2.58};
+}
+export function progressionEvents(route,targetIndex,finale=false){
+  const tonic=route.register+route.key,sequence=route.sequence;
+  let at=.12;const events=[];
+  if(!finale&&targetIndex===0){events.push({at,duration:.62,notes:[tonic,tonic+4,tonic+7],part:'home',index:-1});at+=.82;}
+  const start=finale?0:Math.max(0,targetIndex-3),end=finale?sequence.length-1:targetIndex;
+  for(let index=start;index<=end;index++){
+    const target=!finale&&index===targetIndex,duration=target?1.16:.56;
+    if(target&&index>start)at+=.20;
+    events.push({at,duration,notes:chordNotes(sequence[index],tonic),part:target?'target':'context',index});
+    at+=target?1.28:.68;
   }
-  return {events,duration:sector>=2?3.75:2.58};
+  return {events,duration:at+.12};
+}
+export function bookReferenceEvents(route,targetIndex){
+  const tonic=route.register+route.key;
+  return {events:[
+    {at:.12,duration:.58,notes:[tonic],part:'home',index:-1},
+    {at:.98,duration:1.20,notes:chordNotes(route.sequence[targetIndex],tonic),part:'target',index:targetIndex},
+  ],duration:2.34};
 }
 export function answerResult(chord,shields,kind,value) {
   if(!['bass','quality'].includes(kind)||shields[kind]) return {ignored:true};
-  const correct=kind==='bass'?Number(value)===(chord.bassOffset??chord.offset):value===family(chord.quality);
+  const correct=kind==='bass'?Number(value)===(chord.answerOffset??chord.bassOffset??chord.offset):value===family(chord.quality);
   const next={...shields,[kind]:correct};
   return {correct,shields:correct?next:shields,destroyed:correct&&next.bass&&next.quality};
 }

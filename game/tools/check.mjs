@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {BOOK_ROUTES,DEGREES,SECTORS,QUALITIES,INTERVALS,createRoute,cueEvents,answerResult,family} from '../music.mjs';
+import {BOOK_ROUTES,DEGREES,SECTORS,QUALITIES,INTERVALS,createRoute,createBookRoute,bookRoutesForChapter,bookReferenceEvents,cueEvents,progressionEvents,answerResult,family} from '../music.mjs';
 import {createCapsule,capsuleOutcome,intervalCue} from '../intervals.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const canonical=fs.readFileSync(root+'app.js','utf8');
@@ -20,15 +20,29 @@ for(let sector=0;sector<4;sector++){
     for(const chord of route.sequence){
       assert(SECTORS[sector].degrees.includes(chord.offset));assert(DEGREES[chord.offset]);
       if(sector>=2)assert(SECTORS[sector].qualities.includes(family(chord.quality)));
-      const cue=cueEvents(route,chord,sector),home=cue.events[0],bass=cue.events[1];
-      assert(bass.at-home.at-home.duration>=.3,'Reference must end before a real silence');
-      assert.equal(bass.notes[0]-home.notes[0],chord.offset,'Degree remains relative to tonic');
+      const cue=cueEvents(route,chord,sector),home=cue.events[0],target=cue.events[1];
+      assert(target.at-home.at-home.duration>=.3,'Reference must end before a real silence');
+      if(sector<2)assert.equal(target.notes[0]-home.notes[0],chord.offset,'Degree remains relative to tonic');
       assert(cue.events.every(e=>e.duration>0&&e.at+e.duration<cue.duration));
       if(sector>=2){
-        const actual=[...new Set(cue.events.slice(2).flatMap(e=>e.notes).map(note=>((note-bass.notes[0])%12+12)%12))].sort((a,b)=>a-b);
+        assert.equal(cue.events.length,2,'Chord sectors use one vertical target, without an isolated intermediate note');
+        const root=home.notes[0]+chord.offset,actual=[...new Set(target.notes.map(note=>((note-root)%12+12)%12))].sort((a,b)=>a-b);
         assert.deepEqual(actual,[...new Set(INTERVALS[chord.quality].map(n=>n%12))].sort((a,b)=>a-b),'Every chord tone must survive articulation and spacing');
       }
     }
+  }
+}
+for(let chapter=1;chapter<=16;chapter++){
+  const routes=bookRoutesForChapter(chapter);assert(routes.length>0);
+  for(let index=0;index<routes.length;index++){
+    const route=createBookRoute(chapter,index,-1,()=>.2);assert.equal(route.chapter,chapter);assert.equal(route.sequence.length,routes[index].sequence.length);assert.match(route.code,new RegExp(`^C${String(chapter).padStart(2,'0')}·`));
+    const first=progressionEvents(route,0),later=progressionEvents(route,Math.min(4,route.sequence.length-1)),finale=progressionEvents(route,route.sequence.length-1,true);
+    assert.equal(first.events[0].part,'home');assert.equal(first.events.at(-1).part,'target');assert(later.events.length<=4);assert.equal(finale.events.length,route.sequence.length);
+    assert([...first.events,...later.events,...finale.events].every(event=>event.notes.length>=3),'Book chords must be vertical');
+    const reference=bookReferenceEvents(route,Math.min(1,route.sequence.length-1));
+    assert.deepEqual(reference.events.map(event=>event.part),['home','target']);
+    assert.equal(reference.events[0].notes.length,1,'Space reference HOME must be one note');
+    assert(reference.events[1].notes.length>=4,'Space reference target must be a vertical chord');
   }
 }
 const chord={offset:9,quality:'m7'},full={bass:false,quality:false};

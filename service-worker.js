@@ -1,4 +1,4 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.58";
+const CACHE_NAME = "reharm-ear-trainer-v0.59";
 const APP_FILES = [
   "./",
   "./index.html",

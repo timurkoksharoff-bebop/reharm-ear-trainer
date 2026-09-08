@@ -77,3 +77,28 @@ so a quality is identified by its notation rather than a mood-colour shortcut.
 The terrain was generated as a tile but has imperfect edge geometry. The dark
 rendering keeps it subdued; exact seamless art and a broader weapon/enemy roster
 remain visual polish work.
+
+## Visual backlog after Book Flight
+
+- Replace the flying drummer with a slim blonde woman drummer, using the supplied
+  2026-08-20 portrait only as a mood and silhouette reference: cool,
+  restrained and work-worn rather than sweet or glamorous.
+- Give her normally proportioned, slightly smaller ears; a pale leather flight cap
+  with rivets; and a few strands of blonde hair escaping from beneath the cap.
+- Keep the established hard-space material language: scuffs, oil, repaired metal,
+  practical hardware and a believable musician at work. Her artifact still starts
+  the rhythm encounter.
+
+### Start screen redesign
+
+- Replace the cold green control panel with a cohesive worn-space cabinet: chipped
+  steel, oily seams, rivets, cables, lamps, speaker grilles, faders and mixer parts.
+- Keep musical terms and all rank names in English. Russian remains for explanatory
+  copy and actions.
+- Present the four ranks as long physical cargo tokens or instrument crates with
+  crisp stencil/engraved labels rather than ordinary UI cards.
+- Preserve fast scanning and a large playfield. Dense machinery should frame the
+  choices without making the start flow cumbersome on mobile.
+- Before implementation, make several complete start-screen mockups for the user
+  to compare. Judge them as a game cover and arcade cabinet: the first screen must
+  sell the tension, character and replayable space combat immediately.

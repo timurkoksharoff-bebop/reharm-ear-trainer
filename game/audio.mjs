@@ -1,4 +1,4 @@
-import {cueEvents} from './music.mjs';
+import {bookReferenceEvents,cueEvents,progressionEvents} from './music.mjs';
 import {intervalCue} from './intervals.mjs';
 import {polyEvents} from './expedition.mjs';
 // A sustained, pitch-stable two-oscillator arcade synth. No sample/network
@@ -46,6 +46,24 @@ export class FlightAudio {
     for(const event of cue.events){
       for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.58/Math.sqrt(event.notes.length));
       if(event.part!=='tone')this.schedule(()=>{if(token===this.token)onPart(event.part);},event.at);
+    }
+    this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
+  }
+  progression(route,targetIndex,onPart,onEnd,finale=false){
+    this.stop();const token=this.token,cue=progressionEvents(route,targetIndex,finale),start=this.context.currentTime;
+    this.lastCue={...cue,kind:finale?'route-finale':'harmonic-context',targetIndex,code:route.code,sound:'vertical sustained synth'};
+    for(const event of cue.events){
+      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.54/Math.sqrt(event.notes.length));
+      this.schedule(()=>{if(token===this.token)onPart(event);},event.at);
+    }
+    this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
+  }
+  bookReference(route,targetIndex,onPart,onEnd){
+    this.stop();const token=this.token,cue=bookReferenceEvents(route,targetIndex),start=this.context.currentTime;
+    this.lastCue={...cue,kind:'book-reference',targetIndex,code:route.code,sound:'home note plus vertical target'};
+    for(const event of cue.events){
+      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.56/Math.sqrt(event.notes.length));
+      this.schedule(()=>{if(token===this.token)onPart(event);},event.at);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
   }

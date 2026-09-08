@@ -19,7 +19,7 @@ class Element {
 const elements=new Map();
 const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 get('space').getContext=()=>({});get('enemy-label').append(new Element());
-class TestAudio {rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
+class TestAudio {rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
 const context=vm.createContext({...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
   installLanguage(){},loadFlightImage:async()=>{},
@@ -83,4 +83,8 @@ while(state().cleared<12){
   run('audio.pending();answer("bass",s.enemy.chord.offset);answer("quality",s.enemy.chord.quality);');
 }
 run('advance();');assert.equal(state().mode,'finished');assert.equal(state().totalCleared,12);
+// Book Flight starts with route context; Space uses only a HOME note and the target chord.
+await run('startBookRun(1,0);');run('spawnEnemy();audio.pending();playCue(true);');
+assert.equal(run('audio.referencePlayed'),true);assert.equal(state().listening,true);assert.equal(state().bullets.length,0);run('audio.pending();');assert.equal(state().listening,false);
+assert(get('bass-pads').children.length>=4);run('answerBookChord(s.enemy.chord.offset,s.enemy.chord.quality,document.getElementById("bass-pads").children[0]);');assert.equal(state().mode,'resolving');
 console.log('Lifecycle checks passed: 12-enemy chromatic and 24-enemy campaign completion, single-token interlude/pause/replay, calibration, shields, retry/storage, drones and pressure.');

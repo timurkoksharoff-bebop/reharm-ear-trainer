@@ -89,3 +89,17 @@ Created with the built-in ImageGen tool on 2026-09-07, from original prompts:
   background was not transparent; the game clips cells into brass medallions.
 
 Number tokens are Canvas-rendered brass gears with illuminated musical symbols.
+
+## Flight 003 musician assets
+
+Built-in ImageGen created four original fictional, full-body transparent PNGs on
+2026-09-08: `trumpeter.png`, `keytarist.png`, `guitarist.png` and `drummer.png`.
+The prompts specify weathered working musicians in worn orbital flight gear; no
+real-person likeness was requested. The game uses them only after a small relic
+is captured. Relics themselves are deterministic Canvas drawings.
+
+`keytar-exact.svg` and `guitar-exact.svg` are hand-authored vector overlays. The
+keytar has fourteen equal white keys with black-key groups 2–3–2–3. The guitar
+overlay has exactly six strings and six tuning pegs, with single markers at 5, 7,
+10, 15, 17, 19 and 21 and a double marker at 12. These overlays prevent generative
+geometry from becoming the musical reference.

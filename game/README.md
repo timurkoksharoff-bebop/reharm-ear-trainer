@@ -58,8 +58,8 @@ See [MUSICAL_NOTES.md](MUSICAL_NOTES.md), [DESIGN.md](DESIGN.md),
 ## Flight 002 additions
 
 Four pilot difficulties, scrolling Moon/Mars art, brass instruments and compact
-root/type tabs. Beginner and Student have no collidable terrain obstacles;
-Magister and Herbie add moving rock corridors. Skip bypasses calibration.
+root/type tabs. Beginner has no collidable terrain; Student introduces broad rock
+corridors, while Magister and Herbie narrow and accelerate them. Skip bypasses calibration.
 
 Interval activities now require **one** brass number token, independent of direction:
 minor third → ♭3, fifth → 5, minor seventh → ♭7, major seventh → 7.
@@ -67,9 +67,9 @@ Each field contains exactly one correct token (one of ♭5/♯4 for a tritone).
 Any wrong pickup loses the attempt. Captured tokens shrink and emit particles.
 
 Five fictional steampunk subject teachers approach from four edges. Neutralizing
-them grants hints, rapid fire, cloak or shield. Six artifacts grant temporary
-effects or interrupt the current cue immediately with guide-tone, chord-only or
-rhythm recognition. Jazz Bass asks for chord member 3 or 7; the latter is the
+them grants hints, rapid fire, cloak or shield. Instrument relics grant temporary
+effects or interrupt the current cue immediately with guide-tone, chord-only,
+melody, modal or rhythm recognition. Jazz Bass asks for chord member 3 or 7; the latter is the
 minor seventh in its dominant-seventh cue. Correct Rock Tongue recognition fully
 restores HP. Rhythm buttons have English names. Space repeats the current signal,
 including when a musical answer button has keyboard focus.
@@ -78,8 +78,9 @@ The sound hangar contains all 22 chord qualities, interval labels, 20 rhythm
 examples and 10 polyrhythm ratios. Chords share the exact flight audio path,
 with optional arpeggios for comparison. Rhythm examples can loop; polyrhythm
 layers can be heard separately. Tumbao and Montuno are marked as instrument parts.
-Cymbal challenges open a frozen-flight room with a swaying cyborg quartet.
-Recognizing the pattern returns to flight. Drum Machine appears from Student,
+Capturing a drummer relic opens a frozen-flight rhythm performance with the drummer
+in front of the cyborg quartet. Zildjian is stored as Rhythm Focus; one charge removes
+half the wrong rhythm choices. Recognizing the pattern returns to flight. Drum Machine appears from Student,
 starting with 2:3, 3:2, 3:4 and 4:3; higher levels add fives and sevens.
 
 Russian is the default with a device-local English toggle. Space repeats even

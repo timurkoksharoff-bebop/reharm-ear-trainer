@@ -169,8 +169,12 @@ const ARTIFACTS=[
   {name:'Jazz Bass',elixir:'Guide Tone',text:'Услышь 3 или 7, поймай цифру — учителя нейтрализуются'},
   {name:'Overdrive',elixir:'Iron Fuzz',text:'Двойной урон и щит · 10 секунд'},
   {name:'Rock Tongue',elixir:'Full Recovery',text:'Узнай тип случайного аккорда → HP 100%'},
-  {name:'Zildjian',elixir:'Rhythm Portal',text:'Узнай ритм → щит + автомат'},
+  {name:'Zildjian',elixir:'Rhythm Focus',text:'Запаси подсказку: убрать половину неверных ритмов'},
   {name:'Drum Machine',elixir:'Phase Lock',text:'Узнай соотношение пульсов → защита и автомат'},
+  {name:'The Trumpeter',elixir:'Harmonic Flight',text:'Собери basic, guide или color tones для случайного аккорда'},
+  {name:'The Key Pilot',elixir:'Melody Memory',text:'Узнай одноголосную тему по названию или голосом'},
+  {name:'The Guitar Pilot',elixir:'Modal Drive',text:'Узнай лад по восходящей или нисходящей гамме'},
+  {name:'The Drummer',elixir:'Rhythm Trial',text:'Узнай стиль или ритмическую партию'},
 ];
 // Authored short recognition examples, not arrangements copied from a source.
 // Beat positions are quarter-note units across two bars. Same tempo for all.
@@ -234,6 +238,33 @@ function polyEvents(pattern,cycles=3,layer='both'){
 }
 const NUMBER_LABELS=['1','♭2','2','♭3','3','4','♭5','♯4','5','♭6','6','♭7','7','8'];
 const NUMBER_OFFSETS={'1':0,'♭2':1,'2':2,'♭3':3,'3':4,'4':5,'♭5':6,'♯4':6,'5':7,'♭6':8,'6':9,'♭7':10,'7':11,'8':12};
+const TONE_OFFSETS={'1':0,'♭9':1,'9':2,'♯9':3,'♭3':3,'3':4,'11':5,'♯11':6,'♭5':6,'5':7,'♭13':8,'13':9,'♭7':10,'7':11};
+const TONE_PROGRAMS={
+  '7':{basic:['1','5'],guide:['3','♭7'],color:[['9','♯11','13'],['♭9','♯9','♭13']]},
+  maj7:{basic:['1','5'],guide:['3','7'],color:[['9','♯11','13']]},
+  m7:{basic:['1','5'],guide:['♭3','♭7'],color:[['9','11','13']]},
+  m7b5:{basic:['1','♭5'],guide:['♭3','♭5','♭7'],color:[['9','11','♭13']]},
+  '7sus4':{basic:['1','5'],guide:['11','♭7'],color:[['9','13']]},
+};
+const TONE_MODES=['basic','guide','color'];
+const MELODIES=[
+  {name:'When the Saints',aliases:['when the saints','saints','when the saints go marching in'],notes:[0,4,5,7,0,4,5,7,0,4,5,7,4,0,4,2],beats:[.5,.5,.5,1,.5,.5,.5,1,.5,.5,.5,.75,.75,.75,.5,1.5]},
+  {name:'Amazing Grace',aliases:['amazing grace'],notes:[7,0,4,0,4,2,0,9,7],beats:[.6,1.1,.45,.45,1.1,.6,1.1,.6,1.5]},
+  {name:'Ode to Joy',aliases:['ode to joy','ode joy'],notes:[4,4,5,7,7,5,4,2,0,0,2,4,4,2,2],beats:[.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.8,.28,1.2]},
+  {name:'Greensleeves',aliases:['greensleeves','green sleeves'],notes:[9,0,2,4,5,4,2,11,7,9,11,0,9,9],beats:[.55,1,.55,.8,.55,.55,.8,.55,.9,.55,.55,.8,.55,1.2]},
+];
+const MODES=[
+  {name:'Ionian',level:0,notes:[0,2,4,5,7,9,11,12]},{name:'Dorian',level:0,notes:[0,2,3,5,7,9,10,12]},{name:'Phrygian',level:0,notes:[0,1,3,5,7,8,10,12]},{name:'Lydian',level:0,notes:[0,2,4,6,7,9,11,12]},{name:'Mixolydian',level:0,notes:[0,2,4,5,7,9,10,12]},{name:'Aeolian',level:0,notes:[0,2,3,5,7,8,10,12]},{name:'Locrian',level:0,notes:[0,1,3,5,6,8,10,12]},
+  {name:'Harmonic Minor',level:1,notes:[0,2,3,5,7,8,11,12]},{name:'Phrygian Dominant',level:1,notes:[0,1,4,5,7,8,10,12]},{name:'Melodic Minor',level:1,notes:[0,2,3,5,7,9,11,12]},{name:'Lydian Dominant',level:1,notes:[0,2,4,6,7,9,10,12]},{name:'Altered',level:1,notes:[0,1,3,4,6,8,10,12]},{name:'Locrian Natural 2',level:1,notes:[0,2,3,5,6,8,10,12]},
+  {name:'Whole Tone',level:2,notes:[0,2,4,6,8,10,12]},{name:'Diminished Half-Whole',level:2,notes:[0,1,3,4,6,7,9,10,12]},{name:'Diminished Whole-Half',level:2,notes:[0,2,3,5,6,8,9,11,12]},{name:'Bebop Dominant',level:2,notes:[0,2,4,5,7,9,10,11,12]},{name:'Double Harmonic',level:2,notes:[0,1,4,5,7,8,11,12]},{name:'Hungarian Minor',level:2,notes:[0,2,3,6,7,8,11,12]},
+];
+const ROOT_NAMES=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const QUALITY_SPEECH={'7':'seven',maj7:'major seven',m7:'minor seven',m7b5:'minor seven flat five','7sus4':'seven sus four'};
+function toneMission(quality,mode,random=Math.random){
+  const program=TONE_PROGRAMS[quality],groups=program[mode],required=mode==='color'?groups[Math.floor(random()*groups.length)]:groups;
+  return {quality,mode,required:[...required]};
+}
+function toneAnswer(challenge,label){return {correct:challenge.required.includes(label),complete:challenge.required.every(t=>challenge.collected.includes(t)||t===label)};}
 function orderedTargets(interval,direction){return [interval];}
 function gradeNumber(challenge,label){
   const note=NUMBER_OFFSETS[label];
@@ -248,26 +279,26 @@ function obstacleRow(index,width,gap){
 function touchesWall(player,wall,r=11){return player.x+r>wall.x&&player.x-r<wall.x+wall.w&&player.y+r>wall.y&&player.y-r<wall.y+wall.h;}
 
 function createExpedition(api){
-  const {s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,W,getH,images,document}=api;
+  const {s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH,images,document}=api;
   let pilot=0,planet='moon',teachers=[],walls=[],drops=[],digits=[],special=null,queue=[],timer=5,wallTimer=3,artifactTimer=9,index=0,dropIndex=0,wallIndex=0;
-  let cloak=0,shield=0,rapid=0,fuzz=0,hints=0,collectCooldown=0,lastRender='',captures=[],renderedChallenge=null;
+  let cloak=0,shield=0,rapid=0,fuzz=0,hints=0,rhythmFocus=0,collectCooldown=0,lastRender='',captures=[],renderedChallenge=null;
   const $=id=>document.getElementById(id);
   const random=items=>items[Math.floor(Math.random()*items.length)];
-  function reset(level=0){pilot=level;planet=level%2?'mars':'moon';teachers=[];walls=[];drops=[];digits=[];special=null;queue=[];timer=5;wallTimer=3;artifactTimer=9;index=dropIndex=wallIndex=0;cloak=shield=rapid=fuzz=hints=collectCooldown=0;render();}
+  function reset(level=0){pilot=level;planet=level%2?'mars':'moon';teachers=[];walls=[];drops=[];digits=[];special=null;queue=[];timer=5;wallTimer=3;artifactTimer=9;index=dropIndex=wallIndex=0;cloak=shield=rapid=fuzz=hints=rhythmFocus=collectCooldown=0;render();}
   function render(){
-    const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,s.listening,s.mode,special?.kind,Math.ceil(special?.time||0),special?.collected.length,special?.target]);
+    const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
     if(stamp===lastRender)return;lastRender=stamp;
     $('planet-name').textContent=`${planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
-    $('effects').textContent=[rapid>0?`AUTO ${Math.ceil(rapid)}s`:'',cloak>0?`GHOST ${Math.ceil(cloak)}s`:'',shield>0?`SHIELD ${Math.ceil(shield)}s`:'',fuzz>0?`FUZZ ${Math.ceil(fuzz)}s`:''].filter(Boolean).join(' · ');
+    $('effects').textContent=[rapid>0?`AUTO ${Math.ceil(rapid)}s`:'',cloak>0?`GHOST ${Math.ceil(cloak)}s`:'',shield>0?`SHIELD ${Math.ceil(shield)}s`:'',fuzz>0?`FUZZ ${Math.ceil(fuzz)}s`:'',rhythmFocus?`RHYTHM FOCUS ×${rhythmFocus}`:''].filter(Boolean).join(' · ');
     $('hint').textContent=`Подсказка · ${hints}`;$('hint').disabled=!hints||s.listening||!['active','resolving'].includes(s.mode);
     $('special-panel').hidden=!special;
     if(special){
-      $('special-title').textContent=special.kind==='poly'?'DRUM MACHINE · ВЫСОКИЙ : НИЗКИЙ':special.kind==='rhythm'?'RHYTHM PORTAL':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':'СОБЕРИ ИНТЕРВАЛ';
-      $('special-detail').textContent=special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
-      const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:POLYRHYTHMS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):[];
+      $('special-title').textContent=special.kind==='poly'?'DRUM MACHINE · ВЫСОКИЙ : НИЗКИЙ':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?'MELODY MEMORY · KEY PILOT':special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='tones'?`${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
+      $('special-detail').textContent=special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='melody'?'Полёт удержан · назови тему по-английски или выбери название':special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='tones'?`Трубач просит по-английски · собрано ${special.collected.length}/${special.required.length} · ошибка гасит режим`:special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
+      const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:POLYRHYTHMS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):[];
       // Keep live buttons in place while the countdown changes: replacing them
       // between pointer-down and pointer-up used to discard some answers.
-      if(renderedChallenge!==special){$('special-options').replaceChildren();for(const choice of choices){const b=document.createElement('button');b.textContent=`${choice.icon} ${choice.name}`.trim();b.addEventListener('click',()=>answerSpecial(choice.id));$('special-options').append(b);}renderedChallenge=special;}
+      if(renderedChallenge!==special){$('special-options').replaceChildren();for(const choice of choices){const b=document.createElement('button');b.textContent=`${choice.icon} ${choice.name}`.trim();b.addEventListener('click',()=>answerSpecial(choice.id));$('special-options').append(b);}if(special.kind==='rhythm'&&rhythmFocus){const focus=document.createElement('button');focus.className='voice-answer';focus.textContent=`◉ ZILDJIAN FOCUS ×${rhythmFocus}`;focus.addEventListener('click',useRhythmFocus);$('special-options').append(focus);}if(['melody','mode'].includes(special.kind)){const mic=document.createElement('button');mic.className='voice-answer';mic.textContent=special.kind==='melody'?'🎙 SAY TITLE':'🎙 SAY MODE';mic.addEventListener('click',listenTitle);$('special-options').append(mic);}renderedChallenge=special;}
       for(const b of $('special-options').children)b.disabled=s.listening||s.mode==='paused';
     }
   }
@@ -294,28 +325,43 @@ function createExpedition(api){
     c.label=target;
     digits=labels.map((label,i)=>({label,x:45+(i%4)*(W-90)/3,y:145+Math.floor(i/4)*70,vx:(i%2?1:-1)*(22+Math.random()*25),vy:(i%3?1:-1)*22,age:Math.random()*6}));
   }
+  function makeToneNumbers(c){
+    const distractors=Object.keys(TONE_OFFSETS).filter(label=>!c.required.includes(label));
+    const labels=[...c.required,...distractors.sort(()=>Math.random()-.5).slice(0,Math.max(7,11-c.required.length))].sort(()=>Math.random()-.5);
+    const colors={basic:'#7ef5d1',guide:'#ffcb72',color:'#ff70d0'};
+    digits=labels.map((label,i)=>({label,color:colors[c.toneMode],x:45+(i%4)*(W-90)/3,y:145+Math.floor(i/4)*70,vx:(i%2?1:-1)*(25+Math.random()*30),vy:(i%3?1:-1)*24,age:Math.random()*6}));
+  }
   function startChallenge(kind){
     if(special||s.listening)return false;
     if(!['active','resolving'].includes(s.mode))return false;
-    special={kind:kind,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:kind==='rhythm',beat:0};
+    special={kind:kind,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','melody','mode'].includes(kind),beat:0,createdAt:Date.now()};
     s.bullets=[];
     if(kind==='numbers'){special.interval=random(pilot<2?[3,4,6,7]:[1,2,3,4,5,6,7,8,9,10,11,12]);special.direction=random(['up','down']);makeNumbers(special);}
     if(kind==='guide'){special.target=random(['3','7']);makeNumbers(special);}
     if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=random(special.options);special.root=48+Math.floor(Math.random()*12);}
-    if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=random(pool);special.options=pool.filter(i=>!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);}
+    if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=random(pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
     if(kind==='poly'){special.options=POLYRHYTHMS.map((_,i)=>i).filter(i=>POLYRHYTHMS[i].level<=Math.max(1,pilot));special.target=random(special.options);}
+    if(kind==='melody'){special.options=MELODIES.map((_,i)=>i).slice(0,pilot<2?3:MELODIES.length);special.target=random(special.options);special.root=pilot<2?60:57+Math.floor(Math.random()*6);}
+    if(kind==='mode'){const pool=MODES.map((mode,i)=>({mode,i})).filter(item=>item.mode.level<=Math.min(2,pilot)).map(item=>item.i);special.target=random(pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=55+Math.floor(Math.random()*7);special.direction=random(['up','down']);}
+    if(kind==='tones'){
+      const qualities=pilot<2?['7','maj7','m7','7sus4']:Object.keys(TONE_PROGRAMS),quality=random(qualities),toneMode=random(TONE_MODES),mission=toneMission(quality,toneMode);
+      special={...special,...mission,toneMode,rootPc:Math.floor(Math.random()*12)};special.root=48+special.rootPc;special.chordName=`${ROOT_NAMES[special.rootPc]}${QUALITIES[quality].glyph}`;special.pause=false;makeToneNumbers(special);
+    }
     replay();render();syncPads();return true;
   }
   function replay(){
     if(!special)return;const current=special;s.listening=true;signal('♫ Слушай артефакт',true);render();syncPads();
-    const done=()=>{if(special!==current||s.mode==='paused')return;s.listening=false;signal(current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':'Выбери услышанное');render();syncPads();};
+    const done=()=>{if(special!==current||s.mode==='paused')return;s.listening=false;signal(current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':current.kind==='tones'?`Собери ${current.toneMode.toUpperCase()} TONES для ${current.chordName}`:'Выбери услышанное');render();syncPads();};
     if(special.kind==='numbers')audio.interval(60+s.route.key,special.interval,special.direction,done);
     else if(special.kind==='guide')audio.guide(60+s.route.key,special.target,done);
     else if(special.kind==='chord')audio.chordOnly(special.root,INTERVALS[special.target],done);
     else if(special.kind==='poly')audio.poly(POLYRHYTHMS[special.target],done);
+    else if(special.kind==='tones')audio.announce(`${ROOT_NAMES[special.rootPc]} ${QUALITY_SPEECH[special.quality]}. Give me ${special.toneMode} tones, man.`,()=>{if(special===current)audio.trumpetChord(special.root,INTERVALS[special.quality],done);});
+    else if(special.kind==='melody')audio.melody(special.root,MELODIES[special.target],done);
+    else if(special.kind==='mode')audio.scale(special.root,MODES[special.target],special.direction,done);
     else audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
   }
-  function specialName(c,value=c.target){return c.kind==='poly'?POLYRHYTHMS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='chord'?QUALITIES[value].glyph:c.kind==='guide'?c.target:c.label;}
+  function specialName(c,value=c.target){return c.kind==='poly'?POLYRHYTHMS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?QUALITIES[value].glyph:c.kind==='tones'?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
   function endChallenge(won,wrong=false){
     const c=special;if(!c)return;
     audio.stop();s.listening=false;special=null;digits=[];
@@ -324,8 +370,11 @@ function createExpedition(api){
       else if(c.kind==='rhythm'){shield=12;rapid=10;feedback(`${RHYTHMS[c.target].name} · Rhythm Shield`);}
       else if(c.kind==='poly'){shield=10;rapid=12;feedback(`${POLYRHYTHMS[c.target].name} · Phase Lock`);}
       else if(c.kind==='guide'){teachers.filter(t=>t.hp>0).forEach(killTeacher);shield=8;feedback(`Guide tone ${c.target} · учителя нейтрализованы`);}
+      else if(c.kind==='tones'){rapid=14;shield=12;s.energy=Math.min(99,s.energy+45);feedback(`${c.toneMode.toUpperCase()} TONES · ${c.chordName} · HARMONIC FLIGHT`);}
+      else if(c.kind==='melody'){cloak=12;rapid=12;s.energy=Math.min(99,s.energy+35);feedback(`${MELODIES[c.target].name} · MELODY MEMORY`);}
+      else if(c.kind==='mode'){fuzz=12;rapid=14;s.energy=Math.min(99,s.energy+40);feedback(`${MODES[c.target].name} · MODAL DRIVE`);}
       else{rapid=10;s.energy=Math.min(99,s.energy+30);feedback(`${orderedTargets(c.interval,c.direction).map(n=>n===6?'♭5 / ♯4':Object.keys(NUMBER_OFFSETS).find(k=>NUMBER_OFFSETS[k]===n)).join(' → ')} · +30 силы`);}
-    }else{feedback(wrong?`Попытка потеряна · нужно ${c.label}`:['rhythm','chord','poly'].includes(c.kind)?`Это ${specialName(c)}`:'Время вышло · попробуем ещё',true);}
+    }else{feedback(wrong?c.kind==='tones'?`Гармония погасла · нужны ${c.required.join(' · ')}`:`Попытка потеряна · нужно ${c.label}`:['rhythm','chord','poly','melody','mode'].includes(c.kind)?`Это ${specialName(c)}`:'Время вышло · попробуем ещё',true);}
     s.fireTimer=Math.max(s.fireTimer,4);render();renderHud();syncPads();
     if(s.mode==='active')api.playCue();
   }
@@ -334,6 +383,17 @@ function createExpedition(api){
     if(value===special.target){endChallenge(true);return;}
     special.misses++;special.revealed=true;special.time=Math.max(0,special.time-3);
     feedback(`Выбрано ${specialName(special,value)} · звучит ${specialName(special)}`,true);lastRender='';render();
+  }
+  function useRhythmFocus(){
+    if(!special||special.kind!=='rhythm'||!rhythmFocus||s.listening||s.mode==='paused')return false;
+    const wrong=special.options.filter(i=>i!==special.target),remove=new Set(wrong.slice().sort(()=>Math.random()-.5).slice(0,Math.ceil(wrong.length/2)));
+    special.options=special.options.filter(i=>!remove.has(i));rhythmFocus--;renderedChallenge=null;lastRender='';
+    feedback(`Zildjian Focus · осталось ${special.options.length} вариантов`);render();syncPads();return true;
+  }
+  function answerSpoken(text){
+    if(!special||!['melody','mode'].includes(special.kind)||s.listening)return false;const heard=String(text).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(),items=special.kind==='melody'?MELODIES:MODES;
+    const match=special.options.find(i=>(items[i].aliases||[items[i].name.toLowerCase()]).some(alias=>heard.includes(alias)));
+    if(match===undefined){feedback(`Не расслышал название: “${text}”`,true);return false;}answerSpecial(match);return true;
   }
   function collectNumber(label){
     if(!special||s.listening)return;const result=gradeNumber(special,label);
@@ -344,19 +404,27 @@ function createExpedition(api){
     endChallenge(result.correct,!result.correct);
     render();
   }
+  function collectTone(label){
+    if(!special||special.kind!=='tones'||s.listening)return;const c=special,result=toneAnswer(c,label),captured=digits.find(d=>d.label===label);collectCooldown=.45;
+    if(captured){captures.push({...captured,life:.55,correct:result.correct});burst(captured.x,captured.y,result.correct?captured.color:'#ff596e',result.correct?34:45);s.rings?.push({x:captured.x,y:captured.y,age:0});}
+    if(!result.correct){endChallenge(false,true);return;}
+    c.collected.push(label);digits=digits.filter(d=>d.label!==label);s.score+=90;lastRender='';
+    if(result.complete)endChallenge(true);else{feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
+  }
   function artifact(type){
     feedback(`${ARTIFACTS[type].name} · ${ARTIFACTS[type].elixir}`);
     if(type===0)rapid=14;
     if(type===1)cloak=12;
     if(type===2){if(!teachers.some(t=>t.hp>0))spawnTeacher();}
     if(type===3){fuzz=shield=10;}
-    if([2,4,5,6].includes(type)&&['active','resolving'].includes(s.mode)){
+    if(type===5){rhythmFocus++;feedback(`Zildjian · Rhythm Focus ×${rhythmFocus}`);}
+    if([2,4,6,7,8,9,10].includes(type)&&['active','resolving'].includes(s.mode)){
       audio.stop();s.listening=false;special=null;digits=[];queue=[];s.capsule=null;s.capsuleTimer=0;
-      startChallenge(type===2?'guide':type===4?'chord':type===6?'poly':'rhythm');
+      startChallenge(type===2?'guide':type===4?'chord':type===6?'poly':type===7?'tones':type===8?'melody':type===9?'mode':'rhythm');
     }
     render();
   }
-  function dropArtifact(type=dropIndex++%(pilot>=1?7:6)){drops.push({type,x:60+Math.random()*(W-120),y:110,age:0});}
+  function dropArtifact(type=null){if(type===null){const pool=pilot===0?[0,1,2,3,4,5,6,9,10]:ARTIFACTS.map((_,i)=>i);type=pool[dropIndex++%pool.length];}drops.push({type,x:60+Math.random()*(W-120),y:110,age:0});}
   function afterHydra(){if(s.totalCleared%3===0)planet=planet==='moon'?'mars':'moon';queue.push('numbers');dropArtifact();render();}
   function hint(){if(!hints||s.listening||!['active','resolving'].includes(s.mode))return;hints--;if(special){feedback(`Подсказка: ${specialName(special)}`);}else if(s.capsule){feedback(s.capsule.heard===s.capsule.wanted?'Капсула совпадает · лови':'Другой интервал · пропусти');}else if(s.enemy)feedback(`Корень: ${api.degree(s.enemy.chord.offset)} · тип: ${QUALITIES[s.enemy.chord.quality].glyph}`);render();}
   function tick(dt){
@@ -383,16 +451,36 @@ function createExpedition(api){
       teachers=teachers.filter(t=>t.hp>0&&t.age<45);
       if(special){special.time-=dt;if(special.time<=0){endChallenge(false);return;}
         for(const d of digits){d.age+=dt;d.x+=(d.vx+Math.sin(d.age*2)*15)*dt;d.y+=d.vy*dt;if(d.x<30||d.x>W-30)d.vx*=-1;if(d.y<120||d.y>getH()-35)d.vy*=-1;d.x=Math.max(29,Math.min(W-29,d.x));d.y=Math.max(119,Math.min(getH()-34,d.y));
-          if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<36){collectNumber(d.label);break;}}
+          if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<36){if(special.kind==='tones')collectTone(d.label);else collectNumber(d.label);break;}}
       }else if(queue.length&&!s.capsule&&s.capsuleTimer<=0)startChallenge(queue.shift());
     }
     render();
   }
   function drawSprite(img,cell,cols,rows,x,y,size){if(!img?.complete||!img.naturalWidth)return;const sw=img.naturalWidth/cols,sh=img.naturalHeight/rows,scale=size/Math.max(sw,sh);api.ctx.drawImage(img,(cell%cols)*sw,Math.floor(cell/cols)*sh,sw,sh,x-sw*scale/2,y-sh*scale/2,sw*scale,sh*scale);}
+  function drawRelic(d){
+    const ctx=api.ctx;if(d.type<7){ctx.save();ctx.beginPath();ctx.arc(d.x,d.y,29,0,Math.PI*2);ctx.clip();if(d.type===6)drawSprite(images.drummachine,0,1,1,d.x,d.y,55);else drawSprite(images.artifacts,d.type,3,2,d.x,d.y,55);ctx.restore();return;}
+    const hue={7:34,8:192,9:292,10:12}[d.type]||45,spin=d.age*.8;
+    ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(spin)*.12);ctx.shadowColor=`hsl(${hue} 95% 62%)`;ctx.shadowBlur=22;
+    ctx.fillStyle='#231b18';ctx.strokeStyle=`hsl(${hue} 88% 72%)`;ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(-22,-13);ctx.lineTo(0,-26);ctx.lineTo(22,-13);ctx.lineTo(22,14);ctx.lineTo(0,27);ctx.lineTo(-22,14);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=`hsla(${hue} 70% 42% / .72)`;ctx.beginPath();ctx.moveTo(-22,-13);ctx.lineTo(0,0);ctx.lineTo(0,27);ctx.lineTo(-22,14);ctx.closePath();ctx.fill();
+    ctx.fillStyle=`hsla(${hue+24} 82% 52% / .5)`;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(22,-13);ctx.lineTo(22,14);ctx.lineTo(0,27);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+    ctx.strokeStyle='#fff0bd';ctx.fillStyle='#fff0bd';ctx.lineWidth=2;ctx.lineCap='round';
+    if(d.type===7){ctx.beginPath();ctx.moveTo(-12,3);ctx.lineTo(9,-5);ctx.lineTo(9,6);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(-14,3,3,0,Math.PI*2);ctx.fill();}
+    if(d.type===8){ctx.strokeRect(-14,-7,28,15);for(let x=-10;x<14;x+=6){ctx.beginPath();ctx.moveTo(x,-7);ctx.lineTo(x,8);ctx.stroke();}for(const x of [-7,5])ctx.fillRect(x,-7,3,8);}
+    if(d.type===9){ctx.save();ctx.rotate(-.42);ctx.beginPath();ctx.ellipse(-8,4,9,7,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-1,1);ctx.lineTo(16,-6);ctx.stroke();ctx.restore();}
+    if(d.type===10){ctx.beginPath();ctx.arc(0,3,11,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-13,-13);ctx.lineTo(7,7);ctx.moveTo(13,-13);ctx.lineTo(-7,7);ctx.stroke();}
+    ctx.strokeStyle=`hsla(${hue} 95% 72% / .62)`;ctx.beginPath();ctx.ellipse(0,0,35+Math.sin(d.age*5)*3,17,spin,0,Math.PI*2);ctx.stroke();ctx.restore();
+  }
   function draw(){const ctx=api.ctx;
     for(const w of walls){ctx.save();ctx.beginPath();ctx.rect(w.x,w.y,w.w,w.h);ctx.clip();const tex=images[planet];if(tex?.complete&&tex.naturalWidth)ctx.drawImage(tex,0,tex.naturalHeight*.35,tex.naturalWidth,tex.naturalHeight*.2,w.x,w.y,w.w,w.h);ctx.fillStyle='#4b322b66';ctx.fillRect(w.x,w.y,w.w,w.h);ctx.restore();ctx.strokeStyle='#d2a265';ctx.lineWidth=3;ctx.strokeRect(w.x,w.y,w.w,w.h);ctx.fillStyle='#fbd492';for(let x=w.x+12;x<w.x+w.w;x+=30)ctx.fillRect(x,w.y+6,3,3);}
     for(const t of teachers){drawSprite(images.teachers,t.type,5,1,t.x,t.y,105);ctx.fillStyle='#ffe0a2';ctx.textAlign='center';ctx.font='12px system-ui';ctx.fillText(TEACHERS[t.type].name,t.x,t.y+57);}
-    for(const d of drops){ctx.save();ctx.beginPath();ctx.arc(d.x,d.y,29,0,Math.PI*2);ctx.clip();if(d.type===6)drawSprite(images.drummachine,0,1,1,d.x,d.y,55);else drawSprite(images.artifacts,d.type,3,2,d.x,d.y,55);ctx.restore();ctx.strokeStyle='#eec56a';ctx.beginPath();ctx.arc(d.x,d.y,29,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#ffe0a2';ctx.textAlign='center';ctx.font='10px system-ui';ctx.fillText(ARTIFACTS[d.type].name,d.x,d.y+39);}
+    for(const d of drops){drawRelic(d);ctx.strokeStyle=d.type>=7?`hsl(${(d.age*90+d.type*70)%360} 95% 72%)`:'#eec56a';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=d.type>=7?18:0;ctx.beginPath();ctx.arc(d.x,d.y,29+Math.sin(d.age*5)*2,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#ffe0a2';ctx.textAlign='center';ctx.font='10px system-ui';ctx.fillText(ARTIFACTS[d.type].name,d.x,d.y+39);}
+    if(special?.kind==='tones'){
+      const lit=special.collected.length,H=getH(),x=W*.76,y=H*.34;
+      ctx.save();ctx.globalAlpha=.82;for(let i=0;i<4;i++){ctx.strokeStyle=`hsla(${(i*85+special.time*25)%360} 95% 68% / ${.28+lit*.18})`;ctx.lineWidth=2+i;ctx.beginPath();ctx.arc(x,y,63+i*14+Math.sin(special.time*3+i)*5,0,Math.PI*2);ctx.stroke();}
+      drawSprite(images.trumpeter,0,1,1,x,y,205);ctx.globalAlpha=1;ctx.fillStyle='#091820d9';ctx.strokeStyle=special.toneMode==='color'?'#ff77d3':special.toneMode==='guide'?'#ffc66d':'#78f5d0';ctx.lineWidth=2;ctx.fillRect(18,105,255,43);ctx.strokeRect(18,105,255,43);ctx.fillStyle=ctx.strokeStyle;ctx.textAlign='left';ctx.font='bold 17px Georgia';ctx.fillText(`${special.toneMode.toUpperCase()} TONES · ${special.chordName}`,29,125);ctx.font='11px system-ui';ctx.fillText(`${special.collected.join(' · ')||'♫'}  ${special.collected.length}/${special.required.length}`,29,141);ctx.restore();
+    }
     for(const d of [...digits,...captures]){
       ctx.save();ctx.translate(d.x,d.y);
       if(d.life!==undefined){const k=d.life/.5;ctx.scale(k,k);ctx.globalAlpha=k;}
@@ -402,10 +490,11 @@ function createExpedition(api){
       ctx.beginPath();for(let i=0;i<24;i++){const a=i*Math.PI/12,r=i%2?25:29;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();ctx.stroke();
       ctx.fillStyle='#172a2c';ctx.strokeStyle='#f3c885';ctx.beginPath();ctx.arc(0,0,21,0,Math.PI*2);ctx.fill();ctx.stroke();
       for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;ctx.fillStyle='#ffe2a5';ctx.beginPath();ctx.arc(Math.cos(a)*24,Math.sin(a)*24,2,0,Math.PI*2);ctx.fill();}
-      ctx.shadowColor='#ffc46c';ctx.shadowBlur=9;ctx.fillStyle='#ffe3a7';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px Georgia, serif';ctx.fillText(d.label,0,1);ctx.restore();
+      ctx.shadowColor=d.color||'#ffc46c';ctx.shadowBlur=d.color?18:9;ctx.fillStyle=d.color||'#ffe3a7';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px Georgia, serif';ctx.fillText(d.label,0,1);ctx.restore();
     }
   }
-  function drawBandOverlay(){
+  function arrival(target,from=1){const t=Math.min(1,Math.max(0,(Date.now()-(special?.createdAt||Date.now()))/720)),ease=1-(1-t)**3;return target+(1-ease)*W*.85*from;}
+  function drawRhythmOverlay(){
     const ctx=api.ctx,H=getH(),beat=special?.beat||0,pulse=s.listening?Math.sin((audio.context?.currentTime||0)*Math.PI*110/60):0;
     ctx.save();
     ctx.fillStyle='#09151ee0';ctx.fillRect(12,H*.20,W-24,H*.60);
@@ -415,22 +504,42 @@ function createExpedition(api){
     const band=images.band;
     for(let i=0;i<4;i++){
       const x=W*(.16+i*.225),y=H*.54+Math.sin(i*2)*4;
-      ctx.save();ctx.translate(x,y);ctx.rotate(pulse*(i%2?-.025:.025));
-      if(band?.complete&&band.naturalWidth){const bounds=[0,370,730,1190,1536],sx=bounds[i],sw=bounds[i+1]-sx,sh=band.naturalHeight,scale=Math.min(H*.70/sh,W*.235/sw);ctx.drawImage(band,sx,0,sw,sh,-sw*scale/2,-sh*scale/2,sw*scale,sh*scale);}ctx.restore();
+      ctx.save();ctx.globalAlpha=.34;ctx.translate(x,y);ctx.rotate(pulse*(i%2?-.025:.025));
+      if(band?.complete&&band.naturalWidth){const bounds=[0,370,730,1190,1536],sx=bounds[i],sw=bounds[i+1]-sx,sh=band.naturalHeight,scale=Math.min(H*.48/sh,W*.19/sw);ctx.drawImage(band,sx,0,sw,sh,-sw*scale/2,-sh*scale/2,sw*scale,sh*scale);}ctx.restore();
       ctx.fillStyle=i===beat%4?'#c4ffe4':'#817353';ctx.beginPath();ctx.arc(x,H*.82,5,0,Math.PI*2);ctx.fill();
     }
-    ctx.textAlign='center';ctx.fillStyle='#ffe2a7';ctx.font='bold 20px Georgia';ctx.fillText('THE COPPER QUARTET · FIELD PAUSE',W/2,H*.27);
-    ctx.font='12px system-ui';ctx.fillText('RHYTHM SIGNAL · 110 BPM',W/2,H*.30);
+    const drummerX=arrival(W*.52,-1);ctx.save();ctx.translate(drummerX,H*.53);ctx.rotate(pulse*.014);drawSprite(images.drummer,0,1,1,0,0,360);ctx.restore();
+    ctx.textAlign='center';ctx.fillStyle='#ffe2a7';ctx.font='bold 20px Georgia';ctx.fillText('THE DRUMMER · RHYTHM TRIAL',W/2,H*.25);
+    ctx.font='12px system-ui';ctx.fillText(`RHYTHM SIGNAL · 110 BPM${rhythmFocus?' · ZILDJIAN FOCUS READY':''}`,W/2,H*.29);
     ctx.restore();
   }
+  function drawMelodyOverlay(){
+    const ctx=api.ctx,H=getH(),pulse=Math.sin((audio.context?.currentTime||0)*5),x=W*.36,y=H*.47;
+    ctx.save();ctx.fillStyle='#081629df';ctx.fillRect(12,H*.18,W-24,H*.64);
+    const glow=ctx.createRadialGradient(x,y,15,x,y,W*.6);glow.addColorStop(0,'#854dff99');glow.addColorStop(.55,'#175cff35');glow.addColorStop(1,'#07162600');ctx.fillStyle=glow;ctx.fillRect(12,H*.18,W-24,H*.64);
+    for(let i=0;i<5;i++){ctx.strokeStyle=`hsla(${210+i*26} 95% 68% / ${.25+i*.08})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,85+i*18+8*pulse,32+i*12,Math.sin(i)*.22,0,Math.PI*2);ctx.stroke();}
+    const keyX=arrival(x,1);drawSprite(images.keytarist,0,1,1,keyX,y,310);
+    if(images.keytarExact?.complete&&images.keytarExact.naturalWidth){ctx.save();ctx.translate(keyX-3,y+19);ctx.rotate(-.17);ctx.drawImage(images.keytarExact,-132,-44,264,88);ctx.restore();}
+    ctx.fillStyle='#edf3ff';ctx.textAlign='center';ctx.font='bold 19px Georgia';ctx.fillText('MELODY MEMORY',W/2,H*.25);ctx.font='12px system-ui';ctx.fillStyle='#a8c8ff';ctx.fillText(s.listening?'♫ LISTEN TO THE LINE':'TAP A TITLE OR SAY IT IN ENGLISH',W/2,H*.29);ctx.restore();
+  }
+  function drawModeOverlay(){
+    const ctx=api.ctx,H=getH(),pulse=Math.sin((audio.context?.currentTime||0)*4),x=arrival(W*.59,-1),y=H*.49;
+    ctx.save();ctx.fillStyle='#11101cdf';ctx.fillRect(12,H*.18,W-24,H*.64);const glow=ctx.createRadialGradient(x,y,15,x,y,W*.62);glow.addColorStop(0,'#c54f9a8c');glow.addColorStop(.5,'#3e79b43a');glow.addColorStop(1,'#080b1500');ctx.fillStyle=glow;ctx.fillRect(12,H*.18,W-24,H*.64);
+    for(let i=0;i<6;i++){ctx.strokeStyle=`hsla(${285-i*17} 88% 68% / ${.18+i*.055})`;ctx.beginPath();ctx.ellipse(x,y,70+i*17+5*pulse,29+i*9,-.22,0,Math.PI*2);ctx.stroke();}
+    drawSprite(images.guitarist,0,1,1,x,y,330);
+    if(images.guitarExact?.complete&&images.guitarExact.naturalWidth){ctx.save();ctx.translate(x-4,y-1);ctx.rotate(-.18);ctx.drawImage(images.guitarExact,-168,-47,336,94);ctx.restore();}
+    ctx.textAlign='center';ctx.fillStyle='#ffe5bb';ctx.font='bold 19px Georgia';ctx.fillText('MODAL DRIVE · GUITAR PILOT',W/2,H*.25);ctx.font='12px system-ui';ctx.fillStyle='#d5b5ff';ctx.fillText(s.listening?'♫ FOLLOW THE SCALE':'NAME THE MODE · UP OR DOWN',W/2,H*.29);ctx.restore();
+  }
+  function drawPauseOverlay(){if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else drawRhythmOverlay();}
   function hitShot(b){for(const t of teachers){if(t.hp>0&&Math.hypot(b.x-t.x,b.y-t.y)<31){if(t.hp<=(fuzz?2:1))killTeacher(t);else t.hp-=fuzz?2:1;return true;}}return false;}
-  return {reset,render,tick,draw,drawBandOverlay,hitShot,replay,hint,afterHydra,startChallenge,answerSpecial,collectNumber,artifact,spawnTeacher,
+  return {reset,render,tick,draw,drawPauseOverlay,hitShot,replay,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,artifact,spawnTeacher,
     get pausedCombat(){return !!special?.pause;},
-    get busy(){return !!special;},get invincible(){return shield>0||cloak>0;},get cloaked(){return cloak>0;},get boosted(){return rapid>0;},get planet(){return planet;},get pilot(){return PILOTS[pilot];},get level(){return pilot;},
-    snapshot:()=>({pilot,planet,teachers,walls,drops,digits,special,queue,cloak,shield,rapid,fuzz,hints})};
+    get pauseKind(){return special?.pause?special.kind:null;},
+    get busy(){return !!special;},get invincible(){return shield>0||cloak>0||special?.kind==='tones';},get cloaked(){return cloak>0;},get boosted(){return rapid>0;},get planet(){return planet;},get pilot(){return PILOTS[pilot];},get level(){return pilot;},
+    snapshot:()=>({pilot,planet,teachers,walls,drops,digits,special,queue,cloak,shield,rapid,fuzz,hints,rhythmFocus})};
 }
 
-return {PILOTS,TEACHERS,ARTIFACTS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,rhythmIds,POLYRHYTHMS,polyEvents,NUMBER_LABELS,NUMBER_OFFSETS,orderedTargets,gradeNumber,obstacleRow,touchesWall,createExpedition};
+return {PILOTS,TEACHERS,ARTIFACTS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,rhythmIds,POLYRHYTHMS,polyEvents,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,TONE_PROGRAMS,TONE_MODES,MELODIES,MODES,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,createExpedition};
 })();
 const module_audio=(()=>{
 const {cueEvents}=module_music;
@@ -505,6 +614,35 @@ class FlightAudio {
     this.note(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
     this.schedule(()=>{if(token===this.token)onEnd();},2.6);
   }
+  announce(text,onEnd){
+    this.stop();const token=this.token;
+    if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance){this.schedule(()=>{if(token===this.token)onEnd();},.1);return;}
+    const utterance=new window.SpeechSynthesisUtterance(text),voices=window.speechSynthesis.getVoices();
+    utterance.lang='en-US';utterance.rate=.78;utterance.pitch=.72;utterance.volume=.95;
+    utterance.voice=voices.find(v=>/Alex|Daniel|Reed|Ralph|Fred|Rocko/i.test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en[-_](US|GB)/i.test(v.lang))||null;
+    let finished=false;const finish=()=>{if(finished||token!==this.token)return;finished=true;onEnd();};
+    utterance.onend=finish;utterance.onerror=finish;window.speechSynthesis.cancel();window.speechSynthesis.speak(utterance);
+    this.schedule(finish,Math.max(3.2,text.length*.075));
+  }
+  trumpetChord(root,intervals,onEnd){
+    this.stop();const token=this.token,start=this.context.currentTime+.08,phrase=[0,7,10,12];
+    phrase.forEach((n,i)=>this.note(root+12+n,start+i*.18,.48,'synth',.34));
+    const chordAt=start+1.0,notes=intervals.map(n=>root+n);notes.forEach(note=>this.note(note,chordAt,1.75,'synth',.62/Math.sqrt(notes.length)));
+    this.lastCue={kind:'trumpeter-chord',root,notes,spoken:true,sound:'brass synth'};
+    this.schedule(()=>{if(token===this.token)onEnd();},2.9);
+  }
+  melody(root,pattern,onEnd){
+    this.stop();const token=this.token,start=this.context.currentTime+.12;let cursor=0;
+    pattern.notes.forEach((offset,i)=>{const beats=pattern.beats[i]||.5;this.note(root+offset,start+cursor,Math.max(.22,beats*.46),'soft',.44);cursor+=beats*.48;});
+    this.lastCue={kind:'melody-memory',root,name:pattern.name,notes:[...pattern.notes],sound:'keytar synth'};
+    this.schedule(()=>{if(token===this.token)onEnd();},cursor+.35);
+  }
+  scale(root,mode,direction,onEnd){
+    this.stop();const token=this.token,start=this.context.currentTime+.12,notes=(direction==='down'?[...mode.notes].reverse():mode.notes).map(n=>root+n);
+    notes.forEach((note,i)=>this.note(note,start+i*.25,.58,'synth',.36));
+    this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:'guitar synth'};
+    this.schedule(()=>{if(token===this.token)onEnd();},notes.length*.25+.55);
+  }
   drum(voice,at){
     const ctx=this.context,osc=ctx.createOscillator(),gain=ctx.createGain();
     const freq={kick:120,snare:185,hat:7200,ride:4800,clave:1800,rim:1100}[voice];
@@ -538,7 +676,7 @@ class FlightAudio {
     this.lastCue={kind:'polyrhythm',a:pattern.a,b:pattern.b,cycles,layer};
     this.schedule(()=>{if(token===this.token)onEnd();},cycles*4*beat+.4);
   }
-  stop(){this.token++;this.timers.forEach(clearTimeout);this.timers.clear();this.voices.forEach(v=>{try{v.stop();}catch{}});this.voices.clear();}
+  stop(){this.token++;this.timers.forEach(clearTimeout);this.timers.clear();this.voices.forEach(v=>{try{v.stop();}catch{}});this.voices.clear();try{if(typeof window!=='undefined')window.speechSynthesis?.cancel();}catch{}}
 }
 
 return {FlightAudio};
@@ -567,6 +705,8 @@ const pairs=[
 ['СОБЕРИ ИНТЕРВАЛ','CATCH THE INTERVAL'],['ВЫСОКИЙ : НИЗКИЙ','HIGH : LOW'],['УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ','IDENTIFY THE SIGNAL — FIRE'],['ВЫБЕРИ СИГНАЛ — ВЫСТРЕЛИ','CHOOSE THE SIGNAL — FIRE'],['ДВА ЩИТА · ДВА ВИДА ОРУЖИЯ','TWO SHIELDS · TWO WEAPONS'],['Ступень','Degree'],['Тип','Quality'],['БАС','ROOT'],['ТИП','QUALITY'],['ИМПУЛЬС','PULSE'],['КОМБО','COMBO'],['РАЗГОН · ВЕЕРНЫЙ ОГОНЬ','BOOST · SPREAD FIRE'],
 ['Выбери ступень относительно тоники I','Choose a degree relative to tonic I'],['Узнай сигнал и стреляй','Identify the signal and fire'],['Пробей оба щита','Break both shields'],['Поймай цифру услышанного интервала','Catch the token for the interval you heard'],['Узнай на слух','Identify by ear'],['Выбери услышанное','Choose what you heard'],['Слушай артефакт','Listen to the artifact'],['Слушай опору','Listen to the tonic'],['тоника — точка отсчёта','tonic — your reference'],['Сигнал гидры','Enemy signal'],['Слушай тип аккорда','Listen to the chord quality'],
 ['Попытка потеряна · нужно','Attempt lost · correct token:'],['Время вышло · попробуем ещё','Time is up · try again'],['Выбрано','Selected'],['звучит','playing'],['Звучит','Playing'],['нейтрализованы','neutralized'],['нейтрализуются','are neutralized'],['учителя','teachers'],['учитель атакует','teacher approaching'],['Литература','Literature'],['Математика','Mathematics'],['Химия','Chemistry'],['Физ-ра','PE'],['НВП','Civil defense'],['силы','energy'],['Щит задет · продолжай полёт','Shield hit · keep flying'],['Щит пробит','Shield broken'],['щиты пробиты','shields broken'],['тип распознан','quality identified'],['Тяни корабль · стрельба автоматическая','Drag to fly · automatic fire'],['Попробовать сбор интервалов','Try interval tokens'],['Попробовать','Try'],['Сигнал:','Signal:'],['Тип аккорда:','Chord quality:'],['тоника','tonic'],['пятая','fifth'],['четвёртая','fourth'],['третья','third'],['вторая','second'],['шестая','sixth'],['седьмая','seventh'],['РАЗВЕДЧИК','SCOUT'],['КОРВЕТ','CORVETTE'],['КРЕЙСЕР','CRUISER'],['КРЕПОСТЬ','FORTRESS'],
+['Тренажёр ступеней и аккордов','Degree and chord trainer'],['ТРЕНАЖЁР · БЕЗ ВРАГОВ И ТАЙМЕРА','TRAINER · NO ENEMIES OR TIMER'],['Слуховой полигон','Ear training range'],['Звучание такое же, как в полёте. Ступень можно услышать вверх или вниз: ответ всегда обозначает расстояние от тоники. У аккордов меняется направление звучания, а тип остаётся тем же.','The sound is the same as in flight. A degree may play upward or downward; the answer always names its distance from the tonic. Chord direction changes, but its quality does not.'],['Ступени','Degrees'],['Нажми вариант ответа','Choose an answer'],['Пока нет ответов','No answers yet'],['верно','correct'],['направление:','direction:'],['восходящее','ascending'],['нисходящее','descending'],['одновременно','together'],['Следующий сигнал','Next signal'],['Точный слуховой захват','Accurate ear catch'],['Сверь обозначение и послушай ещё','Check the symbol and listen again'],['Верный ответ:','Correct answer:'],['точно!','exact!'],
+['Квартет вышел на поле · полёт удержан, выбери стиль или партию','The quartet has arrived on the field · flight is held while you identify the style or part'],['РИТМ-ПАУЗА · КВАРТЕТ НА ПОЛЕ','RHYTHM PAUSE · QUARTET ON FIELD'],['Узнай стиль или партию — и продолжим тот же полёт','Identify the style or part, then resume this flight'],
 ];
 function installLanguage(){
   if(typeof MutationObserver==='undefined')return;
@@ -597,8 +737,8 @@ const {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,RHYTHMS,RHYTHM_HINTS,RHYTHM
 
 const $=id=>document.getElementById(id);
 const canvas=$('space'),ctx=canvas.getContext('2d'),audio=new FlightAudio();
-const images=Object.fromEntries(['hydra','enemyships','corvette','fortress','drummachine','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
-for(const [name,img] of Object.entries(images))img.src=`assets/${name}.png`;
+const images=Object.fromEntries(['hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
+for(const [name,img] of Object.entries(images))img.src=['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:`assets/${name}.png`;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[],runToken=0,qualityBank=0,weaponTab='bass';
@@ -608,7 +748,20 @@ const s={mode:'start',sector:0,route:null,routeNumber:0,position:0,cleared:0,tot
   drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,droneKills:0,
   capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0},
   player:{x:240,y:500,tx:240,ty:500},keys:new Set(),pointer:null,feedbackTimer:0};
-const expedition=createExpedition({s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,W,getH:()=>H,images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
+let activeRecognition=null;
+function listenTitle(){
+  const Engine=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!Engine){feedback('Голосовой ответ недоступен здесь. В Safari открой HTTPS-версию или выбери кнопку.',true);return;}
+  try{
+    activeRecognition?.abort();const recognition=new Engine();activeRecognition=recognition;recognition.lang='en-US';recognition.interimResults=false;recognition.maxAlternatives=3;
+    signal('🎙 Say the title in English',true);
+    recognition.onresult=event=>{const variants=Array.from(event.results[0]||[]).map(item=>item.transcript);if(!variants.some(text=>expedition.answerSpoken(text)))feedback(`Распознано: ${variants[0]||'—'}`,true);};
+    recognition.onerror=event=>feedback(event.error==='not-allowed'?'Safari не получил доступ к микрофону':'Не расслышал. Повтори или выбери кнопку.',true);
+    recognition.onend=()=>{if(activeRecognition===recognition){activeRecognition=null;signal('Выбери ответ или повтори');}};
+    recognition.start();
+  }catch{feedback('Не удалось запустить микрофон. Выбери ответ кнопкой.',true);}
+}
+const expedition=createExpedition({s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>H,images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
 const stars=Array.from({length:85},()=>({x:Math.random()*480,y:Math.random()*1100,z:.25+Math.random(),r:Math.random()*1.3+.3}));
 const MACHINES=['РАЗВЕДЧИК','КОРВЕТ','КРЕЙСЕР','КРЕПОСТЬ'];
 const MACHINE_CROPS=[[135,20,380,490],[675,20,490,505],[60,530,520,640],[588,515,666,720]];
@@ -664,7 +817,7 @@ function syncPads(){
     b.classList.toggle('selected',!!broken&&(b.dataset.kind==='bass'?Number(b.dataset.value)===s.enemy.chord.offset:b.dataset.value===family(s.enemy.chord.quality)));
   });
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening;
-  if(expedition.pausedCombat){$('dock-label').textContent='РИТМ-ПАУЗА · КВАРТЕТ НА ПОЛЕ';$('dock-tip').textContent='Узнай стиль или партию — и продолжим тот же полёт';}
+  if(expedition.pausedCombat){const labels={rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||labels.rhythm;$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
   $('interval-reference').disabled=s.mode!=='resolving'||s.listening;
   $('pause').disabled=['start','finished','gameover','loading'].includes(s.mode);
   if(s.enemy){$('shield-tags').innerHTML=`<span class="shield-tag ${s.enemy.shields.bass?'broken':''}">◇ БАС</span>${s.sector>=2?`<span class="shield-tag quality ${s.enemy.shields.quality?'broken':''}">✧ ТИП</span>`:''}`;}
@@ -787,7 +940,7 @@ async function playStudy(){
   }catch(e){feedback(e.message,true);}
 }
 function artifactGuide(){
-  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster — автомат. Keytar — невидимость. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: учителя нейтрализуются.<br><br>Красный язык — узнай тип аккорда без ступени для HP 100%. Тарелка Zildjian останавливает полёт: квартет появляется прямо на поле, играет бит, а ты узнаёшь стиль или партию.<br><br>Литература даёт подсказку, Математика — автомат, Химия — невидимость, Физ-ра — защиту, НВП — автомат + невидимость. Для нейтрализации также используй обычные заряды.</p>');
+  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster — автомат. Keytar — невидимость. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: учителя нейтрализуются.<br><br>Красный язык — узнай тип аккорда без ступени для HP 100%. Реликвия барабанщика останавливает полёт и запускает распознавание стиля или партии. Тарелка Zildjian запасает RHYTHM FOCUS: во время задания она убирает половину неверных вариантов.<br><br>Реликвии музыкантов — это светящиеся механические кубы. После захвата в кадр влетает трубач, клавишник, гитарист или барабанщик. Трубач просит BASIC, GUIDE или COLOR TONES; один чужой жетон гасит режим.<br><br>Литература даёт подсказку, Математика — автомат, Химия — невидимость, Физ-ра — защиту, НВП — автомат + невидимость. Для нейтрализации также используй обычные заряды.</p>');
   action('Сразу в бой →',()=>spawnEnemy());
   action('Попробовать сбор интервалов',()=>{spawnEnemy();audio.stop();s.listening=false;expedition.startChallenge('numbers');},true);
   ARTIFACTS.forEach((item,i)=>action(`Попробовать ${item.name}`,()=>{spawnEnemy();audio.stop();s.listening=false;expedition.artifact(i);if(i<2||i===3)playCue();},true));
@@ -1028,7 +1181,7 @@ function draw(){
   for(const r of s.rings){ctx.strokeStyle=`rgba(121,245,208,${1-r.age/.8})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*260,0,Math.PI*2);ctx.stroke();}
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
-  if(expedition.pausedCombat)expedition.drawBandOverlay();
+  if(expedition.pausedCombat)expedition.drawPauseOverlay();
   if(s.flash>0&&!reduced){ctx.fillStyle=`rgba(255,93,134,${s.flash*.3})`;ctx.fillRect(0,0,W,H);}
 }
 function frame(now){const dt=Math.min(.035,(now-last)/1000||.016);last=now;update(dt);draw();requestAnimationFrame(frame);}
@@ -1053,7 +1206,7 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>s.keys.delete(e.key.toLowerCase()));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
 window.addEventListener('blur',()=>{s.keys.clear();pause();});
-window.addEventListener('pagehide',()=>audio.stop());
+window.addEventListener('pagehide',()=>{audio.stop();activeRecognition?.abort();});
 ['bank-basic','bank-altered'].forEach((id,i)=>$(id).addEventListener('click',()=>{qualityBank=i;buildPads();}));
 ['weapon-root','weapon-type'].forEach((id,i)=>$(id).addEventListener('click',()=>{weaponTab=i?'quality':'bass';syncPads();}));
 $('hint').addEventListener('click',()=>expedition.hint());

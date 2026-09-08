@@ -7,16 +7,16 @@ export const PILOTS=[
   {name:'Херби Хэнкок',sector:3,speed:1.25,grace:3,obstacleGap:145,description:'Вся гармония · быстрые враги · узкие проходы'},
 ];
 export const TEACHERS=[
-  {name:'Литература',reward:'hint',text:'Шпаргалка: одна подсказка'},
-  {name:'Математика',reward:'rapid',text:'Автомат: 12 секунд'},
-  {name:'Химия',reward:'cloak',text:'Невидимость: 10 секунд'},
-  {name:'Физ-ра',reward:'shield',text:'Неприкосновенность: 10 секунд'},
-  {name:'НВП',reward:'combo',text:'Автомат + невидимость'},
+  {name:'КЛЕПАНАЯ ПАСТЬ',reward:'hint',text:'Из обломков извлечена подсказка'},
+  {name:'СЧЁТНЫЙ КЛЕЩ',reward:'rapid',text:'Автомат: 12 секунд'},
+  {name:'КИСЛОТНЫЙ КОТЁЛ',reward:'cloak',text:'Невидимость: 10 секунд'},
+  {name:'ТАРАННЫЙ ЖУК',reward:'shield',text:'Неприкосновенность: 10 секунд'},
+  {name:'ВОЕННЫЙ УТИЛИЗАТОР',reward:'combo',text:'Автомат + невидимость'},
 ];
 export const ARTIFACTS=[
-  {name:'Telecaster',elixir:'Copper Drive',text:'Веерный автомат · 14 секунд'},
-  {name:'Keytar',elixir:'Phase Shift',text:'Невидимость · 12 секунд'},
-  {name:'Jazz Bass',elixir:'Guide Tone',text:'Услышь 3 или 7, поймай цифру — учителя нейтрализуются'},
+  {name:'Telecaster',elixir:'Modal Drive',text:'Вызывает гитариста · распознай лад'},
+  {name:'Keytar',elixir:'Melody Memory',text:'Вызывает клавишника · распознай тему'},
+  {name:'Jazz Bass',elixir:'Guide Tone',text:'Услышь 3 или 7, поймай цифру — механические хищники нейтрализуются'},
   {name:'Overdrive',elixir:'Iron Fuzz',text:'Двойной урон и щит · 10 секунд'},
   {name:'Rock Tongue',elixir:'Full Recovery',text:'Узнай тип случайного аккорда → HP 100%'},
   {name:'Zildjian',elixir:'Rhythm Focus',text:'Запаси подсказку: убрать половину неверных ритмов'},
@@ -157,7 +157,7 @@ export function createExpedition(api){
     const x=edge===0?-40:edge===1?W+40:70+Math.random()*(W-140),y=edge===2?-45:edge===3?H+45:120+Math.random()*(H-200);
     const angle=Math.atan2(H*.62-y,W/2-x);
     teachers.push({type,x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,hp:7+pilot*2,age:0,fire:3,edge});
-    feedback(`${TEACHERS[type].name} · учитель атакует!`);
+    feedback(`${TEACHERS[type].name} · механический хищник атакует!`);
   }
   function reward(type){
     const r=TEACHERS[type].reward;
@@ -216,10 +216,10 @@ export function createExpedition(api){
     const c=special;if(!c)return;
     audio.stop();s.listening=false;special=null;digits=[];
     if(won){s.score+=250;
-      if(c.kind==='chord'){s.health=5;feedback(`${QUALITIES[c.target].glyph} · HP 100%`);}
+      if(c.kind==='chord'){s.health=s.maxHealth||5;feedback(`${QUALITIES[c.target].glyph} · HP 100%`);}
       else if(c.kind==='rhythm'){shield=12;rapid=10;feedback(`${RHYTHMS[c.target].name} · Rhythm Shield`);}
       else if(c.kind==='poly'){shield=10;rapid=12;feedback(`${POLYRHYTHMS[c.target].name} · Phase Lock`);}
-      else if(c.kind==='guide'){teachers.filter(t=>t.hp>0).forEach(killTeacher);shield=8;feedback(`Guide tone ${c.target} · учителя нейтрализованы`);}
+      else if(c.kind==='guide'){teachers.filter(t=>t.hp>0).forEach(killTeacher);shield=8;feedback(`Guide tone ${c.target} · механические хищники нейтрализованы`);}
       else if(c.kind==='tones'){rapid=14;shield=12;s.energy=Math.min(99,s.energy+45);feedback(`${c.toneMode.toUpperCase()} TONES · ${c.chordName} · HARMONIC FLIGHT`);}
       else if(c.kind==='melody'){cloak=12;rapid=12;s.energy=Math.min(99,s.energy+35);feedback(`${MELODIES[c.target].name} · MELODY MEMORY`);}
       else if(c.kind==='mode'){fuzz=12;rapid=14;s.energy=Math.min(99,s.energy+40);feedback(`${MODES[c.target].name} · MODAL DRIVE`);}
@@ -231,8 +231,9 @@ export function createExpedition(api){
   function answerSpecial(value){
     if(!special||s.listening||s.mode==='paused')return;
     if(value===special.target){endChallenge(true);return;}
-    special.misses++;special.revealed=true;special.time=Math.max(0,special.time-3);
-    feedback(`Выбрано ${specialName(special,value)} · звучит ${specialName(special)}`,true);lastRender='';render();
+    special.misses++;special.time=Math.max(0,special.time-3);
+    if(special.misses>=2){endChallenge(false);return;}
+    feedback('Мимо · осталась одна попытка',true);lastRender='';render();
   }
   function useRhythmFocus(){
     if(!special||special.kind!=='rhythm'||!rhythmFocus||s.listening||s.mode==='paused')return false;
@@ -263,14 +264,12 @@ export function createExpedition(api){
   }
   function artifact(type){
     feedback(`${ARTIFACTS[type].name} · ${ARTIFACTS[type].elixir}`);
-    if(type===0)rapid=14;
-    if(type===1)cloak=12;
     if(type===2){if(!teachers.some(t=>t.hp>0))spawnTeacher();}
     if(type===3){fuzz=shield=10;}
     if(type===5){rhythmFocus++;feedback(`Zildjian · Rhythm Focus ×${rhythmFocus}`);}
-    if([2,4,6,7,8,9,10].includes(type)&&['active','resolving'].includes(s.mode)){
+    if([0,1,2,4,6,7,8,9,10].includes(type)&&['active','resolving'].includes(s.mode)){
       audio.stop();s.listening=false;special=null;digits=[];queue=[];s.capsule=null;s.capsuleTimer=0;
-      startChallenge(type===2?'guide':type===4?'chord':type===6?'poly':type===7?'tones':type===8?'melody':type===9?'mode':'rhythm');
+      startChallenge(type===0?'mode':type===1?'melody':type===2?'guide':type===4?'chord':type===6?'poly':type===7?'tones':type===8?'melody':type===9?'mode':'rhythm');
     }
     render();
   }
@@ -324,7 +323,7 @@ export function createExpedition(api){
   }
   function draw(){const ctx=api.ctx;
     for(const w of walls){ctx.save();ctx.beginPath();ctx.rect(w.x,w.y,w.w,w.h);ctx.clip();const tex=images[planet];if(tex?.complete&&tex.naturalWidth)ctx.drawImage(tex,0,tex.naturalHeight*.35,tex.naturalWidth,tex.naturalHeight*.2,w.x,w.y,w.w,w.h);ctx.fillStyle='#4b322b66';ctx.fillRect(w.x,w.y,w.w,w.h);ctx.restore();ctx.strokeStyle='#d2a265';ctx.lineWidth=3;ctx.strokeRect(w.x,w.y,w.w,w.h);ctx.fillStyle='#fbd492';for(let x=w.x+12;x<w.x+w.w;x+=30)ctx.fillRect(x,w.y+6,3,3);}
-    for(const t of teachers){drawSprite(images.teachers,t.type,5,1,t.x,t.y,105);ctx.fillStyle='#ffe0a2';ctx.textAlign='center';ctx.font='12px system-ui';ctx.fillText(TEACHERS[t.type].name,t.x,t.y+57);}
+    for(const t of teachers){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.sin(t.age*2)*.2);drawSprite(images.drone,0,1,1,0,0,70+t.type*6);ctx.strokeStyle='#788385';ctx.lineWidth=5;for(let i=0;i<3+t.type;i++){const a=i*Math.PI*2/(3+t.type)+t.age*.4;ctx.beginPath();ctx.moveTo(Math.cos(a)*23,Math.sin(a)*23);ctx.lineTo(Math.cos(a)*42,Math.sin(a)*42);ctx.lineTo(Math.cos(a+.25)*49,Math.sin(a+.25)*49);ctx.stroke();}ctx.fillStyle=['#d46d47','#82b8b4','#a4bd64','#ca665d','#a58fbf'][t.type];ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=9;ctx.fillRect(-5,-5,10,10);ctx.restore();}
     for(const d of drops){drawRelic(d);ctx.strokeStyle=d.type>=7?`hsl(${(d.age*90+d.type*70)%360} 95% 72%)`:'#eec56a';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=d.type>=7?18:0;ctx.beginPath();ctx.arc(d.x,d.y,29+Math.sin(d.age*5)*2,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#ffe0a2';ctx.textAlign='center';ctx.font='10px system-ui';ctx.fillText(ARTIFACTS[d.type].name,d.x,d.y+39);}
     if(special?.kind==='tones'){
       const lit=special.collected.length,H=getH(),x=W*.76,y=H*.34;
@@ -335,12 +334,13 @@ export function createExpedition(api){
       ctx.save();ctx.translate(d.x,d.y);
       if(d.life!==undefined){const k=d.life/.5;ctx.scale(k,k);ctx.globalAlpha=k;}
       ctx.rotate(Math.sin(d.age)*.08);
-      const brass=ctx.createLinearGradient(-26,-26,26,26);brass.addColorStop(0,'#ffe0a2');brass.addColorStop(.35,'#967047');brass.addColorStop(.65,'#e9bb76');brass.addColorStop(1,'#59412d');
+      const brass=ctx.createLinearGradient(-26,-26,26,26);brass.addColorStop(0,'#89989a');brass.addColorStop(.35,'#30393c');brass.addColorStop(.65,'#505d60');brass.addColorStop(1,'#151a1d');
       ctx.fillStyle=brass;ctx.strokeStyle='#412d20';ctx.lineWidth=2;
       ctx.beginPath();for(let i=0;i<24;i++){const a=i*Math.PI/12,r=i%2?25:29;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();ctx.stroke();
-      ctx.fillStyle='#172a2c';ctx.strokeStyle='#f3c885';ctx.beginPath();ctx.arc(0,0,21,0,Math.PI*2);ctx.fill();ctx.stroke();
-      for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;ctx.fillStyle='#ffe2a5';ctx.beginPath();ctx.arc(Math.cos(a)*24,Math.sin(a)*24,2,0,Math.PI*2);ctx.fill();}
-      ctx.shadowColor=d.color||'#ffc46c';ctx.shadowBlur=d.color?18:9;ctx.fillStyle=d.color||'#ffe3a7';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px Georgia, serif';ctx.fillText(d.label,0,1);ctx.restore();
+      ctx.fillStyle='#11191d';ctx.strokeStyle='#708282';ctx.beginPath();ctx.arc(0,0,21,0,Math.PI*2);ctx.fill();ctx.stroke();
+      for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;ctx.fillStyle='#a3abad';ctx.beginPath();ctx.arc(Math.cos(a)*24,Math.sin(a)*24,2,0,Math.PI*2);ctx.fill();}
+      ctx.strokeStyle='#a8b9b333';ctx.beginPath();ctx.moveTo(-19,-13);ctx.lineTo(-8,-17);ctx.moveTo(12,15);ctx.lineTo(21,9);ctx.stroke();
+      ctx.shadowColor=d.color||'#9ef2dc';ctx.shadowBlur=d.color?8:2;ctx.fillStyle=d.color||'#d8e5df';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px monospace';ctx.fillText(d.label,0,1);ctx.restore();
     }
   }
   function arrival(target,from=1){const t=Math.min(1,Math.max(0,(Date.now()-(special?.createdAt||Date.now()))/720)),ease=1-(1-t)**3;return target+(1-ease)*W*.85*from;}
@@ -369,7 +369,6 @@ export function createExpedition(api){
     const glow=ctx.createRadialGradient(x,y,15,x,y,W*.6);glow.addColorStop(0,'#854dff99');glow.addColorStop(.55,'#175cff35');glow.addColorStop(1,'#07162600');ctx.fillStyle=glow;ctx.fillRect(12,H*.18,W-24,H*.64);
     for(let i=0;i<5;i++){ctx.strokeStyle=`hsla(${210+i*26} 95% 68% / ${.25+i*.08})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,85+i*18+8*pulse,32+i*12,Math.sin(i)*.22,0,Math.PI*2);ctx.stroke();}
     const keyX=arrival(x,1);drawSprite(images.keytarist,0,1,1,keyX,y,310);
-    if(images.keytarExact?.complete&&images.keytarExact.naturalWidth){ctx.save();ctx.translate(keyX-3,y+19);ctx.rotate(-.17);ctx.drawImage(images.keytarExact,-132,-44,264,88);ctx.restore();}
     ctx.fillStyle='#edf3ff';ctx.textAlign='center';ctx.font='bold 19px Georgia';ctx.fillText('MELODY MEMORY',W/2,H*.25);ctx.font='12px system-ui';ctx.fillStyle='#a8c8ff';ctx.fillText(s.listening?'♫ LISTEN TO THE LINE':'TAP A TITLE OR SAY IT IN ENGLISH',W/2,H*.29);ctx.restore();
   }
   function drawModeOverlay(){
@@ -377,7 +376,6 @@ export function createExpedition(api){
     ctx.save();ctx.fillStyle='#11101cdf';ctx.fillRect(12,H*.18,W-24,H*.64);const glow=ctx.createRadialGradient(x,y,15,x,y,W*.62);glow.addColorStop(0,'#c54f9a8c');glow.addColorStop(.5,'#3e79b43a');glow.addColorStop(1,'#080b1500');ctx.fillStyle=glow;ctx.fillRect(12,H*.18,W-24,H*.64);
     for(let i=0;i<6;i++){ctx.strokeStyle=`hsla(${285-i*17} 88% 68% / ${.18+i*.055})`;ctx.beginPath();ctx.ellipse(x,y,70+i*17+5*pulse,29+i*9,-.22,0,Math.PI*2);ctx.stroke();}
     drawSprite(images.guitarist,0,1,1,x,y,330);
-    if(images.guitarExact?.complete&&images.guitarExact.naturalWidth){ctx.save();ctx.translate(x-4,y-1);ctx.rotate(-.18);ctx.drawImage(images.guitarExact,-168,-47,336,94);ctx.restore();}
     ctx.textAlign='center';ctx.fillStyle='#ffe5bb';ctx.font='bold 19px Georgia';ctx.fillText('MODAL DRIVE · GUITAR PILOT',W/2,H*.25);ctx.font='12px system-ui';ctx.fillStyle='#d5b5ff';ctx.fillText(s.listening?'♫ FOLLOW THE SCALE':'NAME THE MODE · UP OR DOWN',W/2,H*.29);ctx.restore();
   }
   function drawPauseOverlay(){if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else drawRhythmOverlay();}

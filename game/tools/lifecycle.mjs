@@ -12,7 +12,7 @@ class Element {
   set innerHTML(v){this.html=v;this.children=[];if(v.includes('overlay-card'))this.children.push(new Element());}
   get innerHTML(){return this.html;}
   get firstElementChild(){return this.children[0];}get firstChild(){return this.children[0];}
-  append(...v){this.children.push(...v);}replaceChildren(...v){this.children=v;}
+  append(...v){this.children.push(...v);}replaceChildren(...v){this.children=v;}insertAdjacentHTML(){}
   addEventListener(n,f){this.events[n]=f;}setAttribute(n,v){this[n]=v;}
   click(){if(!this.disabled)this.events.click?.({});}
 }
@@ -22,7 +22,7 @@ get('space').getContext=()=>({});get('enemy-label').append(new Element());
 class TestAudio {rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
 const context=vm.createContext({...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
-  installLanguage(){},
+  installLanguage(){},loadFlightImage:async()=>{},
   document:{getElementById:get,createElement:()=>new Element(),querySelector:()=>null,querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
   window:{addEventListener(){}},localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
   Image:class{},ResizeObserver:class{observe(){}},matchMedia:()=>({matches:true}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},HTMLButtonElement:Element,
@@ -61,7 +61,7 @@ for(let sector=0;sector<3;sector++){
 assert.equal(state().totalCleared,24);assert.equal(state().stats.quality.hit,8);
 assert.equal(JSON.parse(storage.get('ear-reharm-game.v1')).unlocked,2);
 await run('startRun(2);');run('spawnEnemy();audio.pending();s.health=1;s.invulnerable=0;shipHit();');assert.equal(state().mode,'gameover');
-await run('startRun(2);');assert.equal(state().health,5);assert.equal(state().score,0);
+await run('startRun(2);');assert.equal(state().health,state().maxHealth);assert.equal(state().score,0);
 // Weapon collision kills a drone but cannot advance a musical encounter.
 run('spawnEnemy();audio.pending();s.drones=[{x:240,y:200,baseX:240,phase:0,age:0,speed:0,hp:1,hit:0,fire:99,pattern:0}];s.shots=[{x:240,y:205,vx:0}];update(.01);');
 assert.equal(state().droneKills,1);assert.equal(state().cleared,0);

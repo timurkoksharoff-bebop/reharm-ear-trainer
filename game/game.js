@@ -98,7 +98,7 @@ function buildPads(){
       const item=data[id],b=document.createElement('button');b.className='pad';b.style.setProperty('--pad-color',item.color);b.dataset.kind=kind;b.dataset.value=id;
       b.innerHTML=`${s.sector===3?'':`<kbd>${kind==='bass'?index+1:['Q','W','E','R'][index]}</kbd>`}<span class="glyph" aria-hidden="true">${item.glyph}</span><small>${item.label}</small>`;
       b.title=item.label;
-      b.setAttribute('aria-label',`${kind==='bass'?'Сигнал':'Тип аккорда'}: ${item.name}, ${item.label}`);
+    b.setAttribute('aria-label',`${kind==='bass'?'Сигнал':'Тип аккорда'}: ${item.name}, ${item.label}`);
       b.addEventListener('click',()=>answer(kind,id,b));container.append(b);
     });
   }
@@ -114,7 +114,7 @@ function syncPads(){
   $('weapon-root').setAttribute('aria-pressed',String(weaponTab==='bass'));$('weapon-type').setAttribute('aria-pressed',String(weaponTab==='quality'));
   document.querySelectorAll('.pad').forEach(b=>{
     const broken=s.enemy?.shields[b.dataset.kind];b.disabled=s.mode!=='active'||s.listening||!!broken||special;
-    b.classList.toggle('selected',!!broken&&(b.dataset.kind==='bass'?Number(b.dataset.value)===s.enemy.chord.offset:b.dataset.value===family(s.enemy.chord.quality)));
+    b.disabled=b.disabled||b.dataset.locked==='1';b.classList.toggle('selected',!!broken&&(b.dataset.kind==='bass'?Number(b.dataset.value)===s.enemy.chord.offset:b.dataset.value===family(s.enemy.chord.quality)));
   });
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening;
   $('replay').setAttribute('aria-label',s.bookMission?'Повторить одну ноту HOME и текущий аккорд':'Повторить тонику и сигнал');
@@ -122,7 +122,7 @@ function syncPads(){
   if(expedition.pausedCombat){const labels={rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||labels.rhythm;$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
   $('interval-reference').disabled=s.mode!=='resolving'||s.listening;
   $('pause').disabled=['start','finished','gameover','loading'].includes(s.mode);
-  if(s.enemy){$('shield-tags').innerHTML=`<span class="shield-tag ${s.enemy.shields.bass?'broken':''}">◇ БАС</span>${s.sector>=2?`<span class="shield-tag quality ${s.enemy.shields.quality?'broken':''}">✧ ТИП</span>`:''}`;}
+  if(s.enemy){$('shield-tags').innerHTML=s.bookMission?'<span class="shield-tag">◈ ЦИФРОВКА</span>':`<span class="shield-tag ${s.enemy.shields.bass?'broken':''}">◇ БАС</span>${s.sector>=2?`<span class="shield-tag quality ${s.enemy.shields.quality?'broken':''}">✧ ТИП</span>`:''}`;}
 }
 function startScreen(){
   s.mode='start';
@@ -331,8 +331,8 @@ function spawnEnemy(){
   hideOverlay();s.mode='active';s.listening=false;weaponTab='bass';
   s.enemy={chord:s.route.sequence[s.position],model:expedition.level===0?Math.min(2,s.sector):expedition.level,shields:{bass:false,quality:s.sector<2},x:W/2,y:Math.max(155,Math.min(H*.38,250)),age:0,misses:0,hit:0,muzzle:0};
   $('enemy-label').hidden=false;$('enemy-label').firstElementChild.textContent=s.bookMission?`${s.route.code} · HYDRA ${String(s.position+1).padStart(2,'0')}/${String(s.route.sequence.length).padStart(2,'0')}`:`HYDRA · ${MACHINES[s.enemy.model]} / ${String(s.totalCleared+1).padStart(2,'0')}`;
-  $('dock-label').textContent=s.sector>=2?'ДВА ЩИТА · ДВА ВИДА ОРУЖИЯ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
-  $('dock-tip').textContent=s.sector<2?'Выбери ступень относительно тоники I':s.sector===3?'Корень + тип → цифровка · m7 ≠ maj7':'Корень и точный тип — в любом порядке';
+  $('dock-label').textContent=s.bookMission?'ОДНА ЦИФРОВКА — ОДИН ВЫСТРЕЛ':s.sector>=2?'ДВА ЩИТА · ДВА ВИДА ОРУЖИЯ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
+  $('dock-tip').textContent=s.bookMission?'Выбери готовый аккорд целиком':s.sector<2?'Выбери ступень относительно тоники I':s.sector===3?'Корень + тип → цифровка · m7 ≠ maj7':'Корень и точный тип — в любом порядке';
   s.fireTimer=expedition.pilot.grace;if(s.bookMission)buildBookPads();renderHud();playCue();
 }
 function buildBookPads(){
@@ -349,7 +349,7 @@ function answerBookChord(offset,quality,button){
   if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
   const chord=s.enemy.chord,correct=offset===chord.offset&&quality===chord.quality;
   if(correct){const attempts=s.attempts,recognized=s.correct;answer('bass',chord.offset,button);answer('quality',chord.quality,button);s.attempts=attempts+1;s.correct=recognized+1;return;}
-  s.attempts++;s.stats[offset!==chord.offset?'bass':'quality'].miss++;s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;button.classList.add('wrong');button.disabled=true;feedback(`${chordSymbol({offset,quality})} · чужой сигнал`,true);enemyVolley(true);renderHud();
+  s.attempts++;s.stats[offset!==chord.offset?'bass':'quality'].miss++;s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;button.classList.add('wrong');button.dataset.locked='1';button.disabled=true;feedback(`${chordSymbol({offset,quality})} · чужой сигнал`,true);enemyVolley(true);renderHud();
 }
 function playCue(referenceOnly=false){
   if(s.mode!=='active'||!s.enemy)return;

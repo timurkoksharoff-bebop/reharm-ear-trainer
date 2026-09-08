@@ -32,6 +32,7 @@ world.startChallenge('chord');assert(s.listening);const target=world.snapshot().
 world.answerSpecial(target);assert.equal(s.health,1,'Cannot answer before sound ends');
 audio.pending();world.answerSpecial(target);assert.equal(s.health,5);assert(!world.busy);
 world.startChallenge('rhythm');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.invincible&&world.boosted);
+world.reset(0);world.startChallenge('mode');assert.equal(world.snapshot().special.direction,'up','Novice modal challenge must ascend');audio.pending();
 world.reset(0);world.spawnTeacher();assert.equal(world.snapshot().teachers.length,1);
 world.startChallenge('guide');const guide=world.snapshot().special.target;audio.pending();world.collectNumber(guide);assert(world.snapshot().teachers.every(t=>t.hp===0));assert(world.invincible);
 world.reset(2);world.startChallenge('numbers');const numeric=world.snapshot().special;audio.pending();

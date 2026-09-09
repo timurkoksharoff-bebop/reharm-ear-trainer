@@ -117,13 +117,29 @@ export class FlightAudio {
     this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:'guitar synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},notes.length*.25+.55);
   }
-  drum(voice,at){
+  artifactReveal(type,onEnd){
+    this.stop();const token=this.token,ctx=this.context;
+    if(!ctx){this.schedule(()=>{if(token===this.token)onEnd();},.05);return;}
+    const start=ctx.currentTime+.04,root=type===4?41:36+(type%5)*2;
+    // Servo rumble, three latch strikes and a short luminous confirmation.
+    this.note(root,start,.72,'soft',.24);
+    [0,.13,.27].forEach((offset,i)=>{this.drum(i===2?'snare':'clave',start+offset,.75+i*.12);this.note(root+12+i*5,start+offset,.16,'synth',.18);});
+    [24,31,36].forEach((interval,i)=>this.note(root+interval,start+.38+i*.07,.42,'soft',.16));
+    this.lastCue={kind:type===4?'artifact-roulette':'artifact-opening',type,sound:'mechanical latches and energy flash'};
+    this.schedule(()=>{if(token===this.token)onEnd();},.84);
+  }
+  rouletteTick(final=false){
+    const ctx=this.context;if(!ctx)return;const at=ctx.currentTime+.01;
+    this.drum(final?'snare':'clave',at,final?1.2:.68);
+    this.note(final?79:67,at,final?.32:.08,'soft',final?.2:.08);
+  }
+  drum(voice,at,velocity=1){
     const ctx=this.context,osc=ctx.createOscillator(),gain=ctx.createGain();
     const freq={kick:120,snare:185,hat:7200,ride:4800,clave:1800,rim:1100}[voice];
     const duration=voice==='ride'?.22:voice==='kick'?.18:.07;
     osc.type=['hat','ride','snare'].includes(voice)?'square':'sine';
     osc.frequency.setValueAtTime(freq,at);osc.frequency.exponentialRampToValueAtTime(voice==='kick'?42:freq*.78,at+duration);
-    gain.gain.setValueAtTime(voice==='kick'?.35:voice==='snare'?.13:voice==='clave'?.15:.035,at);
+    gain.gain.setValueAtTime((voice==='kick'?.35:voice==='snare'?.13:voice==='clave'?.15:.035)*velocity,at);
     gain.gain.exponentialRampToValueAtTime(.00001,at+duration);
     osc.connect(gain);gain.connect(this.master);osc.start(at);osc.stop(at+duration+.01);this.voices.add(osc);
     osc.onended=()=>{this.voices.delete(osc);osc.disconnect();gain.disconnect();};
@@ -135,13 +151,14 @@ export class FlightAudio {
       for(const event of pattern.events){const at=start+(loop*beats+event.beat)*beat;
         if(event.voice==='bass')this.note(event.midi,at,.34,'synth',.42);
         else if(event.voice==='keys')for(const midi of event.notes)this.note(midi,at,.26,'synth',.25);
-        else this.drum(event.voice,at);
+        else this.drum(event.voice,at,event.velocity??1);
       }
       for(let i=0;i<beats;i++)this.schedule(()=>{if(token===this.token)onBeat(i,loop);},.15+(loop*beats+i)*beat);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},beats*loops*beat+.4);
   }
   poly(pattern,onEnd,{cycles=3,layer='both',onHit=()=>{}}={}){
+    if(pattern.sticking)return this.rhythm(pattern,onEnd,{loops:cycles});
     this.stop();const token=this.token,start=this.context.currentTime+.15,beat=60/110;
     for(const event of polyEvents(pattern,cycles,layer)){
       this.drum(event.voice,start+event.beat*beat);

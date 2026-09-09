@@ -49,6 +49,14 @@ export const QUALITIES = {
 for(const q of Object.values(QUALITIES)){q.name=q.glyph;q.color='#f7cd7f';}
 export const QUALITY_BANKS=[['maj','min','6','m6','7','maj7','m7','m7b5','dim7','7sus4','aug'],
   ['maj7sharp11','m7natural9','m7b5natural9','7b9','7b9b13','7b5','7sharp5','7alt','m7b9','minSharp5','augMaj7']];
+const MASTER_OPENING_QUALITIES=['maj','min','6','m6','7','maj7','m7','m7b5','dim7','7sus4','aug'];
+const MASTER_MIDDLE_QUALITIES=[...MASTER_OPENING_QUALITIES,'maj7sharp11','m7natural9','m7b5natural9','7b9','7b5','7sharp5'];
+export function routeQualities(pilotLevel=3,routeIndex=0){
+  if(pilotLevel!==2)return SECTORS[3].qualities;
+  if(routeIndex<2)return MASTER_OPENING_QUALITIES;
+  if(routeIndex<5)return MASTER_MIDDLE_QUALITIES;
+  return SECTORS[3].qualities;
+}
 export const family = quality => quality;
 export const chordSymbol = chord => `${DEGREES[chord.offset].glyph}${chord.quality==='maj'?'':QUALITIES[chord.quality].glyph}`;
 export const SECTORS = [
@@ -58,11 +66,11 @@ export const SECTORS = [
   {name:'Хроматический полёт',degrees:Array.from({length:12},(_,i)=>i),qualities:QUALITY_BANKS.flat(),title:'Вся хроматика. Точная цифровка.',description:'12 корней × 22 типа аккорда. Например: ♭IImaj7 или IIIm7. Типы оружия переключаются вкладками «Аккорды» / «Альтерации».',count:12},
 ];
 const pick = (items,rng) => items[Math.floor(rng()*items.length)];
-export function createRoute(sector,previousKey=-1,rng=Math.random,routeIndex=0) {
+export function createRoute(sector,previousKey=-1,rng=Math.random,routeIndex=0,pilotLevel=3) {
   const keys=[0,2,3,5,7,9,10].filter(k=>k!==previousKey);
   const key=pick(keys,rng);
   const book=BOOK_ROUTES[routeIndex%BOOK_ROUTES.length];
-  const sequence=sector===3?Array.from({length:4},()=>{const offset=pick(SECTORS[3].degrees,rng),quality=pick(SECTORS[3].qualities,rng);const c={offset,quality};return {...c,degree:chordSymbol(c)};}):sector===2?book.sequence.map(c=>({...c})):
+  const sequence=sector===3?Array.from({length:4},()=>{const offset=pick(SECTORS[3].degrees,rng),quality=pick(routeQualities(pilotLevel,routeIndex),rng);const c={offset,quality};return {...c,degree:chordSymbol(c)};}):sector===2?book.sequence.map(c=>({...c})):
     pick(SECTORS[sector].patterns,rng).map(offset=>({offset,degree:DEGREES[offset].glyph,quality:'maj'}));
   return {key,sequence,source:sector===2?book.source:sector===3?'Авторские независимые сигналы · не книжная прогрессия':'Авторская вводная фраза',id:sector===2?book.id:sector===3?'chromatic-lab':'primer',
     // Keep one timbre, register and articulation throughout each musical phrase.

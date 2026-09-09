@@ -1,0 +1,60 @@
+.art-overlay{position:fixed!important;inset:0!important;z-index:1000!important;padding:0!important;display:grid!important;place-items:center!important;background:#080a0c!important;overflow:auto!important}
+.art-overlay[hidden]{display:none!important}
+.art-overlay>.overlay-card{width:100%!important;max-width:none!important;border:0!important;padding:0!important;background:none!important;box-shadow:none!important;margin:0!important}
+.art-overlay>.overlay-card::before,.art-overlay>.overlay-card::after{display:none}
+.console-scene{position:relative;width:min(100vw,177.69dvh);aspect-ratio:1672/941;margin:auto;color:#f4dfbd}
+.console-scene>img{width:100%;height:100%;display:block;user-select:none}
+.art-overlay .console-hit{position:absolute;display:block;padding:0;border:2px solid transparent!important;border-radius:9px!important;background:transparent!important;box-shadow:none!important;filter:none!important;transform:none!important;transition:background .15s,box-shadow .15s}
+.art-overlay .console-hit:hover,.art-overlay .console-hit:focus-visible{background:#ffd38a16!important;border-color:#f3c77d!important;box-shadow:inset 0 0 20px #ffc36c44,0 0 16px #ffbc6655!important;outline-offset:2px}
+.art-overlay .console-hit[aria-pressed=true]{border-color:#ffdba0!important;box-shadow:inset 0 0 20px #ffbc6655,0 0 12px #ffbc6644!important}
+.console-hit:hover,.console-hit:focus-visible{background:#ffd38a16;border-color:#f3c77d;box-shadow:inset 0 0 20px #ffc36c44,0 0 16px #ffbc6655;outline-offset:2px}
+.console-hit[aria-pressed=true]{border-color:#ffdba0;box-shadow:inset 0 0 20px #ffbc6655,0 0 12px #ffbc6644}
+.console-status{position:absolute;top:1%;right:1%;max-width:48%;margin:0!important;padding:6px 10px!important;background:#080a0dda;border:1px solid #987653;border-radius:4px;color:#ffe4b8!important;font:12px ui-monospace,monospace!important;pointer-events:none}
+.console-build{position:absolute;bottom:1%;left:1%;padding:4px 7px;background:#080a0dcc;color:#dac6a7;font:10px ui-monospace,monospace}
+.console-quick{position:absolute;right:1.5%;bottom:2%;display:flex;gap:8px}
+.console-quick button{padding:9px 12px;background:#201c18ef;border:2px ridge #977957;border-radius:4px;color:#ffe4b8;font:12px ui-monospace,monospace;min-height:40px}
+@media(max-width:700px) and (orientation:portrait){
+.console-scene{width:100%;min-width:0}.art-overlay{place-items:center!important}.art-overlay>.overlay-card{min-width:0!important}
+.console-portrait{width:min(100vw,56.3dvh);aspect-ratio:941/1672}.console-status{font-size:9px!important;max-width:80%}
+.console-lab{width:100%;min-height:100dvh;aspect-ratio:auto;padding:100px 18px 24px;display:flex;flex-direction:column;gap:9px;background:#171d1e}
+.console-lab>img{position:absolute;inset:0;object-fit:cover;opacity:.2;height:100%;pointer-events:none}
+.console-lab .console-hit{position:relative;left:auto!important;top:auto!important;width:100%!important;height:auto!important;min-height:46px;flex-shrink:0;background:#2c302eee;border:2px ridge #877c65;color:#ece3d0}
+.console-lab .console-hit::after{content:attr(data-label);font:bold 14px monospace}
+.art-overlay .console-lab .console-hit{position:relative;background:#2c302eee!important;border:2px ridge #877c65!important;color:#ece3d0!important}
+.console-quick{position:relative;right:auto;bottom:auto;flex-wrap:wrap;justify-content:center;z-index:1}.console-build{z-index:2}
+#special-options{grid-template-columns:repeat(2,minmax(0,1fr));max-height:27dvh}#special-options button{min-height:44px;font-size:12px}
+}
+
+/* Terrain continues below the compact translucent answer deck. */
+.floating-deck{position:relative}
+.floating-deck .flight{min-height:0}
+.floating-deck>footer{display:none}
+.floating-deck .cockpit{position:absolute;bottom:0;left:0;right:0;z-index:3;padding:3px 9px calc(4px + env(safe-area-inset-bottom));max-height:40dvh!important;background:linear-gradient(#101a22a6,#10181dde)!important;border-top:1px solid #b9d9ccaa!important;box-shadow:0 -8px 22px #95dcc512;backdrop-filter:blur(3px)}
+.floating-deck .cockpit::before{content:'';position:absolute;top:0;left:12%;right:12%;height:1px;background:#c6eee0;box-shadow:0 0 8px #92e6d7;pointer-events:none}
+.floating-deck .dock-tip,.floating-deck #dock-label{display:none}
+.floating-deck .dock-top{margin:0 0 3px;justify-content:flex-end;gap:5px}
+.floating-deck .replay{font-size:17px;padding:1px 0 1px 5px}.floating-deck .replay span{font-size:10px}
+.floating-deck .hint{font-size:9px!important;padding:1px 5px!important;border-width:1px!important;box-shadow:none!important}
+.floating-deck .pad,.floating-deck .quality-pads .pad{min-height:32px!important;padding:2px!important;background:linear-gradient(130deg,#596661bb,#1a2929d9)!important;color:#f3ecdb!important;border:1px solid #b4ba9d!important;box-shadow:inset 0 1px #ffffff40,0 2px 3px #0009!important}
+.floating-deck .pad .glyph{color:#f3ecdb!important}
+.floating-deck .book-chord-pads{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important}
+.floating-deck .book-chord-pads .chord-choice{font-size:15px!important;letter-spacing:-.3px!important}
+.floating-deck .pad .glyph{font-size:19px!important}
+.floating-deck .flight-bottom{bottom:calc(var(--deck-height,120px) + 8px)}
+.floating-deck .signal{bottom:calc(var(--deck-height,120px) + 32px)}
+
+/* Utility controls share the answer rows instead of consuming a header row. */
+.floating-deck .cockpit{padding:4px 53px calc(4px + env(safe-area-inset-bottom)) 8px}
+.floating-deck .dock-top{position:absolute;right:5px;top:4px;width:42px;display:flex;flex-direction:column;gap:3px;margin:0}
+.floating-deck .dock-top .hint,.floating-deck .dock-top .replay{width:42px;min-height:27px;max-height:27px;justify-content:center;margin:0;padding:0!important}
+.floating-deck .dock-top .hint{font-size:0!important;background:#18282bc9!important;color:#efe6d2!important;border:1px solid #b4ba9d!important}
+.floating-deck .dock-top .hint::after{content:'?';font:bold 15px monospace}
+.floating-deck .dock-top .replay{font-size:22px;line-height:1;background:#18282bc9;border:1px solid #b4ba9d;border-radius:3px}
+.floating-deck .dock-top .replay span{display:none}
+.floating-deck .cockpit{min-height:59px}
+.floating-deck .book-chord-pads .chord-choice{min-height:25px!important;font-size:13px!important}
+.floating-deck .book-chord-pads{gap:3px!important}
+.floating-deck .special-panel{margin:0;max-height:38dvh;overflow:auto;background:#172427d9}
+.floating-deck #special-options{gap:3px;max-height:28dvh}
+.floating-deck #special-options button{min-height:30px;padding:2px 4px;font-size:11px}
+.floating-deck #special-options .artifact-activate{min-height:42px;font:bold 13px ui-monospace,monospace;letter-spacing:.12em;background:linear-gradient(135deg,#6d5432dd,#203b3add)!important;box-shadow:inset 0 0 14px #ffd07d28,0 0 10px #70efd326!important}

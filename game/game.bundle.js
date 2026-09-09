@@ -58,6 +58,14 @@ const QUALITIES = {
 for(const q of Object.values(QUALITIES)){q.name=q.glyph;q.color='#f7cd7f';}
 const QUALITY_BANKS=[['maj','min','6','m6','7','maj7','m7','m7b5','dim7','7sus4','aug'],
   ['maj7sharp11','m7natural9','m7b5natural9','7b9','7b9b13','7b5','7sharp5','7alt','m7b9','minSharp5','augMaj7']];
+const MASTER_OPENING_QUALITIES=['maj','min','6','m6','7','maj7','m7','m7b5','dim7','7sus4','aug'];
+const MASTER_MIDDLE_QUALITIES=[...MASTER_OPENING_QUALITIES,'maj7sharp11','m7natural9','m7b5natural9','7b9','7b5','7sharp5'];
+function routeQualities(pilotLevel=3,routeIndex=0){
+  if(pilotLevel!==2)return SECTORS[3].qualities;
+  if(routeIndex<2)return MASTER_OPENING_QUALITIES;
+  if(routeIndex<5)return MASTER_MIDDLE_QUALITIES;
+  return SECTORS[3].qualities;
+}
 const family = quality => quality;
 const chordSymbol = chord => `${DEGREES[chord.offset].glyph}${chord.quality==='maj'?'':QUALITIES[chord.quality].glyph}`;
 const SECTORS = [
@@ -67,11 +75,11 @@ const SECTORS = [
   {name:'Хроматический полёт',degrees:Array.from({length:12},(_,i)=>i),qualities:QUALITY_BANKS.flat(),title:'Вся хроматика. Точная цифровка.',description:'12 корней × 22 типа аккорда. Например: ♭IImaj7 или IIIm7. Типы оружия переключаются вкладками «Аккорды» / «Альтерации».',count:12},
 ];
 const pick = (items,rng) => items[Math.floor(rng()*items.length)];
-function createRoute(sector,previousKey=-1,rng=Math.random,routeIndex=0) {
+function createRoute(sector,previousKey=-1,rng=Math.random,routeIndex=0,pilotLevel=3) {
   const keys=[0,2,3,5,7,9,10].filter(k=>k!==previousKey);
   const key=pick(keys,rng);
   const book=BOOK_ROUTES[routeIndex%BOOK_ROUTES.length];
-  const sequence=sector===3?Array.from({length:4},()=>{const offset=pick(SECTORS[3].degrees,rng),quality=pick(SECTORS[3].qualities,rng);const c={offset,quality};return {...c,degree:chordSymbol(c)};}):sector===2?book.sequence.map(c=>({...c})):
+  const sequence=sector===3?Array.from({length:4},()=>{const offset=pick(SECTORS[3].degrees,rng),quality=pick(routeQualities(pilotLevel,routeIndex),rng);const c={offset,quality};return {...c,degree:chordSymbol(c)};}):sector===2?book.sequence.map(c=>({...c})):
     pick(SECTORS[sector].patterns,rng).map(offset=>({offset,degree:DEGREES[offset].glyph,quality:'maj'}));
   return {key,sequence,source:sector===2?book.source:sector===3?'Авторские независимые сигналы · не книжная прогрессия':'Авторская вводная фраза',id:sector===2?book.id:sector===3?'chromatic-lab':'primer',
     // Keep one timbre, register and articulation throughout each musical phrase.
@@ -130,7 +138,7 @@ function answerResult(chord,shields,kind,value) {
   return {correct,shields:correct?next:shields,destroyed:correct&&next.bass&&next.quality};
 }
 
-return {BOOK_ROUTES,DEGREES,INTERVALS,QUALITIES,QUALITY_BANKS,family,chordSymbol,SECTORS,createRoute,missionCode,createBookRoute,bookRoutesForChapter,chordNotes,cueEvents,progressionEvents,bookReferenceEvents,answerResult};
+return {BOOK_ROUTES,DEGREES,INTERVALS,QUALITIES,QUALITY_BANKS,routeQualities,family,chordSymbol,SECTORS,createRoute,missionCode,createBookRoute,bookRoutesForChapter,chordNotes,cueEvents,progressionEvents,bookReferenceEvents,answerResult};
 })();
 const module_intervals=(()=>{
 const INTERVAL_TARGETS={
@@ -182,7 +190,7 @@ const {QUALITIES,INTERVALS}=module_music;
 
 const PILOTS=[
   {name:'Новичок',sector:0,speed:.65,grace:9,obstacleGap:230,description:'I и V · спокойный полёт · помощь'},
-  {name:'Студент',sector:2,speed:.85,grace:7,obstacleGap:200,description:'Два щита · основные аккорды'},
+  {name:'Студент',sector:2,speed:.85,grace:7,obstacleGap:200,description:'Одна плашка · полный аккорд'},
   {name:'Магистр музыки',sector:3,speed:1,grace:5,obstacleGap:170,description:'12 корней · 22 типа · все интервалы'},
   {name:'Херби Хэнкок',sector:3,speed:1.25,grace:3,obstacleGap:145,description:'Вся гармония · быстрые враги · узкие проходы'},
 ];
@@ -200,7 +208,7 @@ const ARTIFACTS=[
   {name:'Overdrive',elixir:'Iron Fuzz',text:'Двойной урон и щит · 10 секунд'},
   {name:'Rock Tongue',elixir:'Full Recovery',text:'Узнай тип случайного аккорда → HP 100%'},
   {name:'Zildjian',elixir:'Rhythm Focus',text:'Запаси подсказку: убрать половину неверных ритмов'},
-  {name:'Drum Machine',elixir:'Phase Lock',text:'Узнай соотношение пульсов → защита и автомат'},
+  {name:'Drum Machine',elixir:'Phase Lock',text:'Барабанщица · узнай рудимент по нотам → защита и автомат'},
   {name:'The Trumpeter',elixir:'Harmonic Flight',text:'Собери basic, guide или color tones для случайного аккорда'},
   {name:'The Key Pilot',elixir:'Melody Memory',text:'Узнай одноголосную тему по названию или голосом'},
   {name:'The Guitar Pilot',elixir:'Modal Drive',text:'Узнай лад по восходящей или нисходящей гамме'},
@@ -266,6 +274,23 @@ function polyEvents(pattern,cycles=3,layer='both'){
   }
   return events.sort((a,b)=>a.beat-b.beat);
 }
+// PAS paradiddle family. Accent studies are authored variations, not extra PAS rudiments.
+const RUDIMENTS=[
+  {name:'Single Paradiddle',sticking:'RLRRLRLL',accents:[0,4],level:0},
+  {name:'Single · Back Accent',sticking:'RLRRLRLL',accents:[3,7],level:0},
+  {name:'Double Paradiddle',sticking:'RLRLRRLRLRLL',accents:[0,6],level:1},
+  {name:'Paradiddle-Diddle · Accent Study',sticking:'RLRRLLRLRRLL',accents:[0,2,6,8],level:1},
+  {name:'Triple Paradiddle',sticking:'RLRLRLRRLRLRLRLL',accents:[0,8],level:2},
+  {name:'Single · Offbeat Accent',sticking:'RLRRLRLL',accents:[1,5],level:2},
+  {name:'Double · Three Accents',sticking:'RLRLRRLRLRLL',accents:[0,2,4,6,8,10],level:3},
+  {name:'Triple · Displaced Accent',sticking:'RLRLRLRRLRLRLRLL',accents:[1,6,9,14],level:3},
+].map(p=>({...p,beats:p.sticking.length/4,events:[...p.sticking].map((hand,i)=>({voice:'snare',beat:i/4,velocity:p.accents.includes(i)?1:.28,hand}))}));
+function rudimentScore(p){
+  const n=p.sticking.length,w=n*24+24;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 94"><rect width="100%" height="100%" rx="5" fill="#d8d5c8"/><path d="M8 53H${w-8}" stroke="#333"/>`;
+  for(let i=0;i<n;i++){const x=16+i*24;svg+=`<ellipse cx="${x}" cy="53" rx="5" ry="3.5" transform="rotate(-20 ${x} 53)" fill="#202728"/><path d="M${x+4} 53V25" stroke="#202728" stroke-width="1.5"/><text x="${x}" y="82" text-anchor="middle" font-family="monospace" font-size="12">${p.sticking[i]}</text>`;if(p.accents.includes(i))svg+=`<path d="M${x-4} 10l8 3-8 3" fill="none" stroke="#202728" stroke-width="2"/>`;if(i%4!==3&&i<n-1)svg+=`<path d="M${x+4} 25h24m-24 5h24" stroke="#202728" stroke-width="3"/>`;}
+  return svg+'</svg>';
+}
 const NUMBER_LABELS=['1','♭2','2','♭3','3','4','♭5','♯4','5','♭6','6','♭7','7','8'];
 const NUMBER_OFFSETS={'1':0,'♭2':1,'2':2,'♭3':3,'3':4,'4':5,'♭5':6,'♯4':6,'5':7,'♭6':8,'6':9,'♭7':10,'7':11,'8':12};
 const TONE_OFFSETS={'1':0,'♭9':1,'9':2,'♯9':3,'♭3':3,'3':4,'11':5,'♯11':6,'♭5':6,'5':7,'♭13':8,'13':9,'♭7':10,'7':11};
@@ -278,6 +303,11 @@ const TONE_PROGRAMS={
 };
 const TONE_MODES=['basic','guide','color'];
 const MELODIES=[
+  // Recognition excerpts checked against user-provided Real Book 5th ed., printed pages 9,18,36,51.
+  {name:'Afro Blue',aliases:['afro blue'],notes:[5,8,7,8,7,10,5],beats:[1,1.5,.5,3,1.5,1.5,2]},
+  {name:'All the Things You Are',aliases:['all the things you are','all things you are'],notes:[8,13,12,5,5,5,5,5,10,3],beats:[4,3,1,1,1,1,1,1,2,1]},
+  {name:'Autumn Leaves',aliases:['autumn leaves'],notes:[4,6,7,12,2,4,6,11,11],beats:[1,1,1,5,1,1,1,2,3]},
+  {name:'Blue Bossa',aliases:['blue bossa','blue bosa'],notes:[7,19,17,15,14,12,10,8,19,17],beats:[1,1.5,.5,.5,1,3.5,1,2,1.5,4.5]},
   {name:'When the Saints',aliases:['when the saints','saints','when the saints go marching in'],notes:[0,4,5,7,0,4,5,7,0,4,5,7,4,0,4,2],beats:[.5,.5,.5,1,.5,.5,.5,1,.5,.5,.5,.75,.75,.75,.5,1.5]},
   {name:'Amazing Grace',aliases:['amazing grace'],notes:[7,0,4,0,4,2,0,9,7],beats:[.6,1.1,.45,.45,1.1,.6,1.1,.6,1.5]},
   {name:'Ode to Joy',aliases:['ode to joy','ode joy'],notes:[4,4,5,7,7,5,4,2,0,0,2,4,4,2,2],beats:[.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.8,.28,1.2]},
@@ -314,22 +344,36 @@ function createExpedition(api){
   let cloak=0,shield=0,rapid=0,fuzz=0,hints=0,rhythmFocus=0,collectCooldown=0,lastRender='',captures=[],renderedChallenge=null;
   const $=id=>document.getElementById(id);
   const random=items=>items[Math.floor(Math.random()*items.length)];
+  const artifactKind=type=>type===0?'mode':type===1?'melody':type===2?'guide':type===6?'poly':type===7?'tones':type===8?'melody':type===9?'mode':type===10?'rhythm':null;
+  const rouletteKinds=['mode','melody','guide','chord','poly','tones','rhythm'];
+  const rouletteLabel=kind=>({mode:'GUITAR PILOT',melody:'KEY PILOT',guide:'JAZZ BASS',chord:'CHORD RECOVERY',poly:'DRUM MACHINE',tones:'TRUMPETER',rhythm:'THE DRUMMER'})[kind];
+  // Keep the deck across retries so restarting a flight does not replay the
+  // same small prefix of the repertoire. Only playable entries enter this pool.
+  let melodyDeck=[],lastMelody=-1;
+  function nextMelody(){
+    if(!melodyDeck.length){
+      melodyDeck=MELODIES.map((_,i)=>i);
+      for(let i=melodyDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[melodyDeck[i],melodyDeck[j]]=[melodyDeck[j],melodyDeck[i]];}
+      if(melodyDeck.length>1&&melodyDeck.at(-1)===lastMelody)[melodyDeck[0],melodyDeck[melodyDeck.length-1]]=[melodyDeck.at(-1),melodyDeck[0]];
+    }
+    lastMelody=melodyDeck.pop();return lastMelody;
+  }
   function reset(level=0){pilot=level;planet=level%2?'mars':'moon';teachers=[];walls=[];drops=[];digits=[];special=null;queue=[];timer=5;wallTimer=3;artifactTimer=9;index=dropIndex=wallIndex=0;cloak=shield=rapid=fuzz=hints=rhythmFocus=collectCooldown=0;render();}
   function render(){
-    const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
+    const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,special?.artifactType,special?.opening,special?.rollKind,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
     if(stamp===lastRender)return;lastRender=stamp;
     $('planet-name').textContent=`${planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
     $('effects').textContent=[rapid>0?`AUTO ${Math.ceil(rapid)}s`:'',cloak>0?`GHOST ${Math.ceil(cloak)}s`:'',shield>0?`SHIELD ${Math.ceil(shield)}s`:'',fuzz>0?`FUZZ ${Math.ceil(fuzz)}s`:'',rhythmFocus?`RHYTHM FOCUS ×${rhythmFocus}`:''].filter(Boolean).join(' · ');
     $('hint').textContent=`Подсказка · ${hints}`;$('hint').disabled=!hints||s.listening||!['active','resolving'].includes(s.mode);
     $('special-panel').hidden=!special;
     if(special){
-      $('special-title').textContent=special.kind==='poly'?'DRUM MACHINE · ВЫСОКИЙ : НИЗКИЙ':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?'MELODY MEMORY · KEY PILOT':special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='tones'?`${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
-      $('special-detail').textContent=special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='melody'?'Полёт удержан · назови тему по-английски или выбери название':special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='tones'?`Трубач просит по-английски · собрано ${special.collected.length}/${special.required.length} · ошибка гасит режим`:special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
-      const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:POLYRHYTHMS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):[];
+      $('special-title').textContent=special.kind==='reveal'?`SALVAGE CHAMBER · ${ARTIFACTS[special.artifactType].name}`:special.kind==='roulette'?'ROCK TONGUE · RANDOM MODE':special.kind==='poly'?'DRUM MACHINE · RUDIMENTS':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?'MELODY MEMORY · KEY PILOT':special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='tones'?`${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
+      $('special-detail').textContent=special.kind==='reveal'?(special.opening?'Замки открыты · энергетический контур запущен':'Полёт удержан · коснись находки, чтобы активировать'):special.kind==='roulette'?`Барабан выбирает испытание · ${rouletteLabel(special.rollKind)}`:special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?'Полёт удержан · назови тему по-английски или выбери название':special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='tones'?`Трубач просит по-английски · собрано ${special.collected.length}/${special.required.length} · ошибка гасит режим`:special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
+      const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:RUDIMENTS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):[];
       // Keep live buttons in place while the countdown changes: replacing them
       // between pointer-down and pointer-up used to discard some answers.
-      if(renderedChallenge!==special){$('special-options').replaceChildren();for(const choice of choices){const b=document.createElement('button');b.textContent=`${choice.icon} ${choice.name}`.trim();b.addEventListener('click',()=>answerSpecial(choice.id));$('special-options').append(b);}if(special.kind==='rhythm'&&rhythmFocus){const focus=document.createElement('button');focus.className='voice-answer';focus.textContent=`◉ ZILDJIAN FOCUS ×${rhythmFocus}`;focus.addEventListener('click',useRhythmFocus);$('special-options').append(focus);}if(['melody','mode'].includes(special.kind)){const mic=document.createElement('button');mic.className='voice-answer';mic.textContent=special.kind==='melody'?'🎙 SAY TITLE':'🎙 SAY MODE';mic.addEventListener('click',listenTitle);$('special-options').append(mic);}renderedChallenge=special;}
-      for(const b of $('special-options').children)b.disabled=s.listening||s.mode==='paused';
+      if(renderedChallenge!==special){$('special-options').replaceChildren();if(special.kind==='reveal'){const open=document.createElement('button');open.className='artifact-activate';open.textContent=special.opening?'OPENING…':'ACTIVATE ARTIFACT';open.addEventListener('click',activateArtifact);$('special-options').append(open);}for(const choice of choices){const b=document.createElement('button');b.textContent=`${choice.icon} ${choice.name}`.trim();if(special.kind==='poly'){const score=document.createElement('img');score.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(rudimentScore(RUDIMENTS[choice.id]));score.alt=RUDIMENTS[choice.id].sticking;score.style.cssText='display:block;width:100%;max-height:85px;margin-top:6px';b.append(score);}b.addEventListener('click',()=>answerSpecial(choice.id));$('special-options').append(b);}if(special.kind==='rhythm'&&rhythmFocus){const focus=document.createElement('button');focus.className='voice-answer';focus.textContent=`◉ ZILDJIAN FOCUS ×${rhythmFocus}`;focus.addEventListener('click',useRhythmFocus);$('special-options').append(focus);}if(special.kind==='melody'){const mic=document.createElement('button');mic.className='voice-answer';mic.textContent='🎙 SAY TITLE';mic.addEventListener('click',listenTitle);$('special-options').append(mic);}renderedChallenge=special;}
+      for(const b of $('special-options').children)b.disabled=!['active','resolving'].includes(s.mode)||!!special.opening;
     }
   }
   function spawnTeacher(){
@@ -364,14 +408,21 @@ function createExpedition(api){
   function startChallenge(kind){
     if(special||s.listening)return false;
     if(!['active','resolving'].includes(s.mode))return false;
-    special={kind:kind,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','melody','mode'].includes(kind),beat:0,createdAt:Date.now()};
+    special={kind:kind,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','poly','melody','mode'].includes(kind),truceUntil:Date.now()+3500,beat:0,createdAt:Date.now()};
     s.bullets=[];
     if(kind==='numbers'){special.interval=random(pilot<2?[3,4,6,7]:[1,2,3,4,5,6,7,8,9,10,11,12]);special.direction=random(['up','down']);makeNumbers(special);}
     if(kind==='guide'){special.target=random(['3','7']);makeNumbers(special);}
     if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=random(special.options);special.root=48+Math.floor(Math.random()*12);}
     if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=random(pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
-    if(kind==='poly'){special.options=POLYRHYTHMS.map((_,i)=>i).filter(i=>POLYRHYTHMS[i].level<=Math.max(1,pilot));special.target=random(special.options);}
-    if(kind==='melody'){special.options=MELODIES.map((_,i)=>i).slice(0,pilot<2?3:MELODIES.length);special.target=random(special.options);special.root=pilot<2?60:57+Math.floor(Math.random()*6);}
+    if(kind==='poly'){special.options=RUDIMENTS.map((_,i)=>i).filter(i=>RUDIMENTS[i].level<=pilot);special.target=random(special.options);}
+    if(kind==='melody'){
+      special.target=nextMelody();
+      const others=MELODIES.map((_,i)=>i).filter(i=>i!==special.target);
+      for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]];}
+      special.options=[special.target,...others.slice(0,pilot<2?3:5)];
+      for(let i=special.options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[special.options[i],special.options[j]]=[special.options[j],special.options[i]];}
+      special.root=pilot<2?60:57+Math.floor(Math.random()*6);
+    }
     if(kind==='mode'){const pool=MODES.map((mode,i)=>({mode,i})).filter(item=>item.mode.level<=Math.min(2,pilot)).map(item=>item.i);special.target=random(pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=55+Math.floor(Math.random()*7);special.direction=pilot===0?'up':random(['up','down']);}
     if(kind==='tones'){
       const qualities=pilot<2?['7','maj7','m7','7sus4']:Object.keys(TONE_PROGRAMS),quality=random(qualities),toneMode=random(TONE_MODES),mission=toneMission(quality,toneMode);
@@ -385,20 +436,20 @@ function createExpedition(api){
     if(special.kind==='numbers')audio.interval(60+s.route.key,special.interval,special.direction,done);
     else if(special.kind==='guide')audio.guide(60+s.route.key,special.target,done);
     else if(special.kind==='chord')audio.chordOnly(special.root,INTERVALS[special.target],done);
-    else if(special.kind==='poly')audio.poly(POLYRHYTHMS[special.target],done);
+    else if(special.kind==='poly')audio.poly(RUDIMENTS[special.target],done);
     else if(special.kind==='tones')audio.announce(`${ROOT_NAMES[special.rootPc]} ${QUALITY_SPEECH[special.quality]}. Give me ${special.toneMode} tones, man.`,()=>{if(special===current)audio.trumpetChord(special.root,INTERVALS[special.quality],done);});
     else if(special.kind==='melody')audio.melody(special.root,MELODIES[special.target],done);
     else if(special.kind==='mode')audio.scale(special.root,MODES[special.target],special.direction,done);
     else audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
   }
-  function specialName(c,value=c.target){return c.kind==='poly'?POLYRHYTHMS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?QUALITIES[value].glyph:c.kind==='tones'?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
+  function specialName(c,value=c.target){return c.kind==='poly'?RUDIMENTS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?QUALITIES[value].glyph:c.kind==='tones'?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
   function endChallenge(won,wrong=false){
     const c=special;if(!c)return;
     audio.stop();s.listening=false;special=null;digits=[];
     if(won){s.score+=250;
       if(c.kind==='chord'){s.health=s.maxHealth||5;feedback(`${QUALITIES[c.target].glyph} · HP 100%`);}
       else if(c.kind==='rhythm'){shield=12;rapid=10;feedback(`${RHYTHMS[c.target].name} · Rhythm Shield`);}
-      else if(c.kind==='poly'){shield=10;rapid=12;feedback(`${POLYRHYTHMS[c.target].name} · Phase Lock`);}
+      else if(c.kind==='poly'){shield=10;rapid=12;feedback(`${RUDIMENTS[c.target].name} · Phase Lock`);}
       else if(c.kind==='guide'){teachers.filter(t=>t.hp>0).forEach(killTeacher);shield=8;feedback(`Guide tone ${c.target} · механические хищники нейтрализованы`);}
       else if(c.kind==='tones'){rapid=14;shield=12;s.energy=Math.min(99,s.energy+45);feedback(`${c.toneMode.toUpperCase()} TONES · ${c.chordName} · HARMONIC FLIGHT`);}
       else if(c.kind==='melody'){cloak=12;rapid=12;s.energy=Math.min(99,s.energy+35);feedback(`${MELODIES[c.target].name} · MELODY MEMORY`);}
@@ -409,20 +460,20 @@ function createExpedition(api){
     if(s.mode==='active')api.playCue();
   }
   function answerSpecial(value){
-    if(!special||s.listening||s.mode==='paused')return;
+    if(!special||!['active','resolving'].includes(s.mode)||!special.options.includes(value))return;
     if(value===special.target){endChallenge(true);return;}
     special.misses++;special.time=Math.max(0,special.time-3);
     if(special.misses>=2){endChallenge(false);return;}
     feedback('Мимо · осталась одна попытка',true);lastRender='';render();
   }
   function useRhythmFocus(){
-    if(!special||special.kind!=='rhythm'||!rhythmFocus||s.listening||s.mode==='paused')return false;
+    if(!special||special.kind!=='rhythm'||!rhythmFocus||!['active','resolving'].includes(s.mode))return false;
     const wrong=special.options.filter(i=>i!==special.target),remove=new Set(wrong.slice().sort(()=>Math.random()-.5).slice(0,Math.ceil(wrong.length/2)));
     special.options=special.options.filter(i=>!remove.has(i));rhythmFocus--;renderedChallenge=null;lastRender='';
     feedback(`Zildjian Focus · осталось ${special.options.length} вариантов`);render();syncPads();return true;
   }
   function answerSpoken(text){
-    if(!special||!['melody','mode'].includes(special.kind)||s.listening)return false;const heard=String(text).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(),items=special.kind==='melody'?MELODIES:MODES;
+    if(!special||!['melody','mode'].includes(special.kind)||!['active','resolving'].includes(s.mode))return false;const heard=String(text).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(),items=special.kind==='melody'?MELODIES:MODES;
     const match=special.options.find(i=>(items[i].aliases||[items[i].name.toLowerCase()]).some(alias=>heard.includes(alias)));
     if(match===undefined){feedback(`Не расслышал название: “${text}”`,true);return false;}answerSpecial(match);return true;
   }
@@ -442,22 +493,45 @@ function createExpedition(api){
     c.collected.push(label);digits=digits.filter(d=>d.label!==label);s.score+=90;lastRender='';
     if(result.complete)endChallenge(true);else{feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
   }
-  function artifact(type){
-    feedback(`${ARTIFACTS[type].name} · ${ARTIFACTS[type].elixir}`);
-    if(type===2){if(!teachers.some(t=>t.hp>0))spawnTeacher();}
-    if(type===3){fuzz=shield=10;}
+  function applyArtifact(type){
+    const kind=artifactKind(type);
+    if(type===2&&!teachers.some(t=>t.hp>0))spawnTeacher();
+    if(type===3){fuzz=shield=10;feedback('Overdrive · щит и двойной урон на 10 секунд');}
     if(type===5){rhythmFocus++;feedback(`Zildjian · Rhythm Focus ×${rhythmFocus}`);}
-    if([0,1,2,4,6,7,8,9,10].includes(type)&&['active','resolving'].includes(s.mode)){
-      audio.stop();s.listening=false;special=null;digits=[];queue=[];s.capsule=null;s.capsuleTimer=0;
-      startChallenge(type===0?'mode':type===1?'melody':type===2?'guide':type===4?'chord':type===6?'poly':type===7?'tones':type===8?'melody':type===9?'mode':'rhythm');
-    }
-    render();
+    if(type===4){beginRoulette();return;}
+    if(kind)startChallenge(kind);else{render();renderHud();syncPads();if(s.mode==='active')api.playCue();}
   }
-  function dropArtifact(type=null){if(type===null){const pool=pilot===0?[0,1,2,3,4,5,6,9,10]:ARTIFACTS.map((_,i)=>i);type=pool[dropIndex++%pool.length];}drops.push({type,x:60+Math.random()*(W-120),y:110,age:0});}
+  function beginRoulette(){
+    const target=random(rouletteKinds);
+    special={kind:'roulette',targetKind:target,rollKind:rouletteKinds[0],rollStep:-1,pause:true,createdAt:Date.now(),collected:[],options:[]};
+    renderedChallenge=null;lastRender='';render();syncPads();
+  }
+  function updateRoulette(){
+    const c=special,elapsed=(Date.now()-c.createdAt)/1000,stops=[0,.11,.23,.36,.51,.68,.88,1.12,1.41,1.75,2.15,2.55];
+    let step=0;for(let i=1;i<stops.length;i++)if(elapsed>=stops[i])step=i;
+    if(step!==c.rollStep){c.rollStep=step;c.rollKind=step===stops.length-1?c.targetKind:rouletteKinds[step%rouletteKinds.length];if(typeof audio.rouletteTick==='function')audio.rouletteTick(step===stops.length-1);lastRender='';render();}
+    if(elapsed<2.82)return;
+    const kind=c.targetKind;special=null;renderedChallenge=null;lastRender='';feedback(`ROCK TONGUE → ${rouletteLabel(kind)}`);startChallenge(kind);
+  }
+  function activateArtifact(){
+    if(special?.kind!=='reveal'||special.opening||!['active','resolving'].includes(s.mode))return false;
+    const reveal=special,type=reveal.artifactType;reveal.opening=true;reveal.createdAt=Date.now();renderedChallenge=null;lastRender='';render();syncPads();
+    const finish=()=>{if(special!==reveal)return;special=null;renderedChallenge=null;lastRender='';s.flash=Math.max(s.flash,.18);applyArtifact(type);};
+    if(typeof audio.artifactReveal==='function')audio.artifactReveal(type,finish);else finish();
+    return true;
+  }
+  function artifact(type){
+    if(!['active','resolving'].includes(s.mode))return;
+    audio.stop();s.listening=false;digits=[];queue=[];s.capsule=null;s.capsuleTimer=0;
+    special={kind:'reveal',artifactType:type,opening:false,pause:true,createdAt:Date.now(),collected:[],options:[]};
+    renderedChallenge=null;lastRender='';feedback(`${ARTIFACTS[type].name} · находка перемещена в камеру`);render();syncPads();
+  }
+  function dropArtifact(type=null){if(type===null){const pool=[7,0,3,1,5,10,2,6,4];type=pool[dropIndex++%pool.length];}drops.push({type,x:60+Math.random()*(W-120),y:110,age:0});}
   function afterHydra(){if(s.totalCleared%3===0)planet=planet==='moon'?'mars':'moon';queue.push('numbers');dropArtifact();render();}
   function hint(){if(!hints||s.listening||!['active','resolving'].includes(s.mode))return;hints--;if(special){feedback(`Подсказка: ${specialName(special)}`);}else if(s.capsule){feedback(s.capsule.heard===s.capsule.wanted?'Капсула совпадает · лови':'Другой интервал · пропусти');}else if(s.enemy)feedback(`Корень: ${api.degree(s.enemy.chord.offset)} · тип: ${QUALITIES[s.enemy.chord.quality].glyph}`);render();}
   function tick(dt){
     if(!['active','resolving'].includes(s.mode))return;
+    if(special?.kind==='roulette'){updateRoulette();return;}
     if(special?.pause){render();return;}
     collectCooldown=Math.max(0,collectCooldown-dt);
     captures=captures.filter(c=>(c.life-=dt)>0);
@@ -487,23 +561,31 @@ function createExpedition(api){
   }
   function drawSprite(img,cell,cols,rows,x,y,size){if(!img?.complete||!img.naturalWidth)return;const sw=img.naturalWidth/cols,sh=img.naturalHeight/rows,scale=size/Math.max(sw,sh);api.ctx.drawImage(img,(cell%cols)*sw,Math.floor(cell/cols)*sh,sw,sh,x-sw*scale/2,y-sh*scale/2,sw*scale,sh*scale);}
   function drawRelic(d){
-    const ctx=api.ctx;if(d.type<7){ctx.save();ctx.beginPath();ctx.arc(d.x,d.y,29,0,Math.PI*2);ctx.clip();if(d.type===6)drawSprite(images.drummachine,0,1,1,d.x,d.y,55);else drawSprite(images.artifacts,d.type,3,2,d.x,d.y,55);ctx.restore();return;}
-    const hue={7:34,8:192,9:292,10:12}[d.type]||45,spin=d.age*.8;
-    ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(spin)*.12);ctx.shadowColor=`hsl(${hue} 95% 62%)`;ctx.shadowBlur=22;
-    ctx.fillStyle='#231b18';ctx.strokeStyle=`hsl(${hue} 88% 72%)`;ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(-22,-13);ctx.lineTo(0,-26);ctx.lineTo(22,-13);ctx.lineTo(22,14);ctx.lineTo(0,27);ctx.lineTo(-22,14);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle=`hsla(${hue} 70% 42% / .72)`;ctx.beginPath();ctx.moveTo(-22,-13);ctx.lineTo(0,0);ctx.lineTo(0,27);ctx.lineTo(-22,14);ctx.closePath();ctx.fill();
-    ctx.fillStyle=`hsla(${hue+24} 82% 52% / .5)`;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(22,-13);ctx.lineTo(22,14);ctx.lineTo(0,27);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
-    ctx.strokeStyle='#fff0bd';ctx.fillStyle='#fff0bd';ctx.lineWidth=2;ctx.lineCap='round';
-    if(d.type===7){ctx.beginPath();ctx.moveTo(-12,3);ctx.lineTo(9,-5);ctx.lineTo(9,6);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(-14,3,3,0,Math.PI*2);ctx.fill();}
-    if(d.type===8){ctx.strokeRect(-14,-7,28,15);for(let x=-10;x<14;x+=6){ctx.beginPath();ctx.moveTo(x,-7);ctx.lineTo(x,8);ctx.stroke();}for(const x of [-7,5])ctx.fillRect(x,-7,3,8);}
-    if(d.type===9){ctx.save();ctx.rotate(-.42);ctx.beginPath();ctx.ellipse(-8,4,9,7,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-1,1);ctx.lineTo(16,-6);ctx.stroke();ctx.restore();}
-    if(d.type===10){ctx.beginPath();ctx.arc(0,3,11,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-13,-13);ctx.lineTo(7,7);ctx.moveTo(13,-13);ctx.lineTo(-7,7);ctx.stroke();}
-    ctx.strokeStyle=`hsla(${hue} 95% 72% / .62)`;ctx.beginPath();ctx.ellipse(0,0,35+Math.sin(d.age*5)*3,17,spin,0,Math.PI*2);ctx.stroke();ctx.restore();
+    const ctx=api.ctx,hue=[292,192,150,12,345,48,185,34,192,292,12][d.type];
+    ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.age*1.5)*.08);
+    ctx.shadowColor=`hsl(${hue} 82% 58%)`;ctx.shadowBlur=17;
+    ctx.fillStyle='#182325';ctx.beginPath();ctx.roundRect(-31,-27,62,54,7);ctx.fill();ctx.shadowBlur=0;
+    const wood=ctx.createLinearGradient(-25,-20,25,20);wood.addColorStop(0,'#2a2924');wood.addColorStop(.48,'#66523a');wood.addColorStop(1,'#252b28');
+    ctx.fillStyle=wood;ctx.fillRect(-25,-21,50,42);
+    ctx.strokeStyle='#151a19';ctx.lineWidth=2;for(let y=-16;y<21;y+=7){ctx.beginPath();ctx.moveTo(-25,y);ctx.lineTo(25,y+2);ctx.stroke();}
+    const copper=ctx.createLinearGradient(-31,0,31,0);copper.addColorStop(0,'#263b38');copper.addColorStop(.35,'#b56d42');copper.addColorStop(.65,'#69402f');copper.addColorStop(1,'#29433f');
+    ctx.fillStyle=copper;for(const x of [-29,22])ctx.fillRect(x,-25,7,50);ctx.fillRect(-29,-25,58,6);ctx.fillRect(-29,19,58,6);
+    ctx.fillStyle='#b7ad8d';for(const x of [-25,25])for(const y of [-21,21]){ctx.beginPath();ctx.arc(x,y,2.4,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#30271f';ctx.stroke();}
+    ctx.fillStyle='#101719';ctx.fillRect(-20,-12,40,24);ctx.strokeStyle='#8b866f';ctx.lineWidth=1.5;ctx.strokeRect(-20,-12,40,24);
+    ctx.fillStyle='#d8d3bd';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(['GTR','KEY','BASS','FX','CHRD','FOCUS','DRUM','HORN','KEY','GTR','BEAT'][d.type],0,0);
+    ctx.strokeStyle='#d2c5a355';ctx.beginPath();ctx.moveTo(-16,15);ctx.lineTo(-5,12);ctx.moveTo(7,-18);ctx.lineTo(16,-21);ctx.stroke();
+    ctx.fillStyle=`hsl(${hue} 88% ${55+Math.sin(d.age*5)*13}%)`;ctx.beginPath();ctx.arc(0,18,4,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=`hsla(${hue} 90% 66% / .55)`;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,38+Math.sin(d.age*4)*2,20,d.age*.5,0,Math.PI*2);ctx.stroke();ctx.restore();
   }
+
   function draw(){const ctx=api.ctx;
     for(const w of walls){ctx.save();ctx.beginPath();ctx.rect(w.x,w.y,w.w,w.h);ctx.clip();const tex=images[planet];if(tex?.complete&&tex.naturalWidth)ctx.drawImage(tex,0,tex.naturalHeight*.35,tex.naturalWidth,tex.naturalHeight*.2,w.x,w.y,w.w,w.h);ctx.fillStyle='#4b322b66';ctx.fillRect(w.x,w.y,w.w,w.h);ctx.restore();ctx.strokeStyle='#d2a265';ctx.lineWidth=3;ctx.strokeRect(w.x,w.y,w.w,w.h);ctx.fillStyle='#fbd492';for(let x=w.x+12;x<w.x+w.w;x+=30)ctx.fillRect(x,w.y+6,3,3);}
-    for(const t of teachers){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.sin(t.age*2)*.2);drawSprite(images.drone,0,1,1,0,0,70+t.type*6);ctx.strokeStyle='#788385';ctx.lineWidth=5;for(let i=0;i<3+t.type;i++){const a=i*Math.PI*2/(3+t.type)+t.age*.4;ctx.beginPath();ctx.moveTo(Math.cos(a)*23,Math.sin(a)*23);ctx.lineTo(Math.cos(a)*42,Math.sin(a)*42);ctx.lineTo(Math.cos(a+.25)*49,Math.sin(a+.25)*49);ctx.stroke();}ctx.fillStyle=['#d46d47','#82b8b4','#a4bd64','#ca665d','#a58fbf'][t.type];ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=9;ctx.fillRect(-5,-5,10,10);ctx.restore();}
+    for(const t of teachers){
+      ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.sin(t.age*1.7)*.08);
+      const signal=['#b66c4c','#799b98','#68998f','#a45c4a','#8a8172'][t.type];
+      ctx.shadowColor=signal;ctx.shadowBlur=12;drawSprite(images.teachers,t.type,5,1,0,0,108+t.type*3);ctx.shadowBlur=0;
+      ctx.strokeStyle=signal;ctx.lineWidth=2;ctx.globalAlpha=.55;ctx.beginPath();ctx.arc(0,2,31+Math.sin(t.age*4)*2,0,Math.PI*2);ctx.stroke();ctx.restore();
+    }
     for(const d of drops){drawRelic(d);ctx.strokeStyle=d.type>=7?`hsl(${(d.age*90+d.type*70)%360} 95% 72%)`:'#eec56a';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=d.type>=7?18:0;ctx.beginPath();ctx.arc(d.x,d.y,29+Math.sin(d.age*5)*2,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#ffe0a2';ctx.textAlign='center';ctx.font='10px system-ui';ctx.fillText(ARTIFACTS[d.type].name,d.x,d.y+39);}
     if(special?.kind==='tones'){
       const lit=special.collected.length,H=getH(),x=W*.76,y=H*.34;
@@ -527,47 +609,79 @@ function createExpedition(api){
   function drawRhythmOverlay(){
     const ctx=api.ctx,H=getH(),beat=special?.beat||0,pulse=s.listening?Math.sin((audio.context?.currentTime||0)*Math.PI*110/60):0;
     ctx.save();
-    ctx.fillStyle='#09151ee0';ctx.fillRect(12,H*.20,W-24,H*.60);
-    const glow=ctx.createRadialGradient(W/2,H*.43,10,W/2,H*.43,W*.62);glow.addColorStop(0,'#8b653a99');glow.addColorStop(1,'#101c2400');ctx.fillStyle=glow;ctx.fillRect(12,H*.20,W-24,H*.60);
-    for(let x=25;x<W;x+=60){ctx.fillStyle='#70573899';ctx.fillRect(x,H*.23,6,H*.48);ctx.fillStyle='#d4a768';ctx.fillRect(x+1,H*.23,2,H*.48);}
-    ctx.fillStyle='#262f31e8';ctx.beginPath();ctx.ellipse(W/2,H*.68,W*.46,H*.14,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#c69a58';ctx.lineWidth=3;ctx.stroke();
-    const band=images.band;
-    for(let i=0;i<4;i++){
-      const x=W*(.16+i*.225),y=H*.54+Math.sin(i*2)*4;
-      ctx.save();ctx.globalAlpha=.34;ctx.translate(x,y);ctx.rotate(pulse*(i%2?-.025:.025));
-      if(band?.complete&&band.naturalWidth){const bounds=[0,370,730,1190,1536],sx=bounds[i],sw=bounds[i+1]-sx,sh=band.naturalHeight,scale=Math.min(H*.48/sh,W*.19/sw);ctx.drawImage(band,sx,0,sw,sh,-sw*scale/2,-sh*scale/2,sw*scale,sh*scale);}ctx.restore();
-      ctx.fillStyle=i===beat%4?'#c4ffe4':'#817353';ctx.beginPath();ctx.arc(x,H*.82,5,0,Math.PI*2);ctx.fill();
+    if(special.kind==='poly'){
+      concertBackdrop('drummergirl',true);
+      concertTitle('DRUM MACHINE · RUDIMENTS');ctx.restore();return;
     }
-    const drummerX=arrival(W*.52,-1);ctx.save();ctx.translate(drummerX,H*.53);ctx.rotate(pulse*.014);drawSprite(images.drummer,0,1,1,0,0,360);ctx.restore();
-    ctx.textAlign='center';ctx.fillStyle='#ffe2a7';ctx.font='bold 20px Georgia';ctx.fillText('THE DRUMMER · RHYTHM TRIAL',W/2,H*.25);
-    ctx.font='12px system-ui';ctx.fillText(`RHYTHM SIGNAL · 110 BPM${rhythmFocus?' · ZILDJIAN FOCUS READY':''}`,W/2,H*.29);
-    ctx.restore();
+    ctx.restore();concertPerformer('concert-drums-v65',images.drummer,'RHYTHM TRIAL');
   }
-  function drawMelodyOverlay(){
-    const ctx=api.ctx,H=getH(),pulse=Math.sin((audio.context?.currentTime||0)*5),x=W*.36,y=H*.47;
-    ctx.save();ctx.fillStyle='#081629df';ctx.fillRect(12,H*.18,W-24,H*.64);
-    const glow=ctx.createRadialGradient(x,y,15,x,y,W*.6);glow.addColorStop(0,'#854dff99');glow.addColorStop(.55,'#175cff35');glow.addColorStop(1,'#07162600');ctx.fillStyle=glow;ctx.fillRect(12,H*.18,W-24,H*.64);
-    for(let i=0;i<5;i++){ctx.strokeStyle=`hsla(${210+i*26} 95% 68% / ${.25+i*.08})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,85+i*18+8*pulse,32+i*12,Math.sin(i)*.22,0,Math.PI*2);ctx.stroke();}
-    const keyX=arrival(x,1);drawSprite(images.keytarist,0,1,1,keyX,y,310);
-    ctx.fillStyle='#edf3ff';ctx.textAlign='center';ctx.font='bold 19px Georgia';ctx.fillText('MELODY MEMORY',W/2,H*.25);ctx.font='12px system-ui';ctx.fillStyle='#a8c8ff';ctx.fillText(s.listening?'♫ LISTEN TO THE LINE':'TAP A TITLE OR SAY IT IN ENGLISH',W/2,H*.29);ctx.restore();
+  function concertBackdrop(name,showWholeImage=false){
+    const ctx=api.ctx,H=getH(),img=images[name];
+    ctx.fillStyle='#080d14';ctx.fillRect(0,0,W,H);
+    if(img?.complete&&img.naturalWidth){
+      const cover=Math.max(W/img.naturalWidth,H/img.naturalHeight);
+      const k=showWholeImage?Math.min(W/img.naturalWidth,H/img.naturalHeight):cover;
+      ctx.drawImage(img,(W-img.naturalWidth*k)/2,(H-img.naturalHeight*k)/2,img.naturalWidth*k,img.naturalHeight*k);
+      if(showWholeImage){
+        // One portrait only. Blend its empty outer edges into the dark room;
+        // never enlarge a second copy of the musician behind her.
+        const x=(W-img.naturalWidth*k)/2,y=(H-img.naturalHeight*k)/2,w=img.naturalWidth*k,h=img.naturalHeight*k;
+        const edge=Math.min(w*.08,24);
+        for(const [from,to] of [[x,x+edge],[x+w,x+w-edge]]){
+          const fade=ctx.createLinearGradient(from,0,to,0);fade.addColorStop(0,'#080d14');fade.addColorStop(1,'#080d1400');ctx.fillStyle=fade;ctx.fillRect(Math.min(from,to),y,edge,h);
+        }
+        if(y>0){
+          for(const [from,to] of [[y,y+edge],[y+h,y+h-edge]]){
+            const fade=ctx.createLinearGradient(0,from,0,to);fade.addColorStop(0,'#080d14');fade.addColorStop(1,'#080d1400');ctx.fillStyle=fade;ctx.fillRect(x,Math.min(from,to),w,edge);
+          }
+        }
+      }
+    }
   }
-  function drawModeOverlay(){
-    const ctx=api.ctx,H=getH(),pulse=Math.sin((audio.context?.currentTime||0)*4),x=arrival(W*.59,-1),y=H*.49;
-    ctx.save();ctx.fillStyle='#11101cdf';ctx.fillRect(12,H*.18,W-24,H*.64);const glow=ctx.createRadialGradient(x,y,15,x,y,W*.62);glow.addColorStop(0,'#c54f9a8c');glow.addColorStop(.5,'#3e79b43a');glow.addColorStop(1,'#080b1500');ctx.fillStyle=glow;ctx.fillRect(12,H*.18,W-24,H*.64);
-    for(let i=0;i<6;i++){ctx.strokeStyle=`hsla(${285-i*17} 88% 68% / ${.18+i*.055})`;ctx.beginPath();ctx.ellipse(x,y,70+i*17+5*pulse,29+i*9,-.22,0,Math.PI*2);ctx.stroke();}
-    drawSprite(images.guitarist,0,1,1,x,y,330);
-    ctx.textAlign='center';ctx.fillStyle='#ffe5bb';ctx.font='bold 19px Georgia';ctx.fillText('MODAL DRIVE · GUITAR PILOT',W/2,H*.25);ctx.font='12px system-ui';ctx.fillStyle='#d5b5ff';ctx.fillText(s.listening?'♫ FOLLOW THE SCALE':'NAME THE MODE · UP OR DOWN',W/2,H*.29);ctx.restore();
+  function concertTitle(title){
+    const ctx=api.ctx;ctx.save();ctx.fillStyle='#f2e3c9';ctx.strokeStyle='#080a0dcc';ctx.lineWidth=5;ctx.textAlign='center';ctx.font='bold 17px monospace';ctx.shadowColor='#000';ctx.shadowBlur=9;ctx.strokeText(title,W/2,34);ctx.fillText(title,W/2,34);ctx.restore();
   }
-  function drawPauseOverlay(){if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else drawRhythmOverlay();}
+  function concertPerformer(background,portrait,title){
+    const ctx=api.ctx,H=getH();ctx.save();concertBackdrop(background);
+    drawSprite(portrait,0,1,1,arrival(W*.5,1),H*.53,Math.min(H*.76,W*.88));
+    concertTitle(title);ctx.restore();
+  }
+  function drawMelodyOverlay(){concertPerformer('concert-keys-v65',images.keytarist,'MELODY MEMORY');}
+  function drawModeOverlay(){concertPerformer('concert-guitar-v65',images.guitarist,'MODAL DRIVE');}
+  function revealBackdrop(type){
+    const kind=artifactKind(type);
+    if(kind==='poly')concertBackdrop('drummergirl',true);
+    else concertBackdrop(kind==='rhythm'?'concert-drums-v65':kind==='melody'||kind==='guide'?'concert-keys-v65':kind==='tones'?'concert-trumpet-v65':'concert-guitar-v65');
+  }
+  function revealCrate(type){return type===2?images['crate-bass']:type===4?images['crate-roulette']:type===7?images['crate-trumpet']:type===6?images['crate-vibraphone']:null;}
+  function drawArtifactReveal(){
+    const ctx=api.ctx,H=getH(),type=special.artifactType,elapsed=(Date.now()-special.createdAt)/1000,pulse=.5+.5*Math.sin(elapsed*4.5),opening=!!special.opening;
+    ctx.save();revealBackdrop(type);
+    const shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#05090ca8');shade.addColorStop(.55,'#06101535');shade.addColorStop(1,'#020609d8');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+    const x=W/2,y=H*.55,beam=ctx.createRadialGradient(x,y,10,x,y,Math.min(W,H)*.46);beam.addColorStop(0,opening?'#fff4c9b8':'#80ffe83d');beam.addColorStop(.55,opening?'#ffd88425':'#55d7c80c');beam.addColorStop(1,'#0000');ctx.fillStyle=beam;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle=opening?'#ffe6a8':'#7ee9d0';ctx.globalAlpha=.32+pulse*.38;ctx.lineWidth=2;for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(x,y,105+i*24+pulse*5,35+i*11,0,0,Math.PI*2);ctx.stroke();}
+    ctx.globalAlpha=1;const crate=revealCrate(type);
+    if(crate?.complete&&crate.naturalWidth){const target=Math.min(W*.72,H*.58)*(opening?1.04+pulse*.025:1),k=target/Math.max(crate.naturalWidth,crate.naturalHeight);ctx.shadowColor=opening?'#ffe0a5':'#59e8d2';ctx.shadowBlur=opening?36:12+pulse*10;ctx.drawImage(crate,x-crate.naturalWidth*k/2,y-crate.naturalHeight*k*.52,crate.naturalWidth*k,crate.naturalHeight*k);ctx.shadowBlur=0;}
+    else{ctx.save();ctx.translate(x,y);ctx.scale(2.8,2.8);drawRelic({type,x:0,y:0,age:elapsed});ctx.restore();}
+    if(opening){const flash=Math.max(0,1-elapsed/.84);ctx.fillStyle=`rgba(255,240,194,${flash*.34})`;ctx.fillRect(0,0,W,H);}
+    concertTitle(opening?'ARTIFACT ONLINE':`TOUCH TO ACTIVATE · ${ARTIFACTS[type].name.toUpperCase()}`);ctx.restore();
+  }
+  function drawRouletteOverlay(){
+    const ctx=api.ctx,H=getH(),elapsed=(Date.now()-special.createdAt)/1000,pulse=.5+.5*Math.sin(elapsed*13),crate=images['crate-roulette'];ctx.save();concertBackdrop('concert-guitar-v65');
+    ctx.fillStyle='#05080bc7';ctx.fillRect(0,0,W,H);const x=W/2,y=H*.51;
+    if(crate?.complete&&crate.naturalWidth){const target=Math.min(W*.72,H*.55),k=target/Math.max(crate.naturalWidth,crate.naturalHeight);ctx.shadowColor='#ffbd66';ctx.shadowBlur=14+pulse*22;ctx.drawImage(crate,x-crate.naturalWidth*k/2,y-crate.naturalHeight*k*.52,crate.naturalWidth*k,crate.naturalHeight*k);ctx.shadowBlur=0;}
+    ctx.fillStyle='#101516e8';ctx.strokeStyle='#f0c57d';ctx.lineWidth=2;ctx.fillRect(W*.12,H*.76,W*.76,47);ctx.strokeRect(W*.12,H*.76,W*.76,47);ctx.fillStyle='#ffe4b1';ctx.textAlign='center';ctx.font='bold 18px ui-monospace,monospace';ctx.fillText(rouletteLabel(special.rollKind),x,H*.76+30);concertTitle('ROCK TONGUE · RANDOM MODE');ctx.restore();
+  }
+  function drawPauseOverlay(){if(special?.kind==='reveal')drawArtifactReveal();else if(special?.kind==='roulette')drawRouletteOverlay();else if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else drawRhythmOverlay();}
   function hitShot(b){for(const t of teachers){if(t.hp>0&&Math.hypot(b.x-t.x,b.y-t.y)<31){if(t.hp<=(fuzz?2:1))killTeacher(t);else t.hp-=fuzz?2:1;return true;}}return false;}
-  return {reset,render,tick,draw,drawPauseOverlay,hitShot,replay,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,artifact,spawnTeacher,
-    get pausedCombat(){return !!special?.pause;},
+  return {reset,render,tick,draw,drawPauseOverlay,hitShot,replay,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,artifact,activateArtifact,spawnTeacher,
+    get pausedCombat(){return !!special?.pause||!!special?.truceUntil&&Date.now()<special.truceUntil;},
     get pauseKind(){return special?.pause?special.kind:null;},
     get busy(){return !!special;},get invincible(){return shield>0||cloak>0||special?.kind==='tones';},get cloaked(){return cloak>0;},get boosted(){return rapid>0;},get planet(){return planet;},get pilot(){return PILOTS[pilot];},get level(){return pilot;},
     snapshot:()=>({pilot,planet,teachers,walls,drops,digits,special,queue,cloak,shield,rapid,fuzz,hints,rhythmFocus})};
 }
 
-return {PILOTS,TEACHERS,ARTIFACTS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,rhythmIds,POLYRHYTHMS,polyEvents,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,TONE_PROGRAMS,TONE_MODES,MELODIES,MODES,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,createExpedition};
+return {PILOTS,TEACHERS,ARTIFACTS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,rhythmIds,POLYRHYTHMS,polyEvents,RUDIMENTS,rudimentScore,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,TONE_PROGRAMS,TONE_MODES,MELODIES,MODES,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,createExpedition};
 })();
 const module_audio=(()=>{
 const {bookReferenceEvents,cueEvents,progressionEvents}=module_music;
@@ -689,13 +803,29 @@ class FlightAudio {
     this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:'guitar synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},notes.length*.25+.55);
   }
-  drum(voice,at){
+  artifactReveal(type,onEnd){
+    this.stop();const token=this.token,ctx=this.context;
+    if(!ctx){this.schedule(()=>{if(token===this.token)onEnd();},.05);return;}
+    const start=ctx.currentTime+.04,root=type===4?41:36+(type%5)*2;
+    // Servo rumble, three latch strikes and a short luminous confirmation.
+    this.note(root,start,.72,'soft',.24);
+    [0,.13,.27].forEach((offset,i)=>{this.drum(i===2?'snare':'clave',start+offset,.75+i*.12);this.note(root+12+i*5,start+offset,.16,'synth',.18);});
+    [24,31,36].forEach((interval,i)=>this.note(root+interval,start+.38+i*.07,.42,'soft',.16));
+    this.lastCue={kind:type===4?'artifact-roulette':'artifact-opening',type,sound:'mechanical latches and energy flash'};
+    this.schedule(()=>{if(token===this.token)onEnd();},.84);
+  }
+  rouletteTick(final=false){
+    const ctx=this.context;if(!ctx)return;const at=ctx.currentTime+.01;
+    this.drum(final?'snare':'clave',at,final?1.2:.68);
+    this.note(final?79:67,at,final?.32:.08,'soft',final?.2:.08);
+  }
+  drum(voice,at,velocity=1){
     const ctx=this.context,osc=ctx.createOscillator(),gain=ctx.createGain();
     const freq={kick:120,snare:185,hat:7200,ride:4800,clave:1800,rim:1100}[voice];
     const duration=voice==='ride'?.22:voice==='kick'?.18:.07;
     osc.type=['hat','ride','snare'].includes(voice)?'square':'sine';
     osc.frequency.setValueAtTime(freq,at);osc.frequency.exponentialRampToValueAtTime(voice==='kick'?42:freq*.78,at+duration);
-    gain.gain.setValueAtTime(voice==='kick'?.35:voice==='snare'?.13:voice==='clave'?.15:.035,at);
+    gain.gain.setValueAtTime((voice==='kick'?.35:voice==='snare'?.13:voice==='clave'?.15:.035)*velocity,at);
     gain.gain.exponentialRampToValueAtTime(.00001,at+duration);
     osc.connect(gain);gain.connect(this.master);osc.start(at);osc.stop(at+duration+.01);this.voices.add(osc);
     osc.onended=()=>{this.voices.delete(osc);osc.disconnect();gain.disconnect();};
@@ -707,13 +837,14 @@ class FlightAudio {
       for(const event of pattern.events){const at=start+(loop*beats+event.beat)*beat;
         if(event.voice==='bass')this.note(event.midi,at,.34,'synth',.42);
         else if(event.voice==='keys')for(const midi of event.notes)this.note(midi,at,.26,'synth',.25);
-        else this.drum(event.voice,at);
+        else this.drum(event.voice,at,event.velocity??1);
       }
       for(let i=0;i<beats;i++)this.schedule(()=>{if(token===this.token)onBeat(i,loop);},.15+(loop*beats+i)*beat);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},beats*loops*beat+.4);
   }
   poly(pattern,onEnd,{cycles=3,layer='both',onHit=()=>{}}={}){
+    if(pattern.sticking)return this.rhythm(pattern,onEnd,{loops:cycles});
     this.stop();const token=this.token,start=this.context.currentTime+.15,beat=60/110;
     for(const event of polyEvents(pattern,cycles,layer)){
       this.drum(event.voice,start+event.beat*beat);
@@ -799,12 +930,25 @@ const {loadFlightImage}=module_assets_loader;
 const {installLanguage}=module_i18n;
 const {pressure,formation,stepDrone,hitCircle}=module_combat;
 const {INTERVAL_TARGETS,INTERVAL_MODES,targetForSector,createCapsule,capsuleOutcome}=module_intervals;
-const {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,POLYRHYTHMS,createExpedition}=module_expedition;
+const {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,RUDIMENTS,rudimentScore,createExpedition}=module_expedition;
 
 const $=id=>document.getElementById(id);
 const canvas=$('space'),ctx=canvas.getContext('2d'),audio=new FlightAudio();
-const images=Object.fromEntries(['hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
-const imageUrl=name=>['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:`assets/${name}.webp`;
+const deckSetting=new URLSearchParams(location.search).get('deck');
+// The flight surface now continues behind the translucent answer deck on
+// every device. Keep ?deck=0 as a temporary comparison switch while tuning.
+const floatingDeck=deckSetting!=='0';
+document.querySelector('.cabinet').classList.toggle('floating-deck',floatingDeck);
+let deckHeight=0;
+function playableHeight(){return Math.max(180,H-deckHeight);}
+function measureDeck(){
+  const cabinet=document.querySelector('.cabinet'),flight=canvas.getBoundingClientRect(),dock=document.querySelector('.cockpit').getBoundingClientRect();
+  deckHeight=floatingDeck&&flight.width?Math.max(0,flight.bottom-dock.top)*480/flight.width:0;
+  cabinet.style.setProperty('--deck-height',`${Math.max(0,flight.bottom-dock.top)}px`);
+}
+new ResizeObserver(measureDeck).observe(document.querySelector('.cockpit'));
+const images=Object.fromEntries(['concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
+const imageUrl=name=>name.startsWith('concert-')||name.startsWith('crate-')?`assets/${name}.png`:['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:['drummergirl','vibraphonist'].includes(name)?`assets/${name}.png`:name==='teachers'?'assets/teachers-v2.png':`assets/${name}.webp`;
 async function prepareFlightImages(onProgress=()=>{}){
   let ready=0;const entries=Object.entries(images);
   const results=await Promise.allSettled(entries.map(async([name,img])=>{await loadFlightImage(img,imageUrl(name));onProgress(++ready,entries.length);}));
@@ -834,7 +978,7 @@ function listenTitle(){
     recognition.start();
   }catch{feedback('Не удалось запустить микрофон. Выбери ответ кнопкой.',true);}
 }
-const expedition=createExpedition({s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>H,images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
+const expedition=createExpedition({s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
 const stars=Array.from({length:85},()=>({x:Math.random()*480,y:Math.random()*1100,z:.25+Math.random(),r:Math.random()*1.3+.3}));
 const MACHINES=['РАЗВЕДЧИК','КОРВЕТ','КРЕЙСЕР','КРЕПОСТЬ'];
 const MACHINE_CROPS=[[135,20,380,490],[675,20,490,505],[60,530,520,640],[588,515,666,720]];
@@ -868,7 +1012,7 @@ function hangar(){const saved=record().hangar||{};return {scrap:saved.scrap||0,t
 function saveHangar(next){try{const old=record();localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...old,hangar:next}));}catch{}}
 function shipBuild(){const h=hangar(),frame=HANGAR_SHIPS[h.ship];return {h,frame,maxHealth:Math.min(5,2+h.upgrades.hull+(frame.frame>=2?1:0)),speed:180+h.upgrades.engine*28+frame.frame*8,shotDelay:Math.max(.09,.28-h.upgrades.cannon*.055-frame.frame*.012),shots:1+Math.floor(h.upgrades.cannon/2),energyGain:1+h.upgrades.reactor*.25};}
 function awardScrap(amount){const h=hangar();h.scrap+=amount;h.total+=amount;saveHangar(h);}
-function overlay(html){$('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;}
+function overlay(html){$('overlay').classList.remove('art-overlay');$('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;}
 function hideOverlay(){$('overlay').hidden=true;}
 function action(label,fn,secondary=false){const b=document.createElement('button');b.className=secondary?'secondary':'primary';b.textContent=label;$('overlay').firstElementChild.append(b);b.addEventListener('click',fn);return b;}
 function signal(text,listening=false){$('signal-text').textContent=text;$('signal').classList.toggle('listening',listening);}
@@ -883,6 +1027,7 @@ function renderHud(){
 }
 function buildPads(){
   const config=SECTORS[s.sector];
+  $('bass-pads').classList.remove('book-chord-pads');
   $('bass-pads').classList.toggle('chromatic-pads',s.sector===3);
   $('quality-pads').classList.toggle('arsenal-pads',s.sector===3);
   $('quality-tabs').hidden=s.sector!==3;
@@ -904,8 +1049,8 @@ function syncPads(){
   const special=expedition.busy;
   document.querySelector('.cabinet')?.classList.toggle('rhythm-room',expedition.pausedCombat);
   $('enemy-label').hidden=expedition.pausedCombat||!s.enemy||s.mode==='resolving';
-  $('capsule-panel').hidden=!capsuleMode||special;$('bass-pads').hidden=capsuleMode||special||(!s.bookMission&&s.sector>=2&&weaponTab!=='bass');$('quality-panel').hidden=!!s.bookMission||capsuleMode||special||s.sector<2||weaponTab!=='quality';
-  $('weapon-tabs').hidden=!!s.bookMission||capsuleMode||special||s.sector<2;
+  $('capsule-panel').hidden=!capsuleMode||special;$('bass-pads').hidden=capsuleMode||special;$('quality-panel').hidden=true;
+  $('weapon-tabs').hidden=true;
   $('weapon-root').setAttribute('aria-pressed',String(weaponTab==='bass'));$('weapon-type').setAttribute('aria-pressed',String(weaponTab==='quality'));
   document.querySelectorAll('.pad').forEach(b=>{
     const broken=s.enemy?.shields[b.dataset.kind];b.disabled=s.mode!=='active'||s.listening||!!broken||special;
@@ -914,14 +1059,15 @@ function syncPads(){
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening;
   $('replay').setAttribute('aria-label',s.bookMission?'Повторить одну ноту HOME и текущий аккорд':'Повторить тонику и сигнал');
   $('replay').setAttribute('title',s.bookMission?'HOME одной нотой → текущий вертикальный аккорд · Space':'Повторить звучание · Space');
-  if(expedition.pausedCombat){const labels={rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||labels.rhythm;$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
+  if(expedition.pausedCombat){const labels={poly:['DRUM MACHINE · БАРАБАНЩИЦА','Выбери нотный рисунок · можно отвечать во время звучания'],rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||labels.rhythm;$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
   $('interval-reference').disabled=s.mode!=='resolving'||s.listening;
   $('pause').disabled=['start','finished','gameover','loading'].includes(s.mode);
-  if(s.enemy){$('shield-tags').innerHTML=s.bookMission?'<span class="shield-tag">◈ ЦИФРОВКА</span>':`<span class="shield-tag ${s.enemy.shields.bass?'broken':''}">◇ БАС</span>${s.sector>=2?`<span class="shield-tag quality ${s.enemy.shields.quality?'broken':''}">✧ ТИП</span>`:''}`;}
+  if(s.enemy){$('shield-tags').innerHTML=s.bookMission||s.sector>=2?'<span class="shield-tag">◈ АККОРД</span>':'<span class="shield-tag">◇ СТУПЕНЬ</span>';}
 }
 function startScreen(){
   s.mode='start';
   renderHud();buildPads();
+  openFlightConsole();return;
   overlay('<span class="eyebrow">STEAM / SOUND / SPACE</span><h1>Signal<br><span class="accent">Expedition.</span></h1><p>Лови звуки. Обходи скалы.<br>Пробивай путь к своей музыке.</p>');
   $('overlay').firstElementChild.insertAdjacentHTML('afterbegin','<div class="console-hardware" aria-hidden="true"><i class="console-speaker"></i><i class="console-lamp"></i><i class="console-fader"></i><i class="console-fader" style="--pos:5px"></i><i class="console-fader" style="--pos:27px"></i><i class="console-fader" style="--pos:11px"></i><i class="console-lamp"></i><i class="console-speaker"></i></div>');
   PILOTS.forEach((pilot,i)=>{const b=action(pilot.name,()=>startRun(pilot.sector,i),true);b.className='pilot-choice';const info=document.createElement('small');info.textContent=pilot.description;b.append(info);});
@@ -932,6 +1078,45 @@ function startScreen(){
   action('Экипаж и особые режимы · посмотреть',openCrewGallery,true);
   action('Ангар · магазин',openHangar,true);
   const note=document.createElement('p');note.className='quiet-note';note.textContent=`Включи звук · наушники помогут${record().best?' · рекорд '+record().best:''}`;$('overlay').firstChild.append(note);
+}
+function consoleButton(label,box,callback,selected=false){
+  const b=document.createElement('button');b.className='console-hit';
+  b.dataset.label=label;b.setAttribute('aria-label',label);b.title=label;b.setAttribute('aria-pressed',String(selected));
+  b.style.cssText=`left:${box[0]}%;top:${box[1]}%;width:${box[2]}%;height:${box[3]}%`;
+  b.addEventListener('click',callback);$('console-scene').append(b);return b;
+}
+function consoleScene(image,description){
+  audio.stop();s.listening=false;s.mode='start';
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 067</span></div>`);
+  $('overlay').classList.add('art-overlay');
+}
+let consolePilot=0;
+function openFlightConsole(){
+  const portrait=window.matchMedia('(max-width: 700px) and (orientation: portrait)').matches;
+  consoleScene(portrait?'console-portrait.jpg':'console-flight.jpg','Космический ангар. Выбери уровень и нажми Launch.');
+  if(portrait)$('console-scene').classList.add('console-portrait');
+  const names=['NOVICE','STUDENT','MASTER','LEGEND'];
+  const boxes=portrait?[[9,60,39,7],[49,60,41,7],[9,67.5,39,7],[49,67.5,41,7]]:[[15,37,34,13],[50,37,35,13],[15,52,34,14],[50,52,35,14]];
+  names.forEach((name,i)=>consoleButton(name,boxes[i],()=>{consolePilot=i;openFlightConsole();},i===consolePilot));
+  $('console-status').textContent=`${names[consolePilot]} · ${PILOTS[consolePilot].description}`;
+  consoleButton('LAUNCH',portrait?[20,76,58,8]:[34,71,31,13],()=>startRun(PILOTS[consolePilot].sector,consolePilot));
+  consoleButton('MISSIONS',portrait?[8,86,20,6]:[4,80,12,9],()=>openBookFlight());
+  consoleButton('HANGAR',portrait?[29,86,20,6]:[17,80,12,9],openHangar);
+  consoleButton('SOUND LAB',portrait?[50,86,21,6]:[72,80,14,9],()=>openSoundLab());
+  consoleButton('RU / EN',portrait?[72,86,20,6]:[87,82,12,9],()=>$('language').click());
+}
+function openSoundLab(selection=0){
+  consoleScene('console-sound-lab.jpg','Sound Lab: тренажёр, миссии, библиотека аккордов и ритмов, лады и мелодии.');
+  $('console-scene').classList.add('console-lab');
+  const items=[['PRACTICE',()=>openTrainer()],['MISSIONS',()=>openBookFlight()],['CHORD LIBRARY',()=>{study.kind='chord';openStudy();}],['RHYTHM LIBRARY',()=>{study.kind='rhythm';openStudy();}],['MODES',()=>launchEncounter(0)],['STANDARDS',()=>launchEncounter(1)]];
+  items.forEach(([name],i)=>consoleButton(name,[13,18+i*8.35,42,7.8],()=>openSoundLab(i),i===selection));
+  $('console-status').textContent=`${items[selection][0]} · выбери раздел и нажми OPEN`;
+  consoleButton('OPEN',[51,69,16,22],items[selection][1]);
+  consoleButton('BACK',[57,34,11,6],startScreen);
+  consoleButton('RU / EN',[57,42,11,7],()=>$('language').click());
+  const quick=document.createElement('div');quick.className='console-quick';
+  for(const [label,fn] of [['▶ RHYTHM · проверить режим',()=>launchEncounter(10)],['▶ DRUM MACHINE',()=>launchEncounter(6)],['CREW · персонажи',openCrewGallery]]){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);quick.append(b);}
+  $('console-scene').append(quick);
 }
 function openBookFlight(chapter=1){
   s.mode='start';const routes=bookRoutesForChapter(chapter);
@@ -946,11 +1131,12 @@ async function launchEncounter(type){
   spawnEnemy();audio.stop();s.listening=false;expedition.artifact(type);
 }
 function openCrewGallery(){
-  overlay(`<span class="eyebrow">BUILD 058 · ЭКИПАЖ УЖЕ В ИГРЕ</span><h2>Музыканты дальнего космоса</h2><p class="compact">В полёте их вызывают светящиеся реликвии. Здесь персонажи открыты сразу, чтобы можно было проверить новую графику без ожидания случайного события.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 067 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
     <article><img src="assets/drummer.webp" alt="Стимпанковский барабанщик"><b>БАРАБАНЩИК</b><span>Ритмы, стили и рисунки</span></article>
+    <article><img src="assets/vibraphonist.png" alt="Космическая вибрафонистка"><b>ВИБРАФОНИСТКА</b><span>Color Hearing · надстройки аккорда</span></article>
   </div>`);
   for(const [label,type] of [['Гитарист · запустить',0],['Клавишник · запустить',1],['Барабанщик · запустить',10],['Трубач · запустить',7]])action(label,()=>launchEncounter(type));
   action('Вернуться на базу',startScreen,true);
@@ -988,7 +1174,7 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
 function beginSector(sector){
   weaponTab='bass';
   s.sector=sector;s.cleared=0;s.position=0;s.routeNumber=0;s.health=s.maxHealth||shipBuild().maxHealth;s.bullets=[];s.shots=[];s.enemy=null;s.drones=[];s.overdrive=0;s.waveTimer=1;s.capsule=null;s.capsuleTimer=0;
-  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
+  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
   const c=SECTORS[sector];
   const map=s.bookMission?`<div class="battle-map"><i class="home">HOME</i>${s.route.sequence.map((_,i)=>`<i><b>${i+1}</b><span>HYDRA</span></i>`).join('')}</div>`:'';
   overlay(`<span class="eyebrow">${s.bookMission?s.route.code:`СЕКТОР 0${sector+1} / ${c.name.toUpperCase()}`}</span><h2>${s.bookMission?`${s.route.sequence.length} целей · гармонический маршрут`:c.title}</h2><p>${s.bookMission?'Home звучит перед стартом. Затем каждая гидра продолжает одну настоящую последовательность.':c.description}</p>${map}<p class="compact">${s.bookMission?'Все аккорды звучат вертикально. Перед целью услышишь до трёх предыдущих аккордов маршрута.':sector===0?'Во время сигнала гидра не атакует. Тяни корабль пальцем; правильная кнопка заряжает выстрел.':sector===1?'I, IV и V — ступени относительно тоники. Цифровка написана прямо на оружии.':'Бас даёт усиление сразу. Два пробитых щита уничтожают гидру. Ошибка не восстанавливает уже пробитый щит.'}</p>`);
@@ -1058,10 +1244,10 @@ function renderStudy(){
   const item=QUALITIES[study.quality];
   overlay(`<span class="eyebrow">СЛУХОВОЙ АНГАР · БЕЗ ТАЙМЕРА</span><h2>Ознакомление со звуками</h2><p class="compact">Тот же синтезатор, что в полёте. Нажми символ, чтобы услышать его. Сравни maj → maj7 → 7: у двух последних добавлена разная септима.</p><div id="study-tabs" class="study-tabs"></div><div id="study-choices" class="study-choices"></div><div class="study-readout"><strong id="study-symbol">${study.kind==='chord'?item.glyph:study.interval}</strong><span id="study-description">${study.kind==='chord'?item.label:'Интервал от одного опорного звука'}</span></div><div id="study-modes" class="study-tabs"></div><p id="study-status" class="compact">Корень C3 · выбери звук</p>`);
   const add=(container,label,fn,selected=false)=>{const b=document.createElement('button');b.textContent=label;b.setAttribute('aria-pressed',String(selected));b.addEventListener('click',fn);$(container).append(b);return b;};
-  for(const [kind,label] of [['chord','Аккорды'],['interval','Интервалы'],['rhythm','Ритмы'],['poly','Полиритмы']])add('study-tabs',label,()=>{audio.stop();study.kind=kind;renderStudy();},study.kind===kind);
-  const choices=study.kind==='chord'?Object.keys(QUALITIES):study.kind==='interval'?NUMBER_LABELS:(study.kind==='poly'?POLYRHYTHMS:RHYTHMS).map((_,i)=>i);
-  for(const value of choices){const label=study.kind==='chord'?QUALITIES[value].glyph:study.kind==='rhythm'?RHYTHMS[value].name:study.kind==='poly'?POLYRHYTHMS[value].name:value;
-    const b=add('study-choices',label,()=>{study[study.kind==='chord'?'quality':study.kind]=value;renderStudy();playStudy();},value===study[study.kind==='chord'?'quality':study.kind]);b.title=study.kind==='chord'?QUALITIES[value].label:study.kind==='rhythm'?`С уровня: ${PILOTS[RHYTHM_LEVELS[value]].name}`:study.kind==='poly'?`С уровня: ${PILOTS[POLYRHYTHMS[value].level].name}`:`${NUMBER_OFFSETS[value]} полутонов`;
+  for(const [kind,label] of [['chord','Аккорды'],['interval','Интервалы'],['rhythm','Ритмы'],['poly','Rudiments']])add('study-tabs',label,()=>{audio.stop();study.kind=kind;renderStudy();},study.kind===kind);
+  const choices=study.kind==='chord'?Object.keys(QUALITIES):study.kind==='interval'?NUMBER_LABELS:(study.kind==='poly'?RUDIMENTS:RHYTHMS).map((_,i)=>i);
+  for(const value of choices){const label=study.kind==='chord'?QUALITIES[value].glyph:study.kind==='rhythm'?RHYTHMS[value].name:study.kind==='poly'?RUDIMENTS[value].name:value;
+    const b=add('study-choices',label,()=>{study[study.kind==='chord'?'quality':study.kind]=value;renderStudy();playStudy();},value===study[study.kind==='chord'?'quality':study.kind]);b.title=study.kind==='chord'?QUALITIES[value].label:study.kind==='rhythm'?`С уровня: ${PILOTS[RHYTHM_LEVELS[value]].name}`:study.kind==='poly'?`С уровня: ${PILOTS[RUDIMENTS[value].level].name}`:`${NUMBER_OFFSETS[value]} полутонов`;
   }
   if(study.kind==='rhythm'){
     $('study-symbol').textContent=RHYTHMS[study.rhythm].name;$('study-description').textContent=RHYTHM_HINTS[study.rhythm];
@@ -1070,9 +1256,8 @@ function renderStudy(){
     add('study-modes','Стоп',()=>{audio.stop();$('study-status').textContent='Остановлено';});
     const pulse=document.createElement('div');pulse.id='study-pulse';pulse.className='study-pulse';$('study-modes').append(pulse);
   }else if(study.kind==='poly'){
-    const p=POLYRHYTHMS[study.poly];$('study-symbol').textContent=p.name;$('study-description').textContent=`${p.a} высоких ударов против ${p.b} низких за один общий цикл.`;$('study-status').textContent=`В игре с уровня «${PILOTS[p.level].name}» · сначала сравни слои отдельно`;
-    for(const [layer,label] of [['both','Оба слоя'],['rim','Высокий'],['kick','Низкий']])add('study-modes',label,()=>{study.layer=layer;renderStudy();playStudy();},study.layer===layer);
-    for(const id of ['poly-high','poly-low']){const row=document.createElement('div');row.id=id;row.className='study-pulse';row.textContent='○';$('study-modes').append(row);}
+    const p=RUDIMENTS[study.poly];$('study-symbol').textContent=p.name;$('study-description').textContent='R — правая, L — левая. Знак > — акцент. Учебные варианты различаются акцентами.';$('study-status').textContent=`С уровня ${PILOTS[p.level].name}`;
+    const score=document.createElement('img');score.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(rudimentScore(p));score.alt=p.sticking;score.style.cssText='width:100%;max-height:120px';$('study-modes').append(score);
     add('study-modes','По кругу',()=>{study.loop=!study.loop;renderStudy();playStudy();},study.loop);add('study-modes','Стоп',()=>audio.stop());
   }else for(const [mode,label] of [['together','Вместе'],['up','Вверх'],['down','Вниз']])add('study-modes',label,()=>{study.mode=mode;renderStudy();playStudy();},study.mode===mode);
   action('↻ Повторить · Space',playStudy);action('Вернуться',closeStudy,true);
@@ -1084,7 +1269,7 @@ async function playStudy(){
     const done=()=>{if(s.mode==='study')$('study-status').textContent='Повтори или выбери другой символ для сравнения';};
     if(study.kind==='chord')audio.chordOnly(study.root,INTERVALS[study.quality],done,study.mode);
     else if(study.kind==='interval')audio.interval(study.root,NUMBER_OFFSETS[study.interval],study.mode,done);
-    else if(study.kind==='poly'){const poly=study.poly,p=POLYRHYTHMS[poly];audio.poly(p,()=>{if(s.mode==='study'&&study.kind==='poly'&&study.poly===poly&&study.loop)playStudy();else done();},{cycles:study.loop?8:3,layer:study.layer,onHit:event=>{if(s.mode!=='study'||study.kind!=='poly')return;const count=event.voice==='rim'?p.a:p.b;$(event.voice==='rim'?'poly-high':'poly-low').textContent=Array.from({length:count},(_,i)=>i===event.index?'●':'○').join(' ');}});}
+    else if(study.kind==='poly')audio.poly(RUDIMENTS[study.poly],()=>{if(s.mode==='study'&&study.kind==='poly'&&study.loop)playStudy();else done();});
     else{const rhythm=study.rhythm;audio.rhythm(RHYTHMS[rhythm],()=>{if(s.mode==='study'&&study.kind==='rhythm'&&study.rhythm===rhythm&&study.loop)playStudy();else done();},{loops:study.loop?8:1,onBeat:beat=>{if(s.mode==='study'&&study.kind==='rhythm')$('study-pulse').textContent=Array.from({length:RHYTHMS[rhythm].beats===6?3:4},(_,i)=>i===beat%(RHYTHMS[rhythm].beats===6?3:4)?'●':'○').join('  ');}});}
   }catch(e){feedback(e.message,true);}
 }
@@ -1126,9 +1311,9 @@ function spawnEnemy(){
   hideOverlay();s.mode='active';s.listening=false;weaponTab='bass';
   s.enemy={chord:s.route.sequence[s.position],model:expedition.level===0?Math.min(2,s.sector):expedition.level,shields:{bass:false,quality:s.sector<2},x:W/2,y:Math.max(155,Math.min(H*.38,250)),age:0,misses:0,hit:0,muzzle:0};
   $('enemy-label').hidden=false;$('enemy-label').firstElementChild.textContent=s.bookMission?`${s.route.code} · HYDRA ${String(s.position+1).padStart(2,'0')}/${String(s.route.sequence.length).padStart(2,'0')}`:`HYDRA · ${MACHINES[s.enemy.model]} / ${String(s.totalCleared+1).padStart(2,'0')}`;
-  $('dock-label').textContent=s.bookMission?'ОДНА ЦИФРОВКА — ОДИН ВЫСТРЕЛ':s.sector>=2?'ДВА ЩИТА · ДВА ВИДА ОРУЖИЯ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
-  $('dock-tip').textContent=s.bookMission?'Выбери готовый аккорд целиком':s.sector<2?'Выбери ступень относительно тоники I':s.sector===3?'Корень + тип → цифровка · m7 ≠ maj7':'Корень и точный тип — в любом порядке';
-  s.fireTimer=expedition.pilot.grace;if(s.bookMission)buildBookPads();renderHud();playCue();
+  $('dock-label').textContent=s.bookMission||s.sector>=2?'ОДИН АККОРД — ОДИН ВЫСТРЕЛ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
+  $('dock-tip').textContent=s.bookMission||s.sector>=2?'Выбери готовый аккорд: ступень и тип на одной плашке':'Выбери ступень относительно тоники I';
+  s.fireTimer=expedition.pilot.grace;if(s.bookMission||s.sector>=2)buildBookPads();renderHud();playCue();
 }
 function buildBookPads(){
   const target=s.enemy.chord,candidates=[target];
@@ -1202,7 +1387,7 @@ function advance(){
     overlay(`<span class="eyebrow">СЕКТОР ПРОЙДЕН</span><h2>Чистый сигнал.</h2><p>Путь свободен. Щит корабля восстановлен.<br>Дальше — ${SECTORS[s.sector+1].name.toLowerCase()}.</p><div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>${s.firstTry}</strong><span>С ПЕРВОГО РАЗА</span></div></div>`);
     action('Лететь дальше →',()=>beginSector(s.sector+1));syncPads();return;
   }
-  if(s.position>=s.route.sequence.length){if(s.bookMission){finish(true);return;}s.position=0;s.routeNumber++;s.route=createRoute(s.sector,s.route.key,Math.random,s.routeNumber);}
+  if(s.position>=s.route.sequence.length){if(s.bookMission){finish(true);return;}s.position=0;s.routeNumber++;s.route=createRoute(s.sector,s.route.key,Math.random,s.routeNumber,expedition.level);}
   spawnEnemy();
 }
 function finish(won){
@@ -1276,7 +1461,7 @@ function update(dt){
     if(s.keys.has('arrowright')||s.keys.has('d'))p.tx+=speed;
     if(s.keys.has('arrowup')||s.keys.has('w'))p.ty-=speed;
     if(s.keys.has('arrowdown')||s.keys.has('s'))p.ty+=speed;
-    p.tx=clamp(p.tx,25,W-25);p.ty=clamp(p.ty,115,H-35);p.x+=(p.tx-p.x)*Math.min(1,dt*16);p.y+=(p.ty-p.y)*Math.min(1,dt*16);
+    p.tx=clamp(p.tx,25,W-25);p.ty=clamp(p.ty,115,playableHeight()-35);p.x+=(p.tx-p.x)*Math.min(1,dt*16);p.y+=(p.ty-p.y)*Math.min(1,dt*16);p.y=Math.min(p.y,playableHeight()-35);
     expedition.tick(dt);
     const hadBoost=s.overdrive>0;if(!s.listening)s.overdrive=Math.max(0,s.overdrive-dt);if(hadBoost&&s.overdrive===0)renderHud();
     s.shotTimer-=dt;if(s.shotTimer<=0){const build=shipBuild(),boost=s.overdrive>0||expedition.boosted;s.shotTimer=boost?.09:build.shotDelay;const count=boost?5:Math.max(s.power,build.shots);for(let i=0;i<count;i++)s.shots.push({x:p.x+(i-(count-1)/2)*10,y:p.y-20,vx:boost?(i-2)*60:0});}
@@ -1366,7 +1551,7 @@ function drawPlayerFrame(frame){
 }
 function frame(now){const dt=Math.min(.035,(now-last)/1000||.016);last=now;update(dt);draw();requestAnimationFrame(frame);}
 function movePointer(event){const rect=canvas.getBoundingClientRect();s.player.tx=(event.clientX-rect.left)*W/rect.width;s.player.ty=(event.clientY-rect.top)*H/rect.height-28;}
-canvas.addEventListener('pointerdown',e=>{if(!['active','resolving'].includes(s.mode))return;s.pointer=e.pointerId;canvas.setPointerCapture(e.pointerId);movePointer(e);});
+canvas.addEventListener('pointerdown',e=>{if(!['active','resolving'].includes(s.mode))return;if(expedition.activateArtifact())return;s.pointer=e.pointerId;canvas.setPointerCapture(e.pointerId);movePointer(e);});
 canvas.addEventListener('pointermove',e=>{if(e.pointerId===s.pointer)movePointer(e);});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>s.pointer=null);
 document.addEventListener('keydown',e=>{
@@ -1381,7 +1566,7 @@ document.addEventListener('keydown',e=>{
   const key=e.key.toLowerCase();s.keys.add(key);
   if(/^[1-4]$/.test(key))$('bass-pads').children[Number(key)-1]?.click();
   // W is movement only before chord mode; use arrows in the two-shield sector.
-  if(s.sector>=2&&['q','w','e','r'].includes(key)){s.keys.delete(key);$('quality-pads').children[['q','w','e','r'].indexOf(key)]?.click();}
+  if(s.sector>=2&&['q','w','e','r'].includes(key)){s.keys.delete(key);}
 });
 document.addEventListener('keyup',e=>s.keys.delete(e.key.toLowerCase()));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
@@ -1390,6 +1575,7 @@ window.addEventListener('pagehide',()=>{audio.stop();activeRecognition?.abort();
 ['bank-basic','bank-altered'].forEach((id,i)=>$(id).addEventListener('click',()=>{qualityBank=i;buildPads();}));
 ['weapon-root','weapon-type'].forEach((id,i)=>$(id).addEventListener('click',()=>{weaponTab=i?'quality':'bass';syncPads();}));
 $('hint').addEventListener('click',()=>expedition.hint());
+$('home').addEventListener('click',()=>{audio.stop();s.listening=false;s.keys.clear();s.pointer=null;expedition.reset(0);startScreen();});
 $('pause').addEventListener('click',()=>s.mode==='paused'?resume():pause());
 $('replay').addEventListener('click',()=>{s.replays++;expedition.busy?expedition.replay():s.capsule?playCapsule():playCue(!!s.bookMission);});
 $('interval-reference').addEventListener('click',()=>playCapsule(true));

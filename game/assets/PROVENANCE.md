@@ -103,3 +103,21 @@ keytar has fourteen equal white keys with black-key groups 2–3–2–3. The gu
 overlay has exactly six strings and six tuning pegs, with single markers at 5, 7,
 10, 15, 17, 19 and 21 and a double marker at 12. These overlays prevent generative
 geometry from becoming the musical reference.
+
+## Flight 004 educator enemies
+
+`teachers-v2.png` replaces the temporary vehicle-like drone rendering with five
+original fictional humanoid cyborg educators. The transparent horizontal sheet
+contains, left to right, a worn scholar, mathematics technician, chemistry
+mechanic, physical-training instructor and civil-defense instructor. All share
+soot-black steel, chipped enamel, oxidized copper, greasy canvas and restrained
+teal/amber light. No subject names or text appear in the artwork. Created with
+the built-in ImageGen tool on 2026-09-08.
+
+Build 063: drummergirl.png is the user-approved drummer-live-b character with a generated dark-space background, built-in imagegen edit exec-ef581dc6-7359-4f16-b5b5-7a02a5b6364e. The male drummer remains assigned to rhythm styles. Console JPEGs derive from approved design-concepts.
+
+Build 065: `vibraphonist.png` is the user-selected full-frame flying
+vibraphonist created with built-in ImageGen
+`exec-97f6234a-38de-449e-b54a-e4ea09cf0280`. It is the current game asset.
+The separate three-shaft source is preserved under `design-concepts/` for a
+future localized Burton-grip correction and is not shipped as the character.

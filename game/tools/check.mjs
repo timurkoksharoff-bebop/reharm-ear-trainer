@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {BOOK_ROUTES,DEGREES,SECTORS,QUALITIES,INTERVALS,createRoute,createBookRoute,bookRoutesForChapter,bookReferenceEvents,cueEvents,progressionEvents,answerResult,family} from '../music.mjs';
+import {BOOK_ROUTES,DEGREES,SECTORS,QUALITIES,INTERVALS,createRoute,createBookRoute,bookRoutesForChapter,bookReferenceEvents,cueEvents,progressionEvents,answerResult,family,routeQualities} from '../music.mjs';
 import {createCapsule,capsuleOutcome,intervalCue} from '../intervals.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const canonical=fs.readFileSync(root+'app.js','utf8');
@@ -53,7 +53,7 @@ assert(answerResult(chord,result.shields,'quality','m7').destroyed);
 result=answerResult(chord,full,'quality','m7');assert(result.correct&&!result.destroyed);
 assert(answerResult(chord,result.shields,'bass',9).destroyed,'Both recognition orders must work');
 assert(answerResult({...chord,bassOffset:0},full,'bass',0).correct,'Independent bass is distinct from root');
-for(const path of ['index.html','game.css','game.js','audio.mjs','assets/hydra.png','assets/ship.png','assets/terrain.png','assets/drone.png','intervals.mjs','serve.py'])assert(fs.statSync(root+'game/'+path).size>0);
+for(const path of ['index.html','game.css','game.js','audio.mjs','assets/hydra.png','assets/ship.png','assets/terrain.png','assets/drone.png','assets/teachers-v2.png','intervals.mjs','serve.py'])assert(fs.statSync(root+'game/'+path).size>0);
 
 for(const [id,intervals] of Object.entries(INTERVALS)){
   const line=canonical.split('\n').find(l=>l.trimStart().startsWith(`${id}: { suffix:`)||l.trimStart().startsWith(`"${id}": { suffix:`));
@@ -69,6 +69,11 @@ for(let root=0;root<12;root++)for(let type=0;type<22;type++){
   assert.equal(route.sequence[0].quality,SECTORS[3].qualities[type]);
   assert(answerResult(route.sequence[0],full,'quality',SECTORS[3].qualities[type]).correct);
 }
+assert.equal(routeQualities(2,0).length,11,'Master must begin without altered/two-extension voicings');
+assert(!routeQualities(2,0).includes('7b9b13'));
+assert(routeQualities(2,2).includes('7b9')&&!routeQualities(2,2).includes('7b9b13'),'Single alterations enter in the middle of Master');
+assert(routeQualities(2,5).includes('7b9b13'),'Double alterations enter only after five Master routes');
+assert.equal(routeQualities(3,0).length,22,'Legend keeps the full quality bank');
 assert(!answerResult({offset:4,quality:'m7'},full,'quality','maj7').correct);
 assert(!answerResult({offset:0,quality:'6'},full,'quality','maj').correct);
 for(let sector=0;sector<4;sector++)for(let n=0;n<100;n++){

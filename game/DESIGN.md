@@ -102,3 +102,27 @@ remain visual polish work.
 - Before implementation, make several complete start-screen mockups for the user
   to compare. Judge them as a game cover and arcade cabinet: the first screen must
   sell the tension, character and replayable space combat immediately.
+
+### Desktop character selection and hangar
+
+- Desktop is the current design priority; defer mobile adaptation of these scenes.
+- Character selection is a dedicated full-screen scene, one full-body musician at
+  a time, browsed left/right. Show adult women and men of the modal peoples
+  (Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian), with expressive
+  faces, instruments, worn clothing and detailed equipment. Avoid thumbnail-card
+  galleries as the main selection experience. Keep selection controls at the edges.
+- Ship selection occupies a dedicated full-screen three-dimensional hangar, with
+  a large detailed ship, rotation and close inspection of hull plates, rivets,
+  repair seams, speakers, cables and engines. Treat real geometry and interactive
+  camera controls as implementation requirements; a painted mockup alone is not
+  a completed 3D hangar.
+- Present cohesive full-screen visual prototypes before implementing the chosen
+  art direction. Current menu concept images are previews, not shipped game UI.
+
+## Build 063 integration
+
+- Early answers in special challenges stop playback on success; two misses end challenge.
+- Male drummer: styles. Female drummer: Drum Machine, eight accented rudiment studies, graded by pilot. Legacy polyEvents export remains for compatibility tests, no polyrhythm choices in game/library.
+- All pickups use unified riveted steel/wood freight cases with readable instrument stamps.
+- Portrait start image and touch-friendly Sound Lab for mobile; desktop keeps landscape art.
+- K-Star: eight playable themes including four verified new excerpts. Remaining requested standards are pending.

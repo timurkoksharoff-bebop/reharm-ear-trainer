@@ -53,7 +53,7 @@ assert(answerResult(chord,result.shields,'quality','m7').destroyed);
 result=answerResult(chord,full,'quality','m7');assert(result.correct&&!result.destroyed);
 assert(answerResult(chord,result.shields,'bass',9).destroyed,'Both recognition orders must work');
 assert(answerResult({...chord,bassOffset:0},full,'bass',0).correct,'Independent bass is distinct from root');
-for(const path of ['index.html','game.css','game.js','audio.mjs','assets/hydra.png','assets/ship.png','assets/terrain.png','assets/drone.png','intervals.mjs','serve.py'])assert(fs.statSync(root+'game/'+path).size>0);
+for(const path of ['index.html','game.css','game.js','audio.mjs','assets/hydra.png','assets/ship.png','assets/terrain.png','assets/drone.png','assets/teachers-v2.png','intervals.mjs','serve.py'])assert(fs.statSync(root+'game/'+path).size>0);
 
 for(const [id,intervals] of Object.entries(INTERVALS)){
   const line=canonical.split('\n').find(l=>l.trimStart().startsWith(`${id}: { suffix:`)||l.trimStart().startsWith(`"${id}": { suffix:`));

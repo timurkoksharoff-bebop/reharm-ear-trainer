@@ -2,7 +2,7 @@ import {QUALITIES,INTERVALS} from './music.mjs';
 
 export const PILOTS=[
   {name:'Новичок',sector:0,speed:.65,grace:9,obstacleGap:230,description:'I и V · спокойный полёт · помощь'},
-  {name:'Студент',sector:2,speed:.85,grace:7,obstacleGap:200,description:'Два щита · основные аккорды'},
+  {name:'Студент',sector:2,speed:.85,grace:7,obstacleGap:200,description:'Одна плашка · полный аккорд'},
   {name:'Магистр музыки',sector:3,speed:1,grace:5,obstacleGap:170,description:'12 корней · 22 типа · все интервалы'},
   {name:'Херби Хэнкок',sector:3,speed:1.25,grace:3,obstacleGap:145,description:'Вся гармония · быстрые враги · узкие проходы'},
 ];
@@ -20,7 +20,7 @@ export const ARTIFACTS=[
   {name:'Overdrive',elixir:'Iron Fuzz',text:'Двойной урон и щит · 10 секунд'},
   {name:'Rock Tongue',elixir:'Full Recovery',text:'Узнай тип случайного аккорда → HP 100%'},
   {name:'Zildjian',elixir:'Rhythm Focus',text:'Запаси подсказку: убрать половину неверных ритмов'},
-  {name:'Drum Machine',elixir:'Phase Lock',text:'Узнай соотношение пульсов → защита и автомат'},
+  {name:'Drum Machine',elixir:'Phase Lock',text:'Барабанщица · узнай рудимент по нотам → защита и автомат'},
   {name:'The Trumpeter',elixir:'Harmonic Flight',text:'Собери basic, guide или color tones для случайного аккорда'},
   {name:'The Key Pilot',elixir:'Melody Memory',text:'Узнай одноголосную тему по названию или голосом'},
   {name:'The Guitar Pilot',elixir:'Modal Drive',text:'Узнай лад по восходящей или нисходящей гамме'},
@@ -86,6 +86,23 @@ export function polyEvents(pattern,cycles=3,layer='both'){
   }
   return events.sort((a,b)=>a.beat-b.beat);
 }
+// PAS paradiddle family. Accent studies are authored variations, not extra PAS rudiments.
+export const RUDIMENTS=[
+  {name:'Single Paradiddle',sticking:'RLRRLRLL',accents:[0,4],level:0},
+  {name:'Single · Back Accent',sticking:'RLRRLRLL',accents:[3,7],level:0},
+  {name:'Double Paradiddle',sticking:'RLRLRRLRLRLL',accents:[0,6],level:1},
+  {name:'Paradiddle-Diddle · Accent Study',sticking:'RLRRLLRLRRLL',accents:[0,2,6,8],level:1},
+  {name:'Triple Paradiddle',sticking:'RLRLRLRRLRLRLRLL',accents:[0,8],level:2},
+  {name:'Single · Offbeat Accent',sticking:'RLRRLRLL',accents:[1,5],level:2},
+  {name:'Double · Three Accents',sticking:'RLRLRRLRLRLL',accents:[0,2,4,6,8,10],level:3},
+  {name:'Triple · Displaced Accent',sticking:'RLRLRLRRLRLRLRLL',accents:[1,6,9,14],level:3},
+].map(p=>({...p,beats:p.sticking.length/4,events:[...p.sticking].map((hand,i)=>({voice:'snare',beat:i/4,velocity:p.accents.includes(i)?1:.28,hand}))}));
+export function rudimentScore(p){
+  const n=p.sticking.length,w=n*24+24;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 94"><rect width="100%" height="100%" rx="5" fill="#d8d5c8"/><path d="M8 53H${w-8}" stroke="#333"/>`;
+  for(let i=0;i<n;i++){const x=16+i*24;svg+=`<ellipse cx="${x}" cy="53" rx="5" ry="3.5" transform="rotate(-20 ${x} 53)" fill="#202728"/><path d="M${x+4} 53V25" stroke="#202728" stroke-width="1.5"/><text x="${x}" y="82" text-anchor="middle" font-family="monospace" font-size="12">${p.sticking[i]}</text>`;if(p.accents.includes(i))svg+=`<path d="M${x-4} 10l8 3-8 3" fill="none" stroke="#202728" stroke-width="2"/>`;if(i%4!==3&&i<n-1)svg+=`<path d="M${x+4} 25h24m-24 5h24" stroke="#202728" stroke-width="3"/>`;}
+  return svg+'</svg>';
+}
 export const NUMBER_LABELS=['1','♭2','2','♭3','3','4','♭5','♯4','5','♭6','6','♭7','7','8'];
 export const NUMBER_OFFSETS={'1':0,'♭2':1,'2':2,'♭3':3,'3':4,'4':5,'♭5':6,'♯4':6,'5':7,'♭6':8,'6':9,'♭7':10,'7':11,'8':12};
 export const TONE_OFFSETS={'1':0,'♭9':1,'9':2,'♯9':3,'♭3':3,'3':4,'11':5,'♯11':6,'♭5':6,'5':7,'♭13':8,'13':9,'♭7':10,'7':11};
@@ -98,6 +115,11 @@ export const TONE_PROGRAMS={
 };
 export const TONE_MODES=['basic','guide','color'];
 export const MELODIES=[
+  // Recognition excerpts checked against user-provided Real Book 5th ed., printed pages 9,18,36,51.
+  {name:'Afro Blue',aliases:['afro blue'],notes:[5,8,7,8,7,10,5],beats:[1,1.5,.5,3,1.5,1.5,2]},
+  {name:'All the Things You Are',aliases:['all the things you are','all things you are'],notes:[8,13,12,5,5,5,5,5,10,3],beats:[4,3,1,1,1,1,1,1,2,1]},
+  {name:'Autumn Leaves',aliases:['autumn leaves'],notes:[4,6,7,12,2,4,6,11,11],beats:[1,1,1,5,1,1,1,2,3]},
+  {name:'Blue Bossa',aliases:['blue bossa','blue bosa'],notes:[7,19,17,15,14,12,10,8,19,17],beats:[1,1.5,.5,.5,1,3.5,1,2,1.5,4.5]},
   {name:'When the Saints',aliases:['when the saints','saints','when the saints go marching in'],notes:[0,4,5,7,0,4,5,7,0,4,5,7,4,0,4,2],beats:[.5,.5,.5,1,.5,.5,.5,1,.5,.5,.5,.75,.75,.75,.5,1.5]},
   {name:'Amazing Grace',aliases:['amazing grace'],notes:[7,0,4,0,4,2,0,9,7],beats:[.6,1.1,.45,.45,1.1,.6,1.1,.6,1.5]},
   {name:'Ode to Joy',aliases:['ode to joy','ode joy'],notes:[4,4,5,7,7,5,4,2,0,0,2,4,4,2,2],beats:[.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.8,.28,1.2]},
@@ -134,6 +156,17 @@ export function createExpedition(api){
   let cloak=0,shield=0,rapid=0,fuzz=0,hints=0,rhythmFocus=0,collectCooldown=0,lastRender='',captures=[],renderedChallenge=null;
   const $=id=>document.getElementById(id);
   const random=items=>items[Math.floor(Math.random()*items.length)];
+  // Keep the deck across retries so restarting a flight does not replay the
+  // same small prefix of the repertoire. Only playable entries enter this pool.
+  let melodyDeck=[],lastMelody=-1;
+  function nextMelody(){
+    if(!melodyDeck.length){
+      melodyDeck=MELODIES.map((_,i)=>i);
+      for(let i=melodyDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[melodyDeck[i],melodyDeck[j]]=[melodyDeck[j],melodyDeck[i]];}
+      if(melodyDeck.length>1&&melodyDeck.at(-1)===lastMelody)[melodyDeck[0],melodyDeck[melodyDeck.length-1]]=[melodyDeck.at(-1),melodyDeck[0]];
+    }
+    lastMelody=melodyDeck.pop();return lastMelody;
+  }
   function reset(level=0){pilot=level;planet=level%2?'mars':'moon';teachers=[];walls=[];drops=[];digits=[];special=null;queue=[];timer=5;wallTimer=3;artifactTimer=9;index=dropIndex=wallIndex=0;cloak=shield=rapid=fuzz=hints=rhythmFocus=collectCooldown=0;render();}
   function render(){
     const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
@@ -143,13 +176,13 @@ export function createExpedition(api){
     $('hint').textContent=`Подсказка · ${hints}`;$('hint').disabled=!hints||s.listening||!['active','resolving'].includes(s.mode);
     $('special-panel').hidden=!special;
     if(special){
-      $('special-title').textContent=special.kind==='poly'?'DRUM MACHINE · ВЫСОКИЙ : НИЗКИЙ':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?'MELODY MEMORY · KEY PILOT':special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='tones'?`${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
-      $('special-detail').textContent=special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='melody'?'Полёт удержан · назови тему по-английски или выбери название':special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='tones'?`Трубач просит по-английски · собрано ${special.collected.length}/${special.required.length} · ошибка гасит режим`:special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
-      const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:POLYRHYTHMS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):[];
+      $('special-title').textContent=special.kind==='poly'?'DRUM MACHINE · RUDIMENTS':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?'MELODY MEMORY · KEY PILOT':special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='tones'?`${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
+      $('special-detail').textContent=special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?'Полёт удержан · назови тему по-английски или выбери название':special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='tones'?`Трубач просит по-английски · собрано ${special.collected.length}/${special.required.length} · ошибка гасит режим`:special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
+      const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:RUDIMENTS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):[];
       // Keep live buttons in place while the countdown changes: replacing them
       // between pointer-down and pointer-up used to discard some answers.
-      if(renderedChallenge!==special){$('special-options').replaceChildren();for(const choice of choices){const b=document.createElement('button');b.textContent=`${choice.icon} ${choice.name}`.trim();b.addEventListener('click',()=>answerSpecial(choice.id));$('special-options').append(b);}if(special.kind==='rhythm'&&rhythmFocus){const focus=document.createElement('button');focus.className='voice-answer';focus.textContent=`◉ ZILDJIAN FOCUS ×${rhythmFocus}`;focus.addEventListener('click',useRhythmFocus);$('special-options').append(focus);}if(['melody','mode'].includes(special.kind)){const mic=document.createElement('button');mic.className='voice-answer';mic.textContent=special.kind==='melody'?'🎙 SAY TITLE':'🎙 SAY MODE';mic.addEventListener('click',listenTitle);$('special-options').append(mic);}renderedChallenge=special;}
-      for(const b of $('special-options').children)b.disabled=s.listening||s.mode==='paused';
+      if(renderedChallenge!==special){$('special-options').replaceChildren();for(const choice of choices){const b=document.createElement('button');b.textContent=`${choice.icon} ${choice.name}`.trim();if(special.kind==='poly'){const score=document.createElement('img');score.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(rudimentScore(RUDIMENTS[choice.id]));score.alt=RUDIMENTS[choice.id].sticking;score.style.cssText='display:block;width:100%;max-height:85px;margin-top:6px';b.append(score);}b.addEventListener('click',()=>answerSpecial(choice.id));$('special-options').append(b);}if(special.kind==='rhythm'&&rhythmFocus){const focus=document.createElement('button');focus.className='voice-answer';focus.textContent=`◉ ZILDJIAN FOCUS ×${rhythmFocus}`;focus.addEventListener('click',useRhythmFocus);$('special-options').append(focus);}if(['melody','mode'].includes(special.kind)){const mic=document.createElement('button');mic.className='voice-answer';mic.textContent=special.kind==='melody'?'🎙 SAY TITLE':'🎙 SAY MODE';mic.addEventListener('click',listenTitle);$('special-options').append(mic);}renderedChallenge=special;}
+      for(const b of $('special-options').children)b.disabled=!['active','resolving'].includes(s.mode);
     }
   }
   function spawnTeacher(){
@@ -184,14 +217,21 @@ export function createExpedition(api){
   function startChallenge(kind){
     if(special||s.listening)return false;
     if(!['active','resolving'].includes(s.mode))return false;
-    special={kind:kind,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','melody','mode'].includes(kind),beat:0,createdAt:Date.now()};
+    special={kind:kind,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','poly','melody','mode'].includes(kind),beat:0,createdAt:Date.now()};
     s.bullets=[];
     if(kind==='numbers'){special.interval=random(pilot<2?[3,4,6,7]:[1,2,3,4,5,6,7,8,9,10,11,12]);special.direction=random(['up','down']);makeNumbers(special);}
     if(kind==='guide'){special.target=random(['3','7']);makeNumbers(special);}
     if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=random(special.options);special.root=48+Math.floor(Math.random()*12);}
     if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=random(pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
-    if(kind==='poly'){special.options=POLYRHYTHMS.map((_,i)=>i).filter(i=>POLYRHYTHMS[i].level<=Math.max(1,pilot));special.target=random(special.options);}
-    if(kind==='melody'){special.options=MELODIES.map((_,i)=>i).slice(0,pilot<2?3:MELODIES.length);special.target=random(special.options);special.root=pilot<2?60:57+Math.floor(Math.random()*6);}
+    if(kind==='poly'){special.options=RUDIMENTS.map((_,i)=>i).filter(i=>RUDIMENTS[i].level<=pilot);special.target=random(special.options);}
+    if(kind==='melody'){
+      special.target=nextMelody();
+      const others=MELODIES.map((_,i)=>i).filter(i=>i!==special.target);
+      for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]];}
+      special.options=[special.target,...others.slice(0,pilot<2?3:5)];
+      for(let i=special.options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[special.options[i],special.options[j]]=[special.options[j],special.options[i]];}
+      special.root=pilot<2?60:57+Math.floor(Math.random()*6);
+    }
     if(kind==='mode'){const pool=MODES.map((mode,i)=>({mode,i})).filter(item=>item.mode.level<=Math.min(2,pilot)).map(item=>item.i);special.target=random(pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=55+Math.floor(Math.random()*7);special.direction=pilot===0?'up':random(['up','down']);}
     if(kind==='tones'){
       const qualities=pilot<2?['7','maj7','m7','7sus4']:Object.keys(TONE_PROGRAMS),quality=random(qualities),toneMode=random(TONE_MODES),mission=toneMission(quality,toneMode);
@@ -205,20 +245,20 @@ export function createExpedition(api){
     if(special.kind==='numbers')audio.interval(60+s.route.key,special.interval,special.direction,done);
     else if(special.kind==='guide')audio.guide(60+s.route.key,special.target,done);
     else if(special.kind==='chord')audio.chordOnly(special.root,INTERVALS[special.target],done);
-    else if(special.kind==='poly')audio.poly(POLYRHYTHMS[special.target],done);
+    else if(special.kind==='poly')audio.poly(RUDIMENTS[special.target],done);
     else if(special.kind==='tones')audio.announce(`${ROOT_NAMES[special.rootPc]} ${QUALITY_SPEECH[special.quality]}. Give me ${special.toneMode} tones, man.`,()=>{if(special===current)audio.trumpetChord(special.root,INTERVALS[special.quality],done);});
     else if(special.kind==='melody')audio.melody(special.root,MELODIES[special.target],done);
     else if(special.kind==='mode')audio.scale(special.root,MODES[special.target],special.direction,done);
     else audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
   }
-  function specialName(c,value=c.target){return c.kind==='poly'?POLYRHYTHMS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?QUALITIES[value].glyph:c.kind==='tones'?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
+  function specialName(c,value=c.target){return c.kind==='poly'?RUDIMENTS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?QUALITIES[value].glyph:c.kind==='tones'?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
   function endChallenge(won,wrong=false){
     const c=special;if(!c)return;
     audio.stop();s.listening=false;special=null;digits=[];
     if(won){s.score+=250;
       if(c.kind==='chord'){s.health=s.maxHealth||5;feedback(`${QUALITIES[c.target].glyph} · HP 100%`);}
       else if(c.kind==='rhythm'){shield=12;rapid=10;feedback(`${RHYTHMS[c.target].name} · Rhythm Shield`);}
-      else if(c.kind==='poly'){shield=10;rapid=12;feedback(`${POLYRHYTHMS[c.target].name} · Phase Lock`);}
+      else if(c.kind==='poly'){shield=10;rapid=12;feedback(`${RUDIMENTS[c.target].name} · Phase Lock`);}
       else if(c.kind==='guide'){teachers.filter(t=>t.hp>0).forEach(killTeacher);shield=8;feedback(`Guide tone ${c.target} · механические хищники нейтрализованы`);}
       else if(c.kind==='tones'){rapid=14;shield=12;s.energy=Math.min(99,s.energy+45);feedback(`${c.toneMode.toUpperCase()} TONES · ${c.chordName} · HARMONIC FLIGHT`);}
       else if(c.kind==='melody'){cloak=12;rapid=12;s.energy=Math.min(99,s.energy+35);feedback(`${MELODIES[c.target].name} · MELODY MEMORY`);}
@@ -229,20 +269,20 @@ export function createExpedition(api){
     if(s.mode==='active')api.playCue();
   }
   function answerSpecial(value){
-    if(!special||s.listening||s.mode==='paused')return;
+    if(!special||!['active','resolving'].includes(s.mode)||!special.options.includes(value))return;
     if(value===special.target){endChallenge(true);return;}
     special.misses++;special.time=Math.max(0,special.time-3);
     if(special.misses>=2){endChallenge(false);return;}
     feedback('Мимо · осталась одна попытка',true);lastRender='';render();
   }
   function useRhythmFocus(){
-    if(!special||special.kind!=='rhythm'||!rhythmFocus||s.listening||s.mode==='paused')return false;
+    if(!special||special.kind!=='rhythm'||!rhythmFocus||!['active','resolving'].includes(s.mode))return false;
     const wrong=special.options.filter(i=>i!==special.target),remove=new Set(wrong.slice().sort(()=>Math.random()-.5).slice(0,Math.ceil(wrong.length/2)));
     special.options=special.options.filter(i=>!remove.has(i));rhythmFocus--;renderedChallenge=null;lastRender='';
     feedback(`Zildjian Focus · осталось ${special.options.length} вариантов`);render();syncPads();return true;
   }
   function answerSpoken(text){
-    if(!special||!['melody','mode'].includes(special.kind)||s.listening)return false;const heard=String(text).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(),items=special.kind==='melody'?MELODIES:MODES;
+    if(!special||!['melody','mode'].includes(special.kind)||!['active','resolving'].includes(s.mode))return false;const heard=String(text).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(),items=special.kind==='melody'?MELODIES:MODES;
     const match=special.options.find(i=>(items[i].aliases||[items[i].name.toLowerCase()]).some(alias=>heard.includes(alias)));
     if(match===undefined){feedback(`Не расслышал название: “${text}”`,true);return false;}answerSpecial(match);return true;
   }
@@ -307,23 +347,31 @@ export function createExpedition(api){
   }
   function drawSprite(img,cell,cols,rows,x,y,size){if(!img?.complete||!img.naturalWidth)return;const sw=img.naturalWidth/cols,sh=img.naturalHeight/rows,scale=size/Math.max(sw,sh);api.ctx.drawImage(img,(cell%cols)*sw,Math.floor(cell/cols)*sh,sw,sh,x-sw*scale/2,y-sh*scale/2,sw*scale,sh*scale);}
   function drawRelic(d){
-    const ctx=api.ctx;if(d.type<7){ctx.save();ctx.beginPath();ctx.arc(d.x,d.y,29,0,Math.PI*2);ctx.clip();if(d.type===6)drawSprite(images.drummachine,0,1,1,d.x,d.y,55);else drawSprite(images.artifacts,d.type,3,2,d.x,d.y,55);ctx.restore();return;}
-    const hue={7:34,8:192,9:292,10:12}[d.type]||45,spin=d.age*.8;
-    ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(spin)*.12);ctx.shadowColor=`hsl(${hue} 95% 62%)`;ctx.shadowBlur=22;
-    ctx.fillStyle='#231b18';ctx.strokeStyle=`hsl(${hue} 88% 72%)`;ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(-22,-13);ctx.lineTo(0,-26);ctx.lineTo(22,-13);ctx.lineTo(22,14);ctx.lineTo(0,27);ctx.lineTo(-22,14);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle=`hsla(${hue} 70% 42% / .72)`;ctx.beginPath();ctx.moveTo(-22,-13);ctx.lineTo(0,0);ctx.lineTo(0,27);ctx.lineTo(-22,14);ctx.closePath();ctx.fill();
-    ctx.fillStyle=`hsla(${hue+24} 82% 52% / .5)`;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(22,-13);ctx.lineTo(22,14);ctx.lineTo(0,27);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
-    ctx.strokeStyle='#fff0bd';ctx.fillStyle='#fff0bd';ctx.lineWidth=2;ctx.lineCap='round';
-    if(d.type===7){ctx.beginPath();ctx.moveTo(-12,3);ctx.lineTo(9,-5);ctx.lineTo(9,6);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(-14,3,3,0,Math.PI*2);ctx.fill();}
-    if(d.type===8){ctx.strokeRect(-14,-7,28,15);for(let x=-10;x<14;x+=6){ctx.beginPath();ctx.moveTo(x,-7);ctx.lineTo(x,8);ctx.stroke();}for(const x of [-7,5])ctx.fillRect(x,-7,3,8);}
-    if(d.type===9){ctx.save();ctx.rotate(-.42);ctx.beginPath();ctx.ellipse(-8,4,9,7,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-1,1);ctx.lineTo(16,-6);ctx.stroke();ctx.restore();}
-    if(d.type===10){ctx.beginPath();ctx.arc(0,3,11,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-13,-13);ctx.lineTo(7,7);ctx.moveTo(13,-13);ctx.lineTo(-7,7);ctx.stroke();}
-    ctx.strokeStyle=`hsla(${hue} 95% 72% / .62)`;ctx.beginPath();ctx.ellipse(0,0,35+Math.sin(d.age*5)*3,17,spin,0,Math.PI*2);ctx.stroke();ctx.restore();
+    const ctx=api.ctx,hue=[292,192,150,12,345,48,185,34,192,292,12][d.type];
+    ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.age*1.5)*.08);
+    ctx.shadowColor=`hsl(${hue} 82% 58%)`;ctx.shadowBlur=17;
+    ctx.fillStyle='#182325';ctx.beginPath();ctx.roundRect(-31,-27,62,54,7);ctx.fill();ctx.shadowBlur=0;
+    const wood=ctx.createLinearGradient(-25,-20,25,20);wood.addColorStop(0,'#2a2924');wood.addColorStop(.48,'#66523a');wood.addColorStop(1,'#252b28');
+    ctx.fillStyle=wood;ctx.fillRect(-25,-21,50,42);
+    ctx.strokeStyle='#151a19';ctx.lineWidth=2;for(let y=-16;y<21;y+=7){ctx.beginPath();ctx.moveTo(-25,y);ctx.lineTo(25,y+2);ctx.stroke();}
+    const copper=ctx.createLinearGradient(-31,0,31,0);copper.addColorStop(0,'#263b38');copper.addColorStop(.35,'#b56d42');copper.addColorStop(.65,'#69402f');copper.addColorStop(1,'#29433f');
+    ctx.fillStyle=copper;for(const x of [-29,22])ctx.fillRect(x,-25,7,50);ctx.fillRect(-29,-25,58,6);ctx.fillRect(-29,19,58,6);
+    ctx.fillStyle='#b7ad8d';for(const x of [-25,25])for(const y of [-21,21]){ctx.beginPath();ctx.arc(x,y,2.4,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#30271f';ctx.stroke();}
+    ctx.fillStyle='#101719';ctx.fillRect(-20,-12,40,24);ctx.strokeStyle='#8b866f';ctx.lineWidth=1.5;ctx.strokeRect(-20,-12,40,24);
+    ctx.fillStyle='#d8d3bd';ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(['GTR','KEY','BASS','FX','CHRD','FOCUS','DRUM','HORN','KEY','GTR','BEAT'][d.type],0,0);
+    ctx.strokeStyle='#d2c5a355';ctx.beginPath();ctx.moveTo(-16,15);ctx.lineTo(-5,12);ctx.moveTo(7,-18);ctx.lineTo(16,-21);ctx.stroke();
+    ctx.fillStyle=`hsl(${hue} 88% ${55+Math.sin(d.age*5)*13}%)`;ctx.beginPath();ctx.arc(0,18,4,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=`hsla(${hue} 90% 66% / .55)`;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,38+Math.sin(d.age*4)*2,20,d.age*.5,0,Math.PI*2);ctx.stroke();ctx.restore();
   }
+
   function draw(){const ctx=api.ctx;
     for(const w of walls){ctx.save();ctx.beginPath();ctx.rect(w.x,w.y,w.w,w.h);ctx.clip();const tex=images[planet];if(tex?.complete&&tex.naturalWidth)ctx.drawImage(tex,0,tex.naturalHeight*.35,tex.naturalWidth,tex.naturalHeight*.2,w.x,w.y,w.w,w.h);ctx.fillStyle='#4b322b66';ctx.fillRect(w.x,w.y,w.w,w.h);ctx.restore();ctx.strokeStyle='#d2a265';ctx.lineWidth=3;ctx.strokeRect(w.x,w.y,w.w,w.h);ctx.fillStyle='#fbd492';for(let x=w.x+12;x<w.x+w.w;x+=30)ctx.fillRect(x,w.y+6,3,3);}
-    for(const t of teachers){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.sin(t.age*2)*.2);drawSprite(images.drone,0,1,1,0,0,70+t.type*6);ctx.strokeStyle='#788385';ctx.lineWidth=5;for(let i=0;i<3+t.type;i++){const a=i*Math.PI*2/(3+t.type)+t.age*.4;ctx.beginPath();ctx.moveTo(Math.cos(a)*23,Math.sin(a)*23);ctx.lineTo(Math.cos(a)*42,Math.sin(a)*42);ctx.lineTo(Math.cos(a+.25)*49,Math.sin(a+.25)*49);ctx.stroke();}ctx.fillStyle=['#d46d47','#82b8b4','#a4bd64','#ca665d','#a58fbf'][t.type];ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=9;ctx.fillRect(-5,-5,10,10);ctx.restore();}
+    for(const t of teachers){
+      ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.sin(t.age*1.7)*.08);
+      const signal=['#b66c4c','#799b98','#68998f','#a45c4a','#8a8172'][t.type];
+      ctx.shadowColor=signal;ctx.shadowBlur=12;drawSprite(images.teachers,t.type,5,1,0,0,108+t.type*3);ctx.shadowBlur=0;
+      ctx.strokeStyle=signal;ctx.lineWidth=2;ctx.globalAlpha=.55;ctx.beginPath();ctx.arc(0,2,31+Math.sin(t.age*4)*2,0,Math.PI*2);ctx.stroke();ctx.restore();
+    }
     for(const d of drops){drawRelic(d);ctx.strokeStyle=d.type>=7?`hsl(${(d.age*90+d.type*70)%360} 95% 72%)`:'#eec56a';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=d.type>=7?18:0;ctx.beginPath();ctx.arc(d.x,d.y,29+Math.sin(d.age*5)*2,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#ffe0a2';ctx.textAlign='center';ctx.font='10px system-ui';ctx.fillText(ARTIFACTS[d.type].name,d.x,d.y+39);}
     if(special?.kind==='tones'){
       const lit=special.collected.length,H=getH(),x=W*.76,y=H*.34;
@@ -347,6 +395,18 @@ export function createExpedition(api){
   function drawRhythmOverlay(){
     const ctx=api.ctx,H=getH(),beat=special?.beat||0,pulse=s.listening?Math.sin((audio.context?.currentTime||0)*Math.PI*110/60):0;
     ctx.save();
+    if(special.kind==='poly'){
+      ctx.fillStyle='#09151e';ctx.fillRect(12,H*.05,W-24,H*.9);
+      const portrait=images.drummergirl,off=document.createElement('canvas'),size=Math.ceil(Math.min(H*.8,W*.96));off.width=size;off.height=size*1.34;
+      if(portrait?.complete&&portrait.naturalWidth){
+        const ox=off.getContext('2d'),scale=Math.min(off.width/portrait.naturalWidth,off.height/portrait.naturalHeight),dw=portrait.naturalWidth*scale,dh=portrait.naturalHeight*scale;
+        ox.drawImage(portrait,(off.width-dw)/2,(off.height-dh)/2,dw,dh);
+        ox.globalCompositeOperation='destination-in';const mask=ox.createRadialGradient(off.width*.5,off.height*.46,off.width*.28,off.width*.5,off.height*.48,off.width*.64);mask.addColorStop(0,'#fff');mask.addColorStop(.68,'#fff');mask.addColorStop(1,'#0000');ox.fillStyle=mask;ox.fillRect(0,0,off.width,off.height);
+        ctx.save();ctx.translate(arrival(W/2,-1),H*.51);ctx.drawImage(off,-off.width/2,-off.height/2);ctx.restore();
+      }
+      const haze=ctx.createRadialGradient(W/2,H*.48,20,W/2,H*.48,W*.54);haze.addColorStop(0,'#1b65852c');haze.addColorStop(1,'#09151e00');ctx.fillStyle=haze;ctx.fillRect(12,H*.05,W-24,H*.9);
+      ctx.fillStyle='#dae2dd';ctx.textAlign='center';ctx.font='bold 16px monospace';ctx.fillText('DRUM MACHINE · RUDIMENTS',W/2,H*.11);ctx.restore();return;
+    }
     ctx.fillStyle='#09151ee0';ctx.fillRect(12,H*.20,W-24,H*.60);
     const glow=ctx.createRadialGradient(W/2,H*.43,10,W/2,H*.43,W*.62);glow.addColorStop(0,'#8b653a99');glow.addColorStop(1,'#101c2400');ctx.fillStyle=glow;ctx.fillRect(12,H*.20,W-24,H*.60);
     for(let x=25;x<W;x+=60){ctx.fillStyle='#70573899';ctx.fillRect(x,H*.23,6,H*.48);ctx.fillStyle='#d4a768';ctx.fillRect(x+1,H*.23,2,H*.48);}
@@ -358,8 +418,8 @@ export function createExpedition(api){
       if(band?.complete&&band.naturalWidth){const bounds=[0,370,730,1190,1536],sx=bounds[i],sw=bounds[i+1]-sx,sh=band.naturalHeight,scale=Math.min(H*.48/sh,W*.19/sw);ctx.drawImage(band,sx,0,sw,sh,-sw*scale/2,-sh*scale/2,sw*scale,sh*scale);}ctx.restore();
       ctx.fillStyle=i===beat%4?'#c4ffe4':'#817353';ctx.beginPath();ctx.arc(x,H*.82,5,0,Math.PI*2);ctx.fill();
     }
-    const drummerX=arrival(W*.52,-1);ctx.save();ctx.translate(drummerX,H*.53);ctx.rotate(pulse*.014);drawSprite(images.drummer,0,1,1,0,0,360);ctx.restore();
-    ctx.textAlign='center';ctx.fillStyle='#ffe2a7';ctx.font='bold 20px Georgia';ctx.fillText('THE DRUMMER · RHYTHM TRIAL',W/2,H*.25);
+    const drummerX=arrival(W*.52,-1);ctx.save();ctx.translate(drummerX,H*.53);ctx.rotate(pulse*.014);drawSprite(special.kind==='poly'?images.drummergirl:images.drummer,0,1,1,0,0,360);ctx.restore();
+    ctx.textAlign='center';ctx.fillStyle='#ffe2a7';ctx.font='bold 20px Georgia';ctx.fillText(special.kind==='poly'?'DRUM MACHINE · RUDIMENTS':'THE DRUMMER · RHYTHM TRIAL',W/2,H*.25);
     ctx.font='12px system-ui';ctx.fillText(`RHYTHM SIGNAL · 110 BPM${rhythmFocus?' · ZILDJIAN FOCUS READY':''}`,W/2,H*.29);
     ctx.restore();
   }

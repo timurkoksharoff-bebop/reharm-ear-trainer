@@ -24,7 +24,7 @@ const storage=new Map();
 const context=vm.createContext({...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
   installLanguage(){},loadFlightImage:async()=>{},
   document:{getElementById:get,createElement:()=>new Element(),querySelector:()=>null,querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
-  window:{addEventListener(){}},localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
+  window:{addEventListener(){},matchMedia:()=>({matches:false})},localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
   Image:class{},ResizeObserver:class{observe(){}},matchMedia:()=>({matches:true}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},HTMLButtonElement:Element,
 });
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .+;\n/gm,'');
@@ -68,9 +68,10 @@ assert.equal(state().droneKills,1);assert.equal(state().cleared,0);
 assert.equal(combat.pressure(2,9,1),2);assert.equal(combat.pressure(0,0,1),0);
 // Test the full chromatic arsenal: 12 roots, both banks, exact type and capsule lifecycle.
 await run('startRun(3);');run('spawnEnemy();audio.pending();');
-assert.equal(get('bass-pads').children.length,12);assert.equal(get('quality-pads').children.length,11);
-run('qualityBank=1;buildPads();');assert.equal(get('quality-pads').children[0].dataset.value,'maj7sharp11');
-run('answer("quality",s.enemy.chord.quality);answer("bass",s.enemy.chord.offset);update(.02);');
+assert.equal(get('bass-pads').children.length,6);assert.equal(get('quality-panel').hidden,true);assert.equal(get('weapon-tabs').hidden,true);
+const correctPad=get('bass-pads').children.find(b=>b.textContent===run('chordSymbol(s.enemy.chord)'));
+assert(correctPad);correctPad.click();assert.equal(state().mode,'resolving');assert.equal(state().attempts,1);assert.equal(state().correct,1);
+run('update(.02);');
 assert.equal(state().listening,true);assert.equal(state().capsule,null);
 assert.equal(run('expedition.snapshot().special.kind'),'numbers');
 run('update(1);');assert.equal(state().mode,'resolving');

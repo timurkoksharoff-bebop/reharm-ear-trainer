@@ -125,6 +125,7 @@ button {
 }
 
 .topbar,
+.workspace-tabs,
 .exercise,
 .actions,
 .stats,
@@ -141,6 +142,7 @@ button {
 }
 
 .workspace-tabs {
+  margin-top: 8px;
   padding: 4px;
   border-radius: 16px;
   background: rgba(255, 253, 248, 0.6);
@@ -173,13 +175,6 @@ button {
   display: none;
 }
 
-.quest-bear-sprite {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-}
-
 #trainerWorkspace {
   position: relative;
   isolation: isolate;
@@ -191,94 +186,64 @@ button {
 }
 
 .quest-bear-scene {
-  --quest-bear-mark: rgba(49, 67, 72, 0.4);
   position: fixed;
   z-index: 0;
   top: clamp(235px, 29vh, 340px);
-  right: clamp(-112px, -4vw, -34px);
-  width: clamp(330px, 38vw, 560px);
-  color: rgba(130, 156, 139, 0.28);
+  right: clamp(-84px, -3vw, -24px);
+  width: clamp(240px, 29vw, 400px);
+  opacity: 0.16;
   pointer-events: none;
   mix-blend-mode: multiply;
+  filter: grayscale(0.35) contrast(0.88);
   transform: rotate(1.5deg);
   transform-origin: center;
   transition:
-    color 360ms ease,
     opacity 360ms ease,
     right 480ms ease,
     top 480ms ease,
-    transform 480ms ease;
+    transform 480ms ease,
+    filter 360ms ease;
 }
 
-.quest-bear-scene svg {
+.quest-bear-scene img {
   display: block;
   width: 100%;
   height: auto;
-  overflow: visible;
 }
 
-.quest-bear-scene.is-changing svg {
+.quest-bear-scene.is-changing img {
   animation: quest-bear-emerge 480ms cubic-bezier(0.2, 0.78, 0.25, 1) both;
 }
 
 .quest-bear-scene[data-pose="listen"] {
-  color: rgba(125, 158, 174, 0.3);
-  transform: rotate(-1deg) translateY(-5px);
+  opacity: 0.19;
+  filter: grayscale(0.5) sepia(0.08) hue-rotate(155deg) contrast(0.9);
+  transform: rotate(-1deg) translateY(-5px) scale(1.012);
 }
 
 .quest-bear-scene[data-pose="rest"] {
   top: auto;
-  right: clamp(-75px, 1vw, 18px);
+  right: clamp(-62px, 1vw, 18px);
   bottom: clamp(32px, 6vh, 90px);
-  width: clamp(390px, 45vw, 650px);
-  color: rgba(130, 156, 139, 0.21);
-  transform: rotate(-1deg);
+  width: clamp(270px, 34vw, 450px);
+  opacity: 0.11;
+  transform: rotate(-1deg) translateY(8px);
 }
 
 .quest-bear-scene[data-pose="wrong"] {
-  color: rgba(201, 131, 142, 0.3);
+  opacity: 0.2;
+  filter: grayscale(0.2) sepia(0.2) hue-rotate(300deg) contrast(0.9);
   transform: rotate(-2deg) translateY(3px);
 }
 
 .quest-bear-scene[data-pose="victory"] {
-  right: clamp(-84px, -1vw, -18px);
-  color: rgba(130, 156, 139, 0.31);
-  transform: rotate(1deg) translateY(-8px);
+  right: clamp(-70px, -1vw, -18px);
+  opacity: 0.2;
+  transform: rotate(1deg) translateY(-8px) scale(1.018);
 }
 
 body:not([data-workspace="quest"]) .quest-bear-scene {
   display: none;
-}
-
-.quest-bear-fill {
-  fill: currentColor;
-}
-
-.quest-bear-feature {
-  fill: var(--quest-bear-mark);
-}
-
-.quest-bear-mark,
-.quest-bear-wave {
-  fill: none;
-  stroke: var(--quest-bear-mark);
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.quest-bear-wave {
-  stroke: currentColor;
-  stroke-width: 7;
-  opacity: 0.78;
-}
-
-.quest-bear-limb {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 56;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 @keyframes quest-bear-emerge {
@@ -499,6 +464,45 @@ body:not([data-workspace="quest"]) .quest-hud {
   line-height: 1.55;
 }
 
+.quest-medal-cabinet {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid rgba(113, 88, 52, 0.22);
+  border-radius: 21px;
+  background:
+    radial-gradient(circle at 18% 5%, rgba(255, 255, 255, 0.66), transparent 36%),
+    linear-gradient(145deg, rgba(231, 222, 198, 0.56), rgba(244, 239, 225, 0.36));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.52);
+}
+
+.quest-medal-cabinet-heading {
+  margin-bottom: 13px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.quest-medal-cabinet-heading h3 {
+  margin: 2px 0 0;
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.quest-medal-cabinet-heading strong {
+  color: #715d3d;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+
+.quest-medal-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 9px 5px;
+  justify-items: center;
+}
+
 .quest-map-route {
   display: grid;
   gap: 8px;
@@ -607,6 +611,75 @@ body:not([data-workspace="quest"]) .quest-hud {
   animation: quest-result-in 520ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
 }
 
+.quest-result.has-reward {
+  width: min(530px, 100%);
+}
+
+.quest-result.has-reward .quest-result-visual {
+  width: 320px;
+  height: 310px;
+  margin: 0 auto;
+}
+
+.quest-result.has-reward .quest-reward-stage {
+  width: 310px;
+  height: 300px;
+}
+
+.quest-result.has-reward .quest-reward-animation {
+  inset: 0;
+  width: 310px;
+  height: 310px;
+}
+
+.quest-result.has-reward .quest-result-medal {
+  margin: 2px auto 12px;
+}
+
+.quest-result.has-reward .quest-coin:not(.ceremonial) {
+  --quest-coin-size: 98px;
+  --quest-face-depth: 8px;
+  --quest-rim-one: 2px;
+  --quest-rim-two: 4px;
+  --quest-rim-three: 7px;
+  --quest-face-glow: 11px;
+  --quest-drop-y: 9px;
+  --quest-drop-blur: 21px;
+  --quest-art-glow: 8px;
+  --quest-back-number: 30px;
+  --quest-back-label: 5px;
+  --quest-perspective: 440px;
+}
+
+.quest-result.has-reward .quest-result-actions {
+  margin-top: 17px;
+}
+
+.quest-result.has-reward[data-reward-phase="arrival"],
+.quest-result.has-reward[data-reward-phase="performance"] {
+  width: min(380px, 100%);
+}
+
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-kicker,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-medal,
+.quest-result.has-reward[data-reward-phase="arrival"] h2,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-stars,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-score,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-body,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-badge,
+.quest-result.has-reward[data-reward-phase="arrival"] .quest-result-actions,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-kicker,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-medal,
+.quest-result.has-reward[data-reward-phase="performance"] h2,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-stars,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-score,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-body,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-badge,
+.quest-result.has-reward[data-reward-phase="performance"] .quest-result-actions,
+.quest-result.has-reward[data-reward-phase="medal"] .quest-result-visual {
+  display: none;
+}
+
 .quest-result-kicker {
   margin: 0;
   color: var(--sage-deep);
@@ -617,24 +690,328 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .quest-result-medal {
-  width: 86px;
-  height: 86px;
-  margin: 16px auto;
-  border: 1px solid rgba(84, 116, 102, 0.45);
+  width: fit-content;
+  height: auto;
+  margin: 14px auto 8px;
+  opacity: 0.18;
+  transform: translateY(9px) scale(0.82);
+  transition: opacity 420ms ease, transform 560ms cubic-bezier(0.2, 0.9, 0.25, 1.15);
+}
+
+.quest-result-medal[hidden] {
+  display: none;
+}
+
+.quest-result-medal.is-earned {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.quest-result-medal.is-earned.is-dropping {
+  animation: quest-medal-drop 1.85s cubic-bezier(0.15, 0.82, 0.2, 1) both;
+}
+
+.quest-result-medal.is-earned.is-dropping .quest-coin-turn {
+  animation: quest-medal-spin 1.25s cubic-bezier(0.2, 0.72, 0.24, 1) both;
+}
+
+.quest-result-visual {
+  position: relative;
+  width: min(300px, 80vw);
+  height: 214px;
+  margin: -8px auto 4px;
+  display: grid;
+  place-items: center;
+}
+
+.quest-result-visual[data-mode="reward"] {
+  height: 245px;
+}
+
+.quest-result-reaction,
+.quest-reward-animation {
+  display: block;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.quest-result-reaction {
+  width: 226px;
+  height: 226px;
+  border-radius: 44%;
+  filter: saturate(0.9) contrast(1.03);
+}
+
+.quest-result.dance-only {
+  width: min(480px, 100%);
+}
+
+.quest-result.dance-only .quest-result-kicker,
+.quest-result.dance-only h2,
+.quest-result.dance-only .quest-stars,
+.quest-result.dance-only .quest-result-score,
+.quest-result.dance-only .quest-result-body,
+.quest-result.dance-only .quest-badge {
+  display: none;
+}
+
+.quest-result.dance-only .quest-result-visual {
+  width: min(300px, 78vw);
+  height: 300px;
+  margin: 0 auto;
+}
+
+.quest-result.dance-only .quest-result-reaction {
+  width: 292px;
+  height: 292px;
+}
+
+.quest-result.dance-only .quest-result-actions {
+  margin-top: 12px;
+}
+
+.quest-reward-stage {
+  position: relative;
+  width: 270px;
+  height: 242px;
+  isolation: isolate;
+}
+
+.quest-reward-stage[hidden],
+.quest-result-reaction[hidden],
+.quest-reward-animation[hidden] {
+  display: none;
+}
+
+.quest-reward-animation {
+  position: absolute;
+  inset: -4px 13px 8px;
+  width: 244px;
+  height: 244px;
+  filter: saturate(0.92) contrast(1.04);
+  -webkit-mask-image: radial-gradient(ellipse 58% 66% at 50% 54%, #000 44%, transparent 70%);
+  mask-image: radial-gradient(ellipse 58% 66% at 50% 54%, #000 44%, transparent 70%);
+}
+
+.quest-coin {
+  --quest-coin-size: 120px;
+  --quest-face-depth: 7px;
+  --quest-rim-one: 3px;
+  --quest-rim-two: 5px;
+  --quest-rim-three: 8px;
+  --quest-face-glow: 13px;
+  --quest-drop-y: 12px;
+  --quest-drop-blur: 26px;
+  --quest-art-glow: 10px;
+  --quest-back-number: 36px;
+  --quest-back-label: 6px;
+  --quest-perspective: 540px;
+  position: relative;
+  width: var(--quest-coin-size);
+  height: var(--quest-coin-size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  appearance: none;
+  background: transparent;
+  perspective: var(--quest-perspective);
+  cursor: pointer;
+}
+
+.quest-coin.compact {
+  --quest-coin-size: 58px;
+  --quest-face-depth: 4px;
+  --quest-rim-one: 1px;
+  --quest-rim-two: 2px;
+  --quest-rim-three: 4px;
+  --quest-face-glow: 7px;
+  --quest-drop-y: 5px;
+  --quest-drop-blur: 12px;
+  --quest-art-glow: 5px;
+  --quest-back-number: 18px;
+  --quest-back-label: 4px;
+  --quest-perspective: 260px;
+}
+
+.quest-coin.ceremonial {
+  --quest-coin-size: clamp(196px, 52vw, 270px);
+  --quest-face-depth: 19px;
+  --quest-rim-one: 5px;
+  --quest-rim-two: 9px;
+  --quest-rim-three: 14px;
+  --quest-face-glow: 22px;
+  --quest-drop-y: 20px;
+  --quest-drop-blur: 34px;
+  --quest-art-glow: 16px;
+  --quest-back-number: 52px;
+  --quest-back-label: 8px;
+  --quest-perspective: 720px;
+}
+
+.quest-coin-turn,
+.quest-coin-edge,
+.quest-coin-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.quest-coin-edge {
+  background:
+    repeating-conic-gradient(from 0.5deg, #55442e 0deg 1.3deg, #c4a66d 1.3deg 2.5deg, #755a37 2.5deg 3.6deg),
+    #8e7046;
+  transform: translateZ(var(--quest-edge-z));
+  box-shadow: inset 0 0 var(--quest-art-glow) rgba(50, 35, 20, 0.45);
+  pointer-events: none;
+}
+
+.quest-coin-turn {
+  display: block;
+  transform-style: preserve-3d;
+  transition: transform 760ms cubic-bezier(0.2, 0.72, 0.24, 1);
+}
+
+.quest-coin.is-back .quest-coin-turn {
+  transform: rotateY(180deg);
+}
+
+.quest-coin-face {
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  backface-visibility: hidden;
+  background:
+    radial-gradient(circle at 31% 22%, rgba(255, 243, 204, 0.52), transparent 24%),
+    radial-gradient(circle at 64% 69%, rgba(53, 39, 23, 0.19), transparent 30%),
+    linear-gradient(140deg, #c7a66b 0, #88663e 34%, #b79257 58%, #d2b579 78%, #765735 100%);
+  box-shadow:
+    inset 0 0 0 var(--quest-rim-one) #5d492f,
+    inset 0 0 0 var(--quest-rim-two) #c5a66e,
+    inset 0 0 0 var(--quest-rim-three) rgba(74, 56, 34, 0.82),
+    inset 0 0 var(--quest-face-glow) rgba(46, 34, 21, 0.4),
+    0 var(--quest-drop-y) var(--quest-drop-blur) rgba(47, 38, 25, 0.24);
+}
+
+.quest-coin-face::before {
+  position: absolute;
+  z-index: 5;
+  inset: 4.4%;
+  border: 1px solid rgba(255, 239, 198, 0.72);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.quest-coin-front {
+  transform: translateZ(var(--quest-face-depth));
+}
+
+.quest-coin-back {
+  transform: rotateY(180deg) translateZ(var(--quest-face-depth));
+}
+
+.quest-coin-art {
+  position: absolute;
+  z-index: 1;
+  inset: 8.7%;
+  overflow: hidden;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: var(--sage-deep);
-  background: radial-gradient(circle at 35% 25%, #fff, #dce8dd 64%, #c4d3c8);
-  font-family: Georgia, serif;
-  font-size: 42px;
-  box-shadow: 0 14px 35px rgba(84, 116, 102, 0.18), inset 0 0 0 7px rgba(255, 255, 255, 0.45);
+  background-color: #ad8c58;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-blend-mode: multiply;
+  filter: grayscale(1) sepia(0.72) saturate(0.78) contrast(1.24) brightness(0.96);
+  box-shadow: inset 0 0 var(--quest-art-glow) rgba(51, 37, 21, 0.35);
 }
 
-.quest-result.failed .quest-result-medal {
-  color: var(--clay-deep);
-  border-color: rgba(152, 93, 77, 0.38);
-  background: radial-gradient(circle at 35% 25%, #fff, #eedbd3 64%, #dfbbae);
+.quest-coin.locked .quest-coin-art::after {
+  content: "?";
+  color: rgba(75, 60, 39, 0.6);
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: var(--quest-back-number);
+}
+
+.quest-coin-relief {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, transparent 0 34%, rgba(255, 245, 211, 0.22) 42%, transparent 51%),
+    radial-gradient(circle at 47% 53%, transparent 56%, rgba(48, 34, 20, 0.2));
+  mix-blend-mode: screen;
+}
+
+.quest-coin-legend {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  pointer-events: none;
+}
+
+.quest-coin-legend text {
+  fill: rgba(57, 42, 26, 0.88);
+  font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+  font-size: 3.25px;
+  font-weight: 800;
+  letter-spacing: 0.72px;
+}
+
+.quest-coin-legend .quest-coin-lower {
+  font-size: 3px;
+  letter-spacing: 0.42px;
+}
+
+.quest-coin-beads {
+  fill: none;
+  stroke: rgba(64, 48, 30, 0.66);
+  stroke-width: 0.72;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 2.35;
+}
+
+.quest-coin-back strong,
+.quest-coin-back small {
+  position: relative;
+  z-index: 2;
+  display: block;
+  color: rgba(70, 51, 30, 0.78);
+  text-align: center;
+  text-shadow: 0 1px rgba(255, 231, 176, 0.42), 0 -1px rgba(53, 38, 22, 0.34);
+}
+
+.quest-coin-back strong {
+  margin-top: -3%;
+  font-family: "Iowan Old Style", Baskerville, Georgia, serif;
+  font-size: var(--quest-back-number);
+  font-weight: 500;
+}
+
+.quest-coin-back small {
+  position: absolute;
+  top: 64%;
+  width: 70%;
+  overflow: hidden;
+  font-size: var(--quest-back-label);
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.quest-coin.locked {
+  opacity: 0.3;
+  filter: grayscale(0.78);
+  cursor: default;
 }
 
 .quest-stars {
@@ -711,9 +1088,54 @@ body:not([data-workspace="quest"]) .quest-hud {
   animation: quest-particle-fall var(--duration) var(--delay) ease-in both;
 }
 
+.quest-debug-panel {
+  position: fixed;
+  z-index: 220;
+  left: 12px;
+  bottom: 12px;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  border: 1px solid rgba(49, 67, 72, 0.28);
+  border-radius: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: rgba(250, 248, 241, 0.92);
+  box-shadow: 0 10px 32px rgba(37, 46, 48, 0.2);
+  backdrop-filter: blur(12px);
+}
+
+.quest-debug-panel button {
+  min-height: 29px;
+  padding: 5px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 252, 0.75);
+  color: var(--ink-soft);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
 @keyframes quest-result-in {
   from { opacity: 0; transform: translateY(18px) scale(0.94); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes quest-medal-drop {
+  0% { opacity: 0; transform: translateY(-210px) rotate(-24deg) scale(0.46); }
+  18% { opacity: 1; }
+  57% { transform: translateY(12px) rotate(8deg) scale(1.08); }
+  73% { transform: translateY(-12px) rotate(-4deg) scale(0.98); }
+  88% { transform: translateY(4px) rotate(1deg) scale(1.015); }
+  100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+
+@keyframes quest-medal-spin {
+  0% { transform: rotateY(0deg) rotateZ(0deg); }
+  62% { transform: rotateY(900deg) rotateZ(11deg); }
+  100% { transform: rotateY(1080deg) rotateZ(0deg); }
 }
 
 @keyframes quest-particle-fall {
@@ -723,23 +1145,14 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .topbar {
-  min-height: 112px;
+  min-height: 108px;
   padding: 11px 20px;
   border-radius: 24px;
   background: rgba(255, 253, 248, 0.66);
   display: grid;
-  grid-template-columns: minmax(230px, 290px) minmax(300px, 1fr) 42px 48px;
+  grid-template-columns: auto minmax(220px, 1fr) 42px 48px;
   align-items: center;
   gap: 12px;
-}
-
-.topbar-navigation {
-  min-width: 0;
-  margin: 0;
-  border: 1px solid rgba(105, 121, 121, 0.17);
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 .brand-lockup {
@@ -781,14 +1194,17 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .brand-lockup--bear {
-  min-width: 290px;
+  position: relative;
+  width: 300px;
+  height: 150px;
+  min-width: 300px;
   display: block;
 }
 
 .brand-lockup-art {
   display: block;
-  width: 290px;
-  height: 103px;
+  width: 300px;
+  height: 150px;
   object-fit: contain;
   object-position: left center;
 }
@@ -796,18 +1212,6 @@ body:not([data-workspace="quest"]) .quest-hud {
 .topbar-title {
   margin: 0 14px;
   text-align: center;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .topbar h1,
@@ -1000,6 +1404,13 @@ body:not([data-workspace="quest"]) .quest-hud {
 
 .settings-guide + .settings-reset {
   margin-top: 9px;
+}
+
+.settings-guide.is-confirming,
+.settings-reset.is-confirming {
+  border-color: rgba(191, 113, 110, 0.72);
+  background: rgba(235, 211, 206, 0.58);
+  color: #7d4845;
 }
 
 body.settings-open {
@@ -2404,24 +2815,24 @@ select:focus-visible {
 
   .quest-bear-scene {
     top: 300px;
-    right: -116px;
-    width: min(410px, 112vw);
-    color: rgba(130, 156, 139, 0.25);
+    right: -72px;
+    width: min(270px, 74vw);
+    opacity: 0.14;
   }
 
   .quest-bear-scene[data-pose="listen"] {
-    right: -102px;
+    right: -62px;
   }
 
   .quest-bear-scene[data-pose="rest"] {
     top: auto;
-    right: -84px;
+    right: -54px;
     bottom: 28px;
-    width: min(450px, 124vw);
+    width: min(290px, 80vw);
   }
 
   .quest-bear-scene[data-pose="victory"] {
-    right: -136px;
+    right: -82px;
   }
 
   .quest-result-bear {
@@ -2483,6 +2894,27 @@ select:focus-visible {
     border-radius: 23px;
   }
 
+  .quest-result.has-reward {
+    width: min(520px, 100%);
+    display: block;
+  }
+
+  .quest-result.has-reward .quest-result-visual {
+    width: min(270px, 76vw);
+    height: 220px;
+  }
+
+  .quest-result.has-reward .quest-reward-stage {
+    width: 260px;
+    height: 218px;
+  }
+
+  .quest-result.has-reward .quest-reward-animation {
+    inset: 0 21px 3px;
+    width: 218px;
+    height: 218px;
+  }
+
   .quest-map-heading h2,
   .quest-result h2 {
     font-size: 32px;
@@ -2492,11 +2924,24 @@ select:focus-visible {
     padding-left: 62px;
   }
 
+  .quest-medal-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .quest-medal-cabinet {
+    padding: 14px 11px;
+  }
+
+  .quest-result-visual {
+    margin-top: -3px;
+  }
+
   .quest-result-actions {
     grid-template-columns: 1fr;
   }
 
   .topbar,
+  .workspace-tabs,
   .exercise,
   .actions,
   .stats,
@@ -2528,7 +2973,7 @@ select:focus-visible {
   }
 
   .topbar {
-    min-height: 145px;
+    min-height: 121px;
     padding: 13px 15px 15px;
     grid-template-columns: 1fr 40px 44px;
     gap: 10px;
@@ -2549,19 +2994,35 @@ select:focus-visible {
   }
 
   .brand-lockup--bear {
+    width: 224px;
+    height: 112px;
     min-width: 224px;
     gap: 5px;
   }
 
   .brand-lockup-art {
-    width: min(224px, 100%);
-    height: 70px;
+    width: 224px;
+    height: 112px;
   }
 
-  .topbar-navigation {
+  .help-button {
+    grid-column: 2;
+  }
+
+  .settings-button {
+    grid-column: 3;
+  }
+
+  .topbar-title {
     grid-column: 1 / -1;
     grid-row: 2;
     margin: 0;
+    text-align: left;
+  }
+
+  .topbar h1 {
+    margin-top: 3px;
+    font-size: 30px;
   }
 
   .controls {
@@ -3005,6 +3466,31 @@ select:focus-visible {
   .piano {
     --white-key-width: 36px;
     --black-key-width: 23px;
+  }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    padding-inline: 12px;
+    grid-template-columns: minmax(0, 1fr) 36px 40px;
+    gap: 6px;
+  }
+
+  .brand-lockup--bear,
+  .brand-lockup-art {
+    width: 180px;
+    height: 90px;
+    min-width: 180px;
+  }
+
+  .help-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .settings-button {
+    width: 40px;
+    height: 40px;
   }
 }
 

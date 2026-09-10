@@ -1,4 +1,4 @@
-import {bookReferenceEvents,cueEvents,progressionEvents} from './music.mjs';
+import {bookReferenceEvents,chordNotes,cueEvents,progressionEvents} from './music.mjs';
 import {intervalCue} from './intervals.mjs';
 import {polyEvents} from './expedition.mjs';
 // A sustained, pitch-stable two-oscillator arcade synth. No sample/network
@@ -82,6 +82,13 @@ export class FlightAudio {
     order.forEach((note,i)=>this.note(note,start+.12+i*step,1.65,'synth',.6/Math.sqrt(notes.length)));
     this.schedule(()=>{if(token===this.token)onEnd();},duration);
   }
+  trainerChord(tonic,chord,onEnd,mode='together'){
+    this.stop();const token=this.token,start=this.context.currentTime,notes=chordNotes(chord,tonic),order=mode==='down'?[...notes].reverse():notes,step=mode==='together'?0:.18,targetAt=1.08;
+    [tonic,tonic+4,tonic+7].forEach(note=>this.note(note,start+.12,.62,'soft',.25));
+    order.forEach((note,i)=>this.note(note,start+targetAt+i*step,1.35,'synth',.58/Math.sqrt(notes.length)));
+    const duration=targetAt+1.5+step*(notes.length-1);this.lastCue={kind:'trainer-chord',tonic,chord:{...chord},notes,mode,sound:'home chord plus target chord'};
+    this.schedule(()=>{if(token===this.token)onEnd();},duration);
+  }
   guide(root,target,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime;
     [0,4,7,10].forEach(n=>this.note(root+n,start+.12,.85,'soft',.24));
@@ -96,7 +103,9 @@ export class FlightAudio {
     utterance.voice=voices.find(v=>/Alex|Daniel|Reed|Ralph|Fred|Rocko/i.test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en[-_](US|GB)/i.test(v.lang))||null;
     let finished=false;const finish=()=>{if(finished||token!==this.token)return;finished=true;onEnd();};
     utterance.onend=finish;utterance.onerror=finish;window.speechSynthesis.cancel();window.speechSynthesis.speak(utterance);
-    this.schedule(finish,Math.max(3.2,text.length*.075));
+    // Safari occasionally omits `onend`; keep a fallback, but never cut a
+    // slow English voice off before it reaches "color tones".
+    this.schedule(finish,Math.max(5.8,text.length*.13));
   }
   trumpetChord(root,intervals,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime+.08,phrase=[0,7,10,12];

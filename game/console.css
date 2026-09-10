@@ -82,3 +82,6 @@ html,body{width:100%;height:var(--app-height,100dvh);max-height:var(--app-height
 .floating-deck #special-options button{min-height:27px;font-size:10px;line-height:1.12}
 .floating-deck .special-panel{padding:5px}.floating-deck .special-panel>span{margin:1px 0;font-size:9px}
 @media(max-width:440px){#health{grid-template-columns:60px auto;gap:5px}#health .hp-shell{width:60px;height:13px}.floating-deck .cockpit{max-height:32dvh!important}}
+.trainer-chord-choices{grid-template-columns:repeat(3,minmax(0,1fr))}.trainer-chord-choices button{font:bold 16px ui-monospace,monospace}
+@media(max-width:440px){.trainer-chord-choices{grid-template-columns:repeat(2,minmax(0,1fr))}.trainer-chord-choices button{min-height:39px;font-size:14px}}
+.failed-chord{padding:10px!important;border:1px solid #a7784e;border-radius:7px;background:#351d19;color:#f3d7b0!important}.failed-chord strong{font:800 28px ui-monospace,monospace;color:#ffcf8d}.failed-chord small{font-size:10px;color:#d6bfa0}

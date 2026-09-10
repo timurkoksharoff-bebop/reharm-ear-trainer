@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {FlightAudio} from '../audio.mjs';
-import {INTERVALS} from '../music.mjs';
+import {INTERVALS,chordNotes} from '../music.mjs';
 import {RHYTHMS,rhythmIds,POLYRHYTHMS,polyEvents} from '../expedition.mjs';
 // Exercise the actual playback scheduler, intercepting only its output notes.
 const audio=new FlightAudio();audio.context={currentTime:10};
@@ -19,6 +19,12 @@ for(const mode of ['up','down']){
   notes=[];audio.chordOnly(48,INTERVALS.maj7,()=>{},mode);
   assert.deepEqual(notes.map(n=>n.midi),mode==='up'?[48,52,55,59]:[59,55,52,48]);
   assert(notes.every((n,i)=>!i||n.at>notes[i-1].at));
+}
+for(const mode of ['together','up','down']){
+  notes=[];scheduled=[];const chord={offset:7,quality:'7'},target=chordNotes(chord,48);audio.trainerChord(48,chord,()=>{},mode);
+  assert.deepEqual(notes.slice(0,3).map(n=>n.midi),[48,52,55],'Trainer starts with the tonic reference chord');
+  assert.deepEqual(notes.slice(3).map(n=>n.midi),mode==='down'?[...target].reverse():target,'Trainer target keeps the exact game voicing');
+  if(mode==='together')assert(notes.slice(3).every(n=>n.at===notes[3].at));else assert(notes.slice(4).every((n,i)=>n.at>notes[i+3].at));
 }
 scheduled=[];audio.chordOnly(48,INTERVALS['7'],()=>assert.fail('Cancelled cue callback ran'));const old=scheduled[0].callback;audio.stop();old();
 let drums=[];audio.drum=(voice,at)=>drums.push({voice,at});scheduled=[];

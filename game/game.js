@@ -8,6 +8,15 @@ import {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,RHYTHMS,RHYTHM_HINTS,RHYTH
 
 const $=id=>document.getElementById(id);
 const canvas=$('space'),ctx=canvas.getContext('2d'),audio=new FlightAudio();
+function syncViewportHeight(){
+  const height=Math.round(window.visualViewport?.height||window.innerHeight||0);
+  if(height)document.documentElement.style.setProperty('--app-height',`${height}px`);
+}
+syncViewportHeight();
+window.addEventListener('resize',syncViewportHeight,{passive:true});
+window.addEventListener('orientationchange',syncViewportHeight,{passive:true});
+window.visualViewport?.addEventListener('resize',syncViewportHeight,{passive:true});
+window.visualViewport?.addEventListener('scroll',syncViewportHeight,{passive:true});
 const deckSetting=new URLSearchParams(location.search).get('deck');
 // The flight surface now continues behind the translucent answer deck on
 // every device. Keep ?deck=0 as a temporary comparison switch while tuning.
@@ -92,7 +101,15 @@ function action(label,fn,secondary=false){const b=document.createElement('button
 function signal(text,listening=false){$('signal-text').textContent=text;$('signal').classList.toggle('listening',listening);}
 function feedback(text,error=false){$('feedback').textContent=text;$('feedback').className=`feedback visible${error?' error':''}`;s.feedbackTimer=2.0;}
 function renderHud(){
-  const max=s.maxHealth||5,health=clamp(s.health,0,max);s.health=health;$('score').textContent=String(s.score).padStart(6,'0');$('health').textContent='▰'.repeat(health)+'▱'.repeat(max-health);$('health').setAttribute('aria-label',`Щит: ${health} из ${max}`);
+  const max=s.maxHealth||5,health=clamp(s.health,0,max),meter=$('health'),previous=Number(meter.dataset.value??health);
+  s.health=health;
+  $('score').textContent=String(s.score).padStart(6,'0');
+  meter.innerHTML=`<span class="hp-shell"><i style="--hp:${health/max}"></i></span><b>${health}/${max}</b>`;
+  meter.dataset.value=String(health);
+  meter.classList.toggle('low',health<=Math.ceil(max*.4));
+  meter.classList.toggle('critical',health<=1);
+  meter.setAttribute('aria-label',`Щит: ${health} из ${max}`);
+  if(previous!==health){meter.classList.remove('hp-hit','hp-heal');void meter.offsetWidth;meter.classList.add(health<previous?'hp-hit':'hp-heal');}
   $('sector-name').textContent=s.bookMission?`${s.route?.code||'BOOK FLIGHT'} · ${s.position+1}/${s.route?.sequence.length||0}`:`СЕКТОР 0${s.sector+1} · ${SECTORS[s.sector].name.toUpperCase()}`;
   $('weapon').textContent=s.overdrive>0?'РАЗГОН · ВЕЕРНЫЙ ОГОНЬ':`ИМПУЛЬС ×${s.power}`;$('combo').textContent=`КОМБО ${s.combo} · ⚡ ${s.energy}% · ◉ ${hangar().scrap}`;
   $('route-track').innerHTML=Array.from({length:s.route?.sequence.length||SECTORS[s.sector].count},(_,i)=>`<i class="${i<s.cleared?'done':i===s.cleared?'current':''}"></i>`).join('');
@@ -120,9 +137,9 @@ function buildPads(){
 }
 function syncPads(){
   const capsuleMode=!!s.capsule&&['resolving','paused'].includes(s.mode);
-  const special=expedition.busy;
-  document.querySelector('.cabinet')?.classList.toggle('rhythm-room',expedition.pausedCombat);
-  $('enemy-label').hidden=expedition.pausedCombat||!s.enemy||s.mode==='resolving';
+  const special=expedition.busy,scene=expedition.showScene;
+  document.querySelector('.cabinet')?.classList.toggle('rhythm-room',scene);
+  $('enemy-label').hidden=scene||!s.enemy||s.mode==='resolving';
   $('capsule-panel').hidden=!capsuleMode||special;$('bass-pads').hidden=capsuleMode||special;$('quality-panel').hidden=true;
   $('weapon-tabs').hidden=true;
   $('weapon-root').setAttribute('aria-pressed',String(weaponTab==='bass'));$('weapon-type').setAttribute('aria-pressed',String(weaponTab==='quality'));
@@ -133,7 +150,7 @@ function syncPads(){
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening;
   $('replay').setAttribute('aria-label',s.bookMission?'Повторить одну ноту HOME и текущий аккорд':'Повторить тонику и сигнал');
   $('replay').setAttribute('title',s.bookMission?'HOME одной нотой → текущий вертикальный аккорд · Space':'Повторить звучание · Space');
-  if(expedition.pausedCombat){const labels={poly:['DRUM MACHINE · БАРАБАНЩИЦА','Выбери нотный рисунок · можно отвечать во время звучания'],rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||labels.rhythm;$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
+  if(scene){const labels={reveal:['АРТЕФАКТ НАЙДЕН','Коснись ящика — механизм откроет портал'],roulette:['ROCK TONGUE · RANDOM MODE','Барабан выбирает музыкальное испытание'],poly:['DRUM MACHINE · БАРАБАНЩИЦА','Выбери нотный рисунок · можно отвечать во время звучания'],rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],tones:['COLOR TONES · ВИБРАФОНИСТКА','Поймай все звучащие надстройки'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||['АРТЕФАКТ','Активируй найденный механизм'];$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
   $('interval-reference').disabled=s.mode!=='resolving'||s.listening;
   $('pause').disabled=['start','finished','gameover','loading'].includes(s.mode);
   if(s.enemy){$('shield-tags').innerHTML=s.bookMission||s.sector>=2?'<span class="shield-tag">◈ АККОРД</span>':'<span class="shield-tag">◇ СТУПЕНЬ</span>';}
@@ -161,7 +178,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 067</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 068</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -205,7 +222,7 @@ async function launchEncounter(type){
   spawnEnemy();audio.stop();s.listening=false;expedition.artifact(type);
 }
 function openCrewGallery(){
-  overlay(`<span class="eyebrow">BUILD 067 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 068 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -434,9 +451,9 @@ function answer(kind,value,button){
       $('recognized-chord').textContent=s.sector>=2?chordSymbol(s.enemy.chord):label.glyph;
       burst(s.enemy.x,s.enemy.y,'#f7cd7f',50);s.rings.push({x:s.enemy.x,y:s.enemy.y,age:0});
       s.capsuleTimer=0;
-      if(!s.bookMission)expedition.afterHydra();
+      expedition.afterHydra();
       $('enemy-label').hidden=true;signal(s.bookMission?'Маршрут продолжается…':'Разгон! Услышь интервал и поймай один жетон');
-      if(s.combo%3===0){s.health=Math.min(s.maxHealth,s.health+1);s.score+=100;}
+      if(s.combo%3===0){const before=s.health;s.health=Math.min(s.maxHealth,s.health+1);s.score+=100;if(s.health>before)feedback('Серия ×3 · щит восстановлен +1 HP');}
     }
   }else{
     s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;
@@ -496,7 +513,7 @@ async function resume(){
 function burst(x,y,color,count){for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=30+Math.random()*150;s.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:.5+Math.random()*.7,color});}if(s.particles.length>350)s.particles.splice(0,s.particles.length-350);}
 function shipHit(){
   if(s.invulnerable>0||expedition.invincible||!['active','resolving'].includes(s.mode))return;
-  s.health--;s.invulnerable=1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);feedback('Щит задет · продолжай полёт',true);renderHud();if(s.health<=0)finish(false);
+  s.health--;s.invulnerable=1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);feedback(`ПОПАДАНИЕ · −1 HP · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0)finish(false);
 }
 function launchCapsule(){
   const capsule=createCapsule(s.sector);s.capsule={...capsule,x:70+Math.random()*(W-140),y:Math.max(130,H*.28),age:0,speed:Math.max(45,H*.115)};
@@ -612,7 +629,7 @@ function draw(){
   for(const r of s.rings){ctx.strokeStyle=`rgba(121,245,208,${1-r.age/.8})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*260,0,Math.PI*2);ctx.stroke();}
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
-  if(expedition.pausedCombat)expedition.drawPauseOverlay();
+  if(expedition.showScene)expedition.drawPauseOverlay();
   if(s.flash>0&&!reduced){ctx.fillStyle=`rgba(255,93,134,${s.flash*.3})`;ctx.fillRect(0,0,W,H);}
 }
 function drawPlayerFrame(frame){

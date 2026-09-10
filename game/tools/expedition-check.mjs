@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {PILOTS,RHYTHMS,RUDIMENTS,MELODIES,MODES,NUMBER_OFFSETS,TONE_PROGRAMS,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,createExpedition} from '../expedition.mjs';
+import {PILOTS,RHYTHMS,RUDIMENTS,MELODIES,MODES,NUMBER_OFFSETS,TONE_PROGRAMS,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,turretThreat,createExpedition} from '../expedition.mjs';
 assert.equal(PILOTS.length,4);
 for(let i=1;i<4;i++){assert(PILOTS[i].speed>PILOTS[i-1].speed);assert(PILOTS[i].obstacleGap<PILOTS[i-1].obstacleGap);}
 for(let interval=1;interval<=12;interval++)for(const direction of ['up','down']){
@@ -33,16 +33,20 @@ const oldEnd=audio.pending;world.answerSpecial(target);assert.equal(s.health,5,'
 world.startChallenge('melody');oldEnd();assert(s.listening,'Stale completion cannot stop new cue');world.answerSpecial(world.snapshot().special.target);assert(!world.busy);s.energy=0;
 world.startChallenge('rhythm');assert([...dom.get('special-options').children].every(b=>!b.disabled));world.answerSpecial(world.snapshot().special.target);assert(world.invincible&&world.boosted);
 world.reset(0);world.startChallenge('mode');assert.equal(world.snapshot().special.direction,'up','Novice modal challenge must ascend');audio.pending();
+world.reset(1);world.startChallenge('mode');assert.equal(world.snapshot().special.direction,'up','Student modal challenge must ascend');audio.pending();
+assert.equal(turretThreat(0,0).enabled,false);assert.equal(turretThreat(1,3).enabled,true);assert(turretThreat(3,12).max>turretThreat(1,3).max);assert(turretThreat(3,12).interval<turretThreat(1,3).interval);
 world.reset(0);world.spawnTeacher();assert.equal(world.snapshot().teachers.length,1);
-world.startChallenge('guide');const guide=world.snapshot().special.target;audio.pending();world.collectNumber(guide);assert(world.snapshot().teachers.every(t=>t.hp===0));assert(world.invincible);
+s.health=1;s.maxHealth=5;world.startChallenge('guide');const guide=world.snapshot().special.target;audio.pending();world.collectNumber(guide);assert(world.snapshot().teachers.every(t=>t.hp===0));assert(world.invincible);assert.equal(s.health,2,'Guide-tone success repairs one HP');
 world.reset(2);world.startChallenge('numbers');const numeric=world.snapshot().special;audio.pending();
+assert(world.pausedCombat,'Opening listening truce freezes incoming fire');assert.equal(world.showScene,false,'Listening truce must not draw an unrelated musician scene');
 for(const expected of orderedTargets(numeric.interval,numeric.direction)){world.collectNumber(Object.keys(NUMBER_OFFSETS).find(k=>NUMBER_OFFSETS[k]===expected));}
 assert(!world.busy);assert.equal(s.energy,30);
 const openArtifact=type=>{world.artifact(type);assert.equal(world.snapshot().special.kind,'reveal');assert(world.activateArtifact());const finish=audio.pending;assert(finish);finish();};
-world.reset(0);openArtifact(1);assert.equal(world.snapshot().special.kind,'melody');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.cloaked);openArtifact(3);assert(world.invincible);
+world.reset(0);openArtifact(1);assert.equal(world.snapshot().special.kind,'melody');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.cloaked);world.artifact(3);assert.equal(world.snapshot().special,null,'Overdrive applies without opening an unrelated character scene');assert(world.invincible);
 const frozen=JSON.stringify(world.snapshot());s.mode='paused';world.tick(10);assert.equal(JSON.stringify(world.snapshot()),frozen);
 s.mode='active';world.reset(0);world.startChallenge('rhythm');audio.pending();const roomBefore=JSON.stringify(world.snapshot());world.tick(40);assert.equal(JSON.stringify(world.snapshot()),roomBefore,'Rhythm field pause freezes flight and has no countdown');world.answerSpecial(world.snapshot().special.target);assert(!world.pausedCombat);
 world.reset(0);for(let i=0;i<5;i++)world.spawnTeacher();assert.deepEqual(world.snapshot().teachers.map(t=>t.type),[0,1,2,3,4]);assert.deepEqual(world.snapshot().teachers.slice(0,4).map(t=>t.edge),[0,1,2,3]);
+world.reset(1);s.bookMission={chapter:4};s.totalCleared=1;world.afterHydra();assert.equal(world.snapshot().drops.length,1,'Book Flight must receive the same authored artifacts');assert.equal(world.snapshot().queue.length,0,'Book Flight does not insert the unrelated interval detour');s.bookMission=null;
 world.reset(0);s.listening=false;world.tick(4);assert.equal(world.snapshot().walls.length,0,'Novice flight has no obstacles');
 world.reset(2);world.startChallenge('numbers');
 assert.equal(world.snapshot().digits.filter(d=>gradeNumber(world.snapshot().special,d.label).correct).length,1);

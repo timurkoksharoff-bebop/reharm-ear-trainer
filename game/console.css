@@ -58,3 +58,27 @@
 .floating-deck #special-options{gap:3px;max-height:28dvh}
 .floating-deck #special-options button{min-height:30px;padding:2px 4px;font-size:11px}
 .floating-deck #special-options .artifact-activate{min-height:42px;font:bold 13px ui-monospace,monospace;letter-spacing:.12em;background:linear-gradient(135deg,#6d5432dd,#203b3add)!important;box-shadow:inset 0 0 14px #ffd07d28,0 0 10px #70efd326!important}
+
+/* Safari's visible viewport is the actual cabinet: no clipped controls or page scroll. */
+html,body{width:100%;height:var(--app-height,100dvh);max-height:var(--app-height,100dvh);overflow:hidden;overscroll-behavior:none}
+.cabinet{height:var(--app-height,100dvh)!important;max-height:var(--app-height,100dvh)!important}
+
+/* Mechanical shield battery. Health changes read at a glance during flight. */
+#health{display:grid;grid-template-columns:minmax(58px,82px) auto;align-items:center;justify-content:end;gap:7px;color:#dffbef!important;letter-spacing:0!important}
+#health .hp-shell{position:relative;display:block;width:82px;height:15px;padding:2px;border:2px solid #9aa698;border-radius:3px;background:#11191a;box-shadow:inset 0 0 5px #000,0 0 7px #70e1c244}
+#health .hp-shell::after{content:'';position:absolute;right:-6px;top:3px;width:4px;height:6px;border:1px solid #9aa698;border-left:0;background:#26312f}
+#health .hp-shell i{display:block;height:100%;width:calc(var(--hp)*100%);border-radius:1px;background:linear-gradient(90deg,#43c996,#a9ffdc);box-shadow:0 0 8px #7affe0;transition:width .25s ease,background .2s}
+#health b{font:bold 11px ui-monospace,monospace;color:#e8eee7}
+#health.low .hp-shell i{background:linear-gradient(90deg,#d83d32,#ff9a64);box-shadow:0 0 10px #ff594d}
+#health.critical{animation:hp-alarm .65s steps(2,end) infinite}
+#health.hp-hit .hp-shell{animation:hp-hit .32s ease-out}#health.hp-heal .hp-shell{animation:hp-heal .55s ease-out}
+@keyframes hp-alarm{50%{filter:brightness(1.7)}}@keyframes hp-hit{45%{transform:translateX(-4px);box-shadow:0 0 18px #ff4b3f}}@keyframes hp-heal{45%{box-shadow:0 0 22px #8bffdc;transform:scale(1.05)}}
+
+/* The answer deck stays deliberately shallow over the uninterrupted planet. */
+.floating-deck .cockpit{max-height:34dvh!important;overflow:auto;padding-top:3px;padding-bottom:calc(3px + env(safe-area-inset-bottom))}
+.floating-deck .pad,.floating-deck .quality-pads .pad{min-height:28px!important;border-bottom-width:1px!important}
+.floating-deck .pad .glyph{font-size:17px!important;line-height:1!important}
+.floating-deck .book-chord-pads .chord-choice{min-height:23px!important;font-size:12px!important}
+.floating-deck #special-options button{min-height:27px;font-size:10px;line-height:1.12}
+.floating-deck .special-panel{padding:5px}.floating-deck .special-panel>span{margin:1px 0;font-size:9px}
+@media(max-width:440px){#health{grid-template-columns:60px auto;gap:5px}#health .hp-shell{width:60px;height:13px}.floating-deck .cockpit{max-height:32dvh!important}}

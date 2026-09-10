@@ -357,7 +357,7 @@ export function createExpedition(api){
   }
   function dropArtifact(type=null){if(type===null){const pool=[7,0,3,1,5,10,2,6,4];type=pool[dropIndex++%pool.length];}drops.push({type,x:60+Math.random()*(W-120),y:110,age:0});}
   function afterHydra(){if(s.totalCleared%3===0)planet=planet==='moon'?'mars':'moon';if(!s.bookMission)queue.push('numbers');dropArtifact();render();}
-  function hint(){if(!hints||s.listening||!['active','resolving'].includes(s.mode))return;hints--;if(special){feedback(`Подсказка: ${specialName(special)}`);}else if(s.capsule){feedback(s.capsule.heard===s.capsule.wanted?'Капсула совпадает · лови':'Другой интервал · пропусти');}else if(s.enemy)feedback(`Корень: ${api.degree(s.enemy.chord.offset)} · тип: ${QUALITIES[s.enemy.chord.quality].glyph}`);render();}
+  function hint(){if(!hints||s.listening||!['active','resolving'].includes(s.mode))return;hints--;if(special){feedback(`Подсказка: ${specialName(special)}`);}else if(s.capsule){feedback(s.capsule.heard===s.capsule.wanted?'Капсула совпадает · лови':'Другой интервал · пропусти');}else if(s.enemy)feedback(`Корень: ${api.degree(s.enemy.chord.offset)} · тип: ${(s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.glyph??s.enemy.chord.quality)}`);render();}
   function tick(dt){
     if(!['active','resolving'].includes(s.mode))return;
     if(special?.kind==='roulette'){updateRoulette();return;}

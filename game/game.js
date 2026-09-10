@@ -1,4 +1,5 @@
-import {DEGREES,QUALITIES,INTERVALS,SECTORS,createRoute,createBookRoute,bookRoutesForChapter,answerResult,family,QUALITY_BANKS,chordSymbol} from './music.mjs';
+import {createStandardsLibrary} from './standards-library.mjs';
+import {DEGREES,QUALITIES,INTERVALS,SECTORS,createRoute,createBookRoute,bookRoutesForChapter,answerResult,family,QUALITY_BANKS,chordSymbol,chordAnswerKey} from './music.mjs';
 import {FlightAudio} from './audio.mjs';
 import {loadFlightImage} from './assets-loader.mjs';
 import {installLanguage} from './i18n.mjs';
@@ -95,8 +96,8 @@ function hangar(){const saved=record().hangar||{};return {scrap:saved.scrap||0,t
 function saveHangar(next){try{const old=record();localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...old,hangar:next}));}catch{}}
 function shipBuild(){const h=hangar(),frame=HANGAR_SHIPS[h.ship];return {h,frame,maxHealth:Math.min(5,2+h.upgrades.hull+(frame.frame>=2?1:0)),speed:180+h.upgrades.engine*28+frame.frame*8,shotDelay:Math.max(.09,.28-h.upgrades.cannon*.055-frame.frame*.012),shots:1+Math.floor(h.upgrades.cannon/2),energyGain:1+h.upgrades.reactor*.25};}
 function awardScrap(amount){const h=hangar();h.scrap+=amount;h.total+=amount;saveHangar(h);}
-function overlay(html){$('overlay').classList.remove('art-overlay');$('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;}
-function hideOverlay(){$('overlay').hidden=true;}
+function overlay(html){document.querySelector('.cabinet').classList.add('menu-open');$('overlay').classList.remove('art-overlay');$('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;}
+function hideOverlay(){$('overlay').hidden=true;document.querySelector('.cabinet').classList.remove('menu-open');}
 function action(label,fn,secondary=false){const b=document.createElement('button');b.className=secondary?'secondary':'primary';b.textContent=label;$('overlay').firstElementChild.append(b);b.addEventListener('click',fn);return b;}
 function signal(text,listening=false){$('signal-text').textContent=text;$('signal').classList.toggle('listening',listening);}
 function feedback(text,error=false){$('feedback').textContent=text;$('feedback').className=`feedback visible${error?' error':''}`;s.feedbackTimer=2.0;}
@@ -112,7 +113,7 @@ function renderHud(){
   if(previous!==health){meter.classList.remove('hp-hit','hp-heal');void meter.offsetWidth;meter.classList.add(health<previous?'hp-hit':'hp-heal');}
   $('sector-name').textContent=s.bookMission?`${s.route?.code||'BOOK FLIGHT'} · ${s.position+1}/${s.route?.sequence.length||0}`:`СЕКТОР 0${s.sector+1} · ${SECTORS[s.sector].name.toUpperCase()}`;
   $('weapon').textContent=s.overdrive>0?'РАЗГОН · ВЕЕРНЫЙ ОГОНЬ':`ИМПУЛЬС ×${s.power}`;$('combo').textContent=`КОМБО ${s.combo} · ⚡ ${s.energy}% · ◉ ${hangar().scrap}`;
-  $('route-track').innerHTML=Array.from({length:s.route?.sequence.length||SECTORS[s.sector].count},(_,i)=>`<i class="${i<s.cleared?'done':i===s.cleared?'current':''}"></i>`).join('');
+  $('route-track').classList.toggle('long-route',(s.route?.sequence.length||0)>20);$('route-track').innerHTML=Array.from({length:s.route?.sequence.length||SECTORS[s.sector].count},(_,i)=>`<i class="${i<s.cleared?'done':i===s.cleared?'current':''}"></i>`).join('');
   document.querySelector('.cabinet')?.classList.toggle('charged',s.overdrive>0||expedition.boosted);
   document.querySelector('.cabinet')?.classList.toggle('danger',s.health<=2);
 }
@@ -178,7 +179,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 069</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 070</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -199,7 +200,7 @@ function openFlightConsole(){
 function openSoundLab(selection=0){
   consoleScene('console-sound-lab.jpg','Sound Lab: тренажёр, миссии, библиотека аккордов и ритмов, лады и мелодии.');
   $('console-scene').classList.add('console-lab');
-  const items=[['PRACTICE',()=>openTrainer()],['MISSIONS',()=>openBookFlight()],['CHORD LIBRARY',()=>{study.kind='chord';openStudy();}],['RHYTHM LIBRARY',()=>{study.kind='rhythm';openStudy();}],['MODES',()=>launchEncounter(0)],['STANDARDS',()=>launchEncounter(1)]];
+  const items=[['PRACTICE',()=>openTrainer()],['MISSIONS',()=>openBookFlight()],['CHORD LIBRARY',()=>{study.kind='chord';openStudy();}],['RHYTHM LIBRARY',()=>{study.kind='rhythm';openStudy();}],['MODES',()=>launchEncounter(0)],['STANDARDS',()=>openStandards()]];
   items.forEach(([name],i)=>consoleButton(name,[13,18+i*8.35,42,7.8],()=>openSoundLab(i),i===selection));
   $('console-status').textContent=`${items[selection][0]} · выбери раздел и нажми OPEN`;
   consoleButton('OPEN',[51,69,16,22],items[selection][1]);
@@ -214,15 +215,19 @@ function openBookFlight(chapter=1){
   overlay(`<span class="eyebrow">BOOK FLIGHT · TEST NAVIGATOR</span><h2>Chapter ${String(chapter).padStart(2,'0')}</h2><p class="compact">Выбери главу и конкретный маршрут. Служебный код показывает главу и пример; название источника в игре не выводится.</p><div id="chapter-grid" class="chapter-grid"></div><div class="mission-list" id="mission-list"></div>`);
   for(let value=1;value<=16;value++){const b=document.createElement('button');b.textContent=String(value).padStart(2,'0');b.className=value===chapter?'selected':'';b.addEventListener('click',()=>openBookFlight(value));$('chapter-grid').append(b);}
   routes.forEach((route,index)=>{const preview=createBookRoute(chapter,index,-1,()=>.2),b=document.createElement('button');b.innerHTML=`<b>${preview.code}</b><span>${route.sequence.length} HYDRAS · ROUTE ${index+1}/${routes.length}</span>`;b.addEventListener('click',()=>startBookRun(chapter,index));$('mission-list').append(b);});
-  action('Вернуться',startScreen,true);
+  action('GALACTIC TOUR · 1460 стандартов',openStandards);action('Вернуться',startScreen,true);
 }
+const standardsLibrary=createStandardsLibrary({overlay,action,back:startScreen,stop:()=>audio.stop(),start:(route,level)=>startRun(3,level,{route}),listen:async route=>{try{await audio.unlock();if(s.mode!=='start')return;const preview={...route,sequence:route.sequence.slice(0,8)};audio.progression(preview,preview.sequence.length-1,()=>{},()=>{},true);}catch(e){feedback(e.message,true);}}});
+function openStandards(){s.mode='start';audio.stop();s.listening=false;expedition.reset();syncPads();standardsLibrary.open();}
+function missionBack(){s.bookMission?.route?openStandards():openBookFlight(s.bookMission?.chapter||1);}
+function missionReplay(){s.bookMission?.route?startRun(3,expedition.level,s.bookMission):startBookRun(s.bookMission.chapter,s.bookMission.index);}
 function startBookRun(chapter,index){return startRun(3,Math.min(3,Math.floor((chapter-1)/5)),{chapter,index});}
 async function launchEncounter(type){
   await startRun(2,1);if(s.mode!=='briefing')return;
   spawnEnemy();audio.stop();s.listening=false;expedition.artifact(type);
 }
 function openCrewGallery(){
-  overlay(`<span class="eyebrow">BUILD 069 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 070 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -265,11 +270,11 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
 function beginSector(sector){
   weaponTab='bass';
   s.sector=sector;s.cleared=0;s.position=0;s.routeNumber=0;s.health=s.maxHealth||shipBuild().maxHealth;s.bullets=[];s.shots=[];s.enemy=null;s.drones=[];s.overdrive=0;s.waveTimer=1;s.capsule=null;s.capsuleTimer=0;
-  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
+  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?.route?s.bookMission.route:s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
   const c=SECTORS[sector];
   const map=s.bookMission?`<div class="battle-map"><i class="home">HOME</i>${s.route.sequence.map((_,i)=>`<i><b>${i+1}</b><span>HYDRA</span></i>`).join('')}</div>`:'';
   overlay(`<span class="eyebrow">${s.bookMission?s.route.code:`СЕКТОР 0${sector+1} / ${c.name.toUpperCase()}`}</span><h2>${s.bookMission?`${s.route.sequence.length} целей · гармонический маршрут`:c.title}</h2><p>${s.bookMission?'Home звучит перед стартом. Затем каждая гидра продолжает одну настоящую последовательность.':c.description}</p>${map}<p class="compact">${s.bookMission?'Все аккорды звучат вертикально. Перед целью услышишь до трёх предыдущих аккордов маршрута.':sector===0?'Во время сигнала гидра не атакует. Тяни корабль пальцем; правильная кнопка заряжает выстрел.':sector===1?'I, IV и V — ступени относительно тоники. Цифровка написана прямо на оружии.':'Бас даёт усиление сразу. Два пробитых щита уничтожают гидру. Ошибка не восстанавливает уже пробитый щит.'}</p>`);
-  if(s.bookMission){action('Запустить маршрут →',()=>spawnEnemy());action('Выбрать другую миссию',()=>openBookFlight(s.bookMission.chapter),true);}
+  if(s.bookMission){action('Запустить маршрут →',()=>spawnEnemy());action('Выбрать другую миссию',missionBack,true);}
   else{action('Послушать новые сигналы',()=>startLessons());action('Skip → Сразу в бой',()=>spawnEnemy(),true);action('♫ Ознакомление со звуками',()=>openStudy(),true);action('Тренажёр ступеней и аккордов',()=>openTrainer(),true);action('Артефакты и правила',()=>artifactGuide(),true);}syncPads();
 }
 async function openStudy(){
@@ -411,17 +416,18 @@ function buildBookPads(){
   const target=s.enemy.chord,candidates=[target];
   for(const chord of s.route.sequence)if(chord!==target)candidates.push(chord);
   const contrast={maj:'min',min:'maj','7':'maj7',maj7:'7',m7:'7',m7b5:'m7','6':'maj',m6:'min','7sus4':'7'}[target.quality]||'maj';
-  candidates.push({offset:target.offset,quality:contrast},{offset:(target.offset+5)%12,quality:target.quality},{offset:(target.offset+7)%12,quality:target.quality},{offset:(target.offset+2)%12,quality:target.quality});
-  const unique=[];for(const chord of candidates){const key=`${chord.offset}:${chord.quality}`;if(!unique.some(item=>item.key===key))unique.push({key,chord});}
-  const correctKey=`${target.offset}:${target.quality}`,wrong=unique.filter(item=>item.key!==correctKey).sort(()=>Math.random()-.5).slice(0,5),choices=[{key:correctKey,chord:target},...wrong].sort(()=>Math.random()-.5);
+  candidates.push({offset:target.offset,quality:contrast},{...target,offset:(target.offset+5)%12},{...target,offset:(target.offset+7)%12},{...target,offset:(target.offset+2)%12});
+  const unique=[];for(const chord of candidates){const key=chordAnswerKey(chord);if(!unique.some(item=>item.key===key))unique.push({key,chord});}
+  const correctKey=chordAnswerKey(target),wrong=unique.filter(item=>item.key!==correctKey).sort(()=>Math.random()-.5).slice(0,5),choices=[{key:correctKey,chord:target},...wrong].sort(()=>Math.random()-.5);
   const panel=$('bass-pads');panel.classList.add('book-chord-pads');panel.replaceChildren();
-  for(const {chord} of choices){const b=document.createElement('button');b.className='pad chord-choice';b.textContent=chordSymbol(chord);b.setAttribute('aria-label',`Ответ: ${chordSymbol(chord)}`);b.addEventListener('click',()=>answerBookChord(chord.offset,chord.quality,b));panel.append(b);}
+  for(const {chord} of choices){const b=document.createElement('button');b.className='pad chord-choice';b.textContent=chordSymbol(chord);b.setAttribute('aria-label',`Ответ: ${chordSymbol(chord)}`);b.addEventListener('click',()=>answerBookChord(chord,b));panel.append(b);}
 }
-function answerBookChord(offset,quality,button){
+function answerBookChord(choice,button){
+  const {offset,quality}=choice;
   if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
-  const chord=s.enemy.chord,correct=offset===chord.offset&&quality===chord.quality;
+  const chord=s.enemy.chord,correct=chordAnswerKey(choice)===chordAnswerKey(chord);
   if(correct){const attempts=s.attempts,recognized=s.correct;answer('bass',chord.offset,button);answer('quality',chord.quality,button);s.attempts=attempts+1;s.correct=recognized+1;return;}
-  s.attempts++;s.stats[offset!==chord.offset?'bass':'quality'].miss++;s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;button.classList.add('wrong');button.dataset.locked='1';button.disabled=true;feedback(`${chordSymbol({offset,quality})} · чужой сигнал`,true);enemyVolley(true);renderHud();
+  s.attempts++;s.stats[offset!==chord.offset?'bass':'quality'].miss++;s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;button.classList.add('wrong');button.dataset.locked='1';button.disabled=true;feedback(`${chordSymbol(choice)} · чужой сигнал`,true);enemyVolley(true);renderHud();
 }
 function playCue(referenceOnly=false){
   if(s.mode!=='active'||!s.enemy)return;
@@ -441,7 +447,7 @@ function answer(kind,value,button){
   if(outcome.correct){
     s.correct++;s.enemy.shields=outcome.shields;s.beam=.3;s.enemy.hit=.25;s.score+=kind==='bass'?100:150;awardScrap(kind==='bass'?7:10);
       if(kind==='bass'){s.power=Math.min(3,s.power+1);s.overdrive=7;feedback('Щит пробит · ВЕЕРНЫЙ ОГОНЬ');}
-    else feedback(`${QUALITIES[s.enemy.chord.quality].glyph} · тип распознан`);
+    else feedback(`${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.glyph??s.enemy.chord.quality} · тип распознан`);
     if(!outcome.destroyed)weaponTab=kind==='bass'?'quality':'bass';
     burst(s.enemy.x,s.enemy.y,kind==='bass'?'#79f5d0':'#ff7ea7',25);
     if(outcome.destroyed){
@@ -485,13 +491,13 @@ function advance(){
 function finish(won){
   s.mode=won?'finished':'gameover';audio.stop();s.listening=false;const returnScrap=Math.max(12,Math.floor(s.score/90));awardScrap(returnScrap);save();syncPads();
   const accuracy=s.attempts?Math.round(s.correct/s.attempts*100):0;
-  const failedChord=!won&&s.enemy?.chord?`<p class="failed-chord">ПОСЛЕДНЯЯ ГИДРА · <strong>${chordSymbol(s.enemy.chord)}</strong><br><small>${DEGREES[s.enemy.chord.offset].label} · ${QUALITIES[s.enemy.chord.quality].label}</small></p>`:'';
+  const failedChord=!won&&s.enemy?.chord?`<p class="failed-chord">ПОСЛЕДНЯЯ ГИДРА · <strong>${chordSymbol(s.enemy.chord)}</strong><br><small>${DEGREES[s.enemy.chord.offset].label} · ${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.label??s.enemy.chord.quality}</small></p>`:'';
   overlay(`<span class="eyebrow">${s.bookMission?s.route.code:won?'МАРШРУТ ЗАВЕРШЁН':'КОРАБЛЬ ВЕРНУЛСЯ НА БАЗУ'}</span><h2>${won?'Маршрут взят.':'Ещё один вылет?'}</h2><p>${won&&s.bookMission?'Все гидры уничтожены. Сейчас маршрут прозвучит целиком вертикальными аккордами.':won?'Ступени и цифровки аккордов становятся частью твоего оружия.':'Сигналы становятся знакомее с каждым полётом. Попробуем этот сектор ещё раз.'}</p>${failedChord}<div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>◉ ${returnScrap}</strong><span>CREDITS</span></div><div><strong>${accuracy}%</strong><span>ПОПАДАНИЙ</span></div></div><p class="compact">Бас: ${s.stats.bass.hit}/${s.stats.bass.hit+s.stats.bass.miss} · Тип: ${s.stats.quality.hit}/${s.stats.quality.hit+s.stats.quality.miss}<br>Капсулы: ${s.intervalStats.caught} верных · ${s.intervalStats.wrong} чужих</p>`);
   if(won&&s.bookMission){audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true);action('↻ Прослушать весь маршрут',()=>audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true),true);}
-  action(won?'Новый вылет · другие тональности':'Повторить сектор',()=>s.bookMission?startBookRun(s.bookMission.chapter,s.bookMission.index):startRun(won?(s.sector===3?3:0):s.sector,expedition.level));
+  action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другие тональности'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(s.sector===3?3:0):s.sector,expedition.level));
   action('Выбрать уровень',()=>{s.mode='start';expedition.reset();startScreen();},true);
   action('Ангар · потратить детали',openHangar,true);
-  if(s.bookMission)action('Карта миссий',()=>openBookFlight(s.bookMission.chapter),true);
+  if(s.bookMission)action('Карта миссий',missionBack,true);
   if(won)action('Все ступени и аккорды',()=>startRun(3),true);
 }
 function pause(help=false){

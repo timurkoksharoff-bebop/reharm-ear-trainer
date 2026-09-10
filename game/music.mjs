@@ -58,7 +58,8 @@ export function routeQualities(pilotLevel=3,routeIndex=0){
   return SECTORS[3].qualities;
 }
 export const family = quality => quality;
-export const chordSymbol = chord => `${DEGREES[chord.offset].glyph}${chord.quality==='maj'?'':QUALITIES[chord.quality].glyph}`;
+export const chordSymbol = chord => `${DEGREES[chord.offset].glyph}${chord.quality==='maj'?'':chord.qualityGlyph??QUALITIES[chord.quality]?.glyph??chord.quality}${chord.intervals&&chord.bassOffset!=null?'/'+DEGREES[chord.bassOffset].glyph:''}`;
+export const chordAnswerKey = chord => `${chord.offset}:${chord.quality}:${chord.intervals&&chord.bassOffset!=null&&chord.bassOffset!==chord.offset?chord.bassOffset:'root'}`;
 export const SECTORS = [
   {name:'Маяк',degrees:[0,7],qualities:[],title:'Услышь I и V',description:'Сначала звучит тоника I, потом сигнал гидры. Узнай: это I или V?',patterns:[[0,7,7,0],[0,7,0,0],[7,7,0,0]],count:8},
   {name:'Переправа',degrees:[0,5,7],qualities:[],title:'Знакомься: IV',description:'От тоники I до IV — чистая кварта. Сравни её с квинтой I–V.',patterns:[[0,5,7,0],[0,7,5,0],[5,0,7,0]],count:8},
@@ -89,7 +90,7 @@ export function createBookRoute(chapter,routeIndex=0,previousKey=-1,rng=Math.ran
 export const bookRoutesForChapter=chapter=>BOOK_CATALOG.filter(item=>item.chapter===chapter);
 export function chordNotes(chord,tonic,spread=false) {
   const root=tonic+chord.offset;
-  const notes=INTERVALS[chord.quality].map(i=>root+12+i);
+  const notes=(chord.intervals??INTERVALS[chord.quality]).map(i=>root+12+i);
   if(spread) notes[1]+=12;
   return [tonic+(chord.bassOffset??chord.offset),...notes];
 }
@@ -105,7 +106,7 @@ export function cueEvents(route,chord,sector) {
 export function progressionEvents(route,targetIndex,finale=false){
   const tonic=route.register+route.key,sequence=route.sequence;
   let at=.12;const events=[];
-  if(!finale&&targetIndex===0){events.push({at,duration:.62,notes:[tonic,tonic+4,tonic+7],part:'home',index:-1});at+=.82;}
+  if(!finale&&targetIndex===0){events.push({at,duration:.62,notes:[tonic,tonic+(route.sourceKey?.endsWith('-')?3:4),tonic+7],part:'home',index:-1});at+=.82;}
   const start=finale?0:Math.max(0,targetIndex-3),end=finale?sequence.length-1:targetIndex;
   for(let index=start;index<=end;index++){
     const target=!finale&&index===targetIndex,duration=target?1.16:.56;

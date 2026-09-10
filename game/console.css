@@ -85,3 +85,9 @@ html,body{width:100%;height:var(--app-height,100dvh);max-height:var(--app-height
 .trainer-chord-choices{grid-template-columns:repeat(3,minmax(0,1fr))}.trainer-chord-choices button{font:bold 16px ui-monospace,monospace}
 @media(max-width:440px){.trainer-chord-choices{grid-template-columns:repeat(2,minmax(0,1fr))}.trainer-chord-choices button{min-height:39px;font-size:14px}}
 .failed-chord{padding:10px!important;border:1px solid #a7784e;border-radius:7px;background:#351d19;color:#f3d7b0!important}.failed-chord strong{font:800 28px ui-monospace,monospace;color:#ffcf8d}.failed-chord small{font-size:10px;color:#d6bfa0}
+/* Menu controls remain reachable above the flight deck. */
+.menu-open .cockpit{display:none!important}.menu-open #overlay{z-index:5}
+.library-label{display:block;text-align:left;font-size:12px;color:#e3c392;margin:12px 0}
+.library-label input,.library-label select{display:block;width:100%;box-sizing:border-box;margin:5px 0;padding:10px;background:#171c20;color:#f4e6cd;border:1px solid #ab8753;border-radius:5px;font-size:16px}
+.chart-list{display:grid;gap:7px}.chart-list button{text-align:left;padding:12px}.chart-list b,.chart-list small{display:block}.chart-list small{font-size:11px;margin-top:4px}
+.chart-preview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;text-align:left;max-height:32dvh;overflow:auto;margin:12px 0}.chart-preview>div{border:1px solid #a58555;padding:5px;background:#131d20;min-width:0;overflow-wrap:anywhere;font:12px monospace;color:#ffddb3}.chart-preview small{display:block;color:#9b9e93;font-size:9px}.long-route{right:20px;gap:2px!important}.long-route i{flex:1;min-width:1px;max-width:16px}

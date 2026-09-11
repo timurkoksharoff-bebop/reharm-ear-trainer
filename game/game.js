@@ -1,3 +1,4 @@
+import {createDebrief} from './debrief.mjs';
 import {createStandardsLibrary} from './standards-library.mjs';
 import {DEGREES,QUALITIES,INTERVALS,SECTORS,createRoute,createBookRoute,bookRoutesForChapter,answerResult,family,QUALITY_BANKS,chordSymbol,chordAnswerKey} from './music.mjs';
 import {FlightAudio} from './audio.mjs';
@@ -62,7 +63,9 @@ function listenTitle(){
     recognition.start();
   }catch{feedback('Не удалось запустить микрофон. Выбери ответ кнопкой.',true);}
 }
-const expedition=createExpedition({s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
+const debrief=createDebrief({storage:localStorage,audio,overlay,action,enter:enterMenu,back:menuBack,setMode:()=>{s.mode='debrief';s.listening=false;s.keys.clear();},isActive:()=>s.mode==='debrief'});
+function recordHydraMistake(){if(s.enemy?.chord){debrief.record({kind:'hydra',chord:s.enemy.chord,level:expedition.level,tonic:(s.route.register??48)+s.route.key});s.enemy.reviewRecorded=true;}}
+const expedition=createExpedition({onMistake:item=>debrief.record(item),s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
 const stars=Array.from({length:85},()=>({x:Math.random()*480,y:Math.random()*1100,z:.25+Math.random(),r:Math.random()*1.3+.3}));
 const MACHINES=['РАЗВЕДЧИК','КОРВЕТ','КРЕЙСЕР','КРЕПОСТЬ'];
 const MACHINE_CROPS=[[135,20,380,490],[675,20,490,505],[60,530,520,640],[588,515,666,720]];
@@ -96,8 +99,37 @@ function hangar(){const saved=record().hangar||{};return {scrap:saved.scrap||0,t
 function saveHangar(next){try{const old=record();localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...old,hangar:next}));}catch{}}
 function shipBuild(){const h=hangar(),frame=HANGAR_SHIPS[h.ship];return {h,frame,maxHealth:Math.min(5,2+h.upgrades.hull+(frame.frame>=2?1:0)),speed:180+h.upgrades.engine*28+frame.frame*8,shotDelay:Math.max(.09,.28-h.upgrades.cannon*.055-frame.frame*.012),shots:1+Math.floor(h.upgrades.cannon/2),energyGain:1+h.upgrades.reactor*.25};}
 function awardScrap(amount){const h=hangar();h.scrap+=amount;h.total+=amount;saveHangar(h);}
-function overlay(html){document.querySelector('.cabinet').classList.add('menu-open');$('overlay').classList.remove('art-overlay');$('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;}
-function hideOverlay(){$('overlay').hidden=true;document.querySelector('.cabinet').classList.remove('menu-open');}
+// Menu history stores render callbacks, not HTML, so restored controls keep their listeners.
+let currentMenu=null,menuTrail=[],restoringMenu=false;
+function enterMenu(id,render,root=false){
+  if(root){menuTrail=[];currentMenu={id,render,scroll:0};return;}
+  if(restoringMenu)return;
+  if(currentMenu?.id===id){currentMenu.render=render;return;}
+  if(currentMenu){currentMenu.scroll=$('overlay').scrollTop;menuTrail.push(currentMenu);}
+  currentMenu={id,render,scroll:0};
+}
+function menuBack(){
+  ++runToken;audio.stop();activeRecognition?.abort();s.listening=false;s.keys.clear();s.pointer=null;
+  const target=menuTrail.pop();
+  if(!target){startScreen();return;}
+  currentMenu=target;restoringMenu=true;s.mode='start';
+  try{target.render();}finally{restoringMenu=false;}
+  requestAnimationFrame(()=>{if(currentMenu===target)$('overlay').scrollTop=target.scroll;});
+}
+function overlay(html){
+  document.querySelector('.cabinet').classList.add('menu-open');$('overlay').classList.remove('art-overlay');
+  $('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;
+  if(currentMenu?.id!=='home'){
+    const back=document.createElement('button');back.id='menu-back';back.className='menu-back';back.type='button';
+    back.setAttribute('aria-label','Назад');back.title='Назад';back.textContent='←';
+    back.addEventListener('click',()=>currentMenu?.id==='pause'?resume():menuBack());$('overlay').append(back);
+  }
+}
+function hideOverlay(){
+  $('overlay').hidden=true;document.querySelector('.cabinet').classList.remove('menu-open');
+  // A running flight is not a menu page that Back may restart or resurrect.
+  currentMenu={id:'home',render:startScreen,scroll:0};menuTrail=[];
+}
 function action(label,fn,secondary=false){const b=document.createElement('button');b.className=secondary?'secondary':'primary';b.textContent=label;$('overlay').firstElementChild.append(b);b.addEventListener('click',fn);return b;}
 function signal(text,listening=false){$('signal-text').textContent=text;$('signal').classList.toggle('listening',listening);}
 function feedback(text,error=false){$('feedback').textContent=text;$('feedback').className=`feedback visible${error?' error':''}`;s.feedbackTimer=2.0;}
@@ -179,11 +211,12 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 070</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 071</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
 function openFlightConsole(){
+  enterMenu('home',openFlightConsole,true);
   const portrait=window.matchMedia('(max-width: 700px) and (orientation: portrait)').matches;
   consoleScene(portrait?'console-portrait.jpg':'console-flight.jpg','Космический ангар. Выбери уровень и нажми Launch.');
   if(portrait)$('console-scene').classList.add('console-portrait');
@@ -198,26 +231,26 @@ function openFlightConsole(){
   consoleButton('RU / EN',portrait?[72,86,20,6]:[87,82,12,9],()=>$('language').click());
 }
 function openSoundLab(selection=0){
+  enterMenu('sound-lab',()=>openSoundLab(selection));
   consoleScene('console-sound-lab.jpg','Sound Lab: тренажёр, миссии, библиотека аккордов и ритмов, лады и мелодии.');
   $('console-scene').classList.add('console-lab');
   const items=[['PRACTICE',()=>openTrainer()],['MISSIONS',()=>openBookFlight()],['CHORD LIBRARY',()=>{study.kind='chord';openStudy();}],['RHYTHM LIBRARY',()=>{study.kind='rhythm';openStudy();}],['MODES',()=>launchEncounter(0)],['STANDARDS',()=>openStandards()]];
-  items.forEach(([name],i)=>consoleButton(name,[13,18+i*8.35,42,7.8],()=>openSoundLab(i),i===selection));
-  $('console-status').textContent=`${items[selection][0]} · выбери раздел и нажми OPEN`;
-  consoleButton('OPEN',[51,69,16,22],items[selection][1]);
-  consoleButton('BACK',[57,34,11,6],startScreen);
+  items.forEach(([name,open],i)=>consoleButton(name,[13,18+i*8.35,42,7.8],open));
+  $('console-status').textContent='SOUND LAB · открой нужный раздел';
   consoleButton('RU / EN',[57,42,11,7],()=>$('language').click());
   const quick=document.createElement('div');quick.className='console-quick';
-  for(const [label,fn] of [['▶ RHYTHM · проверить режим',()=>launchEncounter(10)],['▶ DRUM MACHINE',()=>launchEncounter(6)],['CREW · персонажи',openCrewGallery]]){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);quick.append(b);}
+  for(const [label,fn] of [['▶ RHYTHM · проверить режим',()=>launchEncounter(10)],['▶ DRUM MACHINE',()=>launchEncounter(6)],['CREW · персонажи',openCrewGallery],['РАЗБОР ПОЛЁТА',debrief.open]]){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);quick.append(b);}
   $('console-scene').append(quick);
 }
 function openBookFlight(chapter=1){
+  enterMenu('missions',()=>openBookFlight(chapter));
   s.mode='start';const routes=bookRoutesForChapter(chapter);
   overlay(`<span class="eyebrow">BOOK FLIGHT · TEST NAVIGATOR</span><h2>Chapter ${String(chapter).padStart(2,'0')}</h2><p class="compact">Выбери главу и конкретный маршрут. Служебный код показывает главу и пример; название источника в игре не выводится.</p><div id="chapter-grid" class="chapter-grid"></div><div class="mission-list" id="mission-list"></div>`);
   for(let value=1;value<=16;value++){const b=document.createElement('button');b.textContent=String(value).padStart(2,'0');b.className=value===chapter?'selected':'';b.addEventListener('click',()=>openBookFlight(value));$('chapter-grid').append(b);}
   routes.forEach((route,index)=>{const preview=createBookRoute(chapter,index,-1,()=>.2),b=document.createElement('button');b.innerHTML=`<b>${preview.code}</b><span>${route.sequence.length} HYDRAS · ROUTE ${index+1}/${routes.length}</span>`;b.addEventListener('click',()=>startBookRun(chapter,index));$('mission-list').append(b);});
-  action('GALACTIC TOUR · 1460 стандартов',openStandards);action('Вернуться',startScreen,true);
+  action('GALACTIC TOUR · 1460 стандартов',openStandards);action('Вернуться',menuBack,true);
 }
-const standardsLibrary=createStandardsLibrary({overlay,action,back:startScreen,stop:()=>audio.stop(),start:(route,level)=>startRun(3,level,{route}),listen:async route=>{try{await audio.unlock();if(s.mode!=='start')return;const preview={...route,sequence:route.sequence.slice(0,8)};audio.progression(preview,preview.sequence.length-1,()=>{},()=>{},true);}catch(e){feedback(e.message,true);}}});
+const standardsLibrary=createStandardsLibrary({overlay,action,enter:enterMenu,back:menuBack,stop:()=>audio.stop(),start:(route,level)=>startRun(3,level,{route}),listen:async route=>{try{await audio.unlock();if(s.mode!=='start')return;const preview={...route,sequence:route.sequence.slice(0,8)};audio.progression(preview,preview.sequence.length-1,()=>{},()=>{},true);}catch(e){feedback(e.message,true);}}});
 function openStandards(){s.mode='start';audio.stop();s.listening=false;expedition.reset();syncPads();standardsLibrary.open();}
 function missionBack(){s.bookMission?.route?openStandards():openBookFlight(s.bookMission?.chapter||1);}
 function missionReplay(){s.bookMission?.route?startRun(3,expedition.level,s.bookMission):startBookRun(s.bookMission.chapter,s.bookMission.index);}
@@ -227,7 +260,8 @@ async function launchEncounter(type){
   spawnEnemy();audio.stop();s.listening=false;expedition.artifact(type);
 }
 function openCrewGallery(){
-  overlay(`<span class="eyebrow">BUILD 070 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  enterMenu('crew',openCrewGallery);s.mode='start';
+  overlay(`<span class="eyebrow">BUILD 071 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -235,9 +269,10 @@ function openCrewGallery(){
     <article><img src="assets/vibraphonist.png" alt="Космическая вибрафонистка"><b>ВИБРАФОНИСТКА</b><span>Color Hearing · надстройки аккорда</span></article>
   </div>`);
   for(const [label,type] of [['Гитарист · запустить',0],['Клавишник · запустить',1],['Барабанщик · запустить',10],['Трубач · запустить',7]])action(label,()=>launchEncounter(type));
-  action('Вернуться на базу',startScreen,true);
+  action('Вернуться',menuBack,true);
 }
 function openHangar(){
+  enterMenu('hangar',openHangar);s.mode='start';
   const h=hangar(),build=shipBuild(),ship=HANGAR_SHIPS[h.ship],pilot=HANGAR_PILOTS[h.pilot];
   overlay(`<span class="eyebrow">ORBITAL GARAGE · ЖИВАЯ ВАЛЮТА</span><h2>Ангар «Грязный сигнал»</h2><p class="hangar-balance">◉ ${h.scrap} деталей <small>за весь путь добыто ${h.total}</small></p><div class="hangar-hero"><img src="assets/${ship.asset}.webp" alt="${ship.name}"><div><b>${ship.name}</b><span>${ship.description}</span><small>Пилот: ${pilot.name}</small></div></div><p class="compact">Текущая машина: щит ${build.maxHealth}/5 · скорость ${build.speed} · импульс ${Math.round(1/build.shotDelay)}/c.</p><div class="hangar-grid" id="hangar-upgrades"></div><h3>КОРПУСА</h3><div class="hangar-grid" id="hangar-ships"></div><h3>ПИЛОТЫ</h3><div class="hangar-grid" id="hangar-pilots"></div>`);
   const add=(container,content,handler,disabled=false)=>{const b=document.createElement('button');b.className='hangar-card';b.disabled=disabled;b.innerHTML=content;b.addEventListener('click',handler);$(container).append(b);};
@@ -248,18 +283,20 @@ function openHangar(){
   action('Вылететь',()=>startScreen());
 }
 function openPilotCreator(){
+  enterMenu('pilot',openPilotCreator);s.mode='start';
   const profile=record().musician||{nation:'Dorian',body:'Мужская',instrument:'Гитара',outfit:'Рабочий комбинезон',accessory:'Сварочные очки'};
   const nations={'Ionian':'Открытые и энергичные. Светлая краска поверх потёртой брони.','Dorian':'Спокойные импровизаторы. Зелёная патина и рабочая кожа.','Phrygian':'Страстные и резкие. Красная ткань, тёмный металл.','Lydian':'Любопытные исследователи. Световые линзы и высотное снаряжение.','Mixolydian':'Общительные бунтари. Нашивки концертных команд.','Aeolian':'Сдержанные странники. Выцветшие ткани, тяжёлые куртки.','Locrian':'Изобретатели с окраин. Асимметричные протезы и ремонтные заплаты.'};
   overlay('<span class="eyebrow">ЭКИПАЖ · ПЕРВАЯ ЛИНИЯ</span><h2>Твой музыкант</h2><p class="compact">Семь народов дальнего космоса. Выбор сохраняется на этом устройстве. Портреты новых народов пока в разработке.</p><div id="pilot-fields"></div>');
   const fields=[['nation','Народ',Object.keys(nations)],['body','Взрослая модель',['Мужская','Женская']],['instrument','Инструмент',['Гитара','Кейтар','Барабаны','Труба','Бас']],['outfit','Одежда',['Рабочий комбинезон','Кожаный жилет','Лётная куртка']],['accessory','Снаряжение',['Сварочные очки','Наушники','Респиратор']]];
   for(const [key,label,options] of fields){const wrap=document.createElement('label');wrap.style.cssText='display:grid;gap:5px;text-align:left;margin:12px 0';wrap.textContent=label;const select=document.createElement('select');select.style.cssText='padding:12px;background:#1a2825;color:#d7e1d5;border:2px ridge #65726c;font:inherit';for(const value of options){const option=document.createElement('option');option.value=option.textContent=value;option.selected=value===profile[key];select.append(option);}select.addEventListener('change',()=>{profile[key]=select.value;localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...record(),musician:profile}));if(key==='nation')$('nation-note').textContent=nations[profile.nation];});wrap.append(select);$('pilot-fields').append(wrap);}
   const note=document.createElement('p');note.id='nation-note';note.textContent=nations[profile.nation];$('pilot-fields').append(note);
-  action('Сохранить и в ангар',()=>{localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...record(),musician:profile}));openHangar();});
+  action('Сохранить и в ангар',()=>{localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...record(),musician:profile}));menuBack();});
 }
 function buyUpgrade(key){const h=hangar(),level=h.upgrades[key],cost=UPGRADE_INFO[key].cost[level];if(cost===undefined||h.scrap<cost)return;h.scrap-=cost;h.upgrades[key]++;saveHangar(h);openHangar();}
 function selectShip(index){const h=hangar(),target=HANGAR_SHIPS[index];if(h.total<target.price)return;h.ship=index;saveHangar(h);openHangar();}
 function selectPilot(index){const h=hangar(),target=HANGAR_PILOTS[index];if(h.total<target.unlock)return;h.pilot=index;saveHangar(h);openHangar();}
 async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=null){
+  enterMenu('launch',()=>startRun(sector,level,bookMission));
   const token=++runToken;s.mode='loading';overlay('<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Включаем звук…</h2><p>Запускаем синтезатор корабля.</p>');
   try{await audio.unlock();if(token!==runToken)return;
     await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Загружаем графику · ${ready}/${total}</h2><p>Корабли, планеты и музыканты</p>`);});if(token!==runToken)return;
@@ -268,6 +305,8 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
   }catch(e){if(token!==runToken)return;s.mode='start';overlay(`<h2>Подготовка прервана</h2><p>${e.message}</p>`);action('Попробовать ещё',()=>startRun(sector,level));}
 }
 function beginSector(sector){
+  if(currentMenu?.id==='launch')currentMenu={id:'briefing',render:()=>beginSector(sector),scroll:0};
+  else enterMenu('briefing',()=>beginSector(sector));
   weaponTab='bass';
   s.sector=sector;s.cleared=0;s.position=0;s.routeNumber=0;s.health=s.maxHealth||shipBuild().maxHealth;s.bullets=[];s.shots=[];s.enemy=null;s.drones=[];s.overdrive=0;s.waveTimer=1;s.capsule=null;s.capsuleTimer=0;
   $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?.route?s.bookMission.route:s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
@@ -278,25 +317,17 @@ function beginSector(sector){
   else{action('Послушать новые сигналы',()=>startLessons());action('Skip → Сразу в бой',()=>spawnEnemy(),true);action('♫ Ознакомление со звуками',()=>openStudy(),true);action('Тренажёр ступеней и аккордов',()=>openTrainer(),true);action('Артефакты и правила',()=>artifactGuide(),true);}syncPads();
 }
 async function openStudy(){
+  enterMenu('study',openStudy);
   study.back=s.mode;audio.stop();s.mode='study';s.listening=false;s.keys.clear();renderStudy();syncPads();
   try{await audio.unlock();}catch(e){feedback(e.message,true);}
 }
-function closeStudy(){
-  audio.stop();s.listening=false;
-  if(study.back==='start'){s.mode='start';startScreen();}
-  else if(study.back==='briefing'){beginSector(s.sector);}
-  else{s.mode='paused';resume();}
-}
+function closeStudy(){menuBack();}
 async function openTrainer(){
+  enterMenu('trainer',openTrainer);
   trainer.back=s.mode;audio.stop();s.mode='trainer';s.listening=false;s.keys.clear();renderTrainer();syncPads();
-  try{await audio.unlock();newTrainerRound();}catch(e){feedback(e.message,true);}
+  try{await audio.unlock();if(s.mode==='trainer')newTrainerRound();}catch(e){feedback(e.message,true);}
 }
-function closeTrainer(){
-  audio.stop();s.listening=false;
-  if(trainer.back==='start'){s.mode='start';startScreen();}
-  else if(trainer.back==='briefing'){beginSector(s.sector);}
-  else{s.mode='paused';resume();}
-}
+function closeTrainer(){menuBack();}
 function trainerPools(){
   if(trainer.level===0)return {degrees:[0,7],qualities:['maj']};
   if(trainer.level===1)return {degrees:[0,5,7,9],qualities:['maj','6','m7','7sus4']};
@@ -371,12 +402,14 @@ async function playStudy(){
   }catch(e){feedback(e.message,true);}
 }
 function artifactGuide(){
+  enterMenu('artifact-guide',artifactGuide);
   overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster вызывает гитариста и ладовый режим. Keytar вызывает клавишника и мелодический режим. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: механические хищники нейтрализуются.<br><br>Красный язык — узнай тип аккорда без ступени для HP 100%. Реликвия барабанщика останавливает полёт и запускает распознавание стиля или партии. Тарелка Zildjian запасает RHYTHM FOCUS: во время задания она убирает половину неверных вариантов.<br><br>Реликвии музыкантов — это светящиеся механические кубы. После захвата в кадр влетает трубач, клавишник, гитарист или барабанщик. Трубач просит BASIC, GUIDE или COLOR TONES; один чужой жетон гасит режим.<br><br>Механические хищники оставляют подсказки, автомат, невидимость и защиту. Для нейтрализации также используй обычные заряды.</p>');
   action('Сразу в бой →',()=>spawnEnemy());
   action('Попробовать сбор интервалов',()=>{spawnEnemy();audio.stop();s.listening=false;expedition.startChallenge('numbers');},true);
   ARTIFACTS.forEach((item,i)=>action(`Попробовать ${item.name}`,()=>{spawnEnemy();audio.stop();s.listening=false;expedition.artifact(i);if(i===3)playCue();},true));
 }
 function startLessons(){
+  enterMenu('lessons',startLessons);
   lessonItems=s.sector===0?[{offset:0},{offset:7}]:s.sector===1?[{offset:5}]:
     s.sector===2?[{offset:9},{offset:0,quality:'maj',kind:'maj'},{offset:0,quality:'6',kind:'6'},{offset:0,quality:'m7',kind:'m7'},{offset:0,quality:'7sus4',kind:'7sus4'}]:
     [{offset:1},{offset:4},{offset:0,quality:'m7',kind:'m7'},{offset:0,quality:'maj7',kind:'maj7'}];
@@ -427,6 +460,7 @@ function answerBookChord(choice,button){
   if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
   const chord=s.enemy.chord,correct=chordAnswerKey(choice)===chordAnswerKey(chord);
   if(correct){const attempts=s.attempts,recognized=s.correct;answer('bass',chord.offset,button);answer('quality',chord.quality,button);s.attempts=attempts+1;s.correct=recognized+1;return;}
+  recordHydraMistake();
   s.attempts++;s.stats[offset!==chord.offset?'bass':'quality'].miss++;s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;button.classList.add('wrong');button.dataset.locked='1';button.disabled=true;feedback(`${chordSymbol(choice)} · чужой сигнал`,true);enemyVolley(true);renderHud();
 }
 function playCue(referenceOnly=false){
@@ -463,7 +497,7 @@ function answer(kind,value,button){
       if(s.combo%3===0){const before=s.health;s.health=Math.min(s.maxHealth,s.health+1);s.score+=100;if(s.health>before)feedback('Серия ×3 · щит восстановлен +1 HP');}
     }
   }else{
-    s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;
+    recordHydraMistake();s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;
     feedback('Гидра отвечает — уклоняйся!',true);s.flash=.12;
     button?.classList.add('wrong');setTimeout(()=>button?.classList.remove('wrong'),400);enemyVolley(true);
     if(s.enemy.misses>=2)$('dock-tip').textContent='Нажми «Слушать»: дом и сигнал прозвучат снова';
@@ -488,13 +522,16 @@ function advance(){
   if(s.position>=s.route.sequence.length){if(s.bookMission){finish(true);return;}s.position=0;s.routeNumber++;s.route=createRoute(s.sector,s.route.key,Math.random,s.routeNumber,expedition.level);}
   spawnEnemy();
 }
-function finish(won){
-  s.mode=won?'finished':'gameover';audio.stop();s.listening=false;const returnScrap=Math.max(12,Math.floor(s.score/90));awardScrap(returnScrap);save();syncPads();
+function finish(won,revisit=false){
+  if(!won&&!revisit&&s.mode==='active'&&!s.enemy?.reviewRecorded)recordHydraMistake();
+  enterMenu('result',()=>finish(won,true));
+  s.mode=won?'finished':'gameover';audio.stop();s.listening=false;const returnScrap=Math.max(12,Math.floor(s.score/90));if(!revisit)awardScrap(returnScrap);save();syncPads();
   const accuracy=s.attempts?Math.round(s.correct/s.attempts*100):0;
   const failedChord=!won&&s.enemy?.chord?`<p class="failed-chord">ПОСЛЕДНЯЯ ГИДРА · <strong>${chordSymbol(s.enemy.chord)}</strong><br><small>${DEGREES[s.enemy.chord.offset].label} · ${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.label??s.enemy.chord.quality}</small></p>`:'';
   overlay(`<span class="eyebrow">${s.bookMission?s.route.code:won?'МАРШРУТ ЗАВЕРШЁН':'КОРАБЛЬ ВЕРНУЛСЯ НА БАЗУ'}</span><h2>${won?'Маршрут взят.':'Ещё один вылет?'}</h2><p>${won&&s.bookMission?'Все гидры уничтожены. Сейчас маршрут прозвучит целиком вертикальными аккордами.':won?'Ступени и цифровки аккордов становятся частью твоего оружия.':'Сигналы становятся знакомее с каждым полётом. Попробуем этот сектор ещё раз.'}</p>${failedChord}<div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>◉ ${returnScrap}</strong><span>CREDITS</span></div><div><strong>${accuracy}%</strong><span>ПОПАДАНИЙ</span></div></div><p class="compact">Бас: ${s.stats.bass.hit}/${s.stats.bass.hit+s.stats.bass.miss} · Тип: ${s.stats.quality.hit}/${s.stats.quality.hit+s.stats.quality.miss}<br>Капсулы: ${s.intervalStats.caught} верных · ${s.intervalStats.wrong} чужих</p>`);
   if(won&&s.bookMission){audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true);action('↻ Прослушать весь маршрут',()=>audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true),true);}
   action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другие тональности'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(s.sector===3?3:0):s.sector,expedition.level));
+  action(`Разбор полёта · ${debrief.log.pendingCount} ошибок`,debrief.open);
   action('Выбрать уровень',()=>{s.mode='start';expedition.reset();startScreen();},true);
   action('Ангар · потратить детали',openHangar,true);
   if(s.bookMission)action('Карта миссий',missionBack,true);
@@ -502,7 +539,8 @@ function finish(won){
 }
 function pause(help=false){
   if(s.mode==='study'){audio.stop();return;}
-  if(['paused','start','gameover','finished','loading'].includes(s.mode))return;
+  if(['paused','start','gameover','finished','loading','debrief'].includes(s.mode))return;
+  const pausedMode=s.mode;enterMenu('pause',()=>{s.mode=pausedMode;pause(help);});
   previousMode=s.mode;s.mode='paused';audio.stop();s.listening=false;s.keys.clear();s.pointer=null;syncPads();expedition.render();
   overlay(`<span class="eyebrow">${help?'ПОЛЁТ ПО СЛУХУ':'ПАУЗА'}</span><h2>${help?'Твой слух — оружие.':'Держим позицию.'}</h2><p>Тяни корабль по полю, чтобы уклоняться. Сначала звучит тоника I, потом сигнал гидры. Нажми подходящую кнопку, чтобы пробить щит.</p><p class="compact">Стрелки — движение · 1–4 — первые ступени · QWER — первые типы · пробел — слушать · Esc — пауза.<br>В хроматическом полёте: все кнопки доступны касанием; типы — в двух вкладках.<br>Три победы подряд восстанавливают щит.</p>`);
   action('Продолжить полёт',resume);action('На базу',()=>{++runToken;audio.stop();s.mode='start';s.enemy=null;s.capsule=null;s.bullets=[];s.shots=[];expedition.reset();$('enemy-label').hidden=true;startScreen();},true);
@@ -520,7 +558,7 @@ async function resume(){
 }
 function burst(x,y,color,count){for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=30+Math.random()*150;s.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:.5+Math.random()*.7,color});}if(s.particles.length>350)s.particles.splice(0,s.particles.length-350);}
 function shipHit(){
-  if(s.invulnerable>0||expedition.invincible||!['active','resolving'].includes(s.mode))return;
+  if(s.invulnerable>0||expedition.invincible||expedition.pausedCombat||!['active','resolving'].includes(s.mode))return;
   s.health--;s.invulnerable=1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);feedback(`ПОПАДАНИЕ · −1 HP · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0)finish(false);
 }
 function launchCapsule(){
@@ -539,6 +577,7 @@ function playCapsule(reference=false){
 }
 function resolveCapsule(caught){
   const c=s.capsule,outcome=capsuleOutcome(c);
+  if((caught&&!outcome.correct)||(!caught&&outcome.correct))debrief.record({kind:'numbers',interval:c.heard,root:60+s.route.key,direction:c.mode});
   if(caught){
     if(outcome.correct){const reactor=shipBuild().energyGain;s.intervalStats.caught++;s.energy+=Math.round(outcome.energy*reactor);s.score+=outcome.energy*5;awardScrap(9);s.power=Math.min(3,s.power+1);s.overdrive=3+outcome.energy/10;burst(c.x,c.y,'#79f5d0',35);feedback(`Верный интервал · +${outcome.energy} силы`);if(s.energy>=100){s.energy-=100;s.health=Math.min(s.maxHealth,s.health+1);s.overdrive=9;}}
     else{s.intervalStats.wrong++;s.energy=Math.max(0,s.energy-20);s.power=Math.max(1,s.power-1);s.overdrive=0;s.flash=.15;feedback(`Это ${c.heard===3?'♭3':c.heard===4?'3':c.heard===5?'4':'5'} · чужой сигнал, −20 силы`,true);}
@@ -547,11 +586,11 @@ function resolveCapsule(caught){
   s.capsule=null;s.listening=false;s.resolveTimer=Math.min(s.resolveTimer,1);renderHud();syncPads();
 }
 function update(dt){
-  if(['paused','study','trainer'].includes(s.mode))return;
+  if(['paused','study','trainer','debrief'].includes(s.mode))return;
   clock+=dt;
   if(s.feedbackTimer>0){s.feedbackTimer-=dt;if(s.feedbackTimer<=0)$('feedback').classList.remove('visible');}
-  if(expedition.pausedCombat){expedition.tick(dt);return;}
   s.flash=Math.max(0,s.flash-dt);s.beam=Math.max(0,s.beam-dt);s.invulnerable=Math.max(0,s.invulnerable-dt);
+  if(expedition.scenePaused){expedition.tick(dt);return;}
   const playing=['active','resolving'].includes(s.mode);
   s.travel+=dt*(s.mode==='resolving'?130:playing?55:16);
     if(playing){
@@ -566,7 +605,7 @@ function update(dt){
     s.shotTimer-=dt;if(s.shotTimer<=0){const build=shipBuild(),boost=s.overdrive>0||expedition.boosted;s.shotTimer=boost?.09:build.shotDelay;const count=boost?5:Math.max(s.power,build.shots);for(let i=0;i<count;i++)s.shots.push({x:p.x+(i-(count-1)/2)*10,y:p.y-20,vx:boost?(i-2)*60:0});}
     if(!reduced)burst(p.x,p.y+24,'#5efbdd',1);
     if(s.enemy){s.enemy.age+=dt;s.enemy.x=W/2+Math.sin(s.enemy.age*.62)*80;s.enemy.hit=Math.max(0,s.enemy.hit-dt);s.enemy.muzzle=Math.max(0,(s.enemy.muzzle||0)-dt);}
-    if(!s.listening){
+    if(!s.listening&&!expedition.pausedCombat){
       const difficulty=pressure(expedition.level,s.combo,s.health);
       s.waveTimer-=dt;if(s.waveTimer<=0&&s.drones.length<10){s.drones.push(...formation(s.waveIndex++,W,difficulty));s.waveTimer=s.mode==='resolving'?2.3:6;}
       for(const d of s.drones){stepDrone(d,dt*expedition.pilot.speed,W);if(d.fire<=0&&d.y>20&&d.y<H*.6&&!expedition.cloaked){d.fire=10;const a=Math.atan2(p.y-d.y,p.x-d.x);s.bullets.push({x:d.x,y:d.y,vx:Math.cos(a)*75,vy:Math.sin(a)*75,r:5});}if(d.y>0&&hitCircle(d,p,25)){d.hp=0;shipHit();}}
@@ -654,6 +693,7 @@ canvas.addEventListener('pointerdown',e=>{if(!['active','resolving'].includes(s.
 canvas.addEventListener('pointermove',e=>{if(e.pointerId===s.pointer)movePointer(e);});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>s.pointer=null);
 document.addEventListener('keydown',e=>{
+  if(s.mode==='debrief'){if(e.key===' '){e.preventDefault();if(!e.repeat)debrief.play();}if(e.key==='Escape'){e.preventDefault();menuBack();}return;}
   if(s.mode==='trainer'){if(e.key===' '){e.preventDefault();if(!e.repeat)playTrainerRound();}if(e.key==='Escape'){e.preventDefault();closeTrainer();}return;}
   if(s.mode==='study'){if(e.key===' '){e.preventDefault();if(!e.repeat)playStudy();}if(e.key==='Escape'){e.preventDefault();closeStudy();}return;}
   if(e.key==='Escape'){e.preventDefault();s.mode==='paused'?resume():pause();return;}
@@ -674,7 +714,7 @@ window.addEventListener('pagehide',()=>{audio.stop();activeRecognition?.abort();
 ['bank-basic','bank-altered'].forEach((id,i)=>$(id).addEventListener('click',()=>{qualityBank=i;buildPads();}));
 ['weapon-root','weapon-type'].forEach((id,i)=>$(id).addEventListener('click',()=>{weaponTab=i?'quality':'bass';syncPads();}));
 $('hint').addEventListener('click',()=>expedition.hint());
-$('home').addEventListener('click',()=>{audio.stop();s.listening=false;s.keys.clear();s.pointer=null;expedition.reset(0);startScreen();});
+$('home').addEventListener('click',()=>{++runToken;audio.stop();s.listening=false;s.keys.clear();s.pointer=null;expedition.reset(0);startScreen();});
 $('pause').addEventListener('click',()=>s.mode==='paused'?resume():pause());
 $('replay').addEventListener('click',()=>{s.replays++;expedition.busy?expedition.replay():s.capsule?playCapsule():playCue(!!s.bookMission);});
 $('interval-reference').addEventListener('click',()=>playCapsule(true));

@@ -91,3 +91,21 @@ html,body{width:100%;height:var(--app-height,100dvh);max-height:var(--app-height
 .library-label input,.library-label select{display:block;width:100%;box-sizing:border-box;margin:5px 0;padding:10px;background:#171c20;color:#f4e6cd;border:1px solid #ab8753;border-radius:5px;font-size:16px}
 .chart-list{display:grid;gap:7px}.chart-list button{text-align:left;padding:12px}.chart-list b,.chart-list small{display:block}.chart-list small{font-size:11px;margin-top:4px}
 .chart-preview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;text-align:left;max-height:32dvh;overflow:auto;margin:12px 0}.chart-preview>div{border:1px solid #a58555;padding:5px;background:#131d20;min-width:0;overflow-wrap:anywhere;font:12px monospace;color:#ffddb3}.chart-preview small{display:block;color:#9b9e93;font-size:9px}.long-route{right:20px;gap:2px!important}.long-route i{flex:1;min-width:1px;max-width:16px}
+
+/* Persistent top-left navigation, including full-screen illustrated menus. */
+#menu-back{
+  position:fixed;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));
+  z-index:1100;width:46px;height:44px;min-height:44px;padding:0;margin:0;
+  display:grid;place-items:center;border:2px solid #bda174;border-radius:8px;
+  background:linear-gradient(145deg,#5b4933,#221d18);color:#ffe4b5;
+  box-shadow:inset 0 1px 1px #ffe4ac88,0 3px 9px #0009;
+  font:30px/1 system-ui,sans-serif;text-decoration:none;cursor:pointer;
+}
+#menu-back:hover,#menu-back:focus-visible{border-color:#ffe0a0;outline:2px solid #ffdc9980;outline-offset:3px}
+#menu-back:active{transform:translateY(1px)}
+
+/* Touch controls must not select the HUD text or open the image callout. */
+.cabinet{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.cabinet input,.cabinet textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+.cabinet button,.cabinet canvas{touch-action:manipulation}
+.cabinet canvas{touch-action:none}

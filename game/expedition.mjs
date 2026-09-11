@@ -271,8 +271,13 @@ export function createExpedition(api){
     const before=s.health,max=s.maxHealth||5;s.health=Math.min(max,s.health+amount);
     return s.health-before;
   }
+  function recordSpecialMistake(c){
+    if(!c||['reveal','roulette'].includes(c.kind))return;
+    api.onMistake?.({kind:c.kind,target:c.target,interval:c.interval,direction:c.direction,root:c.root??60+s.route.key,quality:c.quality,toneMode:c.toneMode,required:c.required,chordName:c.chordName});
+  }
   function endChallenge(won,wrong=false){
     const c=special;if(!c)return;
+    if(!won&&!c.misses)recordSpecialMistake(c);
     audio.stop();s.listening=false;special=null;digits=[];
     if(won){s.score+=250;
       if(c.kind==='chord'){s.health=s.maxHealth||5;feedback(`${QUALITIES[c.target].glyph} · HP 100%`);}
@@ -290,7 +295,7 @@ export function createExpedition(api){
   function answerSpecial(value){
     if(!special||!['active','resolving'].includes(s.mode)||!special.options.includes(value))return;
     if(value===special.target){endChallenge(true);return;}
-    special.misses++;special.time=Math.max(0,special.time-3);
+    recordSpecialMistake(special);special.misses++;special.time=Math.max(0,special.time-3);
     if(special.misses>=2){endChallenge(false);return;}
     feedback('Мимо · осталась одна попытка',true);lastRender='';render();
   }
@@ -366,7 +371,7 @@ export function createExpedition(api){
     captures=captures.filter(c=>(c.life-=dt)>0);
     for(const d of drops){d.age+=dt;d.y+=dt*38;if(Math.hypot(d.x-s.player.x,d.y-s.player.y)<33){d.age=99;artifact(d.type);break;}}
     drops=drops.filter(d=>d.age<22&&d.y<getH()+35);
-    if(!s.listening){
+    if(!s.listening&&!(special?.truceUntil>Date.now())){
       cloak=Math.max(0,cloak-dt);shield=Math.max(0,shield-dt);rapid=Math.max(0,rapid-dt);fuzz=Math.max(0,fuzz-dt);
       timer-=dt;wallTimer-=dt;artifactTimer-=dt;
       if(timer<=0){if(teachers.length<3)spawnTeacher();timer=18-pilot*2;}
@@ -403,25 +408,13 @@ export function createExpedition(api){
     render();
   }
   function drawSprite(img,cell,cols,rows,x,y,size){if(!img?.complete||!img.naturalWidth)return;const sw=img.naturalWidth/cols,sh=img.naturalHeight/rows,scale=size/Math.max(sw,sh);api.ctx.drawImage(img,(cell%cols)*sw,Math.floor(cell/cols)*sh,sw,sh,x-sw*scale/2,y-sh*scale/2,sw*scale,sh*scale);}
+  function relicCell(type){return type<=5?type:type===8?1:type===9?0:5;}
   function drawRelic(d){
-    const ctx=api.ctx,hue=[292,192,150,12,345,48,185,34,192,292,12][d.type];
-    ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.age*1.5)*.08);
-    ctx.shadowColor=`hsl(${hue} 82% 58%)`;ctx.shadowBlur=17;
-    ctx.fillStyle='#182325';ctx.beginPath();ctx.roundRect(-31,-27,62,54,7);ctx.fill();ctx.shadowBlur=0;
-    const wood=ctx.createLinearGradient(-25,-20,25,20);wood.addColorStop(0,'#2a2924');wood.addColorStop(.48,'#66523a');wood.addColorStop(1,'#252b28');
-    ctx.fillStyle=wood;ctx.fillRect(-25,-21,50,42);
-    ctx.strokeStyle='#151a19';ctx.lineWidth=2;for(let y=-16;y<21;y+=7){ctx.beginPath();ctx.moveTo(-25,y);ctx.lineTo(25,y+2);ctx.stroke();}
-    const copper=ctx.createLinearGradient(-31,0,31,0);copper.addColorStop(0,'#263b38');copper.addColorStop(.35,'#b56d42');copper.addColorStop(.65,'#69402f');copper.addColorStop(1,'#29433f');
-    ctx.fillStyle=copper;for(const x of [-29,22])ctx.fillRect(x,-25,7,50);ctx.fillRect(-29,-25,58,6);ctx.fillRect(-29,19,58,6);
-    ctx.fillStyle='#b7ad8d';for(const x of [-25,25])for(const y of [-21,21]){ctx.beginPath();ctx.arc(x,y,2.4,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#30271f';ctx.stroke();}
-    ctx.save();ctx.beginPath();ctx.rect(-21,-14,42,28);ctx.clip();
+    const ctx=api.ctx;ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.age*1.5)*.06);
     const crate=revealCrate(d.type);
-    if(crate?.complete&&crate.naturalWidth)ctx.drawImage(crate,-21,-18,42,42);
-    else{const cell=d.type<=5?d.type:d.type===8?1:d.type===9?0:5;drawSprite(images.artifacts,cell,3,2,0,0,44);}
-    ctx.restore();ctx.strokeStyle='#8b866f';ctx.lineWidth=1.5;ctx.strokeRect(-21,-14,42,28);
-    ctx.strokeStyle='#d2c5a355';ctx.beginPath();ctx.moveTo(-16,15);ctx.lineTo(-5,12);ctx.moveTo(7,-18);ctx.lineTo(16,-21);ctx.stroke();
-    ctx.fillStyle=`hsl(${hue} 88% ${55+Math.sin(d.age*5)*13}%)`;ctx.beginPath();ctx.arc(0,18,4,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle=`hsla(${hue} 90% 66% / .55)`;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,38+Math.sin(d.age*4)*2,20,d.age*.5,0,Math.PI*2);ctx.stroke();ctx.restore();
+    if(crate?.complete&&crate.naturalWidth){const k=76/Math.max(crate.naturalWidth,crate.naturalHeight);ctx.drawImage(crate,-crate.naturalWidth*k/2,-crate.naturalHeight*k/2,crate.naturalWidth*k,crate.naturalHeight*k);}
+    else drawSprite(images.artifacts,relicCell(d.type),3,2,0,0,70);
+    ctx.restore();
   }
 
   function draw(){const ctx=api.ctx;
@@ -507,7 +500,7 @@ export function createExpedition(api){
     if(kind==='poly')concertBackdrop('drummergirl',true);
     else concertBackdrop(kind==='rhythm'?'concert-drums-v65':kind==='melody'||kind==='guide'?'concert-keys-v65':kind==='tones'?'concert-trumpet-v65':'concert-guitar-v65');
   }
-  function revealCrate(type){return type===2?images['crate-bass']:type===4?images['crate-roulette']:type===7?images['crate-trumpet']:type===6?images['crate-vibraphone']:null;}
+  function revealCrate(type){return type===2?images['crate-bass']:type===4?images['crate-roulette']:type===7?images['crate-trumpet']:null;}
   function drawArtifactReveal(){
     const ctx=api.ctx,H=getH(),type=special.artifactType,elapsed=(Date.now()-special.createdAt)/1000,pulse=.5+.5*Math.sin(elapsed*4.5),opening=!!special.opening;
     ctx.save();revealBackdrop(type);
@@ -553,6 +546,7 @@ export function createExpedition(api){
     return false;
   }
   return {reset,render,tick,draw,drawPauseOverlay,hitShot,replay,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,artifact,activateArtifact,spawnTeacher,
+    get scenePaused(){return !!special?.pause;},
     get pausedCombat(){return !!special?.pause||!!special?.truceUntil&&Date.now()<special.truceUntil;},
     get showScene(){return !!special?.pause;},
     get pauseKind(){return special?.pause?special.kind:null;},

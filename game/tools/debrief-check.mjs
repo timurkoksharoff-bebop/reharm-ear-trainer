@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {createMistakeLog,mistakeKey} from '../mistake-log.mjs';
+const map=new Map(),storage={getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v)};
+let log=createMistakeLog(storage);
+const chord={kind:'hydra',chord:{offset:7,quality:'7',intervals:[0,4,7,10],bassOffset:11},tonic:48};
+log.record(chord);log.record(chord);log.record({kind:'mode',target:1,root:55,direction:'up'});
+assert.equal(log.pendingCount,3);log=createMistakeLog(storage);assert.equal(log.pendingCount,3);
+log.begin();assert.equal(log.pendingCount,0);assert.equal(log.remaining,2);assert.deepEqual(log.current().item,chord);
+log.record({kind:'rhythm',target:3});assert.equal(log.pendingCount,1);assert.equal(log.remaining,2);
+log.answer(false);assert.equal(log.current().item.kind,'mode');
+assert.equal(log.snapshot().history[mistakeKey(chord)].misses,3);
+for(let i=0;i<12&&log.remaining;i++)log.answer(true);
+assert.equal(log.remaining,0);assert.equal(log.completed,2);assert.equal(log.pendingCount,1);
+log.begin();assert.equal(log.current().item.kind,'rhythm');assert.equal(log.pendingCount,0);
+log.answer(false);log=createMistakeLog(storage);assert.equal(log.remaining,1);
+assert.notEqual(mistakeKey(chord),mistakeKey({...chord,chord:{...chord.chord,bassOffset:0}}));
+console.log('Debrief checks passed: retries accumulate, batches split, weak topics repeat, progress persists, slash bass preserved.');

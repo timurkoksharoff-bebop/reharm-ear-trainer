@@ -2,15 +2,16 @@ import {JAZZ_STANDARDS} from './standards-catalog.mjs';
 import {parseImportedChart,parseIRealCollection,parseStoredChart,transposeRoute,absoluteChord,notePitch} from './importer.mjs';
 const STORAGE='space-music-college-charts-v1';
 const KEYS=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-export function createStandardsLibrary({overlay,action,start,back,listen,stop}){
+export function createStandardsLibrary({overlay,action,start,back,listen,stop,enter=()=>{}}){
   let custom=[];try{const saved=JSON.parse(localStorage.getItem(STORAGE)||'[]');if(Array.isArray(saved))custom=saved.filter(c=>typeof c.text==='string'&&typeof c.title==='string');}catch{}
-  let selected=null,selectedKey=0,level=1;
+  let selected=null,selectedKey=0,level=1,searchText='';
   const el=id=>document.getElementById(id);
   function open(){
+    enter('standards',open);
     stop();overlay('<span class="eyebrow">GALACTIC TOUR · CHORD CHARTS</span><h2>Стандарты</h2><p class="compact">Jazz 1460 · найди стандарт, выбери тональность и лети по его аккордам.</p><label class="library-label">Поиск названия или автора<input id="chart-search" type="search" placeholder="Autumn Leaves, Night in Tunisia…" autocomplete="off"></label><label class="library-label">Добавить свою цифровку<input id="chart-file" type="file" accept=".html,.htm,.xml,.musicxml"></label><p id="chart-message" class="compact" role="status"></p><div id="chart-list" class="chart-list"></div>');
     const all=[...custom,...JAZZ_STANDARDS];
-    function search(){const query=el('chart-search').value.toLocaleLowerCase().trim(),found=all.filter(c=>`${c.title} ${c.composer||''}`.toLocaleLowerCase().includes(query));el('chart-list').replaceChildren();el('chart-message').textContent=`${found.length} карт · показаны первые ${Math.min(30,found.length)}`;for(const item of found.slice(0,30)){const b=document.createElement('button'),name=document.createElement('b'),meta=document.createElement('small');name.textContent=item.title;meta.textContent=item.text?'Мой импорт':`${item.composer} · ${item.key} · ${item.style}`;b.append(name,meta);b.onclick=()=>{try{show(item.text?parseImportedChart(item.text,item.filename):parseStoredChart(item));}catch(e){el('chart-message').textContent=e.message;}};el('chart-list').append(b);}}
-    el('chart-search').oninput=search;search();
+    function search(){searchText=el('chart-search').value;const query=searchText.toLocaleLowerCase().trim(),found=all.filter(c=>`${c.title} ${c.composer||''}`.toLocaleLowerCase().includes(query));el('chart-list').replaceChildren();el('chart-message').textContent=`${found.length} карт · показаны первые ${Math.min(30,found.length)}`;for(const item of found.slice(0,30)){const b=document.createElement('button'),name=document.createElement('b'),meta=document.createElement('small');name.textContent=item.title;meta.textContent=item.text?'Мой импорт':`${item.composer} · ${item.key} · ${item.style}`;b.append(name,meta);b.onclick=()=>{try{show(item.text?parseImportedChart(item.text,item.filename):parseStoredChart(item));}catch(e){el('chart-message').textContent=e.message;}};el('chart-list').append(b);}}
+    el('chart-search').value=searchText;el('chart-search').oninput=search;search();
     el('chart-file').onchange=async event=>{
       const file=event.target.files?.[0];if(!file)return;
       try{
@@ -26,10 +27,11 @@ export function createStandardsLibrary({overlay,action,start,back,listen,stop}){
         show(chart);
       }catch(e){el('chart-message').textContent=e.message;}
     };
-    action('Главное меню',back,true);
+    action('Назад',back,true);
   }
-  function show(chart){
-    stop();selected=chart;selectedKey=chart.route?.key??notePitch(chart.key)??0;
+  function show(chart,restore=false){
+    enter('standard-detail',()=>show(chart,true));
+    stop();selected=chart;if(!restore)selectedKey=chart.route?.key??notePitch(chart.key)??0;
     overlay('<span class="eyebrow">GALACTIC TOUR · ПОДГОТОВКА</span><h2 id="chart-title"></h2><p class="compact" id="chart-meta"></p><label class="library-label">Тональность<select id="chart-key"></select></label><label class="library-label">Сложность полёта<select id="chart-level"></select></label><p id="chart-warning" class="compact" role="status"></p><div id="chart-preview" class="chart-preview"></div><p class="compact">Один аккорд — одна гидра. Аккорды и обращения из файла сохранены; длительность боя зависит от ответа. Ноты мелодии здесь не воспроизводятся.</p>');
     el('chart-title').textContent=chart.title;el('chart-meta').textContent=`${chart.composer||''} · ${chart.format} · ${chart.measures.length} тактов / ${chart.route?.sequence.length??chart.measures.flat().length} аккордов`;
     for(let i=0;i<12;i++)el('chart-key').add(new Option(KEYS[i]+(chart.key.endsWith('-')?' minor':''),i,i===selectedKey,i===selectedKey));
@@ -43,7 +45,7 @@ export function createStandardsLibrary({overlay,action,start,back,listen,stop}){
     }
     el('chart-key').disabled=!chart.route;el('chart-key').onchange=()=>{stop();preview();};preview();
     if(chart.route){action('▶ Прослушать первые 8 аккордов',()=>listen(transposeRoute(chart.route,selectedKey)));action('LAUNCH · Лететь этот стандарт',()=>start(transposeRoute(chart.route,selectedKey),level));}
-    action('Назад к стандартам',open,true);
+    action('Назад к стандартам',back,true);
   }
   return {open};
 }

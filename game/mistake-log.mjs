@@ -1,15 +1,27 @@
 // Device-local mistakes; starting a debrief closes the current collection window.
 export function mistakeKey(item){
   const c=item.chord;
+  if(item.kind==='melody'&&item.melodyId)return `melody:${item.melodyId}`;
   return c?`hydra:${c.offset}:${c.quality}:${c.bassOffset??''}:${(c.intervals||[]).join(',')}`:
     `${item.kind}:${item.target??item.interval??''}:${item.quality??''}:${item.toneMode??''}:${(item.required||[]).join(',')}:${item.direction??''}`;
 }
-export function createMistakeLog(storage){
+export function createMistakeLog(storage,normalize=item=>item){
   const key='space-music-college-mistakes-v1';let data={pending:{},history:{},batch:[],completed:0};
   try{const saved=JSON.parse(storage.getItem(key)||'null');if(saved?.pending&&saved?.history&&Array.isArray(saved.batch))data=saved;}catch{}
   const copy=x=>JSON.parse(JSON.stringify(x));
   const save=()=>{try{storage.setItem(key,JSON.stringify(data));}catch{}};
+  // Catalog positions are not identities. Migrate both the current batch and
+  // pending window while preserving all surviving repetition counts.
+  const migrate=entry=>{
+    const item=normalize(entry.item);if(!item)return null;
+    const id=mistakeKey(item);
+    if(id!==entry.id&&data.history[entry.id]){data.history[id]=data.history[entry.id];delete data.history[entry.id];}
+    return {...entry,id,item};
+  };
+  data.pending=Object.fromEntries(Object.values(data.pending).map(migrate).filter(Boolean).map(entry=>[entry.id,entry]));
+  data.batch=data.batch.map(migrate).filter(Boolean);save();
   function record(item){
+    item=normalize(item);if(!item)return;
     const id=mistakeKey(item),old=data.pending[id],history=data.history[id]||{misses:0,correct:0};
     history.misses++;data.history[id]=history;
     data.pending[id]={id,item:copy(item),count:(old?.count||0)+1};save();

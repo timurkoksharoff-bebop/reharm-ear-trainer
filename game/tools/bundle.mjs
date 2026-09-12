@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 await import('./catalog.mjs');
-const names=['book-catalog','music','intervals','combat','expedition','audio','i18n','assets-loader','importer','standards-catalog','standards-library','mistake-log','debrief','game'];
+const names=['book-catalog','music','intervals','combat','melodies-catalog','expedition','audio','i18n','assets-loader','importer','standards-catalog','standards-library','melody-library','mistake-log','debrief','game'];
 let bundle='/* Generated from game source. Classic script also supports local Safari. */\n(()=>{\n';
 for(const name of names){
   let source=fs.readFileSync(`${root}${name}.${name==='game'?'js':'mjs'}`,'utf8');

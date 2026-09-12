@@ -114,11 +114,36 @@ export class FlightAudio {
     this.lastCue={kind:'trumpeter-chord',root,notes,spoken:true,sound:'brass synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},2.9);
   }
-  melody(root,pattern,onEnd){
-    this.stop();const token=this.token,start=this.context.currentTime+.12;let cursor=0;
-    pattern.notes.forEach((offset,i)=>{const beats=pattern.beats[i]||.5;this.note(root+offset,start+cursor,Math.max(.22,beats*.46),'soft',.44);cursor+=beats*.48;});
-    this.lastCue={kind:'melody-memory',root,name:pattern.name,notes:[...pattern.notes],sound:'keytar synth'};
-    this.schedule(()=>{if(token===this.token)onEnd();},cursor+.35);
+  melody(root,pattern,onEnd,{full=false}={}){
+    this.stop();const token=this.token,ctx=this.context;
+    const source=Array.isArray(pattern?.events)?pattern.events:(pattern?.notes||[]).map((note,i)=>[note,pattern.beats?.[i]??.5]);
+    const limit=Number.isInteger(pattern?.preview)&&pattern.preview>0?pattern.preview:source.length;
+    const events=source.slice(0,full?source.length:limit).filter(event=>Array.isArray(event)&&(event[0]===null||Number.isFinite(event[0]))&&Number.isFinite(event[1])&&event[1]>0);
+    // The excerpt and its reward performance use the same quarter-note tempo.
+    const tempo=Number.isFinite(pattern?.tempo)&&pattern.tempo>0?pattern.tempo:120,secondsPerBeat=60/tempo;
+    const start=(ctx?.currentTime||0)+.12,timeline=[];let cursor=0;
+    for(const [offset,beats] of events){
+      timeline.push({offset,at:start+cursor,duration:Math.max(.05,beats*secondsPerBeat*.92)});
+      cursor+=beats*secondsPerBeat;
+    }
+    this.lastCue={kind:'melody-memory',root,name:pattern?.name,events:events.length,full,tempo,duration:cursor+.35,sound:'keytar synth'};
+    if(!ctx){this.schedule(()=>{if(token===this.token)onEnd();},.05);return;}
+    // Long heads must not allocate all their oscillators at once on a phone.
+    // Audio time also prevents a suspended context from ending the cue early.
+    let index=0,finished=false;const endAt=start+cursor+.23;
+    const pump=()=>{
+      if(token!==this.token||finished)return;
+      const now=ctx.currentTime;
+      while(index<timeline.length&&timeline[index].at<=now+.75){
+        const event=timeline[index++],at=Math.max(now,event.at),remaining=event.at+event.duration-at;
+        // After a background-tab stall, resume at the current musical position
+        // instead of playing every missed note together in a loud burst.
+        if(event.offset!==null&&remaining>=.05)this.note(root+event.offset,at,remaining,'soft',.44);
+      }
+      if(now>=endAt){finished=true;onEnd();return;}
+      this.schedule(pump,Math.min(.1,Math.max(.025,endAt-now)));
+    };
+    pump();
   }
   scale(root,mode,direction,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime+.12,notes=(direction==='down'?[...mode.notes].reverse():mode.notes).map(n=>root+n);

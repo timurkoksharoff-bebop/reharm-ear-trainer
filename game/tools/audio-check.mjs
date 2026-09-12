@@ -35,4 +35,19 @@ for(const p of POLYRHYTHMS){
   for(const [voice,count] of [['rim',p.a],['kick',p.b]]){const beats=events.filter(e=>e.voice===voice).map(e=>e.beat);assert.equal(beats.length,count);assert.equal(beats[0],0);for(let i=1;i<count;i++)assert(Math.abs(beats[i]-beats[i-1]-4/count)<1e-10);}
   assert(polyEvents(p,1,'rim').every(e=>e.voice==='rim'));
 }
-console.log('Audio audit passed: all 264 chord/root pairs schedule exact catalog notes; arpeggios, cancellation, rhythm repetition and level pools.');
+const phrase={name:'Timing fixture',tempo:120,preview:3,events:[[0,1],[null,.5],[7,.5],[12,2]]};
+function renderMelody(full){
+  notes=[];scheduled=[];audio.context.currentTime=10;let ended=0;
+  audio.melody(60,phrase,()=>ended++,{full});const initial=notes.length;
+  for(let i=0;i<50&&scheduled.length;i++){audio.context.currentTime+=.1;const tasks=scheduled;scheduled=[];tasks.forEach(t=>t.callback());}
+  assert.equal(ended,1);return {notes:[...notes],cue:{...audio.lastCue},initial};
+}
+const preview=renderMelody(false),full=renderMelody(true);
+assert.deepEqual(preview.notes.map(n=>n.midi),[60,67],'Rests produce silence, not a root note');
+assert.deepEqual(full.notes.slice(0,2),preview.notes,'Excerpt and full performance keep identical tempo and rhythm');
+assert.deepEqual(full.notes.map(n=>n.midi),[60,67,72]);assert.equal(full.initial,1,'Future notes are not allocated at once');
+assert(Math.abs(full.notes[1].at-full.notes[0].at-.75)<1e-9);
+assert(full.cue.duration>preview.cue.duration);
+scheduled=[];audio.context.currentTime=10;audio.melody(60,phrase,()=>assert.fail('Cancelled melody completed'),{full:true});
+const stalePumps=scheduled;audio.stop();notes=[];audio.context.currentTime=100;stalePumps.forEach(t=>t.callback());assert.equal(notes.length,0,'Cancelled full performance cannot start future notes');
+console.log('Audio audit passed: chord pitches, arpeggios, rhythm pools and melody rests, timing, full playback, bounded scheduling and cancellation.');

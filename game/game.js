@@ -1,4 +1,5 @@
 import {createDebrief} from './debrief.mjs';
+import {createMelodyLibrary} from './melody-library.mjs';
 import {createStandardsLibrary} from './standards-library.mjs';
 import {DEGREES,QUALITIES,INTERVALS,SECTORS,createRoute,createBookRoute,bookRoutesForChapter,answerResult,family,QUALITY_BANKS,chordSymbol,chordAnswerKey} from './music.mjs';
 import {FlightAudio} from './audio.mjs';
@@ -212,7 +213,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 073</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 074</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -240,7 +241,7 @@ function openSoundLab(selection=0){
   $('console-status').textContent='SOUND LAB · открой нужный раздел';
   consoleButton('RU / EN',[57,42,11,7],()=>$('language').click());
   const quick=document.createElement('div');quick.className='console-quick';
-  for(const [label,fn] of [['▶ RHYTHM · проверить режим',()=>launchEncounter(10)],['▶ DRUM MACHINE',()=>launchEncounter(6)],['CREW · персонажи',openCrewGallery],['РАЗБОР ПОЛЁТА',debrief.open]]){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);quick.append(b);}
+  for(const [label,fn] of [['♫ МЕЛОДИИ · 200',openMelodies],['▶ RHYTHM · проверить режим',()=>launchEncounter(10)],['▶ DRUM MACHINE',()=>launchEncounter(6)],['CREW · персонажи',openCrewGallery],['РАЗБОР ПОЛЁТА',debrief.open]]){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);quick.append(b);}
   $('console-scene').append(quick);
 }
 function openBookFlight(chapter=1){
@@ -253,6 +254,8 @@ function openBookFlight(chapter=1){
 }
 const standardsLibrary=createStandardsLibrary({overlay,action,enter:enterMenu,back:menuBack,stop:()=>audio.stop(),start:(route,level)=>startRun(3,level,{route}),listen:async route=>{try{await audio.unlock();if(s.mode!=='start')return;const preview={...route,sequence:route.sequence.slice(0,8)};audio.progression(preview,preview.sequence.length-1,()=>{},()=>{},true);}catch(e){feedback(e.message,true);}}});
 function openStandards(){s.mode='start';audio.stop();s.listening=false;expedition.reset();syncPads();standardsLibrary.open();}
+const melodyLibrary=createMelodyLibrary({overlay,action,enter:enterMenu,back:menuBack,audio,isActive:()=>s.mode==='start'&&['melodies','melody-detail'].includes(currentMenu?.id),launch:()=>launchEncounter(1)});
+function openMelodies(){s.mode='start';s.listening=false;expedition.reset();syncPads();melodyLibrary.open();}
 function missionBack(){s.bookMission?.route?openStandards():openBookFlight(s.bookMission?.chapter||1);}
 function missionReplay(){s.bookMission?.route?startRun(3,expedition.level,s.bookMission):startBookRun(s.bookMission.chapter,s.bookMission.index);}
 function startBookRun(chapter,index){return startRun(3,Math.min(3,Math.floor((chapter-1)/5)),{chapter,index});}
@@ -262,7 +265,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 073 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 074 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>

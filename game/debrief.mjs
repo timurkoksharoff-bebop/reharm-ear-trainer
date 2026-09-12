@@ -2,8 +2,17 @@ import {createMistakeLog} from './mistake-log.mjs';
 import {QUALITIES,INTERVALS,chordSymbol,chordAnswerKey} from './music.mjs';
 import {MODES,MELODIES,RHYTHMS,RUDIMENTS,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,rudimentScore} from './expedition.mjs';
 const titles={hydra:'Аккорды',chord:'Тип аккорда',mode:'Лады',melody:'Мелодии',rhythm:'Ритмы',poly:'Рудименты',numbers:'Интервалы',guide:'Гайд-тоны',tones:'Тоны аккорда'};
+const legacyMelodyNames=['Afro Blue','All the Things You Are','Autumn Leaves','Blue Bossa','When the Saints','Amazing Grace','Ode to Joy','Greensleeves'];
+export function normalizeMelodyMistake(item,bank=MELODIES){
+  if(item.kind!=='melody')return item;
+  const name=item.melodyName??(!item.melodyId?legacyMelodyNames[item.target]:null);
+  const target=bank.findIndex(m=>item.melodyId?m.id===item.melodyId:m.name.toLowerCase()===name?.toLowerCase());
+  // Retired inaccurate excerpts must not be replayed as a different standard.
+  if(target<0)return null;
+  return {...item,target,melodyId:bank[target].id,melodyName:bank[target].name};
+}
 export function createDebrief({storage,audio,overlay,action,enter,back,setMode,isActive}){
-  const log=createMistakeLog(storage),el=id=>document.getElementById(id);
+  const log=createMistakeLog(storage,normalizeMelodyMistake),el=id=>document.getElementById(id);
   let entry=null,choices=[],correctIds=[],chosen=new Set(),revealed=false,lastCorrect=false,playToken=0,questionToken=0,advanceTimer=null,answerButton=null;
   const shuffle=items=>{const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
   const name=(item,id)=>item.kind==='hydra'?chordSymbol(id):item.kind==='chord'?QUALITIES[id]?.glyph??id:item.kind==='mode'?MODES[id]?.name:item.kind==='melody'?MELODIES[id]?.name:item.kind==='rhythm'?RHYTHMS[id]?.name:item.kind==='poly'?RUDIMENTS[id]?.name:id;

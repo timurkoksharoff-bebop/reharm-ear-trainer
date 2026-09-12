@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createMistakeLog,mistakeKey} from '../mistake-log.mjs';
-import {createDebrief} from '../debrief.mjs';
+import {createDebrief,normalizeMelodyMistake} from '../debrief.mjs';
 import {chordAnswerKey,chordNotes} from '../music.mjs';
 const map=new Map(),storage={getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v)};
 let log=createMistakeLog(storage);
@@ -21,6 +21,16 @@ assert.equal(log.remaining,0);assert.equal(log.completed,2);assert.equal(log.pen
 log.begin();assert.equal(log.current().item.kind,'hydra');assert.equal(log.pendingCount,0);assert.equal(log.remainingAnswers,4);
 log.answer(false);log=createMistakeLog(storage);assert.equal(log.remaining,2);
 assert.notEqual(mistakeKey(chord),mistakeKey({...chord,chord:{...chord.chord,bassOffset:0}}));
+const bank=[{id:'melody-all-the-things-you-are',name:'All the Things You Are'},{id:'melody-autumn-leaves',name:'Autumn Leaves'}];
+const migrated=normalizeMelodyMistake({kind:'melody',target:2,root:60},bank);
+assert.equal(migrated.target,1);assert.equal(migrated.melodyName,'Autumn Leaves');
+assert.equal(normalizeMelodyMistake(migrated,[...bank].reverse()).target,0,'Reordering the bank preserves the heard theme');
+assert.equal(normalizeMelodyMistake({kind:'melody',target:7},bank),null,'Retired Greensleeves is never relabelled as a new standard');
+const legacyMap=new Map(),legacyStore={getItem:k=>legacyMap.get(k),setItem:(k,v)=>legacyMap.set(k,v)};
+let legacy=createMistakeLog(legacyStore);legacy.record({kind:'melody',target:2,root:60});legacy.record(chord);legacy.begin();
+legacy=createMistakeLog(legacyStore,item=>normalizeMelodyMistake(item,bank));assert.equal(legacy.remainingAnswers,4);
+assert.equal(legacy.snapshot().batch.find(e=>e.item.kind==='melody').item.melodyId,'melody-autumn-leaves');
+assert.equal(legacy.snapshot().history['melody:melody-autumn-leaves'].misses,1);
 // Browser API doubles exercise the real review controller, including its async
 // unlock and timers; no duplicate quiz implementation is used here.
 class Element{

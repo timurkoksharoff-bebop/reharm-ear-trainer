@@ -1,4 +1,5 @@
 import {QUALITIES,INTERVALS} from './music.mjs';
+import {IMPORTED_MELODIES} from './melodies-catalog.mjs';
 
 export const PILOTS=[
   {name:'Новичок',sector:0,speed:.65,grace:9,obstacleGap:230,description:'I и V · спокойный полёт · помощь'},
@@ -114,17 +115,7 @@ export const TONE_PROGRAMS={
   '7sus4':{basic:['1','5'],guide:['11','♭7'],color:[['9','13']]},
 };
 export const TONE_MODES=['basic','guide','color'];
-export const MELODIES=[
-  // Recognition excerpts checked against user-provided Real Book 5th ed., printed pages 9,18,36,51.
-  {name:'Afro Blue',aliases:['afro blue'],notes:[5,8,7,8,7,10,5],beats:[1,1.5,.5,3,1.5,1.5,2]},
-  {name:'All the Things You Are',aliases:['all the things you are','all things you are'],notes:[8,13,12,5,5,5,5,5,10,3],beats:[4,3,1,1,1,1,1,1,2,1]},
-  {name:'Autumn Leaves',aliases:['autumn leaves'],notes:[4,6,7,12,2,4,6,11,11],beats:[1,1,1,5,1,1,1,2,3]},
-  {name:'Blue Bossa',aliases:['blue bossa','blue bosa'],notes:[7,19,17,15,14,12,10,8,19,17],beats:[1,1.5,.5,.5,1,3.5,1,2,1.5,4.5]},
-  {name:'When the Saints',aliases:['when the saints','saints','when the saints go marching in'],notes:[0,4,5,7,0,4,5,7,0,4,5,7,4,0,4,2],beats:[.5,.5,.5,1,.5,.5,.5,1,.5,.5,.5,.75,.75,.75,.5,1.5]},
-  {name:'Amazing Grace',aliases:['amazing grace'],notes:[7,0,4,0,4,2,0,9,7],beats:[.6,1.1,.45,.45,1.1,.6,1.1,.6,1.5]},
-  {name:'Ode to Joy',aliases:['ode to joy','ode joy'],notes:[4,4,5,7,7,5,4,2,0,0,2,4,4,2,2],beats:[.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.55,.8,.28,1.2]},
-  {name:'Greensleeves',aliases:['greensleeves','green sleeves'],notes:[9,0,2,4,5,4,2,11,7,9,11,0,9,9],beats:[.55,1,.55,.8,.55,.55,.8,.55,.9,.55,.55,.8,.55,1.2]},
-];
+export const MELODIES=IMPORTED_MELODIES;
 export const MODES=[
   {name:'Ionian',level:0,notes:[0,2,4,5,7,9,11,12]},{name:'Dorian',level:0,notes:[0,2,3,5,7,9,10,12]},{name:'Phrygian',level:0,notes:[0,1,3,5,7,8,10,12]},{name:'Lydian',level:0,notes:[0,2,4,6,7,9,11,12]},{name:'Mixolydian',level:0,notes:[0,2,4,5,7,9,10,12]},{name:'Aeolian',level:0,notes:[0,2,3,5,7,8,10,12]},{name:'Locrian',level:0,notes:[0,1,3,5,6,8,10,12]},
   {name:'Harmonic Minor',level:1,notes:[0,2,3,5,7,8,11,12]},{name:'Phrygian Dominant',level:1,notes:[0,1,4,5,7,8,10,12]},{name:'Melodic Minor',level:1,notes:[0,2,3,5,7,9,11,12]},{name:'Lydian Dominant',level:1,notes:[0,2,4,6,7,9,10,12]},{name:'Altered',level:1,notes:[0,1,3,4,6,8,10,12]},{name:'Locrian Natural 2',level:1,notes:[0,2,3,5,6,8,10,12]},
@@ -187,7 +178,7 @@ export function createExpedition(api){
   }
   function reset(level=0){pilot=level;planet=level%2?'mars':'moon';teachers=[];turrets=[];walls=[];drops=[];digits=[];special=null;queue=[];timer=5;wallTimer=3;artifactTimer=9;turretTimer=8;index=dropIndex=wallIndex=turretIndex=0;cloak=shield=rapid=fuzz=hints=rhythmFocus=collectCooldown=0;render();}
   function render(){
-    const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,special?.artifactType,special?.opening,special?.rollKind,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
+    const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,special?.artifactType,special?.opening,special?.rollKind,special?.celebrating,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
     if(stamp===lastRender)return;lastRender=stamp;
     $('planet-name').textContent=`${planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
     $('effects').textContent=[rapid>0?`AUTO ${Math.ceil(rapid)}s`:'',cloak>0?`GHOST ${Math.ceil(cloak)}s`:'',shield>0?`SHIELD ${Math.ceil(shield)}s`:'',fuzz>0?`FUZZ ${Math.ceil(fuzz)}s`:'',rhythmFocus?`RHYTHM FOCUS ×${rhythmFocus}`:''].filter(Boolean).join(' · ');
@@ -202,6 +193,14 @@ export function createExpedition(api){
       // between pointer-down and pointer-up used to discard some answers.
       if(renderedChallenge!==special){$('special-options').replaceChildren();if(special.kind==='reveal'){const open=document.createElement('button');open.className='artifact-activate';open.textContent=special.opening?'OPENING…':'ACTIVATE ARTIFACT';open.addEventListener('click',activateArtifact);$('special-options').append(open);}for(const choice of choices){const b=document.createElement('button');b.textContent=`${choice.icon} ${choice.name}`.trim();b.dataset.choice=String(choice.id);if(special.kind==='poly'){const score=document.createElement('img');score.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(rudimentScore(RUDIMENTS[choice.id]));score.alt=RUDIMENTS[choice.id].sticking;score.draggable=false;score.style.cssText='display:block;width:100%;max-height:85px;margin-top:6px';b.append(score);}b.addEventListener('click',()=>special?.kind==='tones'?toggleToneChoice(choice.id):answerSpecial(choice.id));$('special-options').append(b);}if(special.kind==='tones'){const submit=document.createElement('button');submit.className='voice-answer tone-submit';submit.textContent='ОТВЕТИТЬ';submit.addEventListener('click',answerToneSet);$('special-options').append(submit);}if(special.kind==='rhythm'&&rhythmFocus){const focus=document.createElement('button');focus.className='voice-answer';focus.textContent=`◉ ZILDJIAN FOCUS ×${rhythmFocus}`;focus.addEventListener('click',useRhythmFocus);$('special-options').append(focus);}if(special.kind==='melody'){const mic=document.createElement('button');mic.className='voice-answer';mic.textContent='🎙 SAY TITLE';mic.addEventListener('click',listenTitle);$('special-options').append(mic);}renderedChallenge=special;}
       if(special.kind==='tones')for(const b of $('special-options').children){if(b.dataset.choice){const chosen=special.selected.includes(b.dataset.choice);b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));}}
+      if(special.celebrating){
+        $('special-detail').textContent=`✓ ${MELODIES[special.target].name} · слушаем тему до конца. Полёт подождёт.`;
+        if(!$('special-options').children[0]?.dataset.continueFlight){
+          const next=document.createElement('button');next.textContent='Продолжить полёт →';next.dataset.continueFlight='true';
+          next.addEventListener('click',()=>{if(special?.celebrating&&['active','resolving'].includes(s.mode))endChallenge(true);});
+          $('special-options').replaceChildren(next);
+        }
+      }
       for(const b of $('special-options').children)b.disabled=!['active','resolving'].includes(s.mode)||!!special.opening;
     }
   }
@@ -254,7 +253,7 @@ export function createExpedition(api){
       for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]];}
       special.options=[special.target,...others.slice(0,pilot<2?3:5)];
       for(let i=special.options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[special.options[i],special.options[j]]=[special.options[j],special.options[i]];}
-      special.root=pilot<2?60:57+Math.floor(Math.random()*6);
+      special.root=(MELODIES[special.target].firstMidi??60)+(pilot<2?0:Math.floor(Math.random()*5)-2);
     }
     if(kind==='mode'){const pool=MODES.map((mode,i)=>({mode,i})).filter(item=>item.mode.level<=Math.min(2,pilot)).map(item=>item.i);special.target=random(pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=55+Math.floor(Math.random()*7);special.direction=pilot<=1?'up':random(['up','down']);}
     if(kind==='tones'){
@@ -268,8 +267,9 @@ export function createExpedition(api){
     // Reveal and roulette are transition scenes, not musical questions.
     // Replay (including resume from pause) must leave their animation alone.
     if(!special||special.kind==='reveal'||special.kind==='roulette')return;
-    if(!special)return;const current=special;s.listening=true;signal('♫ Слушай артефакт',true);render();syncPads();
-    const done=()=>{if(special!==current||s.mode==='paused')return;s.listening=false;signal(current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':current.kind==='tones'?`Собери ${current.toneMode.toUpperCase()} TONES для ${current.chordName}`:'Выбери услышанное');render();syncPads();};
+    if(special.celebrating){playMelodyCelebration();return;}
+    const current=special,cue= current.cue=(current.cue||0)+1;s.listening=true;signal('♫ Слушай артефакт',true);render();syncPads();
+    const done=()=>{if(special!==current||current.cue!==cue||current.celebrating||s.mode==='paused')return;s.listening=false;signal(current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':current.kind==='tones'?`Собери ${current.toneMode.toUpperCase()} TONES для ${current.chordName}`:'Выбери услышанное');render();syncPads();};
     if(special.kind==='numbers')audio.interval(60+s.route.key,special.interval,special.direction,done);
     else if(special.kind==='guide')audio.guide(60+s.route.key,special.target,done);
     else if(special.kind==='chord')audio.chordOnly(special.root,INTERVALS[special.target],done);
@@ -286,7 +286,7 @@ export function createExpedition(api){
   }
   function recordSpecialMistake(c){
     if(!c||['reveal','roulette'].includes(c.kind))return;
-    api.onMistake?.({kind:c.kind,target:c.target,interval:c.interval,intervals:c.intervals,direction:c.direction,root:c.root??60+s.route.key,quality:c.quality,toneMode:c.toneMode,required:c.required,chordName:c.chordName});
+    api.onMistake?.({kind:c.kind,target:c.target,...(c.kind==='melody'?{melodyId:MELODIES[c.target].id,melodyName:MELODIES[c.target].name}:{}),interval:c.interval,intervals:c.intervals,direction:c.direction,root:c.root??60+s.route.key,quality:c.quality,toneMode:c.toneMode,required:c.required,chordName:c.chordName});
   }
   function endChallenge(won,wrong=false){
     const c=special;if(!c)return;
@@ -303,14 +303,27 @@ export function createExpedition(api){
       else{rapid=10;s.energy=Math.min(99,s.energy+30);feedback(`${orderedTargets(c.interval,c.direction).map(n=>n===6?'♭5 / ♯4':Object.keys(NUMBER_OFFSETS).find(k=>NUMBER_OFFSETS[k]===n)).join(' → ')} · +30 силы`);}
     }else{feedback(wrong?c.kind==='tones'?`Гармония погасла · нужны ${c.required.join(' · ')}`:`Попытка потеряна · нужно ${c.label}`:['rhythm','chord','poly','melody','mode'].includes(c.kind)?`Это ${specialName(c)}`:'Время вышло · попробуем ещё',true);}
     s.fireTimer=Math.max(s.fireTimer,4);render();renderHud();syncPads();
-    if(s.mode==='active')api.playCue();
+    if(c.deferredArtifacts?.length){
+      const [type,...rest]=c.deferredArtifacts;artifact(type);if(special&&rest.length)special.deferredArtifacts=rest;
+    }else if(s.mode==='active')api.playCue();
   }
   function answerSpecial(value){
-    if(!special||!['active','resolving'].includes(s.mode)||!special.options.includes(value))return;
-    if(value===special.target){endChallenge(true);return;}
+    if(!special||special.celebrating||!['active','resolving'].includes(s.mode)||!special.options.includes(value))return;
+    if(value===special.target){
+      if(special.kind==='melody'){
+        special.celebrating=true;playMelodyCelebration();
+      }else endChallenge(true);
+      return;
+    }
     recordSpecialMistake(special);special.misses++;special.time=Math.max(0,special.time-3);
     if(special.misses>=2){endChallenge(false);return;}
     feedback('Мимо · осталась одна попытка',true);lastRender='';render();
+  }
+  function playMelodyCelebration(){
+    const current=special;if(current?.kind!=='melody'||!current.celebrating)return;
+    const cue=current.cue=(current.cue||0)+1;
+    s.listening=true;signal(`✓ ${MELODIES[current.target].name} · звучит полная тема`,true);render();syncPads();
+    audio.melody(current.root,MELODIES[current.target],()=>{if(special===current&&current.cue===cue&&s.mode!=='paused')endChallenge(true);},{full:true});
   }
   function toggleToneChoice(label){
     if(!special||special.kind!=='tones'||!['active','resolving'].includes(s.mode)||!special.options.includes(label))return;
@@ -382,10 +395,12 @@ export function createExpedition(api){
   function resumeChallenge(){
     // Pausing cancels audio timers, including the opening's completion.
     if(special?.kind==='reveal'&&special.opening){special.opening=false;activateArtifact();return;}
+    if(special?.kind==='melody'&&special.celebrating){playMelodyCelebration();return;}
     replay();
   }
   function artifact(type){
     if(!['active','resolving'].includes(s.mode))return;
+    if(special?.celebrating){(special.deferredArtifacts??=[]).push(type);return;}
     audio.stop();s.listening=false;digits=[];queue=[];s.capsule=null;s.capsuleTimer=0;
     if(!hasArtifactScene(type)){applyArtifact(type);return;}
     special={kind:'reveal',artifactType:type,opening:false,pause:true,createdAt:Date.now(),collected:[],options:[]};

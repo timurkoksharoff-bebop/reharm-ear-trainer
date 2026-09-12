@@ -132,8 +132,15 @@ export const MODES=[
 ];
 const ROOT_NAMES=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const QUALITY_SPEECH={'7':'seven',maj7:'major seven',m7:'minor seven',m7b5:'minor seven flat five','7sus4':'seven sus four'};
-export function toneMission(quality,mode,random=Math.random){
-  const program=TONE_PROGRAMS[quality],groups=program[mode],required=mode==='color'?groups[Math.floor(random()*groups.length)]:groups;
+export function toneMission(quality,mode,random=Math.random,level=3){
+  const program=TONE_PROGRAMS[quality],groups=program[mode];
+  let required=mode==='color'?[...groups[Math.floor(random()*groups.length)]]:[...groups];
+  if(mode==='color'){
+    const maxCount=Math.min(level<=1?1:level===2?2:3,required.length);
+    const count=1+Math.floor(random()*maxCount);
+    for(let i=required.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[required[i],required[j]]=[required[j],required[i]];}
+    required=required.slice(0,count);
+  }
   return {quality,mode,required:[...required]};
 }
 export function toneAnswer(challenge,label){return {correct:challenge.required.includes(label),complete:challenge.required.every(t=>challenge.collected.includes(t)||t===label)};}
@@ -251,13 +258,16 @@ export function createExpedition(api){
     }
     if(kind==='mode'){const pool=MODES.map((mode,i)=>({mode,i})).filter(item=>item.mode.level<=Math.min(2,pilot)).map(item=>item.i);special.target=random(pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=55+Math.floor(Math.random()*7);special.direction=pilot<=1?'up':random(['up','down']);}
     if(kind==='tones'){
-      const qualities=pilot<2?['7','maj7','m7','7sus4']:Object.keys(TONE_PROGRAMS),quality=random(qualities),toneMode=random(TONE_MODES),mission=toneMission(quality,toneMode);
+      const qualities=pilot<2?['7','maj7','m7','7sus4']:Object.keys(TONE_PROGRAMS),quality=random(qualities),toneMode=pilot>=2?'color':random(['guide','color']),mission=toneMission(quality,toneMode,Math.random,pilot);
       special={...special,...mission,toneMode,rootPc:Math.floor(Math.random()*12)};special.root=48+special.rootPc;special.chordName=`${ROOT_NAMES[special.rootPc]}${QUALITIES[quality].glyph}`;special.pause=true;special.options=Object.keys(TONE_OFFSETS);special.selected=[];
       special.intervals=[...new Set([...INTERVALS[quality],...(toneMode==='color'?special.required.map(label=>TONE_OFFSETS[label]+12):[])])].sort((a,b)=>a-b);
     }
     replay();render();syncPads();return true;
   }
   function replay(){
+    // Reveal and roulette are transition scenes, not musical questions.
+    // Replay (including resume from pause) must leave their animation alone.
+    if(!special||special.kind==='reveal'||special.kind==='roulette')return;
     if(!special)return;const current=special;s.listening=true;signal('♫ Слушай артефакт',true);render();syncPads();
     const done=()=>{if(special!==current||s.mode==='paused')return;s.listening=false;signal(current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':current.kind==='tones'?`Собери ${current.toneMode.toUpperCase()} TONES для ${current.chordName}`:'Выбери услышанное');render();syncPads();};
     if(special.kind==='numbers')audio.interval(60+s.route.key,special.interval,special.direction,done);
@@ -267,7 +277,7 @@ export function createExpedition(api){
     else if(special.kind==='tones')audio.announce(`${ROOT_NAMES[special.rootPc]} ${QUALITY_SPEECH[special.quality]||QUALITIES[special.quality].glyph}. Give me ${special.toneMode} tones, man.`,()=>{if(special===current)audio.trumpetChord(special.root,special.intervals,done);});
     else if(special.kind==='melody')audio.melody(special.root,MELODIES[special.target],done);
     else if(special.kind==='mode')audio.scale(special.root,MODES[special.target],special.direction,done);
-    else audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
+    else if(special.kind==='rhythm')audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
   }
   function specialName(c,value=c.target){return c.kind==='poly'?RUDIMENTS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?QUALITIES[value].glyph:c.kind==='tones'?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
   function repair(amount=1){
@@ -368,6 +378,11 @@ export function createExpedition(api){
     const finish=()=>{if(special!==reveal)return;special=null;renderedChallenge=null;lastRender='';s.flash=Math.max(s.flash,.18);applyArtifact(type);};
     if(typeof audio.artifactReveal==='function')audio.artifactReveal(type,finish);else finish();
     return true;
+  }
+  function resumeChallenge(){
+    // Pausing cancels audio timers, including the opening's completion.
+    if(special?.kind==='reveal'&&special.opening){special.opening=false;activateArtifact();return;}
+    replay();
   }
   function artifact(type){
     if(!['active','resolving'].includes(s.mode))return;
@@ -542,7 +557,7 @@ export function createExpedition(api){
     for(const t of teachers){if(t.hp>0&&Math.hypot(b.x-t.x,b.y-t.y)<31){if(t.hp<=(fuzz?2:1))killTeacher(t);else t.hp-=fuzz?2:1;return true;}}
     return false;
   }
-  return {reset,render,tick,draw,drawPauseOverlay,hitShot,replay,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,toggleToneChoice,answerToneSet,artifact,activateArtifact,spawnTeacher,
+  return {reset,render,tick,draw,drawPauseOverlay,hitShot,replay,resumeChallenge,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,toggleToneChoice,answerToneSet,artifact,activateArtifact,spawnTeacher,
     get scenePaused(){return !!special?.pause;},
     get pausedCombat(){return !!special?.pause||!!special?.truceUntil&&Date.now()<special.truceUntil;},
     get showScene(){return !!special?.pause;},

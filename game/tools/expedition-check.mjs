@@ -18,7 +18,12 @@ assert(MELODIES.length>=4);assert(MODES.filter(m=>m.level===0).length===7);asser
 for(const pattern of RHYTHMS){assert(/^[\x00-\x7F–·]+$/.test(pattern.name));for(const e of pattern.events)assert(e.beat>=0&&e.beat<(pattern.beats||8));}
 assert.deepEqual(RHYTHMS.find(r=>r.name==='Son Clave 3–2').events.map(e=>e.beat),[0,1.5,3,5,6]);
 assert.deepEqual(TONE_PROGRAMS['7'].guide,['3','♭7']);
-assert.deepEqual(toneMission('7','color',()=>0).required,['9','♯11','13']);
+for(let level=0;level<4;level++)for(const quality of Object.keys(TONE_PROGRAMS))for(let i=0;i<40;i++){
+  const mission=toneMission(quality,'color',Math.random,level);
+  assert(mission.required.length>=1&&mission.required.length<=(level<=1?1:level===2?2:3));
+  assert.equal(new Set(mission.required).size,mission.required.length);
+  assert(TONE_PROGRAMS[quality].color.some(group=>mission.required.every(t=>group.includes(t))));
+}
 assert(toneAnswer({required:['3','♭7'],collected:['3']},'♭7').complete);
 assert(!toneAnswer({required:['3','♭7'],collected:[]},'5').correct);
 class El{constructor(){this.children=[];this.style={};this.dataset={};this.classList={toggle(){}};}setAttribute(){}replaceChildren(){this.children=[];}append(b){this.children.push(b);}addEventListener(){}}
@@ -42,6 +47,21 @@ assert(world.pausedCombat,'Opening listening truce freezes incoming fire');asser
 for(const expected of orderedTargets(numeric.interval,numeric.direction)){world.collectNumber(Object.keys(NUMBER_OFFSETS).find(k=>NUMBER_OFFSETS[k]===expected));}
 assert(!world.busy);assert.equal(s.energy,30);
 const openArtifact=type=>{world.artifact(type);assert.equal(world.snapshot().special.kind,'reveal');assert(world.activateArtifact());const finish=audio.pending;assert(finish);finish();};
+// Replay/resume during a crate or roulette must not send an undefined rhythm
+// into the audio engine or leave listening stuck before the real question.
+world.reset(1);s.listening=false;world.artifact(4);
+const rhythmBefore=audio.rhythm;let transitionRhythms=0;
+audio.rhythm=(pattern,end)=>{assert(pattern,'A rhythm must have a pattern');transitionRhythms++;rhythmBefore(pattern,end);};
+world.replay();assert(!s.listening);assert.equal(transitionRhythms,0);
+world.activateArtifact();const revealFinish=audio.pending;
+world.replay();assert.equal(audio.pending,revealFinish,'Do not cancel reveal sound');
+revealFinish();assert.equal(world.snapshot().special.kind,'roulette');
+world.replay();assert(!s.listening);assert.equal(transitionRhythms,0);
+world.reset(1);s.listening=false;world.artifact(4);world.activateArtifact();
+audio.stop();s.mode='paused';s.listening=false;s.mode='active';world.resumeChallenge();
+assert(audio.pending,'Resume restores the cancelled opening callback');audio.pending();
+assert.equal(world.snapshot().special.kind,'roulette');
+audio.rhythm=rhythmBefore;
 world.reset(0);openArtifact(1);assert.equal(world.snapshot().special.kind,'melody');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.cloaked);world.artifact(3);assert.equal(world.snapshot().special,null,'Overdrive applies without opening an unrelated character scene');assert(world.invincible);
 const frozen=JSON.stringify(world.snapshot());s.mode='paused';world.tick(10);assert.equal(JSON.stringify(world.snapshot()),frozen);
 s.mode='active';world.reset(0);world.startChallenge('rhythm');audio.pending();const roomBefore=JSON.stringify(world.snapshot());world.tick(40);assert.equal(JSON.stringify(world.snapshot()),roomBefore,'Rhythm field pause freezes flight and has no countdown');world.answerSpecial(world.snapshot().special.target);assert(!world.pausedCombat);

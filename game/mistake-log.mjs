@@ -15,9 +15,12 @@ export function createMistakeLog(storage){
     data.pending[id]={id,item:copy(item),count:(old?.count||0)+1};save();
   }
   function begin(){
-    const pending=Object.values(data.pending),left=new Map(data.batch.map(entry=>[entry.id,entry]));
-    for(const entry of pending){const old=left.get(entry.id);left.set(entry.id,{...entry,remaining:Math.max(old?.remaining||0,Math.min(3,1+entry.count))});}
-    data.batch=[...left.values()].sort((a,b)=>(data.history[b.id]?.misses||0)-(data.history[a.id]?.misses||0));
+    // Reopening resumes this finite batch. Mistakes from later flights belong
+    // to the next collection window, even when they concern the same topic.
+    if(data.batch.length)return current();
+    const pending=Object.values(data.pending);if(!pending.length)return null;
+    data.batch=pending.map(entry=>({...entry,remaining:Math.min(3,1+entry.count)}))
+      .sort((a,b)=>(data.history[b.id]?.misses||0)-(data.history[a.id]?.misses||0));
     data.pending={};data.completed=0;save();return current();
   }
   function current(){return data.batch.length?copy(data.batch[0]):null;}
@@ -25,10 +28,10 @@ export function createMistakeLog(storage){
     const entry=data.batch.shift();if(!entry)return;
     const history=data.history[entry.id]||{misses:0,correct:0};
     if(correct){history.correct++;entry.remaining--;if(entry.remaining<=0)data.completed++;}
-    else{history.misses++;entry.remaining=Math.max(2,entry.remaining);}
+    else history.misses++;
     data.history[entry.id]=history;
     // Retry after other tasks; wrong answers never count as mastering an item.
     if(entry.remaining>0)data.batch.push(entry);save();
   }
-  return {record,begin,current,answer,get pendingCount(){return Object.values(data.pending).reduce((sum,e)=>sum+e.count,0);},get remaining(){return data.batch.length;},get completed(){return data.completed;},snapshot:()=>copy(data)};
+  return {record,begin,current,answer,get pendingCount(){return Object.values(data.pending).reduce((sum,e)=>sum+e.count,0);},get remainingAnswers(){return data.batch.reduce((sum,entry)=>sum+entry.remaining,0);},get remaining(){return data.batch.length;},get completed(){return data.completed;},snapshot:()=>copy(data)};
 }

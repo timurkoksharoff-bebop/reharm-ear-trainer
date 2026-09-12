@@ -137,6 +137,11 @@ export class FlightAudio {
     this.lastCue={kind:type===4?'artifact-roulette':'artifact-opening',type,sound:'mechanical latches and energy flash'};
     this.schedule(()=>{if(token===this.token)onEnd();},.84);
   }
+  reviewFeedback(correct){
+    if(!this.context)return;
+    const at=this.context.currentTime+.01;
+    for(const [i,midi] of (correct?[72,79]:[48,43]).entries())this.note(midi,at+i*.12,.18,'soft',.2);
+  }
   rouletteTick(final=false){
     const ctx=this.context;if(!ctx)return;const at=ctx.currentTime+.01;
     this.drum(final?'snare':'clave',at,final?1.2:.68);

@@ -109,6 +109,7 @@ function enterMenu(id,render,root=false){
   currentMenu={id,render,scroll:0};
 }
 function menuBack(){
+  if(s.mode==='debrief')debrief.cancel();
   ++runToken;audio.stop();activeRecognition?.abort();s.listening=false;s.keys.clear();s.pointer=null;
   const target=menuTrail.pop();
   if(!target){startScreen();return;}
@@ -183,7 +184,7 @@ function syncPads(){
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening;
   $('replay').setAttribute('aria-label',s.bookMission?'Повторить одну ноту HOME и текущий аккорд':'Повторить тонику и сигнал');
   $('replay').setAttribute('title',s.bookMission?'HOME одной нотой → текущий вертикальный аккорд · Space':'Повторить звучание · Space');
-  if(scene){const labels={reveal:['АРТЕФАКТ НАЙДЕН','Коснись ящика — механизм откроет портал'],roulette:['ROCK TONGUE · RANDOM MODE','Барабан выбирает музыкальное испытание'],poly:['DRUM MACHINE · БАРАБАНЩИЦА','Выбери нотный рисунок · можно отвечать во время звучания'],rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],tones:['COLOR TONES · ВИБРАФОНИСТКА','Поймай все звучащие надстройки'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||['АРТЕФАКТ','Активируй найденный механизм'];$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
+  if(scene){const labels={reveal:['АРТЕФАКТ НАЙДЕН','Коснись ящика — механизм откроет портал'],roulette:['ROCK TONGUE · RANDOM MODE','Барабан выбирает музыкальное испытание'],poly:['DRUM MACHINE · БАРАБАНЩИЦА','Выбери нотный рисунок · можно отвечать во время звучания'],rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],tones:['CHORD TONES · ТРУБАЧ','Выдели весь набор и нажми «Ответить»'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||['АРТЕФАКТ','Активируй найденный механизм'];$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
   $('interval-reference').disabled=s.mode!=='resolving'||s.listening;
   $('pause').disabled=['start','finished','gameover','loading'].includes(s.mode);
   if(s.enemy){$('shield-tags').innerHTML=s.bookMission||s.sector>=2?'<span class="shield-tag">◈ АККОРД</span>':'<span class="shield-tag">◇ СТУПЕНЬ</span>';}
@@ -211,7 +212,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 071</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 072</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -261,7 +262,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 071 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 072 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>

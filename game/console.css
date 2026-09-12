@@ -4,10 +4,10 @@
 .art-overlay>.overlay-card::before,.art-overlay>.overlay-card::after{display:none}
 .console-scene{position:relative;width:min(100vw,177.69dvh);aspect-ratio:1672/941;margin:auto;color:#f4dfbd}
 .console-scene>img{width:100%;height:100%;display:block;user-select:none}
-.art-overlay .console-hit{position:absolute;display:block;padding:0;border:2px solid transparent!important;border-radius:9px!important;background:transparent!important;box-shadow:none!important;filter:none!important;transform:none!important;transition:background .15s,box-shadow .15s}
-.art-overlay .console-hit:hover,.art-overlay .console-hit:focus-visible{background:#ffd38a16!important;border-color:#f3c77d!important;box-shadow:inset 0 0 20px #ffc36c44,0 0 16px #ffbc6655!important;outline-offset:2px}
-.art-overlay .console-hit[aria-pressed=true]{border-color:#ffdba0!important;box-shadow:inset 0 0 20px #ffbc6655,0 0 12px #ffbc6644!important}
-.console-hit:hover,.console-hit:focus-visible{background:#ffd38a16;border-color:#f3c77d;box-shadow:inset 0 0 20px #ffc36c44,0 0 16px #ffbc6655;outline-offset:2px}
+.art-overlay .console-hit{position:absolute;display:block;padding:0;border:2px solid transparent!important;border-radius:9px!important;background:transparent!important;box-shadow:none!important;filter:none!important;transform:none!important;transition:background .15s,box-shadow .15s}@media (hover:hover) and (pointer:fine){
+.art-overlay .console-hit:hover,.art-overlay .console-hit:focus-visible{background:#ffd38a16!important;border-color:#f3c77d!important;box-shadow:inset 0 0 20px #ffc36c44,0 0 16px #ffbc6655!important;outline-offset:2px}}
+.art-overlay .console-hit[aria-pressed=true]{border-color:#ffdba0!important;box-shadow:inset 0 0 20px #ffbc6655,0 0 12px #ffbc6644!important}@media (hover:hover) and (pointer:fine){
+.console-hit:hover,.console-hit:focus-visible{background:#ffd38a16;border-color:#f3c77d;box-shadow:inset 0 0 20px #ffc36c44,0 0 16px #ffbc6655;outline-offset:2px}}
 .console-hit[aria-pressed=true]{border-color:#ffdba0;box-shadow:inset 0 0 20px #ffbc6655,0 0 12px #ffbc6644}
 .console-status{position:absolute;top:1%;right:1%;max-width:48%;margin:0!important;padding:6px 10px!important;background:#080a0dda;border:1px solid #987653;border-radius:4px;color:#ffe4b8!important;font:12px ui-monospace,monospace!important;pointer-events:none}
 .console-build{position:absolute;bottom:1%;left:1%;padding:4px 7px;background:#080a0dcc;color:#dac6a7;font:10px ui-monospace,monospace}
@@ -100,9 +100,16 @@ html,body{width:100%;height:var(--app-height,100dvh);max-height:var(--app-height
   background:linear-gradient(145deg,#5b4933,#221d18);color:#ffe4b5;
   box-shadow:inset 0 1px 1px #ffe4ac88,0 3px 9px #0009;
   font:30px/1 system-ui,sans-serif;text-decoration:none;cursor:pointer;
-}
-#menu-back:hover,#menu-back:focus-visible{border-color:#ffe0a0;outline:2px solid #ffdc9980;outline-offset:3px}
+}@media (hover:hover) and (pointer:fine){
+#menu-back:hover,#menu-back:focus-visible{border-color:#ffe0a0;outline:2px solid #ffdc9980;outline-offset:3px}}
 #menu-back:active{transform:translateY(1px)}
+
+.floating-deck .special-panel[data-kind=tones] #special-options{grid-template-columns:repeat(4,minmax(0,1fr));max-height:none;overflow:visible}
+.floating-deck .special-panel[data-kind=tones] #special-options button{min-height:36px;font-size:14px}
+#debrief-choices button[aria-pressed=true]{background:linear-gradient(145deg,#bfffe6,#5cae94)!important;border-color:#77f3ca!important;box-shadow:inset 0 0 0 2px #eafff6!important}
+#debrief-choices button.review-answer-correct{background:linear-gradient(145deg,#bfffe6,#5cae94)!important;border-color:#77f3ca!important}
+#debrief-choices button.review-answer-wrong{background:linear-gradient(145deg,#ffced4,#c17b86)!important;border-color:#ff8297!important}
+.console-hit:focus-visible,#menu-back:focus-visible{outline:3px solid #ffe0a0!important;outline-offset:2px}
 
 /* Touch controls must not select the HUD text or open the image callout. */
 .cabinet{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}

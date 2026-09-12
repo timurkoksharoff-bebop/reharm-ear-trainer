@@ -21,7 +21,7 @@ assert.deepEqual(TONE_PROGRAMS['7'].guide,['3','♭7']);
 assert.deepEqual(toneMission('7','color',()=>0).required,['9','♯11','13']);
 assert(toneAnswer({required:['3','♭7'],collected:['3']},'♭7').complete);
 assert(!toneAnswer({required:['3','♭7'],collected:[]},'5').correct);
-class El{constructor(){this.children=[];this.style={};}replaceChildren(){this.children=[];}append(b){this.children.push(b);}addEventListener(){}}
+class El{constructor(){this.children=[];this.style={};this.dataset={};this.classList={toggle(){}};}setAttribute(){}replaceChildren(){this.children=[];}append(b){this.children.push(b);}addEventListener(){}}
 const dom=new Map(),document={getElementById:id=>{if(!dom.has(id))dom.set(id,new El());return dom.get(id);},createElement:()=>new El()};
 const s={mode:'active',listening:false,health:1,score:0,energy:0,route:{key:0},bullets:[],capsule:null,capsuleTimer:0,player:{x:240,y:520},totalCleared:0,enemy:{chord:{offset:0,quality:'maj'}}};
 const audio={pending:null,stop(){this.pending=null;},artifactReveal(a,end){this.pending=end;},interval(a,b,c,end){this.pending=end;},guide(a,b,end){this.pending=end;},chordOnly(a,b,end){this.pending=end;},rhythm(a,end){this.pending=end;},poly(a,end){this.pending=end;},announce(a,end){this.pending=end;},trumpetChord(a,b,end){this.pending=end;},melody(a,b,end){this.pending=end;},scale(a,b,c,end){this.pending=end;}};
@@ -54,7 +54,7 @@ audio.pending();world.collectNumber(world.snapshot().digits.find(d=>!gradeNumber
 world.startChallenge('numbers');const stale=audio.pending;world.artifact(10);assert.equal(world.snapshot().special.kind,'reveal');stale();assert.equal(world.snapshot().special.kind,'reveal','Old interval callback cannot dismiss artifact chamber');world.activateArtifact();audio.pending();assert.equal(world.snapshot().special.kind,'rhythm');
 openArtifact(4);assert.equal(world.snapshot().special.kind,'roulette');assert(world.pausedCombat);assert.equal(world.snapshot().digits.length,0);world.reset(0);
 openArtifact(6);assert.equal(world.snapshot().special.kind,'poly');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.invincible);
-openArtifact(7);assert.equal(world.snapshot().special.kind,'tones');audio.pending();audio.pending();const tone=world.snapshot().special;for(const label of tone.required)world.collectTone(label);assert(!world.busy);assert(world.invincible&&world.boosted);
+openArtifact(7);assert.equal(world.snapshot().special.kind,'tones');audio.pending();audio.pending();const tone=world.snapshot().special;for(const label of tone.required)world.toggleToneChoice(label);assert.deepEqual(new Set(world.snapshot().special.selected),new Set(tone.required));world.answerToneSet();assert(!world.busy);assert(world.invincible&&world.boosted);
 openArtifact(8);assert.equal(world.snapshot().special.kind,'melody');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(!world.busy);
 openArtifact(9);assert.equal(world.snapshot().special.kind,'mode');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(!world.busy);
 openArtifact(5);assert.equal(world.snapshot().rhythmFocus,1);assert(!world.busy,'Zildjian stores a hint instead of starting the rhythm challenge');

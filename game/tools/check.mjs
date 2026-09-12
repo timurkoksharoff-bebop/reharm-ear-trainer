@@ -61,13 +61,17 @@ for(const [id,intervals] of Object.entries(INTERVALS)){
   assert.deepEqual(intervals,JSON.parse(line.match(/intervals: (\[[^\]]+\])/)[1]),id);
   assert(QUALITIES[id]);
 }
-// Exhaustively sample every root/type pair, holding the other dimensions fixed.
-for(let root=0;root<12;root++)for(let type=0;type<22;type++){
-  const calls=[0,(root+.5)/12,(type+.5)/22];let i=0;
-  const route=createRoute(3,-1,()=>calls[i++]??.2);
-  assert.equal(route.sequence[0].offset,root);
-  assert.equal(route.sequence[0].quality,SECTORS[3].qualities[type]);
-  assert(answerResult(route.sequence[0],full,'quality',SECTORS[3].qualities[type]).correct);
+// A complete shuffle bag covers every root/type without replacement.
+const pairs=new Set();
+for(let n=0;n<132;n++)for(const chord of createRoute(3,-1,Math.random,n,3).sequence){
+  pairs.add(`${chord.offset}:${chord.quality}`);
+  assert(answerResult(chord,full,'quality',chord.quality).correct);
+}
+assert(pairs.size===264,'Random flight must cover the full harmonic pool, not a few fixed phrases');
+for(let sector=0;sector<3;sector++){
+ const routes=Array.from({length:60},(_,n)=>createRoute(sector,-1,Math.random,n));
+ assert(new Set(routes.map(r=>r.sequence.map(c=>`${c.offset}:${c.quality}`).join(','))).size>3,'More than three stock phrases');
+ assert(routes.every(r=>r.id==='random-signals'));
 }
 assert.equal(routeQualities(2,0).length,11,'Master must begin without altered/two-extension voicings');
 assert(!routeQualities(2,0).includes('7b9b13'));

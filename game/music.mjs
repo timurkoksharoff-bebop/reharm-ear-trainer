@@ -67,13 +67,27 @@ export const SECTORS = [
   {name:'Хроматический полёт',degrees:Array.from({length:12},(_,i)=>i),qualities:QUALITY_BANKS.flat(),title:'Вся хроматика. Точная цифровка.',description:'12 корней × 22 типа аккорда. Например: ♭IImaj7 или IIIm7. Типы оружия переключаются вкладками «Аккорды» / «Альтерации».',count:12},
 ];
 const pick = (items,rng) => items[Math.floor(rng()*items.length)];
+const routeBags=new Map();
 export function createRoute(sector,previousKey=-1,rng=Math.random,routeIndex=0,pilotLevel=3) {
   const keys=[0,2,3,5,7,9,10].filter(k=>k!==previousKey);
   const key=pick(keys,rng);
-  const book=BOOK_ROUTES[routeIndex%BOOK_ROUTES.length];
-  const sequence=sector===3?Array.from({length:4},()=>{const offset=pick(SECTORS[3].degrees,rng),quality=pick(routeQualities(pilotLevel,routeIndex),rng);const c={offset,quality};return {...c,degree:chordSymbol(c)};}):sector===2?book.sequence.map(c=>({...c})):
-    pick(SECTORS[sector].patterns,rng).map(offset=>({offset,degree:DEGREES[offset].glyph,quality:'maj'}));
-  return {key,sequence,source:sector===2?book.source:sector===3?'Авторские независимые сигналы · не книжная прогрессия':'Авторская вводная фраза',id:sector===2?book.id:sector===3?'chromatic-lab':'primer',
+  const qualities=sector===3?routeQualities(pilotLevel,routeIndex):sector===2?SECTORS[2].qualities:['maj'];
+  const pool=SECTORS[sector].degrees.flatMap(offset=>qualities.map(quality=>({offset,quality})));
+  const signature=`${sector}:${qualities.join(',')}`;
+  let state=routeBags.get(signature);
+  if(!state){state={bag:[],last:null,streak:0};routeBags.set(signature,state);}
+  const sequence=Array.from({length:4},()=>{
+    if(!state.bag.length)state.bag=pool.map(c=>({...c}));
+    // Small beginner pools allow a double, but never an endless repeated signal.
+    const allowed=state.bag.filter(c=>chordAnswerKey(c)!==state.last||pool.length<=3&&state.streak<2);
+    const candidates=allowed.length?allowed:pool.filter(c=>chordAnswerKey(c)!==state.last);
+    const c={...pick(candidates.length?candidates:state.bag,rng)},id=chordAnswerKey(c);
+    const index=state.bag.findIndex(item=>chordAnswerKey(item)===id);
+    if(index>=0)state.bag.splice(index,1);
+    state.streak=id===state.last?state.streak+1:1;state.last=id;
+    return {...c,degree:chordSymbol(c)};
+  });
+  return {key,sequence,source:'Авторские независимые сигналы · не книжная прогрессия',id:'random-signals',
     // Keep one timbre, register and articulation throughout each musical phrase.
     timbre:routeIndex%2?'soft':'synth',register:sector===0?60:48+(rng()<.5?0:12),
     articulation:'block'};

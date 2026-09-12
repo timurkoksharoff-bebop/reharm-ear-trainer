@@ -6,5 +6,8 @@ assets = Path(__file__).resolve().parents[1] / 'assets'
 for source in sorted(assets.glob('*.png')):
     if source.stem in ('scout-art', 'cruiser-art'):
         continue
+    target = source.with_suffix('.webp')
+    if target.exists():
+        continue
     with Image.open(source) as image:
-        image.save(source.with_suffix('.webp'), 'WEBP', quality=85, method=6)
+        image.save(target, 'WEBP', quality=85, method=6)

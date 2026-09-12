@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import {loadFlightImage} from '../assets-loader.mjs';
 const image={complete:false,naturalWidth:0};
 const first=loadFlightImage(image,'test.webp');
@@ -9,4 +11,9 @@ const broken={complete:false,naturalWidth:0};
 const failure=loadFlightImage(broken,'bad.webp');broken.onerror();await assert.rejects(failure,/графика/);
 const retry=loadFlightImage(broken,'good.webp');broken.naturalWidth=10;broken.onload();await retry;
 await assert.rejects(loadFlightImage({},'slow.webp',5),/соединение/);
+const game=fs.readFileSync(fileURLToPath(new URL('../game.js',import.meta.url)),'utf8');
+const core=game.match(/const coreImageNames=\[([^\]]+)\]/)?.[1].match(/'[^']+'/g)||[];
+assert.equal(core.length,9,'Launch waits for only the nine core flight images');
+assert(!/prepareFlightImages\(\)\.catch/.test(game),'Optional musician art must not compete with the first screen');
+assert.match(game,/warmOptionalImages\(\);/,'Optional art starts only after flight setup');
 console.log('Asset checks passed: shared preload, successful decoding, failure, retry and timeout.');

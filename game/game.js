@@ -33,15 +33,17 @@ function measureDeck(){
   cabinet.style.setProperty('--deck-height',`${Math.max(0,flight.bottom-dock.top)}px`);
 }
 new ResizeObserver(measureDeck).observe(document.querySelector('.cockpit'));
-const images=Object.fromEntries(['concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'].map(name=>[name,new Image()]));
-const imageUrl=name=>name.startsWith('concert-')||name.startsWith('crate-')?`assets/${name}.png`:['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:['drummergirl','vibraphonist'].includes(name)?`assets/${name}.png`:name==='teachers'?'assets/teachers-v2.png':`assets/${name}.webp`;
-async function prepareFlightImages(onProgress=()=>{}){
-  let ready=0;const entries=Object.entries(images);
+const imageNames=['concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'];
+const images=Object.fromEntries(imageNames.map(name=>[name,new Image()]));
+const coreImageNames=['hydra','enemyships','corvette','fortress','ship','terrain','drone','moon','mars'];
+const optionalImageNames=imageNames.filter(name=>!coreImageNames.includes(name));
+const imageUrl=name=>['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:name==='teachers'?'assets/teachers-v2.webp':`assets/${name}.webp`;
+async function prepareFlightImages(onProgress=()=>{},names=coreImageNames,strict=true){
+  let ready=0;const entries=names.map(name=>[name,images[name]]);
   const results=await Promise.allSettled(entries.map(async([name,img])=>{await loadFlightImage(img,imageUrl(name));onProgress(++ready,entries.length);}));
-  const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+  const failure=results.find(result=>result.status==='rejected');if(strict&&failure)throw failure.reason;
 }
-// Warm the cache; startRun checks completion and offers a retry on failures.
-prepareFlightImages().catch(()=>{});
+function warmOptionalImages(){return prepareFlightImages(()=>{},optionalImageNames,false);}
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[],runToken=0,qualityBank=0,weaponTab='bass';
@@ -213,7 +215,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 074</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 075</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -265,12 +267,12 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 074 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 075 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
     <article><img src="assets/drummer.webp" alt="Стимпанковский барабанщик"><b>БАРАБАНЩИК</b><span>Ритмы, стили и рисунки</span></article>
-    <article><img src="assets/vibraphonist.png" alt="Космическая вибрафонистка"><b>ВИБРАФОНИСТКА</b><span>Color Hearing · надстройки аккорда</span></article>
+    <article><img src="assets/vibraphonist.webp" alt="Космическая вибрафонистка"><b>ВИБРАФОНИСТКА</b><span>Color Hearing · надстройки аккорда</span></article>
   </div>`);
   for(const [label,type] of [['Гитарист · запустить',0],['Клавишник · запустить',1],['Барабанщик · запустить',10],['Трубач · запустить',7]])action(label,()=>launchEncounter(type));
   action('Вернуться',menuBack,true);
@@ -303,9 +305,9 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
   enterMenu('launch',()=>startRun(sector,level,bookMission));
   const token=++runToken;s.mode='loading';overlay('<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Включаем звук…</h2><p>Запускаем синтезатор корабля.</p>');
   try{await audio.unlock();if(token!==runToken)return;
-    await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Загружаем графику · ${ready}/${total}</h2><p>Корабли, планеты и музыканты</p>`);});if(token!==runToken)return;
+    await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Основная графика · ${ready}/${total}</h2><p>Корабль и поверхность планеты</p>`);});if(token!==runToken)return;
     const build=shipBuild();Object.assign(s,{sector,bookMission,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
-    expedition.reset(level);beginSector(sector);
+    expedition.reset(level);beginSector(sector);warmOptionalImages();
   }catch(e){if(token!==runToken)return;s.mode='start';overlay(`<h2>Подготовка прервана</h2><p>${e.message}</p>`);action('Попробовать ещё',()=>startRun(sector,level));}
 }
 function beginSector(sector){

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import {PILOTS,RHYTHMS,RUDIMENTS,MELODIES,MODES,NUMBER_OFFSETS,TONE_PROGRAMS,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,turretThreat,createExpedition} from '../expedition.mjs';
+import {PILOTS,ARTIFACTS,RHYTHMS,RUDIMENTS,MELODIES,MODES,NUMBER_OFFSETS,TONE_PROGRAMS,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,turretThreat,createExpedition} from '../expedition.mjs';
 assert.equal(PILOTS.length,4);
+assert.equal(ARTIFACTS.length,12);
 for(let i=1;i<4;i++){assert(PILOTS[i].speed>PILOTS[i-1].speed);assert(PILOTS[i].obstacleGap<PILOTS[i-1].obstacleGap);}
 for(let interval=1;interval<=12;interval++)for(const direction of ['up','down']){
   const c={kind:'numbers',interval,direction,collected:[]};
@@ -74,7 +75,8 @@ audio.pending();world.collectNumber(world.snapshot().digits.find(d=>!gradeNumber
 world.startChallenge('numbers');const stale=audio.pending;world.artifact(10);assert.equal(world.snapshot().special.kind,'reveal');stale();assert.equal(world.snapshot().special.kind,'reveal','Old interval callback cannot dismiss artifact chamber');world.activateArtifact();audio.pending();assert.equal(world.snapshot().special.kind,'rhythm');
 openArtifact(4);assert.equal(world.snapshot().special.kind,'roulette');assert(world.pausedCombat);assert.equal(world.snapshot().digits.length,0);world.reset(0);
 openArtifact(6);assert.equal(world.snapshot().special.kind,'poly');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.invincible);
-openArtifact(7);assert.equal(world.snapshot().special.kind,'tones');audio.pending();audio.pending();const tone=world.snapshot().special;for(const label of tone.required)world.toggleToneChoice(label);assert.deepEqual(new Set(world.snapshot().special.selected),new Set(tone.required));world.answerToneSet();assert(!world.busy);assert(world.invincible&&world.boosted);
+openArtifact(7);assert.equal(world.snapshot().special.kind,'flightTones');audio.pending();audio.pending();const trumpet=world.snapshot().special;assert(['basic','guide','all'].includes(trumpet.toneMode));for(const note of trumpet.required)world.collectFlightTone(note);assert(!world.busy);assert(world.invincible&&world.boosted);
+openArtifact(11);assert.equal(world.snapshot().special.kind,'tones');audio.pending();audio.pending();const tone=world.snapshot().special;assert.equal(tone.toneMode,'color');for(const label of tone.required)world.toggleToneChoice(label);assert.deepEqual(new Set(world.snapshot().special.selected),new Set(tone.required));world.answerToneSet();assert(!world.busy);assert(world.invincible&&world.boosted);
 openArtifact(8);assert.equal(world.snapshot().special.kind,'melody');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.scenePaused);audio.pending();assert(!world.busy);
 openArtifact(9);assert.equal(world.snapshot().special.kind,'mode');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(!world.busy);
 openArtifact(5);assert.equal(world.snapshot().rhythmFocus,1);assert(!world.busy,'Zildjian stores a hint instead of starting the rhythm challenge');
@@ -100,7 +102,7 @@ world.replay();assert(audio.melodyOptions.full,'Replay during reward repeats the
 audio.stop();s.mode='paused';world.tick(10);s.mode='active';world.resumeChallenge();assert(audio.melodyOptions.full,'Pause resumes full performance');
 const resumedEnd=audio.pending;world.artifact(6);assert.equal(world.snapshot().special.kind,'melody','Another relic waits until the theme finishes');
 resumedEnd();assert.equal(world.snapshot().special.kind,'reveal');assert.equal(world.snapshot().special.artifactType,6);const rewarded=s.score;resumedEnd();assert.equal(s.score,rewarded);
-world.reset(1);const rotation=new Set();for(let i=0;i<400;i++){world.startChallenge('melody');rotation.add(world.snapshot().special.target);world.answerSpecial(world.snapshot().special.target);audio.pending();}assert.equal(rotation.size,200,'Rotation reaches the entire catalog across two deck cycles');
+world.reset(1);const rotation=new Set();for(let i=0;i<120;i++){world.startChallenge('melody');rotation.add(world.snapshot().special.target);world.answerSpecial(world.snapshot().special.target);audio.pending();}assert.equal(rotation.size,50,'Student rotation stays inside the 50-theme level pool');
 assert.equal(RUDIMENTS.length,8);
 for(const r of RUDIMENTS){assert.equal(r.events.length,r.sticking.length);assert(r.events.some(e=>e.velocity===1));assert(r.events.some(e=>e.velocity<1));}
 const signatures=RUDIMENTS.map(r=>Array.from({length:96},(_,i)=>r.events[i%r.events.length].velocity).join(','));

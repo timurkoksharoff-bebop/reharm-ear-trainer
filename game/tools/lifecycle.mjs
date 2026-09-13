@@ -22,9 +22,10 @@ get('space').getContext=()=>({});get('enemy-label').append(new Element());
 class TestAudio {rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
 const context=vm.createContext({...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
-  installLanguage(){},loadFlightImage:async()=>{},
-  document:{getElementById:get,createElement:()=>new Element(),querySelector:()=>null,querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
-  window:{addEventListener(){},matchMedia:()=>({matches:false})},localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
+  createDebrief:()=>({record(){},open(){}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
+  installLanguage(){},loadFlightImage:async()=>{},createDebrief:()=>({record(){},open(){},log:{pendingCount:0}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
+  document:{documentElement:new Element(),getElementById:get,createElement:()=>new Element(),querySelector:selector=>selector==='.cabinet'?get('cabinet'):null,querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
+  window:{addEventListener(){},matchMedia:()=>({matches:false}),innerHeight:700},location:{search:''},URLSearchParams,localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
   Image:class{},ResizeObserver:class{observe(){}},matchMedia:()=>({matches:true}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},HTMLButtonElement:Element,
 });
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .+;\n/gm,'');
@@ -60,7 +61,9 @@ for(let sector=0;sector<3;sector++){
 }
 assert.equal(state().totalCleared,24);assert.equal(state().stats.quality.hit,8);
 assert.equal(JSON.parse(storage.get('ear-reharm-game.v1')).unlocked,2);
-await run('startRun(2);');run('spawnEnemy();audio.pending();s.health=1;s.invulnerable=0;shipHit();');assert.equal(state().mode,'gameover');
+await run('startRun(2);');run('spawnEnemy();audio.pending();');assert(state().maxHealth>=12,'Master starts with a fractional shield');
+const fullShield=state().health;run('s.invulnerable=0;shipHit();s.invulnerable=0;shipHit();');assert.notEqual(state().mode,'gameover');assert.equal(state().health,fullShield-2,'Two ordinary hits do not end the pilot');
+run('s.health=1;s.invulnerable=0;shipHit();');assert.equal(state().mode,'gameover');
 await run('startRun(2);');assert.equal(state().health,state().maxHealth);assert.equal(state().score,0);
 // Weapon collision kills a drone but cannot advance a musical encounter.
 run('spawnEnemy();audio.pending();s.drones=[{x:240,y:200,baseX:240,phase:0,age:0,speed:0,hp:1,hit:0,fire:99,pattern:0}];s.shots=[{x:240,y:205,vx:0}];update(.01);');
@@ -87,5 +90,5 @@ run('advance();');assert.equal(state().mode,'finished');assert.equal(state().tot
 // Book Flight starts with route context; Space uses only a HOME note and the target chord.
 await run('startBookRun(1,0);');run('spawnEnemy();audio.pending();playCue(true);');
 assert.equal(run('audio.referencePlayed'),true);assert.equal(state().listening,true);assert.equal(state().bullets.length,0);run('audio.pending();');assert.equal(state().listening,false);
-assert(get('bass-pads').children.length>=4);run('answerBookChord(s.enemy.chord.offset,s.enemy.chord.quality,document.getElementById("bass-pads").children[0]);');assert.equal(state().mode,'resolving');
+assert(get('bass-pads').children.length>=4);run('answerBookChord(s.enemy.chord,document.createElement("button"));');assert.equal(state().mode,'resolving');
 console.log('Lifecycle checks passed: 12-enemy chromatic and 24-enemy campaign completion, single-token interlude/pause/replay, calibration, shields, retry/storage, drones and pressure.');

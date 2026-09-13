@@ -26,6 +26,10 @@ for(const mode of ['together','up','down']){
   assert.deepEqual(notes.slice(3).map(n=>n.midi),mode==='down'?[...target].reverse():target,'Trainer target keeps the exact game voicing');
   if(mode==='together')assert(notes.slice(3).every(n=>n.at===notes[3].at));else assert(notes.slice(4).every((n,i)=>n.at>notes[i+3].at));
 }
+let piano=[];audio.pianoNote=(midi,at,duration)=>piano.push({midi,at,duration});
+audio.trainerChord(48,{offset:7,quality:'maj7'},()=>{},'together','piano');
+assert.equal(piano.length,3+chordNotes({offset:7,quality:'maj7'},48).length,'Piano mode routes every reference and target note through samples');
+assert.equal(audio.lastCue.timbre,'piano');
 scheduled=[];audio.chordOnly(48,INTERVALS['7'],()=>assert.fail('Cancelled cue callback ran'));const old=scheduled[0].callback;audio.stop();old();
 let drums=[];audio.drum=(voice,at)=>drums.push({voice,at});scheduled=[];
 audio.rhythm(RHYTHMS[0],()=>{},{loops:2});assert.equal(drums.length,RHYTHMS[0].events.length*2);

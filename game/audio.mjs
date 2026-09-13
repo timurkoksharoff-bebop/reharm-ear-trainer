@@ -1,10 +1,15 @@
 import {bookReferenceEvents,chordNotes,cueEvents,progressionEvents} from './music.mjs';
 import {intervalCue} from './intervals.mjs';
 import {polyEvents} from './expedition.mjs';
+const PIANO_SAMPLES=[
+  [36,'C2'],[39,'Ds2'],[42,'Fs2'],[45,'A2'],[48,'C3'],[51,'Ds3'],
+  [54,'Fs3'],[57,'A3'],[60,'C4'],[63,'Ds4'],[66,'Fs4'],[69,'A4'],
+  [72,'C5'],[75,'Ds5'],[78,'Fs5'],[84,'C6'],[87,'Ds6'],[90,'Fs6'],
+].map(([midi,name])=>({midi,url:`../samples/piano/${name}.mp3`}));
 // A sustained, pitch-stable two-oscillator arcade synth. No sample/network
 // dependency and no detuning/vibrato that could blur interval recognition.
 export class FlightAudio {
-  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;}
+  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;this.pianoBuffers=new Map();this.pianoPromise=null;}
   async unlock(){
     const Engine=window.AudioContext||window.webkitAudioContext;
     if(!Engine)throw new Error('Браузер не поддерживает Web Audio. Открой игру в Safari или Chrome.');
@@ -38,6 +43,28 @@ export class FlightAudio {
       oscillator.start(at);oscillator.stop(at+duration+.005);this.voices.add(oscillator);
       oscillator.onended=()=>{oscillator.disconnect();this.voices.delete(oscillator);if(--remaining===0){coreGain.disconnect();filter.disconnect();envelope.disconnect();}};
     }
+  }
+  async preparePiano(){
+    if(this.pianoBuffers.size===PIANO_SAMPLES.length)return true;
+    if(this.pianoPromise)return this.pianoPromise;
+    this.pianoPromise=Promise.allSettled(PIANO_SAMPLES.map(async sample=>{
+      const response=await fetch(sample.url);if(!response.ok)throw new Error(`Piano sample: HTTP ${response.status}`);
+      const buffer=await this.context.decodeAudioData(await response.arrayBuffer());return [sample.midi,buffer];
+    })).then(results=>{
+      for(const result of results)if(result.status==='fulfilled')this.pianoBuffers.set(...result.value);
+      if(!this.pianoBuffers.size)throw new Error('Семплы рояля не загрузились.');return true;
+    }).catch(error=>{this.pianoPromise=null;throw error;});
+    return this.pianoPromise;
+  }
+  pianoNote(midi,at,duration,level=.38){
+    const available=PIANO_SAMPLES.filter(sample=>this.pianoBuffers.has(sample.midi));
+    if(!available.length){this.note(midi,at,duration,'soft',level);return;}
+    const nearest=available.reduce((best,sample)=>Math.abs(sample.midi-midi)<Math.abs(best.midi-midi)?sample:best),source=this.context.createBufferSource(),gain=this.context.createGain();
+    source.buffer=this.pianoBuffers.get(nearest.midi);source.playbackRate.setValueAtTime(2**((midi-nearest.midi)/12),at);
+    const natural=source.buffer.duration/source.playbackRate.value,stopAt=at+Math.min(natural,duration+1.15);
+    gain.gain.setValueAtTime(.00001,at);gain.gain.exponentialRampToValueAtTime(level,at+.012);gain.gain.setValueAtTime(level*.82,Math.min(stopAt-.08,at+.2));gain.gain.exponentialRampToValueAtTime(.00001,stopAt);
+    source.connect(gain);gain.connect(this.master);source.start(at);source.stop(stopAt+.01);this.voices.add(source);
+    source.onended=()=>{this.voices.delete(source);source.disconnect();gain.disconnect();};
   }
   schedule(callback,seconds){const id=setTimeout(()=>{this.timers.delete(id);callback();},seconds*1000);this.timers.add(id);}
   play(route,chord,sector,onPart,onEnd){
@@ -82,11 +109,12 @@ export class FlightAudio {
     order.forEach((note,i)=>this.note(note,start+.12+i*step,1.65,'synth',.6/Math.sqrt(notes.length)));
     this.schedule(()=>{if(token===this.token)onEnd();},duration);
   }
-  trainerChord(tonic,chord,onEnd,mode='together'){
+  trainerChord(tonic,chord,onEnd,mode='together',timbre='synth'){
     this.stop();const token=this.token,start=this.context.currentTime,notes=chordNotes(chord,tonic),order=mode==='down'?[...notes].reverse():notes,step=mode==='together'?0:.18,targetAt=1.08;
-    [tonic,tonic+4,tonic+7].forEach(note=>this.note(note,start+.12,.62,'soft',.25));
-    order.forEach((note,i)=>this.note(note,start+targetAt+i*step,1.35,'synth',.58/Math.sqrt(notes.length)));
-    const duration=targetAt+1.5+step*(notes.length-1);this.lastCue={kind:'trainer-chord',tonic,chord:{...chord},notes,mode,sound:'home chord plus target chord'};
+    const play=(note,at,duration,level)=>timbre==='piano'?this.pianoNote(note,at,duration,level):this.note(note,at,duration,'synth',level);
+    [tonic,tonic+4,tonic+7].forEach(note=>play(note,start+.12,.62,.25));
+    order.forEach((note,i)=>play(note,start+targetAt+i*step,1.35,.58/Math.sqrt(notes.length)));
+    const duration=targetAt+1.5+step*(notes.length-1);this.lastCue={kind:'trainer-chord',tonic,chord:{...chord},notes,mode,timbre,sound:`home chord plus target chord · ${timbre}`};
     this.schedule(()=>{if(token===this.token)onEnd();},duration);
   }
   guide(root,target,onEnd){
@@ -99,18 +127,20 @@ export class FlightAudio {
     this.stop();const token=this.token;
     if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance){this.schedule(()=>{if(token===this.token)onEnd();},.1);return;}
     const utterance=new window.SpeechSynthesisUtterance(text),voices=window.speechSynthesis.getVoices();
-    utterance.lang='en-US';utterance.rate=.78;utterance.pitch=.72;utterance.volume=.95;
+    utterance.lang='en-US';utterance.rate=.76;utterance.pitch=.72;utterance.volume=.82;
     utterance.voice=voices.find(v=>/Alex|Daniel|Reed|Ralph|Fred|Rocko/i.test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en[-_](US|GB)/i.test(v.lang))||null;
     let finished=false;const finish=()=>{if(finished||token!==this.token)return;finished=true;onEnd();};
-    utterance.onend=finish;utterance.onerror=finish;window.speechSynthesis.cancel();window.speechSynthesis.speak(utterance);
+    utterance.onend=finish;utterance.onerror=finish;window.speechSynthesis.cancel();
+    // Give iOS a short lead-in so the first letter name is not clipped.
+    this.schedule(()=>{if(token===this.token)window.speechSynthesis.speak(utterance);},.18);
     // Safari occasionally omits `onend`; keep a fallback, but never cut a
     // slow English voice off before it reaches "color tones".
     this.schedule(finish,Math.max(5.8,text.length*.13));
   }
   trumpetChord(root,intervals,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime+.08,phrase=[0,7,10,12];
-    phrase.forEach((n,i)=>this.note(root+12+n,start+i*.18,.48,'synth',.34));
-    const chordAt=start+1.0,notes=intervals.map(n=>root+n);notes.forEach(note=>this.note(note,chordAt,1.75,'synth',.62/Math.sqrt(notes.length)));
+    phrase.forEach((n,i)=>this.note(root+12+n,start+i*.18,.48,'synth',.27));
+    const chordAt=start+1.0,notes=intervals.map(n=>root+n);notes.forEach(note=>this.note(note,chordAt,1.75,'synth',.43/Math.sqrt(notes.length)));
     this.lastCue={kind:'trumpeter-chord',root,notes,spoken:true,sound:'brass synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},2.9);
   }

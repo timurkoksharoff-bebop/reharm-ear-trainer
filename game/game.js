@@ -1,13 +1,13 @@
 import {createDebrief} from './debrief.mjs';
 import {createMelodyLibrary} from './melody-library.mjs';
 import {createStandardsLibrary} from './standards-library.mjs';
-import {DEGREES,QUALITIES,INTERVALS,SECTORS,createRoute,createBookRoute,bookRoutesForChapter,answerResult,family,QUALITY_BANKS,chordSymbol,chordAnswerKey} from './music.mjs';
+import {DEGREES,QUALITIES,INTERVALS,SECTORS,createRoute,createBookRoute,bookRoutesForChapter,answerResult,family,QUALITY_BANKS,chordSymbol,chordAnswerKey,chordNotes} from './music.mjs';
 import {FlightAudio} from './audio.mjs';
 import {loadFlightImage} from './assets-loader.mjs';
 import {installLanguage} from './i18n.mjs';
 import {pressure,formation,stepDrone,hitCircle} from './combat.mjs';
 import {INTERVAL_TARGETS,INTERVAL_MODES,targetForSector,createCapsule,capsuleOutcome} from './intervals.mjs';
-import {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,RUDIMENTS,rudimentScore,createExpedition} from './expedition.mjs';
+import {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,NOTE_NAMES,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,RUDIMENTS,rudimentScore,createExpedition} from './expedition.mjs';
 
 const $=id=>document.getElementById(id);
 const canvas=$('space'),ctx=canvas.getContext('2d'),audio=new FlightAudio();
@@ -33,7 +33,7 @@ function measureDeck(){
   cabinet.style.setProperty('--deck-height',`${Math.max(0,flight.bottom-dock.top)}px`);
 }
 new ResizeObserver(measureDeck).observe(document.querySelector('.cockpit'));
-const imageNames=['concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers','artifacts'];
+const imageNames=['concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','artifact-guitar','artifact-keytar','artifact-pedal','artifact-cymbal','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers'];
 const images=Object.fromEntries(imageNames.map(name=>[name,new Image()]));
 const coreImageNames=['hydra','enemyships','corvette','fortress','ship','terrain','drone','moon','mars'];
 const optionalImageNames=imageNames.filter(name=>!coreImageNames.includes(name));
@@ -46,8 +46,9 @@ async function prepareFlightImages(onProgress=()=>{},names=coreImageNames,strict
 function warmOptionalImages(){return prepareFlightImages(()=>{},optionalImageNames,false);}
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const BASE_SHIELD=12,MAX_SHIELD=20;
 let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[],runToken=0,qualityBank=0,weaponTab='bass';
-const s={mode:'start',sector:0,route:null,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:5,power:1,
+const s={mode:'start',sector:0,route:null,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:BASE_SHIELD,maxHealth:BASE_SHIELD,power:1,
   listening:false,enemy:null,bullets:[],shots:[],particles:[],beam:0,flash:0,shotTimer:0,invulnerable:0,
   fireTimer:0,resolveTimer:0,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},
   drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,droneKills:0,
@@ -85,22 +86,23 @@ const HANGAR_PILOTS=[
   {name:'Chrome Ghost',unlock:1000,description:'Киборг-пилот. Открывается за общий лом.'},
 ];
 const UPGRADE_INFO={
-  hull:{name:'БРОНЯ И РЕЗОНАТОР',cost:[70,150,270],description:'+1 сегмент щита за уровень'},
+  hull:{name:'БРОНЯ И РЕЗОНАТОР',cost:[70,150,270],description:'+2 деления щита за уровень'},
   engine:{name:'ДВИГАТЕЛЬ И СОПЛА',cost:[55,125,230],description:'скорость и манёвр'},
   cannon:{name:'ЗВУКОВОЕ ОРУДИЕ',cost:[65,145,260],description:'скорострельность и дополнительные импульсы'},
   reactor:{name:'РЕАКТОР И ТВИТЕРЫ',cost:[60,135,245],description:'быстрее набирает энергию'},
 };
 let study={kind:'chord',quality:'maj',interval:'♭3',rhythm:0,poly:0,layer:'both',root:48,mode:'together',loop:false,back:'start'};
-let trainer={level:1,target:null,choices:[],articulation:'together',tonic:48,total:0,correct:0,locked:false,revealed:false,back:'start'};
+let trainer={level:1,target:null,choices:[],articulation:'together',timbre:'synth',tonic:48,total:0,correct:0,locked:false,revealed:false,back:'start'};
 function machineSize(model){return Math.min(100,H*.20)*(1.35+model*.23);}
 function machinePorts(model){const size=machineSize(model);return Array.from({length:2+model*2},(_,i)=>({x:(i%2?1:-1)*size*.37,y:size*(.22-Math.floor(i/2)*.16)}));}
+function enemyGuns(model){return machinePorts(model).map((port,index)=>({...port,index,hp:4+model,maxHp:4+model,destroyed:false}));}
 function resize(){const rect=canvas.getBoundingClientRect();if(!rect.width||!rect.height)return;const oldH=H;H=rect.height*480/rect.width;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);if(['start','briefing'].includes(s.mode))s.player.y=s.player.ty=H-65;else{s.player.y*=H/oldH;s.player.ty*=H/oldH;}}
 new ResizeObserver(resize).observe(canvas);
 function save(){try{const old=JSON.parse(localStorage.getItem('ear-reharm-game.v1')||'{}');localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...old,best:Math.max(old.best||0,s.score),unlocked:Math.max(old.unlocked||0,s.sector),lastStats:s.stats,intervalStats:s.intervalStats}));}catch{}}
 function record(){try{return JSON.parse(localStorage.getItem('ear-reharm-game.v1')||'{}');}catch{return {};}}
 function hangar(){const saved=record().hangar||{};return {scrap:saved.scrap||0,total:saved.total||0,upgrades:{hull:saved.upgrades?.hull||0,engine:saved.upgrades?.engine||0,cannon:saved.upgrades?.cannon||0,reactor:saved.upgrades?.reactor||0},ship:saved.ship||0,pilot:saved.pilot||0};}
 function saveHangar(next){try{const old=record();localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...old,hangar:next}));}catch{}}
-function shipBuild(){const h=hangar(),frame=HANGAR_SHIPS[h.ship];return {h,frame,maxHealth:Math.min(5,2+h.upgrades.hull+(frame.frame>=2?1:0)),speed:180+h.upgrades.engine*28+frame.frame*8,shotDelay:Math.max(.09,.28-h.upgrades.cannon*.055-frame.frame*.012),shots:1+Math.floor(h.upgrades.cannon/2),energyGain:1+h.upgrades.reactor*.25};}
+function shipBuild(){const h=hangar(),frame=HANGAR_SHIPS[h.ship];return {h,frame,maxHealth:Math.min(MAX_SHIELD,BASE_SHIELD+h.upgrades.hull*2+(frame.frame>=2?2:0)),speed:180+h.upgrades.engine*28+frame.frame*8,shotDelay:Math.max(.09,.28-h.upgrades.cannon*.055-frame.frame*.012),shots:1+Math.floor(h.upgrades.cannon/2),energyGain:1+h.upgrades.reactor*.25};}
 function awardScrap(amount){const h=hangar();h.scrap+=amount;h.total+=amount;saveHangar(h);}
 // Menu history stores render callbacks, not HTML, so restored controls keep their listeners.
 let currentMenu=null,menuTrail=[],restoringMenu=false;
@@ -138,20 +140,20 @@ function action(label,fn,secondary=false){const b=document.createElement('button
 function signal(text,listening=false){$('signal-text').textContent=text;$('signal').classList.toggle('listening',listening);}
 function feedback(text,error=false){$('feedback').textContent=text;$('feedback').className=`feedback visible${error?' error':''}`;s.feedbackTimer=2.0;}
 function renderHud(){
-  const max=s.maxHealth||5,health=clamp(s.health,0,max),meter=$('health'),previous=Number(meter.dataset.value??health);
+  const max=s.maxHealth||BASE_SHIELD,health=clamp(s.health,0,max),meter=$('health'),previous=Number(meter.dataset.value??health);
   s.health=health;
   $('score').textContent=String(s.score).padStart(6,'0');
   meter.innerHTML=`<span class="hp-shell"><i style="--hp:${health/max}"></i></span><b>${health}/${max}</b>`;
   meter.dataset.value=String(health);
-  meter.classList.toggle('low',health<=Math.ceil(max*.4));
-  meter.classList.toggle('critical',health<=1);
+  meter.classList.toggle('low',health<=Math.ceil(max*.35));
+  meter.classList.toggle('critical',health<=Math.ceil(max*.15));
   meter.setAttribute('aria-label',`Щит: ${health} из ${max}`);
   if(previous!==health){meter.classList.remove('hp-hit','hp-heal');void meter.offsetWidth;meter.classList.add(health<previous?'hp-hit':'hp-heal');}
   $('sector-name').textContent=s.bookMission?`${s.route?.code||'BOOK FLIGHT'} · ${s.position+1}/${s.route?.sequence.length||0}`:`СЕКТОР 0${s.sector+1} · ${SECTORS[s.sector].name.toUpperCase()}`;
   $('weapon').textContent=s.overdrive>0?'РАЗГОН · ВЕЕРНЫЙ ОГОНЬ':`ИМПУЛЬС ×${s.power}`;$('combo').textContent=`КОМБО ${s.combo} · ⚡ ${s.energy}% · ◉ ${hangar().scrap}`;
   $('route-track').classList.toggle('long-route',(s.route?.sequence.length||0)>20);$('route-track').innerHTML=Array.from({length:s.route?.sequence.length||SECTORS[s.sector].count},(_,i)=>`<i class="${i<s.cleared?'done':i===s.cleared?'current':''}"></i>`).join('');
   document.querySelector('.cabinet')?.classList.toggle('charged',s.overdrive>0||expedition.boosted);
-  document.querySelector('.cabinet')?.classList.toggle('danger',s.health<=2);
+  document.querySelector('.cabinet')?.classList.toggle('danger',health<=Math.ceil(max*.25));
 }
 function buildPads(){
   const config=SECTORS[s.sector];
@@ -187,7 +189,7 @@ function syncPads(){
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening||['reveal','roulette'].includes(expedition.pauseKind);
   $('replay').setAttribute('aria-label',s.bookMission?'Повторить одну ноту HOME и текущий аккорд':'Повторить тонику и сигнал');
   $('replay').setAttribute('title',s.bookMission?'HOME одной нотой → текущий вертикальный аккорд · Space':'Повторить звучание · Space');
-  if(scene){const labels={reveal:['АРТЕФАКТ НАЙДЕН','Коснись ящика — механизм откроет портал'],roulette:['ROCK TONGUE · RANDOM MODE','Барабан выбирает музыкальное испытание'],poly:['DRUM MACHINE · БАРАБАНЩИЦА','Выбери нотный рисунок · можно отвечать во время звучания'],rhythm:['РИТМ-ПАУЗА · БАРАБАНЩИК НА ПОЛЕ','Узнай стиль или партию — и продолжим тот же полёт'],tones:['CHORD TONES · ТРУБАЧ','Выдели весь набор и нажми «Ответить»'],melody:['МЕЛОДИЧЕСКАЯ ПАУЗА · KEY PILOT','Выбери название или произнеси его по-английски'],mode:['ЛАДОВАЯ ПАУЗА · GUITAR PILOT','Узнай лад по восходящей или нисходящей гамме']},copy=labels[expedition.pauseKind]||['АРТЕФАКТ','Активируй найденный механизм'];$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
+  if(scene){const labels={reveal:['ARTIFACT FOUND','Touch the crate to activate its mechanism'],roulette:['ROCK TONGUE · RANDOM MODE','The drum selects a musical trial'],poly:['DRUM MACHINE · RUDIMENTS','Choose the written sticking pattern'],rhythm:['RHYTHM TRIAL · THE DRUMMER','Recognize the style or instrumental part'],flightTones:['HARMONIC FLIGHT · TRUMPETER','Catch note names for BASIC, GUIDE or ALL TONES'],tones:['COLOR HEARING · VIBRAPHONIST','Select every sounding extension, then press ANSWER'],melody:['MELODY MEMORY · KEY PILOT','Choose or speak the melody title'],mode:['MODAL DRIVE · GUITAR PILOT','Recognize the ascending or descending scale']},copy=labels[expedition.pauseKind]||['ARTIFACT','Activate the recovered mechanism'];$('dock-label').textContent=copy[0];$('dock-tip').textContent=copy[1];}
   $('interval-reference').disabled=s.mode!=='resolving'||s.listening;
   $('pause').disabled=['start','finished','gameover','loading'].includes(s.mode);
   if(s.enemy){$('shield-tags').innerHTML=s.bookMission||s.sector>=2?'<span class="shield-tag">◈ АККОРД</span>':'<span class="shield-tag">◇ СТУПЕНЬ</span>';}
@@ -215,7 +217,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 075</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 076</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -267,20 +269,20 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 075 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
-    <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и color tones</span></article>
+  overlay(`<span class="eyebrow">BUILD 076 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+    <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и all tones · ловля нот</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
     <article><img src="assets/drummer.webp" alt="Стимпанковский барабанщик"><b>БАРАБАНЩИК</b><span>Ритмы, стили и рисунки</span></article>
     <article><img src="assets/vibraphonist.webp" alt="Космическая вибрафонистка"><b>ВИБРАФОНИСТКА</b><span>Color Hearing · надстройки аккорда</span></article>
   </div>`);
-  for(const [label,type] of [['Гитарист · запустить',0],['Клавишник · запустить',1],['Барабанщик · запустить',10],['Трубач · запустить',7]])action(label,()=>launchEncounter(type));
+  for(const [label,type] of [['Гитарист · запустить',0],['Клавишник · запустить',1],['Барабанщик · запустить',10],['Трубач · запустить',7],['Вибрафонистка · запустить',11]])action(label,()=>launchEncounter(type));
   action('Вернуться',menuBack,true);
 }
 function openHangar(){
   enterMenu('hangar',openHangar);s.mode='start';
   const h=hangar(),build=shipBuild(),ship=HANGAR_SHIPS[h.ship],pilot=HANGAR_PILOTS[h.pilot];
-  overlay(`<span class="eyebrow">ORBITAL GARAGE · ЖИВАЯ ВАЛЮТА</span><h2>Ангар «Грязный сигнал»</h2><p class="hangar-balance">◉ ${h.scrap} деталей <small>за весь путь добыто ${h.total}</small></p><div class="hangar-hero"><img src="assets/${ship.asset}.webp" alt="${ship.name}"><div><b>${ship.name}</b><span>${ship.description}</span><small>Пилот: ${pilot.name}</small></div></div><p class="compact">Текущая машина: щит ${build.maxHealth}/5 · скорость ${build.speed} · импульс ${Math.round(1/build.shotDelay)}/c.</p><div class="hangar-grid" id="hangar-upgrades"></div><h3>КОРПУСА</h3><div class="hangar-grid" id="hangar-ships"></div><h3>ПИЛОТЫ</h3><div class="hangar-grid" id="hangar-pilots"></div>`);
+  overlay(`<span class="eyebrow">ORBITAL GARAGE · ЖИВАЯ ВАЛЮТА</span><h2>Ангар «Грязный сигнал»</h2><p class="hangar-balance">◉ ${h.scrap} деталей <small>за весь путь добыто ${h.total}</small></p><div class="hangar-hero"><img src="assets/${ship.asset}.webp" alt="${ship.name}"><div><b>${ship.name}</b><span>${ship.description}</span><small>Пилот: ${pilot.name}</small></div></div><p class="compact">Текущая машина: щит ${build.maxHealth}/${MAX_SHIELD} · скорость ${build.speed} · импульс ${Math.round(1/build.shotDelay)}/c.</p><div class="hangar-grid" id="hangar-upgrades"></div><h3>КОРПУСА</h3><div class="hangar-grid" id="hangar-ships"></div><h3>ПИЛОТЫ</h3><div class="hangar-grid" id="hangar-pilots"></div>`);
   const add=(container,content,handler,disabled=false)=>{const b=document.createElement('button');b.className='hangar-card';b.disabled=disabled;b.innerHTML=content;b.addEventListener('click',handler);$(container).append(b);};
   for(const [key,info] of Object.entries(UPGRADE_INFO)){const level=h.upgrades[key],cost=info.cost[level],max=level>=info.cost.length;add('hangar-upgrades',`<b>${info.name}</b><span>${info.description}</span><small>${max?'МАКСИМУМ':`УРОВЕНЬ ${level+1} · ◉ ${cost}`}</small>`,()=>buyUpgrade(key),max||h.scrap<cost);}
   HANGAR_SHIPS.forEach((item,index)=>{const owned=index===0||h.total>=item.price;const selected=index===h.ship;add('hangar-ships',`<img src="assets/${item.asset}.webp" alt=""><b>${item.name}</b><span>${item.description}</span><small>${selected?'ВЫБРАН':owned?'ВЫБРАТЬ':`ОТКРЫТЬ · ◉ ${item.price}`}</small>`,()=>selectShip(index),selected);});
@@ -330,7 +332,7 @@ async function openStudy(){
 function closeStudy(){menuBack();}
 async function openTrainer(){
   enterMenu('trainer',openTrainer);
-  trainer.back=s.mode;audio.stop();s.mode='trainer';s.listening=false;s.keys.clear();renderTrainer();syncPads();
+  trainer.back=s.mode;trainer.timbre=record().trainerTimbre==='piano'?'piano':'synth';audio.stop();s.mode='trainer';s.listening=false;s.keys.clear();renderTrainer();syncPads();
   try{await audio.unlock();if(s.mode==='trainer')newTrainerRound();}catch(e){feedback(e.message,true);}
 }
 function closeTrainer(){menuBack();}
@@ -343,13 +345,28 @@ const trainerKey=chord=>`${chord.offset}:${chord.quality}`;
 function renderTrainer(){
   const levelNames=['Новичок','Студент','Магистр музыки'];
   const score=trainer.total?`${trainer.correct}/${trainer.total} верно · ${Math.round(trainer.correct/trainer.total*100)}%`:'Пока нет ответов';
-  const status=trainer.locked?'♫ Слушай сигнал…':trainer.revealed?'Проверь ответ и переходи дальше':'Нажми вариант ответа';
+  const status=trainer.locked?'♫ Слушай сигнал…':trainer.revealed?'Нажимай варианты, чтобы сравнить их звучание':'Нажми вариант ответа';
   const articulation=trainer.articulation==='together'?'вертикальный аккорд':trainer.articulation==='up'?'арпеджио вверх':'арпеджио вниз';
-  overlay(`<span class="eyebrow">ТРЕНАЖЁР · БЕЗ ВРАГОВ И ТАЙМЕРА</span><h2>Слуховой полигон</h2><p class="compact">Сначала звучит тоника, затем один полный аккорд — точно как гидра в полёте. Ответ уже объединяет ступень и тип аккорда в одной плашке.</p><div id="trainer-levels" class="study-tabs"></div><div id="trainer-articulation" class="study-tabs"></div><div class="study-readout"><strong id="trainer-readout">?</strong><span id="trainer-status">${status}</span></div><div id="trainer-choices" class="study-choices trainer-chord-choices"></div><p class="compact">${score} · ${articulation}</p>`);
+  overlay(`<span class="eyebrow">ТРЕНАЖЁР · БЕЗ ВРАГОВ И ТАЙМЕРА</span><h2>Слуховой полигон</h2><p class="compact">Сначала звучит тоника, затем один полный аккорд — точно как гидра в полёте. После ответа нажимай варианты для сравнения; удерживай плашку, чтобы увидеть точные ноты.</p><div id="trainer-levels" class="study-tabs"></div><div id="trainer-sound" class="study-tabs trainer-sound"></div><div id="trainer-articulation" class="study-tabs"></div><div class="study-readout"><strong id="trainer-readout">?</strong><span id="trainer-status">${status}</span><div id="trainer-voicing" class="trainer-voicing" hidden></div></div><div id="trainer-choices" class="study-choices trainer-chord-choices"></div><p class="compact">${score} · ${articulation}</p>`);
   const add=(id,label,fn,selected)=>{const b=document.createElement('button');b.textContent=label;b.setAttribute('aria-pressed',String(selected));b.addEventListener('click',fn);$(id).append(b);return b;};
   levelNames.forEach((name,index)=>add('trainer-levels',name,()=>{trainer.level=index;newTrainerRound();},trainer.level===index));
+  for(const [timbre,label] of [['synth','Synth'],['piano','Grand Piano']])add('trainer-sound',label,()=>{
+    trainer.timbre=timbre;localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...record(),trainerTimbre:timbre}));newTrainerRound();
+  },trainer.timbre===timbre);
   for(const [mode,label] of [['together','Аккорд'],['up','Арпеджио ↑'],['down','Арпеджио ↓']])add('trainer-articulation',label,()=>{trainer.articulation=mode;newTrainerRound();},trainer.articulation===mode);
-  for(const chord of trainer.choices){const label=chordSymbol(chord),b=add('trainer-choices',label,()=>answerTrainer(trainerKey(chord)),false);b.title=`${DEGREES[chord.offset].label} · ${QUALITIES[chord.quality].label}`;b.dataset.answer=trainerKey(chord);b.disabled=trainer.locked||trainer.revealed;}
+  for(const chord of trainer.choices){
+    const label=chordSymbol(chord),b=add('trainer-choices',label,()=>{
+      if(b.dataset.longPress==='1'){b.dataset.longPress='0';return;}
+      trainer.revealed?auditionTrainer(chord):answerTrainer(trainerKey(chord));
+    },false);
+    b.title=`${DEGREES[chord.offset].label} · ${QUALITIES[chord.quality].label}`;b.dataset.answer=trainerKey(chord);b.disabled=trainer.locked;
+    let holdTimer=null;
+    const cancelHold=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null;}};
+    b.addEventListener('pointerdown',()=>{if(!trainer.revealed)return;cancelHold();holdTimer=setTimeout(()=>{holdTimer=null;b.dataset.longPress='1';showTrainerVoicing(chord);},520);});
+    for(const event of ['pointerup','pointercancel','pointerleave'])b.addEventListener(event,cancelHold);
+    b.addEventListener('contextmenu',event=>{if(!trainer.revealed)return;event.preventDefault();showTrainerVoicing(chord);});
+    if(trainer.revealed&&trainerKey(chord)===trainerKey(trainer.target))b.classList.add('selected');
+  }
   action('↻ Повторить · Space',playTrainerRound,trainer.locked);
   if(trainer.revealed)action('Следующий сигнал →',newTrainerRound);
   action('Вернуться',closeTrainer,true);
@@ -360,19 +377,36 @@ function newTrainerRound(){
 }
 async function playTrainerRound(){
   if(s.mode!=='trainer'||trainer.target===null)return;
-  try{await audio.unlock();if(s.mode!=='trainer')return;trainer.locked=true;renderTrainer();
+  try{await audio.unlock();if(trainer.timbre==='piano')await audio.preparePiano();if(s.mode!=='trainer')return;trainer.locked=true;renderTrainer();
     const target=trainer.target,articulation=trainer.articulation;
     const done=()=>{if(s.mode==='trainer'&&trainer.target===target){trainer.locked=false;renderTrainer();}};
-    audio.trainerChord(trainer.tonic,target,done,articulation);
-  }catch(e){feedback(e.message,true);}
+    audio.trainerChord(trainer.tonic,target,done,articulation,trainer.timbre);
+  }catch(e){
+    trainer.locked=false;
+    if(trainer.timbre==='piano'){trainer.timbre='synth';localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...record(),trainerTimbre:'synth'}));renderTrainer();}
+    feedback(e.message,true);
+  }
 }
 function answerTrainer(value){
   if(s.mode!=='trainer'||trainer.locked||trainer.revealed)return;
   trainer.total++;trainer.revealed=true;const key=trainerKey(trainer.target),correct=value===key;if(correct)trainer.correct++;
   const symbol=chordSymbol(trainer.target),description=`${DEGREES[trainer.target.offset].label} · ${QUALITIES[trainer.target.quality].label}`;
-  $('trainer-readout').textContent=symbol;$('trainer-status').textContent=correct?`${description} · точно!`:`Верный ответ: ${symbol} · ${description}`;
-  document.querySelectorAll('#trainer-choices button').forEach(b=>{b.disabled=true;if(b.dataset.answer===key)b.classList.add('selected');});
-  action('Следующий сигнал →',newTrainerRound);feedback(correct?'Точный слуховой захват':'Сверь обозначение и послушай ещё',!correct);
+  renderTrainer();
+  $('trainer-readout').textContent=symbol;$('trainer-status').textContent=correct?`${description} · верно. Теперь сравни варианты.`:`Верный ответ: ${symbol} · ${description}. Сравни варианты.`;
+  feedback(correct?'Точный слуховой захват':'Сверь правильный и выбранный аккорды',!correct);
+}
+async function auditionTrainer(chord){
+  if(s.mode!=='trainer'||!trainer.revealed)return;
+  const label=chordSymbol(chord),target=trainer.target;
+  try{await audio.unlock();if(trainer.timbre==='piano')await audio.preparePiano();if(s.mode!=='trainer'||!trainer.revealed||trainer.target!==target)return;
+    $('trainer-status').textContent=`♫ I → ${label}`;
+    audio.trainerChord(trainer.tonic,chord,()=>{if(s.mode==='trainer'&&trainer.revealed&&trainer.target===target)$('trainer-status').textContent='Нажимай варианты для сравнения · удерживай для нот';},trainer.articulation,trainer.timbre);
+  }catch(e){feedback(e.message,true);}
+}
+function showTrainerVoicing(chord){
+  if(s.mode!=='trainer'||!trainer.revealed)return;
+  const notes=chordNotes(chord,trainer.tonic).map(midi=>`${NOTE_NAMES[(midi%12+12)%12]}${Math.floor(midi/12)-1}`),panel=$('trainer-voicing');
+  panel.innerHTML=`<b>${chordSymbol(chord)}</b><span>${notes.join(' · ')}</span>`;panel.hidden=false;
 }
 function renderStudy(){
   const item=QUALITIES[study.quality];
@@ -409,7 +443,7 @@ async function playStudy(){
 }
 function artifactGuide(){
   enterMenu('artifact-guide',artifactGuide);
-  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster вызывает гитариста и ладовый режим. Keytar вызывает клавишника и мелодический режим. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: механические хищники нейтрализуются.<br><br>Красный язык — узнай тип аккорда без ступени для HP 100%. Реликвия барабанщика останавливает полёт и запускает распознавание стиля или партии. Тарелка Zildjian запасает RHYTHM FOCUS: во время задания она убирает половину неверных вариантов.<br><br>Реликвии музыкантов — это светящиеся механические кубы. После захвата в кадр влетает трубач, клавишник, гитарист или барабанщик. Трубач просит BASIC, GUIDE или COLOR TONES; один чужой жетон гасит режим.<br><br>Механические хищники оставляют подсказки, автомат, невидимость и защиту. Для нейтрализации также используй обычные заряды.</p>');
+  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster вызывает гитариста и ладовый режим. Keytar вызывает клавишника и мелодический режим. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: механические хищники нейтрализуются.<br><br>Механическая рулетка выбирает случайное испытание. Реликвия барабанщика останавливает полёт и запускает распознавание стиля или партии. Тарелка Zildjian запасает RHYTHM FOCUS: во время задания она убирает половину неверных вариантов.<br><br>Трубач продолжает полёт и просит поймать названия нот BASIC, GUIDE или ALL TONES. Вибрафонистка останавливает полёт для спокойного распознавания COLOR TONES. На старших уровнях аккорды трубача содержат надстройки, но поле целей остаётся разреженным.<br><br>Механические хищники оставляют подсказки, автомат, невидимость и защиту. Для нейтрализации также используй обычные заряды.</p>');
   action('Сразу в бой →',()=>spawnEnemy());
   action('Попробовать сбор интервалов',()=>{spawnEnemy();audio.stop();s.listening=false;expedition.startChallenge('numbers');},true);
   ARTIFACTS.forEach((item,i)=>action(`Попробовать ${item.name}`,()=>{spawnEnemy();audio.stop();s.listening=false;expedition.artifact(i);if(i===3)playCue();},true));
@@ -445,7 +479,8 @@ function showIntervalLesson(){
 }
 function spawnEnemy(){
   hideOverlay();s.mode='active';s.listening=false;weaponTab='bass';
-  s.enemy={chord:s.route.sequence[s.position],model:expedition.level===0?Math.min(2,s.sector):expedition.level,shields:{bass:false,quality:s.sector<2},x:W/2,y:Math.max(155,Math.min(H*.38,250)),age:0,misses:0,hit:0,muzzle:0};
+  const model=expedition.level===0?Math.min(2,s.sector):expedition.level;
+  s.enemy={chord:s.route.sequence[s.position],model,shields:{bass:false,quality:s.sector<2},x:W/2,y:Math.max(155,Math.min(H*.38,250)),age:0,misses:0,hit:0,muzzle:0,guns:enemyGuns(model)};
   $('enemy-label').hidden=false;$('enemy-label').firstElementChild.textContent=s.bookMission?`${s.route.code} · HYDRA ${String(s.position+1).padStart(2,'0')}/${String(s.route.sequence.length).padStart(2,'0')}`:`HYDRA · ${MACHINES[s.enemy.model]} / ${String(s.totalCleared+1).padStart(2,'0')}`;
   $('dock-label').textContent=s.bookMission||s.sector>=2?'ОДИН АККОРД — ОДИН ВЫСТРЕЛ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
   $('dock-tip').textContent=s.bookMission||s.sector>=2?'Выбери готовый аккорд: ступень и тип на одной плашке':'Выбери ступень относительно тоники I';
@@ -494,7 +529,8 @@ function answer(kind,value,button){
       s.combo++;s.totalCleared++;s.cleared++;if(s.enemy.misses===0)s.firstTry++;
       s.score+=200+Math.min(s.combo,10)*25;awardScrap(24+Math.min(s.combo,8)*2);s.resolveTimer=s.bookMission?1.4:6;s.mode='resolving';s.bullets=[];s.overdrive=Math.max(s.overdrive,6);s.waveTimer=.3;
       const label=DEGREES[s.enemy.chord.offset];
-      feedback(`${s.sector>=2?chordSymbol(s.enemy.chord):label.glyph} · щиты пробиты`);
+      const repaired=s.health<s.maxHealth?(s.health++,1):0;
+      feedback(`${s.sector>=2?chordSymbol(s.enemy.chord):label.glyph} · щиты пробиты${repaired?' · +1 ЩИТ':''}`);
       $('recognized-chord').textContent=s.sector>=2?chordSymbol(s.enemy.chord):label.glyph;
       burst(s.enemy.x,s.enemy.y,'#f7cd7f',50);s.rings.push({x:s.enemy.x,y:s.enemy.y,age:0});
       s.capsuleTimer=0;
@@ -514,7 +550,7 @@ function enemyVolley(aimed=false){
   if(!s.enemy||expedition.cloaked)return;
   const e=s.enemy,count=aimed?3:2+pressure(expedition.level,s.combo,s.health),speed=(aimed?100:72+s.sector*14)*expedition.pilot.speed;
   const angle=Math.atan2(s.player.y-e.y,s.player.x-e.x);
-  const ports=machinePorts(e.model||0);e.muzzle=.18;
+  const ports=(e.guns||enemyGuns(e.model||0)).filter(port=>!port.destroyed&&port.hp>0);if(!ports.length)return;e.muzzle=.18;
   for(let i=0;i<count;i++){const a=angle+(i-(count-1)/2)*.26,port=ports[i%ports.length];s.bullets.push({x:e.x+port.x,y:e.y+port.y+17,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:6});}
 }
 function advance(){
@@ -565,7 +601,7 @@ async function resume(){
 function burst(x,y,color,count){for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=30+Math.random()*150;s.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:.5+Math.random()*.7,color});}if(s.particles.length>350)s.particles.splice(0,s.particles.length-350);}
 function shipHit(){
   if(s.invulnerable>0||expedition.invincible||expedition.pausedCombat||!['active','resolving'].includes(s.mode))return;
-  s.health--;s.invulnerable=1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);feedback(`ПОПАДАНИЕ · −1 HP · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0)finish(false);
+  s.health--;s.invulnerable=1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);feedback(`ПОПАДАНИЕ · −1 ЩИТ · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0)finish(false);
 }
 function launchCapsule(){
   const capsule=createCapsule(s.sector);s.capsule={...capsule,x:70+Math.random()*(W-140),y:Math.max(130,H*.28),age:0,speed:Math.max(45,H*.115)};
@@ -605,12 +641,12 @@ function update(dt){
     if(s.keys.has('arrowright')||s.keys.has('d'))p.tx+=speed;
     if(s.keys.has('arrowup')||s.keys.has('w'))p.ty-=speed;
     if(s.keys.has('arrowdown')||s.keys.has('s'))p.ty+=speed;
-    p.tx=clamp(p.tx,25,W-25);p.ty=clamp(p.ty,115,playableHeight()-35);p.x+=(p.tx-p.x)*Math.min(1,dt*16);p.y+=(p.ty-p.y)*Math.min(1,dt*16);p.y=Math.min(p.y,playableHeight()-35);
+    p.tx=clamp(p.tx,25,W-25);p.ty=clamp(p.ty,115,playableHeight()-35);if(s.enemy&&s.mode==='active'){const barrier=s.enemy.y+machineSize(s.enemy.model)*.58+28;p.ty=Math.max(p.ty,barrier);}p.x+=(p.tx-p.x)*Math.min(1,dt*16);p.y+=(p.ty-p.y)*Math.min(1,dt*16);p.y=Math.min(p.y,playableHeight()-35);if(s.enemy&&s.mode==='active')p.y=Math.max(p.y,s.enemy.y+machineSize(s.enemy.model)*.58+28);
     expedition.tick(dt);
     const hadBoost=s.overdrive>0;if(!s.listening)s.overdrive=Math.max(0,s.overdrive-dt);if(hadBoost&&s.overdrive===0)renderHud();
     s.shotTimer-=dt;if(s.shotTimer<=0){const build=shipBuild(),boost=s.overdrive>0||expedition.boosted;s.shotTimer=boost?.09:build.shotDelay;const count=boost?5:Math.max(s.power,build.shots);for(let i=0;i<count;i++)s.shots.push({x:p.x+(i-(count-1)/2)*10,y:p.y-20,vx:boost?(i-2)*60:0});}
     if(!reduced)burst(p.x,p.y+24,'#5efbdd',1);
-    if(s.enemy){s.enemy.age+=dt;s.enemy.x=W/2+Math.sin(s.enemy.age*.62)*80;s.enemy.hit=Math.max(0,s.enemy.hit-dt);s.enemy.muzzle=Math.max(0,(s.enemy.muzzle||0)-dt);}
+    if(s.enemy){s.enemy.age+=dt;s.enemy.x+=(W/2-s.enemy.x)*Math.min(1,dt*3);s.enemy.hit=Math.max(0,s.enemy.hit-dt);s.enemy.muzzle=Math.max(0,(s.enemy.muzzle||0)-dt);}
     if(!s.listening&&!expedition.pausedCombat){
       const difficulty=pressure(expedition.level,s.combo,s.health);
       s.waveTimer-=dt;if(s.waveTimer<=0&&s.drones.length<10){s.drones.push(...formation(s.waveIndex++,W,difficulty));s.waveTimer=s.mode==='resolving'?2.3:6;}
@@ -632,7 +668,11 @@ function update(dt){
   s.shots.forEach(b=>{b.y-=500*dt;b.x+=(b.vx||0)*dt;
     if(expedition.hitShot(b)){b.y=-30;return;}
     for(const d of s.drones){if(d.hp>0&&d.y>0&&hitCircle(b,d,22)){d.hp--;d.hit=.15;b.y=-30;if(d.hp<=0){s.droneKills++;s.score+=20;awardScrap(2);burst(d.x,d.y,'#f7cd7f',12);renderHud();}break;}}
-    if(s.enemy&&s.mode==='active'&&Math.abs(b.x-s.enemy.x)<72&&b.y<s.enemy.y+60&&b.y>s.enemy.y-50){burst(b.x,b.y,'#a4a9d7',2);b.y=-30;}
+    if(s.enemy&&s.mode==='active'){
+      const gun=s.enemy.guns?.find(port=>port.hp>0&&!port.destroyed&&Math.hypot(b.x-(s.enemy.x+port.x),b.y-(s.enemy.y+port.y+7))<15);
+      if(gun){gun.hp--;s.enemy.hit=.12;b.y=-30;burst(s.enemy.x+gun.x,s.enemy.y+gun.y,'#ffca78',gun.hp<=0?22:4);if(gun.hp<=0){gun.destroyed=true;s.score+=75;awardScrap(5);feedback('ОГНЕВАЯ ТОЧКА ГИДРЫ УНИЧТОЖЕНА');renderHud();}return;}
+      if(Math.abs(b.x-s.enemy.x)<72&&b.y<s.enemy.y+60&&b.y>s.enemy.y-50){burst(b.x,b.y,'#a4a9d7',2);b.y=-30;}
+    }
   });s.shots=s.shots.filter(b=>b.y>-20&&b.x>-10&&b.x<W+10);
   s.drones=s.drones.filter(d=>d.hp>0&&d.y<H+35);
   s.bullets=s.bullets.filter(b=>b.y<H+30&&b.x>-30&&b.x<W+30);
@@ -657,8 +697,13 @@ function draw(){
     ctx.save();ctx.translate(e.x,e.y+Math.sin(clock*2)*3);
     const machine=model===1?images.corvette:model===3?images.fortress:images.enemyships;
     if(machine.complete&&machine.naturalWidth){const [sx,sy,sw,sh]=model===1||model===3?[0,0,machine.naturalWidth,machine.naturalHeight]:MACHINE_CROPS[model],scale=size/Math.max(sw,sh);ctx.save();ctx.rotate(Math.PI);ctx.drawImage(machine,sx,sy,sw,sh,-sw*scale/2,-sh*scale/2,sw*scale,sh*scale);ctx.restore();}
-    for(const port of machinePorts(model)){
-      ctx.fillStyle='#69503a';ctx.strokeStyle='#d9b16f';ctx.lineWidth=1;ctx.fillRect(port.x-6,port.y-8,12,19);ctx.strokeRect(port.x-6,port.y-8,12,19);ctx.fillStyle='#28353a';ctx.fillRect(port.x-3,port.y+4,6,14);
+    for(const port of e.guns||enemyGuns(model)){
+      if(port.hp<=0||port.destroyed){
+        ctx.fillStyle='#120d0b';ctx.strokeStyle='#6e3425';ctx.lineWidth=2;ctx.beginPath();ctx.arc(port.x,port.y+5,10,0,Math.PI*2);ctx.fill();ctx.stroke();
+        ctx.strokeStyle='#d265342d';for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(port.x-9+i*7,port.y-6);ctx.lineTo(port.x-14+i*10,port.y+18);ctx.stroke();}continue;
+      }
+      ctx.fillStyle='#69503a';ctx.strokeStyle='#d9b16f';ctx.lineWidth=1;ctx.fillRect(port.x-6,port.y-8,12,19);ctx.strokeRect(port.x-6,port.y-8,12,19);
+      ctx.fillStyle='#28353a';ctx.fillRect(port.x-3,port.y+4,6,14);
       ctx.fillStyle=e.muzzle>0?'#fff2ad':'#73d4bb';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=e.muzzle>0?14:3;ctx.fillRect(port.x-2,port.y+16,4,e.muzzle>0?11:2);ctx.shadowBlur=0;
     }
     for(let i=0;i<2+model;i++){const x=(i-(1+model)/2)*size*.16;ctx.fillStyle='#69e3d9';ctx.globalAlpha=.35+Math.sin(clock*18+i)*.15;ctx.beginPath();ctx.ellipse(x,-size*.37,4,12+Math.sin(clock*15+i)*4,0,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;

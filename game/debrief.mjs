@@ -1,7 +1,7 @@
 import {createMistakeLog} from './mistake-log.mjs';
 import {QUALITIES,INTERVALS,chordSymbol,chordAnswerKey} from './music.mjs';
-import {MODES,MELODIES,RHYTHMS,RUDIMENTS,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,rudimentScore} from './expedition.mjs';
-const titles={hydra:'Аккорды',chord:'Тип аккорда',mode:'Лады',melody:'Мелодии',rhythm:'Ритмы',poly:'Рудименты',numbers:'Интервалы',guide:'Гайд-тоны',tones:'Тоны аккорда'};
+import {MODES,MELODIES,RHYTHMS,RUDIMENTS,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,NOTE_NAMES,rudimentScore} from './expedition.mjs';
+const titles={hydra:'Аккорды',chord:'Тип аккорда',mode:'Лады',melody:'Мелодии',rhythm:'Ритмы',poly:'Рудименты',numbers:'Интервалы',guide:'Гайд-тоны',tones:'Надстройки',flightTones:'Ноты аккорда'};
 const legacyMelodyNames=['Afro Blue','All the Things You Are','Autumn Leaves','Blue Bossa','When the Saints','Amazing Grace','Ode to Joy','Greensleeves'];
 export function normalizeMelodyMistake(item,bank=MELODIES){
   if(item.kind!=='melody')return item;
@@ -31,6 +31,7 @@ export function createDebrief({storage,audio,overlay,action,enter,back,setMode,i
       choices=shuffle([target,...shuffle(NUMBER_LABELS.filter(label=>NUMBER_OFFSETS[label]!==item.interval)).slice(0,5)]).map(id=>({id,label:id}));
     }else if(item.kind==='guide'){correctIds=[item.target];choices=['3','7'].map(id=>({id,label:id}));}
     else if(item.kind==='tones'){correctIds=[...item.required];choices=Object.keys(TONE_OFFSETS).map(id=>({id,label:id}));}
+    else if(item.kind==='flightTones'){correctIds=[...item.required];choices=NOTE_NAMES.map(id=>({id,label:id}));}
     else{
       const bank=item.kind==='chord'?QUALITIES:item.kind==='mode'?MODES:item.kind==='melody'?MELODIES:item.kind==='poly'?RUDIMENTS:RHYTHMS;
       const pool=Array.isArray(bank)?bank.map((_,i)=>i):Object.keys(bank),target=item.target;correctIds=[target];
@@ -50,17 +51,17 @@ export function createDebrief({storage,audio,overlay,action,enter,back,setMode,i
     if(!entry){el('debrief-progress').textContent=log.completed?`Разобрано тем: ${log.completed}. Осталось ответов: 0. Все задания этого разбора пройдены.`:'Пока нет ошибок для разбора. Игра собирает их во время полётов.';if(log.pendingCount)action(`Новый разбор · ${log.pendingCount} ошибок`,open);action('Назад',leave,true);return;}
     const item=entry.item;
     el('debrief-progress').textContent=`${titles[item.kind]||item.kind} · осталось верных ответов: ${log.remainingAnswers} · тем: ${log.remaining} · завершено тем: ${log.completed}`;
-    el('debrief-prompt').textContent=item.kind==='tones'?`${item.chordName||QUALITIES[item.quality]?.glyph} · выбери ${correctIds.length} ${item.toneMode==='guide'?'гайд-тонa':'тона'} и нажми «Ответить».`:item.kind==='hydra'?'Сначала тоника, затем тот аккорд, на котором возникла ошибка.':'Послушай пример из твоего полёта и выбери ответ.';
+    el('debrief-prompt').textContent=item.kind==='tones'?`${item.chordName||QUALITIES[item.quality]?.glyph} · выбери ${correctIds.length} надстройки и нажми «Ответить».`:item.kind==='flightTones'?`${item.chordName} · выбери все ноты задания ${item.toneMode.toUpperCase()} TONES и нажми «Ответить».`:item.kind==='hydra'?'Сначала тоника, затем тот аккорд, на котором возникла ошибка.':'Послушай пример из твоего полёта и выбери ответ.';
     for(const choice of choices){const b=document.createElement('button');b.type='button';b.textContent=choice.label;b.dataset.reviewAnswer=String(choice.id);b.disabled=revealed&&lastCorrect;
       b.classList.toggle('selected',!revealed&&chosen.has(choice.id));
       b.classList.toggle('review-answer-correct',revealed&&correctIds.includes(choice.id));
       b.classList.toggle('review-answer-wrong',revealed&&chosen.has(choice.id)&&!correctIds.includes(choice.id));
-      if(item.kind==='tones')b.setAttribute('aria-pressed',String(!revealed&&chosen.has(choice.id)));
+      if(['tones','flightTones'].includes(item.kind))b.setAttribute('aria-pressed',String(!revealed&&chosen.has(choice.id)));
       if(item.kind==='poly'){const img=document.createElement('img');img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(rudimentScore(RUDIMENTS[choice.id]));img.alt=RUDIMENTS[choice.id].sticking;img.style.cssText='display:block;width:100%;max-height:90px';b.append(img);}
-      b.onclick=()=>{if(!isActive()||viewToken!==questionToken)return;if(revealed){audition(choice);return;}if(item.kind==='tones'){chosen.has(choice.id)?chosen.delete(choice.id):chosen.add(choice.id);b.classList.toggle('selected',chosen.has(choice.id));b.setAttribute('aria-pressed',String(chosen.has(choice.id)));updateSelection();}else submit([choice.id]);};el('debrief-choices').append(b);
+      b.onclick=()=>{if(!isActive()||viewToken!==questionToken)return;if(revealed){audition(choice);return;}if(['tones','flightTones'].includes(item.kind)){chosen.has(choice.id)?chosen.delete(choice.id):chosen.add(choice.id);b.classList.toggle('selected',chosen.has(choice.id));b.setAttribute('aria-pressed',String(chosen.has(choice.id)));updateSelection();}else submit([choice.id]);};el('debrief-choices').append(b);
     }
     if(!revealed||!lastCorrect)action('▶ Слушать ещё раз',play,true);
-    if(item.kind==='tones'&&!revealed){answerButton=action('Ответить',()=>submit([...chosen]));updateSelection();}
+    if(['tones','flightTones'].includes(item.kind)&&!revealed){answerButton=action('Ответить',()=>submit([...chosen]));updateSelection();}
     if(revealed){el('debrief-feedback').textContent=`${lastCorrect?'✓ ВЕРНО!':'✕ НЕВЕРНО. Задание вернётся на повтор.'} Правильный ответ: ${choices.filter(c=>correctIds.includes(c.id)).map(c=>c.label).join(' · ')}`;el('debrief-feedback').classList.add(lastCorrect?'review-correct':'review-wrong');action('Дальше →',next);}
     if(revealed&&!lastCorrect){const note=document.createElement('p');note.className='compact';note.textContent='Нажимай варианты: теперь они звучат для сравнения, без штрафов.';el('debrief-choices').after(note);}
     action('Продолжить позже',leave,true);
@@ -87,6 +88,7 @@ export function createDebrief({storage,audio,overlay,action,enter,back,setMode,i
     else if(item.kind==='rhythm')audio.rhythm(RHYTHMS[choice.id],done,{loops:1});
     else if(item.kind==='melody')audio.melody(root,MELODIES[choice.id],done);
     else if(item.kind==='guide')audio.guide(root,choice.id,done);
+    else if(item.kind==='flightTones'){const offset=(NOTE_NAMES.indexOf(choice.id)-item.root%12+12)%12;audio.chordOnly(root,[offset],done);}
     else{const offset=TONE_OFFSETS[choice.id],heard=item.intervals?.find(interval=>interval%12===offset);audio.chordOnly(root,[heard??offset],done);}
     }catch(e){audioError(e,token);}
   }
@@ -98,7 +100,7 @@ export function createDebrief({storage,audio,overlay,action,enter,back,setMode,i
       if(item.kind==='hydra')audio.trainerChord(item.tonic,item.chord,done);
       else if(item.kind==='numbers')audio.interval(item.root??60,item.interval,item.direction||'up',done);
       else if(item.kind==='guide')audio.guide(item.root??60,item.target,done);
-      else if(item.kind==='tones')audio.trumpetChord(item.root,item.intervals??INTERVALS[item.quality],done);
+      else if(['tones','flightTones'].includes(item.kind))audio.trumpetChord(item.root,item.intervals??INTERVALS[item.quality],done);
       else if(item.kind==='chord')audio.chordOnly(item.root,INTERVALS[item.target],done);
       else if(item.kind==='mode')audio.scale(item.root,MODES[item.target],item.direction||'up',done);
       else if(item.kind==='melody')audio.melody(item.root,MELODIES[item.target],done);

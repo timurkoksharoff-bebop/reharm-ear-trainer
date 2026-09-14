@@ -1,5 +1,8 @@
 # BUILD 077 — gameplay and mobile verification
 
+Published 14 September 2026, commit `777183b`. Public HTML BUILD 077, service
+worker v0.77 and note-drum WebP SHA-256 verified after push to origin/main.
+
 The note-capture challenge now tests ordered chord spelling instead of crowd
 avoidance. Up to four fixed note cubes and one slow drum share an open field;
 the next required note always has a fixed target. Collected tones pay a partial

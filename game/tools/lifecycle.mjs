@@ -19,7 +19,7 @@ class Element {
 const elements=new Map();
 const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 get('space').getContext=()=>({});get('enemy-label').append(new Element());
-class TestAudio {rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
+class TestAudio {announce(text,onEnd){this.pending=onEnd;}trumpetChord(root,notes,onEnd){this.pending=onEnd;}hydraExplosion({final}){this.explosions=(this.explosions||0)+1;if(final)this.finalExplosions=(this.finalExplosions||0)+1;}rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
 const context=vm.createContext({...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
   createDebrief:()=>({record(){},open(){}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
@@ -36,14 +36,14 @@ await run('startRun(0)');assert.equal(state().mode,'briefing');
 run('startLessons();audio.pending();');assert.equal(state().mode,'lesson');
 run('pause();');assert.equal(state().mode,'paused');
 await run('resume()');assert.equal(state().mode,'lesson');
-run('audio.pending();spawnEnemy();audio.pending();');
+run('audio.pending();spawnEnemy();audio.pending();s.listening=true;s.shotTimer=99;for(let i=0;i<200;i++)update(.035);s.listening=false;');
 const initial=state();run('answer("bass",s.enemy.chord.offset===0?7:0);');
 assert.equal(state().score,initial.score);assert.equal(state().bullets.length,3);assert.equal(state().stats.bass.miss,1);
 run('answer("bass",s.enemy.chord.offset);');assert.equal(state().mode,'resolving');assert(state().overdrive>0);
 const earned=state().score;run('answer("bass",s.enemy.chord.offset);');assert.equal(state().score,earned);
 run('pause();');const paused=JSON.stringify(state());run('update(1)');assert.equal(JSON.stringify(state()),paused);
 await run('resume()');assert.equal(state().mode,'resolving');
-run('update(.02);audio.pending();expedition.collectNumber(expedition.snapshot().special.label);s.resolveTimer=.01;update(.02);audio.pending();');assert.equal(state().mode,'active');
+run('for(let i=0;i<33;i++)update(.035);update(.02);audio.pending();expedition.collectNumber(expedition.snapshot().special.label);s.resolveTimer=.01;update(.02);audio.pending();');assert.equal(state().mode,'active');
 // Complete the actual progression/sector transition logic, preserving each chord.
 for(let sector=0;sector<3;sector++){
   if(sector>0)run(`beginSector(${sector});spawnEnemy();audio.pending();`);
@@ -74,7 +74,7 @@ await run('startRun(3);');run('spawnEnemy();audio.pending();');
 assert.equal(get('bass-pads').children.length,6);assert.equal(get('quality-panel').hidden,true);assert.equal(get('weapon-tabs').hidden,true);
 const correctPad=get('bass-pads').children.find(b=>b.textContent===run('chordSymbol(s.enemy.chord)'));
 assert(correctPad);correctPad.click();assert.equal(state().mode,'resolving');assert.equal(state().attempts,1);assert.equal(state().correct,1);
-run('update(.02);');
+run('for(let i=0;i<33;i++)update(.035);update(.02);');
 assert.equal(state().listening,true);assert.equal(state().capsule,null);
 assert.equal(run('expedition.snapshot().special.kind'),'numbers');
 run('update(1);');assert.equal(state().mode,'resolving');
@@ -91,4 +91,45 @@ run('advance();');assert.equal(state().mode,'finished');assert.equal(state().tot
 await run('startBookRun(1,0);');run('spawnEnemy();audio.pending();playCue(true);');
 assert.equal(run('audio.referencePlayed'),true);assert.equal(state().listening,true);assert.equal(state().bullets.length,0);run('audio.pending();');assert.equal(state().listening,false);
 assert(get('bass-pads').children.length>=4);run('answerBookChord(s.enemy.chord,document.createElement("button"));');assert.equal(state().mode,'resolving');
-console.log('Lifecycle checks passed: 12-enemy chromatic and 24-enemy campaign completion, single-token interlude/pause/replay, calibration, shields, retry/storage, drones and pressure.');
+// A grounded Hydra enters with the exact same displacement as the soil, then
+// locks both together. Listening suppresses unrelated random enemy waves here.
+await run('startRun(3,2);');run('spawnEnemy();s.listening=true;s.shotTimer=99;');
+const approach=state();run('update(.035);');const approaching=state();
+assert.equal(approaching.enemy.groundPhase,'approach');
+assert(Math.abs((approaching.enemy.y-approach.enemy.y)-(approaching.travel-approach.travel))<1e-8,'Base stays on the same patch of soil while approaching');
+run('for(let i=0;i<240;i++)update(.035);');assert.equal(state().enemy.groundPhase,'combat');
+const arrived=state();run('update(.25);');
+assert.equal(state().travel,arrived.travel,'Planet stops at a ground encounter');
+assert.equal(state().enemy.y,arrived.enemy.y);assert.equal(state().groundScrollDelta,0);
+// The body is physical, but its collision does not become a full-width wall.
+run('s.player.x=s.player.tx=25;s.player.y=s.player.ty=115;update(.02);');assert.equal(state().player.y,115,'Side corridor remains open');
+run('s.player.x=s.player.tx=s.enemy.x;s.player.y=s.player.ty=s.enemy.y;s.invulnerable=0;update(.02);');
+assert(state().player.y>state().enemy.y+50,'Hull contact pushes the ship outside the body');
+assert.equal(state().health,arrived.health-1);
+// Bullets can burn out an individual gun, which then ceases firing.
+run('s.player.x=s.player.tx=25;s.player.y=s.player.ty=H-60;s.enemy.guns[0].hp=1;const port=s.enemy.guns[0];s.shots=[{x:s.enemy.x+port.x,y:s.enemy.y+port.y+12,vx:0}];update(.01);');
+assert.equal(state().enemy.guns[0].destroyed,true);assert.equal(state().enemy.guns[0].hp,0);
+run('s.bullets=[];enemyVolley();');
+assert(state().bullets.every(b=>Math.hypot(b.x-(state().enemy.x+state().enemy.guns[0].x),b.y-(state().enemy.y+state().enemy.guns[0].y+17))>1),'Destroyed gun emits no volley');
+// Winning gives a finite chain blast before the next musical question, then
+// releases the terrain again; reduced-motion users get no camera shake.
+run('s.listening=false;answer("bass",s.enemy.chord.offset);answer("quality",s.enemy.chord.quality);');
+assert(state().hydraBlast);assert.equal(run('expedition.busy'),false);
+const blastTravel=state().travel;run('update(.25);');assert.equal(state().travel,blastTravel);assert.equal(state().shake,0);
+run('for(let i=0;i<30;i++)update(.035);');assert.equal(state().hydraBlast,null);
+assert(run('audio.finalExplosions')>0);assert(state().debris.length>0);assert(state().travel>blastTravel,'Flight resumes after detonation');
+// A trumpet exercise suspends the boss and every game.js damage source, while
+// the player's steering and gentle planet motion remain available.
+await run('startRun(3,2);');run('spawnEnemy();audio.pending();expedition.startChallenge("flightTones");audio.pending();audio.pending();');
+assert.equal(run('expedition.safeNoteFlight'),true);
+const noteHealth=state().health,noteTravel=state().travel;
+run('s.player.x=s.player.tx=25;s.player.y=s.player.ty=115;s.invulnerable=0;s.bullets=[{x:25,y:115,vx:0,vy:0,r:20}];s.drones=[{x:25,y:115,baseX:25,phase:0,age:0,speed:0,hp:1,fire:0,pattern:0}];s.shots=[{x:25,y:115,vx:0}];update(.035);enemyVolley(true);shipHit();');
+assert.equal(state().health,noteHealth);assert.equal(state().player.y,115);
+assert.equal(state().bullets.length,0);assert.equal(state().drones.length,0);assert.equal(state().shots.length,0);
+assert(state().travel>noteTravel);assert.equal(state().enemy.suspended,true);assert.equal(get('enemy-label').hidden,true);
+run('expedition.reset(2);update(.035);');
+assert.equal(state().enemy.groundPhase,'approach');assert(state().enemy.y<0,'Suspended base re-enters from the horizon, never reappears on the pilot');
+// Ordinary sustained fire also wins, without crediting a correct ear answer.
+run('expedition.reset(2);spawnEnemy();s.listening=false;s.enemy.y=180;s.enemy.groundPhase="combat";s.enemy.hull=1;s.enemy.guns.forEach(g=>{g.hp=0;g.destroyed=true;});s.shots=[{x:s.enemy.x,y:s.enemy.y+45,vx:0}];');
+const hearingBefore=state().correct;run('update(.01);');assert.equal(state().mode,'resolving');assert(state().hydraBlast);assert.equal(state().correct,hearingBefore);
+console.log('Lifecycle checks passed: campaign completion, pause/replay, shields, drones, ground approach/terrain stop, local hull collision, destructible guns, finite chain explosion and safe trumpet flight.');

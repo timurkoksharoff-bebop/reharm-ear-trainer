@@ -75,8 +75,8 @@ audio.pending();world.collectNumber(world.snapshot().digits.find(d=>!gradeNumber
 world.startChallenge('numbers');const stale=audio.pending;world.artifact(10);assert.equal(world.snapshot().special.kind,'reveal');stale();assert.equal(world.snapshot().special.kind,'reveal','Old interval callback cannot dismiss artifact chamber');world.activateArtifact();audio.pending();assert.equal(world.snapshot().special.kind,'rhythm');
 openArtifact(4);assert.equal(world.snapshot().special.kind,'roulette');assert(world.pausedCombat);assert.equal(world.snapshot().digits.length,0);world.reset(0);
 openArtifact(6);assert.equal(world.snapshot().special.kind,'poly');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.invincible);
-openArtifact(7);assert.equal(world.snapshot().special.kind,'flightTones');audio.pending();audio.pending();const trumpet=world.snapshot().special;assert(['basic','guide','all'].includes(trumpet.toneMode));for(const note of trumpet.required)world.collectFlightTone(note);assert(!world.busy);assert(world.invincible&&world.boosted);
-openArtifact(11);assert.equal(world.snapshot().special.kind,'tones');audio.pending();audio.pending();const tone=world.snapshot().special;assert.equal(tone.toneMode,'color');for(const label of tone.required)world.toggleToneChoice(label);assert.deepEqual(new Set(world.snapshot().special.selected),new Set(tone.required));world.answerToneSet();assert(!world.busy);assert(world.invincible&&world.boosted);
+openArtifact(7);assert.equal(world.snapshot().special.kind,'flightTones');audio.pending();audio.pending();const trumpet=world.snapshot().special;assert(['basic','guide','all'].includes(trumpet.toneMode));for(const note of trumpet.required)world.collectFlightTone(note);assert(world.snapshot().special.result);world.continueToneResult();assert(!world.busy);assert(world.invincible&&world.boosted);
+openArtifact(11);assert.equal(world.snapshot().special.kind,'tones');audio.pending();audio.pending();const tone=world.snapshot().special;assert.equal(tone.toneMode,'color');for(const label of tone.required)world.toggleToneChoice(label);assert.deepEqual(new Set(world.snapshot().special.selected),new Set(tone.required));world.answerToneSet();assert(world.snapshot().special.result);world.continueToneResult();assert(!world.busy);assert(world.invincible&&world.boosted);
 openArtifact(8);assert.equal(world.snapshot().special.kind,'melody');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.scenePaused);audio.pending();assert(!world.busy);
 openArtifact(9);assert.equal(world.snapshot().special.kind,'mode');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(!world.busy);
 openArtifact(5);assert.equal(world.snapshot().rhythmFocus,1);assert(!world.busy,'Zildjian stores a hint instead of starting the rhythm challenge');
@@ -107,4 +107,20 @@ assert.equal(RUDIMENTS.length,8);
 for(const r of RUDIMENTS){assert.equal(r.events.length,r.sticking.length);assert(r.events.some(e=>e.velocity===1));assert(r.events.some(e=>e.velocity<1));}
 const signatures=RUDIMENTS.map(r=>Array.from({length:96},(_,i)=>r.events[i%r.events.length].velocity).join(','));
 assert.equal(new Set(signatures).size,RUDIMENTS.length,'Choices must sound different, not differ only in hand labels');
+
+// Sequence, partial credit, readable results, and a safe route with thinking time.
+world.reset(1);s.listening=false;s.health=1;s.energy=0;world.startChallenge('flightTones');
+const c=world.snapshot().special;audio.pending();audio.pending();c.truceUntil=0;
+const positions=world.snapshot().digits.map(d=>[d.x,d.y]);
+world.tick(8);assert.equal(world.snapshot().walls.length,0);assert.equal(world.snapshot().turrets.length,0);assert.equal(world.snapshot().teachers.length,0);
+assert.deepEqual(world.snapshot().digits.map(d=>[d.x,d.y]),positions,'Cubes hold their positions while player thinks');
+const correctFirst=c.required[0];world.collectFlightTone(correctFirst);const afterFirst=s.score;
+world.collectFlightTone('not a note');assert.equal(world.snapshot().special.result.fraction,1/c.required.length);
+assert(Math.abs(s.health-(1+1/c.required.length))<.00001);assert(s.energy>0);
+const paid=s.score;world.collectFlightTone(correctFirst);world.answerToneSet();assert.equal(s.score,paid,'Result cannot pay twice');
+world.tick(100);assert(world.snapshot().special.result,'Result waits for continuation');world.continueToneResult();
+world.reset(3);s.listening=false;s.health=1;s.energy=0;world.startChallenge('tones');audio.pending();audio.pending();
+const colors=world.snapshot().special;colors.required=['9','13'];world.toggleToneChoice('9');world.answerToneSet();assert.equal(world.snapshot().special.result.fraction,.5);assert.equal(s.health,1.5);world.continueToneResult();
+world.reset(3);s.listening=false;s.health=1;s.energy=0;world.startChallenge('tones');audio.pending();audio.pending();world.snapshot().special.required=['9','13'];world.toggleToneChoice('9');world.toggleToneChoice('♭9');world.answerToneSet();assert.equal(world.snapshot().special.result.fraction,0);assert.equal(s.health,1);world.continueToneResult();
+world.reset(1);s.listening=false;let spoken=0;const announce=audio.announce;audio.announce=(...args)=>{spoken++;announce.apply(audio,args);};world.startChallenge('flightTones');audio.pending();audio.pending();world.replay();audio.pending();assert.equal(spoken,1,'Replay is music only');audio.announce=announce;
 console.log('Expedition checks passed: interval and chord-tone capture, musician relics, Zildjian rhythm focus, modal, melody and rhythm scenes.');

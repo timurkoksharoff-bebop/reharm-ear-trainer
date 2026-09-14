@@ -33,7 +33,7 @@ function measureDeck(){
   cabinet.style.setProperty('--deck-height',`${Math.max(0,flight.bottom-dock.top)}px`);
 }
 new ResizeObserver(measureDeck).observe(document.querySelector('.cockpit'));
-const imageNames=['concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','artifact-guitar','artifact-keytar','artifact-pedal','artifact-cymbal','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers'];
+const imageNames=['note-cube','note-drum','turret-base','turret-barrel','turret-ruin','concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','artifact-guitar','artifact-keytar','artifact-pedal','artifact-cymbal','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers'];
 const images=Object.fromEntries(imageNames.map(name=>[name,new Image()]));
 const coreImageNames=['hydra','enemyships','corvette','fortress','ship','terrain','drone','moon','mars'];
 const optionalImageNames=imageNames.filter(name=>!coreImageNames.includes(name));
@@ -51,7 +51,7 @@ let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[
 const s={mode:'start',sector:0,route:null,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:BASE_SHIELD,maxHealth:BASE_SHIELD,power:1,
   listening:false,enemy:null,bullets:[],shots:[],particles:[],beam:0,flash:0,shotTimer:0,invulnerable:0,
   fireTimer:0,resolveTimer:0,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},
-  drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,droneKills:0,
+  drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,
   capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0},
   bookMission:null,player:{x:240,y:500,tx:240,ty:500},keys:new Set(),pointer:null,feedbackTimer:0};
 let activeRecognition=null;
@@ -92,10 +92,64 @@ const UPGRADE_INFO={
   reactor:{name:'РЕАКТОР И ТВИТЕРЫ',cost:[60,135,245],description:'быстрее набирает энергию'},
 };
 let study={kind:'chord',quality:'maj',interval:'♭3',rhythm:0,poly:0,layer:'both',root:48,mode:'together',loop:false,back:'start'};
+let trainerAudition=0;
 let trainer={level:1,target:null,choices:[],articulation:'together',timbre:'synth',tonic:48,total:0,correct:0,locked:false,revealed:false,back:'start'};
 function machineSize(model){return Math.min(100,H*.20)*(1.35+model*.23);}
 function machinePorts(model){const size=machineSize(model);return Array.from({length:2+model*2},(_,i)=>({x:(i%2?1:-1)*size*.37,y:size*(.22-Math.floor(i/2)*.16)}));}
 function enemyGuns(model){return machinePorts(model).map((port,index)=>({...port,index,hp:4+model,maxHp:4+model,destroyed:false}));}
+// Ground objects and their planet share one camera displacement. The encounter
+// stops that displacement, rather than parking an airborne ship over moving soil.
+function stepGround(dt,playing){
+  const safe=!!expedition.safeNoteFlight,e=s.enemy;
+  let delta=dt*(safe?38:s.mode==='resolving'?130:playing?55:16);
+  s.groundCombat=false;
+  if(s.hydraBlast)delta=0;
+  else if(e&&s.mode==='active'){
+    if(safe)e.suspended=true;
+    else{
+      if(e.suspended){e.suspended=false;e.groundPhase='approach';e.y=-machineSize(e.model)*.6;s.fireTimer=Math.max(s.fireTimer,3);}
+      if(e.groundPhase==='approach'){
+        delta=Math.min(delta,Math.max(0,e.holdY-e.y));e.y+=delta;
+        if(e.y>=e.holdY-.01){e.y=e.holdY;e.groundPhase='combat';}
+      }else delta=0;
+      s.groundCombat=e.groundPhase==='combat';
+    }
+  }
+  s.groundScrollDelta=delta;s.travel+=delta;
+}
+function collideHydraBody(){
+  const e=s.enemy;if(!e||s.mode!=='active'||expedition.safeNoteFlight||e.suspended||expedition.cloaked)return;
+  const p=s.player,size=machineSize(e.model),rx=size*.45+13,ry=size*.46+13;
+  const dx=(p.x-e.x)/rx,dy=(p.y-e.y)/ry,distance=Math.hypot(dx,dy);
+  if(distance>=1)return;
+  const direction=distance>.001?{x:dx/distance,y:dy/distance}:{x:0,y:1};
+  p.x=p.tx=clamp(e.x+direction.x*(rx+2),25,W-25);
+  p.y=p.ty=clamp(e.y+direction.y*(ry+2),115,playableHeight()-35);
+  shipHit();
+}
+function beginHydraDestruction(enemy){
+  s.hydraBlast={enemy,age:0,stage:0,spots:(enemy.guns||[]).map(g=>({x:enemy.x+g.x,y:enemy.y+g.y}))};
+  s.beam=.18;s.bullets=[];s.shots=[];s.drones=[];
+  detonateHydraPart(s.hydraBlast,false);
+}
+function detonateHydraPart(blast,final){
+  const spot=final?blast.enemy:blast.spots[blast.stage%Math.max(1,blast.spots.length)]||blast.enemy;
+  burst(spot.x,spot.y,final?'#ffe2a0':'#ffad56',reduced?12:final?55:22);
+  s.rings.push({x:spot.x,y:spot.y,age:0,explosion:true,final});
+  for(let i=0;i<(reduced?4:final?18:8);i++){
+    const angle=Math.random()*Math.PI*2,speed=35+Math.random()*(final?155:90);
+    s.debris.push({x:spot.x,y:spot.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,angle,spin:(Math.random()-.5)*9,life:1.1+Math.random()*.5,size:2+Math.random()*4});
+  }
+  if(s.debris.length>90)s.debris.splice(0,s.debris.length-90);
+  s.shake=reduced?0:final?.38:.14;
+  audio.hydraExplosion?.({final});
+}
+function stepHydraDestruction(dt){
+  const blast=s.hydraBlast;if(!blast)return;
+  blast.age+=dt;
+  while(blast.stage<3&&blast.age>=(blast.stage+1)*.19){blast.stage++;detonateHydraPart(blast,blast.stage===3);}
+  if(blast.age>=1.1){s.hydraBlast=null;s.groundCombat=false;if(s.mode==='resolving')expedition.afterHydra();}
+}
 function resize(){const rect=canvas.getBoundingClientRect();if(!rect.width||!rect.height)return;const oldH=H;H=rect.height*480/rect.width;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0);if(['start','briefing'].includes(s.mode))s.player.y=s.player.ty=H-65;else{s.player.y*=H/oldH;s.player.ty*=H/oldH;}}
 new ResizeObserver(resize).observe(canvas);
 function save(){try{const old=JSON.parse(localStorage.getItem('ear-reharm-game.v1')||'{}');localStorage.setItem('ear-reharm-game.v1',JSON.stringify({...old,best:Math.max(old.best||0,s.score),unlocked:Math.max(old.unlocked||0,s.sector),lastStats:s.stats,intervalStats:s.intervalStats}));}catch{}}
@@ -217,7 +271,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 076</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 077</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -269,7 +323,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 076 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 077 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и all tones · ловля нот</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -308,7 +362,7 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
   const token=++runToken;s.mode='loading';overlay('<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Включаем звук…</h2><p>Запускаем синтезатор корабля.</p>');
   try{await audio.unlock();if(token!==runToken)return;
     await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Основная графика · ${ready}/${total}</h2><p>Корабль и поверхность планеты</p>`);});if(token!==runToken)return;
-    const build=shipBuild();Object.assign(s,{sector,bookMission,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
+    const build=shipBuild();Object.assign(s,{sector,bookMission,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
     expedition.reset(level);beginSector(sector);warmOptionalImages();
   }catch(e){if(token!==runToken)return;s.mode='start';overlay(`<h2>Подготовка прервана</h2><p>${e.message}</p>`);action('Попробовать ещё',()=>startRun(sector,level));}
 }
@@ -316,7 +370,7 @@ function beginSector(sector){
   if(currentMenu?.id==='launch')currentMenu={id:'briefing',render:()=>beginSector(sector),scroll:0};
   else enterMenu('briefing',()=>beginSector(sector));
   weaponTab='bass';
-  s.sector=sector;s.cleared=0;s.position=0;s.routeNumber=0;s.health=s.maxHealth||shipBuild().maxHealth;s.bullets=[];s.shots=[];s.enemy=null;s.drones=[];s.overdrive=0;s.waveTimer=1;s.capsule=null;s.capsuleTimer=0;
+  s.sector=sector;s.cleared=0;s.position=0;s.routeNumber=0;s.health=s.maxHealth||shipBuild().maxHealth;s.bullets=[];s.shots=[];s.enemy=null;s.drones=[];s.overdrive=0;s.waveTimer=1;s.capsule=null;s.capsuleTimer=0;s.hydraBlast=null;s.groundCombat=false;
   $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?.route?s.bookMission.route:s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
   const c=SECTORS[sector];
   const map=s.bookMission?`<div class="battle-map"><i class="home">HOME</i>${s.route.sequence.map((_,i)=>`<i><b>${i+1}</b><span>HYDRA</span></i>`).join('')}</div>`:'';
@@ -347,7 +401,7 @@ function renderTrainer(){
   const score=trainer.total?`${trainer.correct}/${trainer.total} верно · ${Math.round(trainer.correct/trainer.total*100)}%`:'Пока нет ответов';
   const status=trainer.locked?'♫ Слушай сигнал…':trainer.revealed?'Нажимай варианты, чтобы сравнить их звучание':'Нажми вариант ответа';
   const articulation=trainer.articulation==='together'?'вертикальный аккорд':trainer.articulation==='up'?'арпеджио вверх':'арпеджио вниз';
-  overlay(`<span class="eyebrow">ТРЕНАЖЁР · БЕЗ ВРАГОВ И ТАЙМЕРА</span><h2>Слуховой полигон</h2><p class="compact">Сначала звучит тоника, затем один полный аккорд — точно как гидра в полёте. После ответа нажимай варианты для сравнения; удерживай плашку, чтобы увидеть точные ноты.</p><div id="trainer-levels" class="study-tabs"></div><div id="trainer-sound" class="study-tabs trainer-sound"></div><div id="trainer-articulation" class="study-tabs"></div><div class="study-readout"><strong id="trainer-readout">?</strong><span id="trainer-status">${status}</span><div id="trainer-voicing" class="trainer-voicing" hidden></div></div><div id="trainer-choices" class="study-choices trainer-chord-choices"></div><p class="compact">${score} · ${articulation}</p>`);
+  overlay(`<span class="eyebrow">ТРЕНАЖЁР · БЕЗ ВРАГОВ И ТАЙМЕРА</span><h2>Слуховой полигон</h2><p class="compact">Сначала звучит тоника, затем один полный аккорд — точно как гидра в полёте. Нажатие играет выбранный аккорд и показывает его ноты. После ответа сравнивай любые варианты без штрафа.</p><div id="trainer-levels" class="study-tabs"></div><div id="trainer-sound" class="study-tabs trainer-sound"></div><div id="trainer-articulation" class="study-tabs"></div><div class="study-readout"><strong id="trainer-readout">?</strong><span id="trainer-status">${status}</span><div id="trainer-voicing" class="trainer-voicing" hidden></div></div><div id="trainer-choices" class="study-choices trainer-chord-choices"></div><p class="compact">${score} · ${articulation}</p>`);
   const add=(id,label,fn,selected)=>{const b=document.createElement('button');b.textContent=label;b.setAttribute('aria-pressed',String(selected));b.addEventListener('click',fn);$(id).append(b);return b;};
   levelNames.forEach((name,index)=>add('trainer-levels',name,()=>{trainer.level=index;newTrainerRound();},trainer.level===index));
   for(const [timbre,label] of [['synth','Synth'],['piano','Grand Piano']])add('trainer-sound',label,()=>{
@@ -356,15 +410,10 @@ function renderTrainer(){
   for(const [mode,label] of [['together','Аккорд'],['up','Арпеджио ↑'],['down','Арпеджио ↓']])add('trainer-articulation',label,()=>{trainer.articulation=mode;newTrainerRound();},trainer.articulation===mode);
   for(const chord of trainer.choices){
     const label=chordSymbol(chord),b=add('trainer-choices',label,()=>{
-      if(b.dataset.longPress==='1'){b.dataset.longPress='0';return;}
-      trainer.revealed?auditionTrainer(chord):answerTrainer(trainerKey(chord));
+      if(!trainer.revealed)answerTrainer(trainerKey(chord));
+      showTrainerVoicing(chord);auditionTrainer(chord);
     },false);
     b.title=`${DEGREES[chord.offset].label} · ${QUALITIES[chord.quality].label}`;b.dataset.answer=trainerKey(chord);b.disabled=trainer.locked;
-    let holdTimer=null;
-    const cancelHold=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null;}};
-    b.addEventListener('pointerdown',()=>{if(!trainer.revealed)return;cancelHold();holdTimer=setTimeout(()=>{holdTimer=null;b.dataset.longPress='1';showTrainerVoicing(chord);},520);});
-    for(const event of ['pointerup','pointercancel','pointerleave'])b.addEventListener(event,cancelHold);
-    b.addEventListener('contextmenu',event=>{if(!trainer.revealed)return;event.preventDefault();showTrainerVoicing(chord);});
     if(trainer.revealed&&trainerKey(chord)===trainerKey(trainer.target))b.classList.add('selected');
   }
   action('↻ Повторить · Space',playTrainerRound,trainer.locked);
@@ -372,7 +421,7 @@ function renderTrainer(){
   action('Вернуться',closeTrainer,true);
 }
 function newTrainerRound(){
-  audio.stop();const pools=trainerPools(),all=pools.degrees.flatMap(offset=>pools.qualities.map(quality=>({offset,quality})));trainer.target=all[Math.floor(Math.random()*all.length)];
+  trainerAudition++;audio.stop();const pools=trainerPools(),all=pools.degrees.flatMap(offset=>pools.qualities.map(quality=>({offset,quality})));trainer.target=all[Math.floor(Math.random()*all.length)];
   const targetKey=trainerKey(trainer.target),wrong=all.filter(chord=>trainerKey(chord)!==targetKey).sort(()=>Math.random()-.5).slice(0,Math.min(5,all.length-1));trainer.choices=[trainer.target,...wrong].sort(()=>Math.random()-.5);trainer.tonic=48+[0,2,3,5,7,9,10][Math.floor(Math.random()*7)];trainer.locked=true;trainer.revealed=false;renderTrainer();playTrainerRound();
 }
 async function playTrainerRound(){
@@ -397,10 +446,10 @@ function answerTrainer(value){
 }
 async function auditionTrainer(chord){
   if(s.mode!=='trainer'||!trainer.revealed)return;
-  const label=chordSymbol(chord),target=trainer.target;
-  try{await audio.unlock();if(trainer.timbre==='piano')await audio.preparePiano();if(s.mode!=='trainer'||!trainer.revealed||trainer.target!==target)return;
-    $('trainer-status').textContent=`♫ I → ${label}`;
-    audio.trainerChord(trainer.tonic,chord,()=>{if(s.mode==='trainer'&&trainer.revealed&&trainer.target===target)$('trainer-status').textContent='Нажимай варианты для сравнения · удерживай для нот';},trainer.articulation,trainer.timbre);
+  const label=chordSymbol(chord),target=trainer.target,cue=++trainerAudition;
+  try{await audio.unlock();if(trainer.timbre==='piano')await audio.preparePiano();if(s.mode!=='trainer'||!trainer.revealed||trainer.target!==target||cue!==trainerAudition)return;
+    $('trainer-status').textContent=`♫ ${label} · сравнение`;
+    audio.auditionChord(trainer.tonic,chord,()=>{if(s.mode==='trainer'&&trainer.revealed&&trainer.target===target)$('trainer-status').textContent='Нажимай варианты: звук и точные ноты';},trainer.articulation,trainer.timbre);
   }catch(e){feedback(e.message,true);}
 }
 function showTrainerVoicing(chord){
@@ -480,7 +529,7 @@ function showIntervalLesson(){
 function spawnEnemy(){
   hideOverlay();s.mode='active';s.listening=false;weaponTab='bass';
   const model=expedition.level===0?Math.min(2,s.sector):expedition.level;
-  s.enemy={chord:s.route.sequence[s.position],model,shields:{bass:false,quality:s.sector<2},x:W/2,y:Math.max(155,Math.min(H*.38,250)),age:0,misses:0,hit:0,muzzle:0,guns:enemyGuns(model)};
+  s.enemy={chord:s.route.sequence[s.position],model,shields:{bass:false,quality:s.sector<2},x:W/2,y:-machineSize(model)*.6,holdY:Math.max(155,Math.min(playableHeight()*.36,230)),groundPhase:'approach',suspended:false,hull:100+model*35,maxHull:100+model*35,age:0,misses:0,hit:0,muzzle:0,guns:enemyGuns(model)};
   $('enemy-label').hidden=false;$('enemy-label').firstElementChild.textContent=s.bookMission?`${s.route.code} · HYDRA ${String(s.position+1).padStart(2,'0')}/${String(s.route.sequence.length).padStart(2,'0')}`:`HYDRA · ${MACHINES[s.enemy.model]} / ${String(s.totalCleared+1).padStart(2,'0')}`;
   $('dock-label').textContent=s.bookMission||s.sector>=2?'ОДИН АККОРД — ОДИН ВЫСТРЕЛ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
   $('dock-tip').textContent=s.bookMission||s.sector>=2?'Выбери готовый аккорд: ступень и тип на одной плашке':'Выбери ступень относительно тоники I';
@@ -520,23 +569,13 @@ function answer(kind,value,button){
   const outcome=answerResult(s.enemy.chord,s.enemy.shields,kind,value);if(outcome.ignored)return;
   s.attempts++;s.stats[kind][outcome.correct?'hit':'miss']++;
   if(outcome.correct){
-    s.correct++;s.enemy.shields=outcome.shields;s.beam=.3;s.enemy.hit=.25;s.score+=kind==='bass'?100:150;awardScrap(kind==='bass'?7:10);
+    s.correct++;s.enemy.shields=outcome.shields;s.beam=.3;s.enemy.hit=.25;s.enemy.hull=Math.max(1,s.enemy.hull-s.enemy.maxHull*.45);s.score+=kind==='bass'?100:150;awardScrap(kind==='bass'?7:10);
       if(kind==='bass'){s.power=Math.min(3,s.power+1);s.overdrive=7;feedback('Щит пробит · ВЕЕРНЫЙ ОГОНЬ');}
     else feedback(`${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.glyph??s.enemy.chord.quality} · тип распознан`);
     if(!outcome.destroyed)weaponTab=kind==='bass'?'quality':'bass';
     burst(s.enemy.x,s.enemy.y,kind==='bass'?'#79f5d0':'#ff7ea7',25);
     if(outcome.destroyed){
-      s.combo++;s.totalCleared++;s.cleared++;if(s.enemy.misses===0)s.firstTry++;
-      s.score+=200+Math.min(s.combo,10)*25;awardScrap(24+Math.min(s.combo,8)*2);s.resolveTimer=s.bookMission?1.4:6;s.mode='resolving';s.bullets=[];s.overdrive=Math.max(s.overdrive,6);s.waveTimer=.3;
-      const label=DEGREES[s.enemy.chord.offset];
-      const repaired=s.health<s.maxHealth?(s.health++,1):0;
-      feedback(`${s.sector>=2?chordSymbol(s.enemy.chord):label.glyph} · щиты пробиты${repaired?' · +1 ЩИТ':''}`);
-      $('recognized-chord').textContent=s.sector>=2?chordSymbol(s.enemy.chord):label.glyph;
-      burst(s.enemy.x,s.enemy.y,'#f7cd7f',50);s.rings.push({x:s.enemy.x,y:s.enemy.y,age:0});
-      s.capsuleTimer=0;
-      expedition.afterHydra();
-      $('enemy-label').hidden=true;signal(s.bookMission?'Маршрут продолжается…':'Разгон! Услышь интервал и поймай один жетон');
-      if(s.combo%3===0){const before=s.health;s.health=Math.min(s.maxHealth,s.health+1);s.score+=100;if(s.health>before)feedback('Серия ×3 · щит восстановлен +1 HP');}
+      defeatHydra(true);
     }
   }else{
     recordHydraMistake();s.enemy.misses++;s.combo=0;s.power=Math.max(1,s.power-1);s.fireTimer=4.5;
@@ -546,15 +585,29 @@ function answer(kind,value,button){
   }
   renderHud();syncPads();
 }
+function defeatHydra(recognized){
+  if(!s.enemy||s.mode!=='active')return;
+  if(!recognized)recordHydraMistake();
+      if(recognized)s.combo++;else s.combo=0;s.totalCleared++;s.cleared++;if(recognized&&s.enemy.misses===0)s.firstTry++;
+      s.score+=(recognized?200:60)+Math.min(s.combo,10)*25;awardScrap(24+Math.min(s.combo,8)*2);s.resolveTimer=s.bookMission?1.4:6;s.mode='resolving';s.bullets=[];s.overdrive=Math.max(s.overdrive,6);s.waveTimer=.3;
+      const label=DEGREES[s.enemy.chord.offset];
+      const repaired=recognized&&s.health<s.maxHealth?(s.health=Math.min(s.maxHealth,s.health+1),1):0;
+      feedback(`${s.sector>=2?chordSymbol(s.enemy.chord):label.glyph} · ${recognized?'щиты пробиты':'корпус уничтожен огнём'}${repaired?' · +1 ЩИТ':''}`);
+      $('recognized-chord').textContent=s.sector>=2?chordSymbol(s.enemy.chord):label.glyph;
+      beginHydraDestruction(s.enemy);
+      s.capsuleTimer=0;
+      $('enemy-label').hidden=true;signal(s.bookMission?'Маршрут продолжается…':'Разгон! Услышь интервал и поймай один жетон');
+      if(recognized&&s.combo%3===0){const before=s.health;s.health=Math.min(s.maxHealth,s.health+1);s.score+=100;if(s.health>before)feedback('Серия ×3 · щит восстановлен +1 HP');}
+}
 function enemyVolley(aimed=false){
-  if(!s.enemy||expedition.cloaked)return;
+  if(!s.enemy||expedition.cloaked||expedition.safeNoteFlight||s.enemy.groundPhase!=='combat')return;
   const e=s.enemy,count=aimed?3:2+pressure(expedition.level,s.combo,s.health),speed=(aimed?100:72+s.sector*14)*expedition.pilot.speed;
   const angle=Math.atan2(s.player.y-e.y,s.player.x-e.x);
   const ports=(e.guns||enemyGuns(e.model||0)).filter(port=>!port.destroyed&&port.hp>0);if(!ports.length)return;e.muzzle=.18;
   for(let i=0;i<count;i++){const a=angle+(i-(count-1)/2)*.26,port=ports[i%ports.length];s.bullets.push({x:e.x+port.x,y:e.y+port.y+17,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:6});}
 }
 function advance(){
-  s.enemy=null;s.capsule=null;s.capsuleTimer=0;s.position++;
+  s.hydraBlast=null;s.groundCombat=false;s.enemy=null;s.capsule=null;s.capsuleTimer=0;s.position++;
   if(s.cleared>=(s.bookMission?s.route.sequence.length:SECTORS[s.sector].count)){
     save();s.mode='intermission';$('enemy-label').hidden=true;audio.stop();
     if(s.sector>=2){finish(true);return;}
@@ -600,7 +653,7 @@ async function resume(){
 }
 function burst(x,y,color,count){for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=30+Math.random()*150;s.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:.5+Math.random()*.7,color});}if(s.particles.length>350)s.particles.splice(0,s.particles.length-350);}
 function shipHit(){
-  if(s.invulnerable>0||expedition.invincible||expedition.pausedCombat||!['active','resolving'].includes(s.mode))return;
+  if(s.invulnerable>0||expedition.invincible||expedition.safeNoteFlight||expedition.pausedCombat||!['active','resolving'].includes(s.mode))return;
   s.health--;s.invulnerable=1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);feedback(`ПОПАДАНИЕ · −1 ЩИТ · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0)finish(false);
 }
 function launchCapsule(){
@@ -632,22 +685,27 @@ function update(dt){
   clock+=dt;
   if(s.feedbackTimer>0){s.feedbackTimer-=dt;if(s.feedbackTimer<=0)$('feedback').classList.remove('visible');}
   s.flash=Math.max(0,s.flash-dt);s.beam=Math.max(0,s.beam-dt);s.invulnerable=Math.max(0,s.invulnerable-dt);
+  s.groundScrollDelta=0;s.shake=Math.max(0,s.shake-dt);
   if(expedition.scenePaused){expedition.tick(dt);return;}
   const playing=['active','resolving'].includes(s.mode);
-  s.travel+=dt*(s.mode==='resolving'?130:playing?55:16);
+  stepGround(dt,playing);
     if(playing){
     const p=s.player,speed=shipBuild().speed*dt;
     if(s.keys.has('arrowleft')||s.keys.has('a'))p.tx-=speed;
     if(s.keys.has('arrowright')||s.keys.has('d'))p.tx+=speed;
     if(s.keys.has('arrowup')||s.keys.has('w'))p.ty-=speed;
     if(s.keys.has('arrowdown')||s.keys.has('s'))p.ty+=speed;
-    p.tx=clamp(p.tx,25,W-25);p.ty=clamp(p.ty,115,playableHeight()-35);if(s.enemy&&s.mode==='active'){const barrier=s.enemy.y+machineSize(s.enemy.model)*.58+28;p.ty=Math.max(p.ty,barrier);}p.x+=(p.tx-p.x)*Math.min(1,dt*16);p.y+=(p.ty-p.y)*Math.min(1,dt*16);p.y=Math.min(p.y,playableHeight()-35);if(s.enemy&&s.mode==='active')p.y=Math.max(p.y,s.enemy.y+machineSize(s.enemy.model)*.58+28);
+    p.tx=clamp(p.tx,25,W-25);p.ty=clamp(p.ty,115,playableHeight()-35);p.x+=(p.tx-p.x)*Math.min(1,dt*16);p.y+=(p.ty-p.y)*Math.min(1,dt*16);p.y=Math.min(p.y,playableHeight()-35);
     expedition.tick(dt);
+    collideHydraBody();
+    const safeFlight=!!expedition.safeNoteFlight;
+    if(s.mode==='active'&&s.enemy)$('enemy-label').hidden=safeFlight;
+    if(safeFlight||s.hydraBlast){s.bullets=[];s.shots=[];s.drones=[];s.shotTimer=.2;s.waveTimer=Math.max(s.waveTimer,3);s.fireTimer=Math.max(s.fireTimer,3);}
     const hadBoost=s.overdrive>0;if(!s.listening)s.overdrive=Math.max(0,s.overdrive-dt);if(hadBoost&&s.overdrive===0)renderHud();
-    s.shotTimer-=dt;if(s.shotTimer<=0){const build=shipBuild(),boost=s.overdrive>0||expedition.boosted;s.shotTimer=boost?.09:build.shotDelay;const count=boost?5:Math.max(s.power,build.shots);for(let i=0;i<count;i++)s.shots.push({x:p.x+(i-(count-1)/2)*10,y:p.y-20,vx:boost?(i-2)*60:0});}
+    s.shotTimer-=dt;if(!safeFlight&&!s.hydraBlast&&s.shotTimer<=0){const build=shipBuild(),boost=s.overdrive>0||expedition.boosted;s.shotTimer=boost?.09:build.shotDelay;const count=boost?5:Math.max(s.power,build.shots);for(let i=0;i<count;i++)s.shots.push({x:p.x+(i-(count-1)/2)*10,y:p.y-20,vx:boost?(i-2)*60:0});}
     if(!reduced)burst(p.x,p.y+24,'#5efbdd',1);
-    if(s.enemy){s.enemy.age+=dt;s.enemy.x+=(W/2-s.enemy.x)*Math.min(1,dt*3);s.enemy.hit=Math.max(0,s.enemy.hit-dt);s.enemy.muzzle=Math.max(0,(s.enemy.muzzle||0)-dt);}
-    if(!s.listening&&!expedition.pausedCombat){
+    if(s.enemy&&!safeFlight){s.enemy.age+=dt;s.enemy.hit=Math.max(0,s.enemy.hit-dt);s.enemy.muzzle=Math.max(0,(s.enemy.muzzle||0)-dt);}
+    if(!safeFlight&&!s.hydraBlast&&!s.listening&&!expedition.pausedCombat){
       const difficulty=pressure(expedition.level,s.combo,s.health);
       s.waveTimer-=dt;if(s.waveTimer<=0&&s.drones.length<10){s.drones.push(...formation(s.waveIndex++,W,difficulty));s.waveTimer=s.mode==='resolving'?2.3:6;}
       for(const d of s.drones){stepDrone(d,dt*expedition.pilot.speed,W);if(d.fire<=0&&d.y>20&&d.y<H*.6&&!expedition.cloaked){d.fire=10;const a=Math.atan2(p.y-d.y,p.x-d.x);s.bullets.push({x:d.x,y:d.y,vx:Math.cos(a)*75,vy:Math.sin(a)*75,r:5});}if(d.y>0&&hitCircle(d,p,25)){d.hp=0;shipHit();}}
@@ -658,55 +716,87 @@ function update(dt){
         }
       });
     }
-    if(s.mode==='resolving'&&!expedition.busy){
+    if(s.mode==='resolving'&&!s.hydraBlast&&!expedition.busy){
       if(s.capsuleTimer>0){s.capsuleTimer-=dt;if(s.capsuleTimer<=0)launchCapsule();}
       if(s.capsule&&!s.listening){const c=s.capsule;c.age+=dt;c.y+=c.speed*dt;if(hitCircle(c,p,31))resolveCapsule(true);else if(c.y>H+30)resolveCapsule(false);}
       if(!s.listening)s.resolveTimer-=dt;if(s.resolveTimer<=0&&!s.capsule&&s.capsuleTimer<=0)advance();
     }
   }
-  if(!['active','resolving'].includes(s.mode)){s.shots=[];s.bullets=[];s.drones=[];}
+  stepHydraDestruction(dt);
+  if(!['active','resolving'].includes(s.mode)||expedition.safeNoteFlight||s.hydraBlast){s.shots=[];s.bullets=[];s.drones=[];}
   s.shots.forEach(b=>{b.y-=500*dt;b.x+=(b.vx||0)*dt;
     if(expedition.hitShot(b)){b.y=-30;return;}
     for(const d of s.drones){if(d.hp>0&&d.y>0&&hitCircle(b,d,22)){d.hp--;d.hit=.15;b.y=-30;if(d.hp<=0){s.droneKills++;s.score+=20;awardScrap(2);burst(d.x,d.y,'#f7cd7f',12);renderHud();}break;}}
-    if(s.enemy&&s.mode==='active'){
+    if(s.enemy&&s.mode==='active'&&!expedition.safeNoteFlight){
       const gun=s.enemy.guns?.find(port=>port.hp>0&&!port.destroyed&&Math.hypot(b.x-(s.enemy.x+port.x),b.y-(s.enemy.y+port.y+7))<15);
       if(gun){gun.hp--;s.enemy.hit=.12;b.y=-30;burst(s.enemy.x+gun.x,s.enemy.y+gun.y,'#ffca78',gun.hp<=0?22:4);if(gun.hp<=0){gun.destroyed=true;s.score+=75;awardScrap(5);feedback('ОГНЕВАЯ ТОЧКА ГИДРЫ УНИЧТОЖЕНА');renderHud();}return;}
-      if(Math.abs(b.x-s.enemy.x)<72&&b.y<s.enemy.y+60&&b.y>s.enemy.y-50){burst(b.x,b.y,'#a4a9d7',2);b.y=-30;}
+      if(Math.abs(b.x-s.enemy.x)<machineSize(s.enemy.model)*.42&&b.y<s.enemy.y+50&&b.y>s.enemy.y-50){burst(b.x,b.y,'#f5bd72',2);b.y=-30;s.enemy.hit=.04;s.enemy.hull=Math.max(0,s.enemy.hull-1);if(s.enemy.hull===0)defeatHydra(false);}
     }
   });s.shots=s.shots.filter(b=>b.y>-20&&b.x>-10&&b.x<W+10);
   s.drones=s.drones.filter(d=>d.hp>0&&d.y<H+35);
   s.bullets=s.bullets.filter(b=>b.y<H+30&&b.x>-30&&b.x<W+30);
   s.particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;});s.particles=s.particles.filter(p=>p.life>0);
+  s.debris.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.max(0,1-dt*1.4);p.vy*=Math.max(0,1-dt*1.4);p.angle+=p.spin*dt;p.life-=dt;});s.debris=s.debris.filter(p=>p.life>0);
   s.rings.forEach(r=>r.age+=dt);s.rings=s.rings.filter(r=>r.age<.8);
 }
+function drawHydraFoundation(size){
+  // A tight contact shadow and four braced footings make the hull read as a
+  // structure fixed to the surface, with no flight bob or exhaust particles.
+  ctx.fillStyle='#020303aa';ctx.beginPath();ctx.ellipse(7,13,size*.57,size*.50,0,0,Math.PI*2);ctx.fill();
+  const foundation=images['turret-base'];
+  if(foundation?.complete&&foundation.naturalWidth){ctx.drawImage(foundation,-size*.62,-size*.6,size*1.24,size*1.2);return;}
+  ctx.fillStyle='#272a25';ctx.strokeStyle='#756248';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(-size*.42,-size*.46);ctx.lineTo(size*.42,-size*.46);ctx.lineTo(size*.56,-size*.3);ctx.lineTo(size*.56,size*.3);ctx.lineTo(size*.42,size*.46);ctx.lineTo(-size*.42,size*.46);ctx.lineTo(-size*.56,size*.3);ctx.lineTo(-size*.56,-size*.3);ctx.closePath();ctx.fill();ctx.stroke();
+  for(const side of [-1,1])for(const end of [-1,1]){
+    const x=side*size*.48,y=end*size*.30;
+    ctx.fillStyle='#100f0daa';ctx.fillRect(x-12,y-8,28,24);
+    ctx.fillStyle='#766246';ctx.strokeStyle='#b39768';ctx.lineWidth=1.5;ctx.fillRect(x-13,y-12,24,18);ctx.strokeRect(x-13,y-12,24,18);
+    ctx.fillStyle='#292622';for(const bx of [-7,5]){ctx.beginPath();ctx.arc(x+bx,y-4,2.5,0,Math.PI*2);ctx.fill();}
+    ctx.strokeStyle='#b8a27a';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x-side*5,y);ctx.lineTo(x-side*size*.21,y-end*10);ctx.stroke();
+  }
+}
+function drawHydraGun(port,e){
+  const ruined=port.hp<=0||port.destroyed,base=images[ruined?'turret-ruin':'turret-base'],barrel=images['turret-barrel'];
+  ctx.save();ctx.translate(port.x,port.y);
+  if(base?.complete&&base.naturalWidth)ctx.drawImage(base,-21,-21,42,42);
+  else{
+    ctx.fillStyle=ruined?'#171210':'#68513a';ctx.strokeStyle=ruined?'#6e3425':'#d9b16f';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,0,ruined?13:12,0,Math.PI*2);ctx.fill();ctx.stroke();
+    if(ruined){ctx.strokeStyle='#b66137';for(let i=0;i<5;i++){const a=i*2.3;ctx.beginPath();ctx.moveTo(Math.cos(a)*5,Math.sin(a)*5);ctx.lineTo(Math.cos(a)*16,Math.sin(a)*16);ctx.stroke();}}
+    else{ctx.fillStyle='#211e18';for(let i=0;i<4;i++){const a=i*Math.PI/2+.7;ctx.beginPath();ctx.arc(Math.cos(a)*8,Math.sin(a)*8,2,0,Math.PI*2);ctx.fill();}}
+  }
+  if(!ruined){
+    const aim=Math.atan2(s.player.y-(e.y+port.y),s.player.x-(e.x+port.x));
+    ctx.rotate(aim+Math.PI/2);
+    if(barrel?.complete&&barrel.naturalWidth)ctx.drawImage(barrel,-22,-36,44,58);
+    else{ctx.fillStyle='#343f3d';ctx.strokeStyle='#c5a977';ctx.lineWidth=1.5;ctx.fillRect(-5,-26,10,27);ctx.strokeRect(-5,-26,10,27);ctx.fillStyle='#baa07d';ctx.fillRect(-7,-19,14,4);ctx.fillRect(-7,-9,14,4);ctx.fillStyle='#1b211f';ctx.fillRect(-4,-26,8,4);}
+    if(e.muzzle>0){ctx.fillStyle='#fff2ad';ctx.shadowColor='#ffb654';ctx.shadowBlur=14;ctx.beginPath();ctx.moveTo(-4,-29);ctx.lineTo(0,-42);ctx.lineTo(5,-29);ctx.closePath();ctx.fill();ctx.shadowBlur=0;}
+  }
+  ctx.restore();
+}
 function draw(){
-  ctx.clearRect(0,0,W,H);
+  ctx.clearRect(0,0,W,H);ctx.save();
+  if(s.shake>0&&!reduced){const amount=Math.min(4,s.shake*12);ctx.translate(Math.sin(clock*93)*amount,Math.cos(clock*77)*amount*.65);}
   const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#111328');bg.addColorStop(.6,'#090f21');bg.addColorStop(1,'#102b34');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
   const terrain=images[expedition.planet];
   if(terrain.complete&&terrain.naturalWidth){const tileHeight=W*terrain.naturalHeight/terrain.naturalWidth,offset=s.travel%tileHeight;ctx.globalAlpha=.72;for(let y=offset-tileHeight;y<H;y+=tileHeight)ctx.drawImage(terrain,0,y,W,tileHeight);ctx.globalAlpha=1;ctx.fillStyle='#08102128';ctx.fillRect(0,0,W,H);}
   const nebula=ctx.createRadialGradient(W*.15,H*.38,0,W*.15,H*.38,270);nebula.addColorStop(0,'#5e357920');nebula.addColorStop(1,'#24123200');ctx.fillStyle=nebula;ctx.fillRect(0,0,W,H);
-  for(const star of stars){const y=(star.y+clock*(reduced?3:18)*star.z)%(H+20);ctx.globalAlpha=.28+star.z*.45;ctx.fillStyle=star.z>.85?'#aacbdb':'#687694';ctx.fillRect(star.x,y,star.r,star.r*(star.z>.9?2:1));}ctx.globalAlpha=1;
+  for(const star of stars){const y=(star.y+s.travel*(reduced?.05:.3)*star.z)%(H+20);ctx.globalAlpha=.28+star.z*.45;ctx.fillStyle=star.z>.85?'#aacbdb':'#687694';ctx.fillRect(star.x,y,star.r,star.r*(star.z>.9?2:1));}ctx.globalAlpha=1;
   // Navigational grid and scrolling rail marks, not a decorative scene asset.
   ctx.strokeStyle='#7695bd0d';ctx.lineWidth=1;for(let x=0;x<=W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=(clock*24)%70;y<H;y+=70){ctx.fillStyle='#a6c5d52b';ctx.fillRect(12,y,4,1);ctx.fillRect(W-16,y,4,1);}
-  const activeEnemy=s.enemy&&s.mode!=='resolving';
-  if(activeEnemy||s.mode==='start'){
-    const e=activeEnemy?s.enemy:{x:W/2,y:H*.37,age:clock,shields:{bass:false,quality:false},hit:0};
+  for(let y=s.travel%70;y<H;y+=70){ctx.fillStyle='#a6c5d52b';ctx.fillRect(12,y,4,1);ctx.fillRect(W-16,y,4,1);}
+  const activeEnemy=s.enemy&&s.mode!=='resolving'&&!expedition.safeNoteFlight&&!s.enemy.suspended;
+  if(activeEnemy||s.hydraBlast||s.mode==='start'){
+    const e=s.hydraBlast?.enemy||(activeEnemy?s.enemy:{x:W/2,y:H*.37,age:clock,shields:{bass:false,quality:false},hit:0});
     const model=e.model??0,size=machineSize(model),radius=size*.57;
     const halo=ctx.createRadialGradient(e.x,e.y,15,e.x,e.y,radius*1.3);halo.addColorStop(0,'#b44e892b');halo.addColorStop(1,'#b44e8900');ctx.fillStyle=halo;ctx.fillRect(e.x-radius*1.3,e.y-radius*1.3,radius*2.6,radius*2.6);
-    ctx.save();ctx.translate(e.x,e.y+Math.sin(clock*2)*3);
+    ctx.save();ctx.translate(e.x,e.y);
+    if(s.hydraBlast)ctx.globalAlpha=Math.max(0,1-s.hydraBlast.age/.85);
+    drawHydraFoundation(size);
     const machine=model===1?images.corvette:model===3?images.fortress:images.enemyships;
     if(machine.complete&&machine.naturalWidth){const [sx,sy,sw,sh]=model===1||model===3?[0,0,machine.naturalWidth,machine.naturalHeight]:MACHINE_CROPS[model],scale=size/Math.max(sw,sh);ctx.save();ctx.rotate(Math.PI);ctx.drawImage(machine,sx,sy,sw,sh,-sw*scale/2,-sh*scale/2,sw*scale,sh*scale);ctx.restore();}
-    for(const port of e.guns||enemyGuns(model)){
-      if(port.hp<=0||port.destroyed){
-        ctx.fillStyle='#120d0b';ctx.strokeStyle='#6e3425';ctx.lineWidth=2;ctx.beginPath();ctx.arc(port.x,port.y+5,10,0,Math.PI*2);ctx.fill();ctx.stroke();
-        ctx.strokeStyle='#d265342d';for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(port.x-9+i*7,port.y-6);ctx.lineTo(port.x-14+i*10,port.y+18);ctx.stroke();}continue;
-      }
-      ctx.fillStyle='#69503a';ctx.strokeStyle='#d9b16f';ctx.lineWidth=1;ctx.fillRect(port.x-6,port.y-8,12,19);ctx.strokeRect(port.x-6,port.y-8,12,19);
-      ctx.fillStyle='#28353a';ctx.fillRect(port.x-3,port.y+4,6,14);
-      ctx.fillStyle=e.muzzle>0?'#fff2ad':'#73d4bb';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=e.muzzle>0?14:3;ctx.fillRect(port.x-2,port.y+16,4,e.muzzle>0?11:2);ctx.shadowBlur=0;
-    }
-    for(let i=0;i<2+model;i++){const x=(i-(1+model)/2)*size*.16;ctx.fillStyle='#69e3d9';ctx.globalAlpha=.35+Math.sin(clock*18+i)*.15;ctx.beginPath();ctx.ellipse(x,-size*.37,4,12+Math.sin(clock*15+i)*4,0,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+    for(const port of e.guns||enemyGuns(model))drawHydraGun(port,e);
+    if(e.maxHull&&!s.hydraBlast){ctx.fillStyle='#10191dee';ctx.fillRect(-55,size*.6,110,7);ctx.fillStyle=e.hull/e.maxHull<.3?'#ff8866':'#ecc781';ctx.fillRect(-54,size*.6+1,108*e.hull/e.maxHull,5);}
     for(const [i,kind] of ['bass','quality'].entries()){
       if(e.shields[kind]||(kind==='quality'&&s.sector<2&&s.mode!=='start'))continue;
       ctx.save();ctx.rotate(clock*(i?-.3:.23));ctx.strokeStyle=i?'#ff7ea780':'#79f5d0a0';ctx.lineWidth=2;ctx.setLineDash([26,7]);ctx.beginPath();ctx.arc(0,0,radius+i*10,0,Math.PI*2);ctx.stroke();ctx.restore();
@@ -721,14 +811,17 @@ function draw(){
   ctx.save();ctx.translate(p.x,p.y);if(s.invulnerable>0||expedition.cloaked)ctx.globalAlpha=.45+Math.sin(clock*30)*.3;
   if(expedition.invincible){ctx.strokeStyle='#ffe69a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,36,0,Math.PI*2);ctx.stroke();}
   ctx.strokeStyle='#79f5d029';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,35,0,Math.PI*2);ctx.stroke();
+  ctx.save();ctx.translate(18,25);ctx.scale(.86,.7);ctx.filter='brightness(0) blur(2px)';ctx.globalAlpha=.45;drawPlayerFrame(shipBuild().frame.frame);ctx.restore();
   drawPlayerFrame(shipBuild().frame.frame);
   ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,-6,2,0,Math.PI*2);ctx.fill();ctx.restore();
-  if(s.beam>0&&s.enemy){ctx.strokeStyle='#bdffe7';ctx.lineWidth=4+s.beam*20;ctx.globalAlpha=s.beam/.3;ctx.beginPath();ctx.moveTo(p.x,p.y-26);ctx.lineTo(s.enemy.x,s.enemy.y+30);ctx.stroke();ctx.globalAlpha=1;}
-  for(const r of s.rings){ctx.strokeStyle=`rgba(121,245,208,${1-r.age/.8})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*260,0,Math.PI*2);ctx.stroke();}
+  if(s.beam>0&&s.enemy&&!expedition.safeNoteFlight){ctx.strokeStyle='#bdffe7';ctx.lineWidth=4+s.beam*20;ctx.globalAlpha=s.beam/.3;ctx.beginPath();ctx.moveTo(p.x,p.y-26);ctx.lineTo(s.enemy.x,s.enemy.y+30);ctx.stroke();ctx.globalAlpha=1;}
+  for(const r of s.rings){ctx.strokeStyle=r.explosion?`rgba(255,191,102,${1-r.age/.8})`:`rgba(121,245,208,${1-r.age/.8})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*260,0,Math.PI*2);ctx.stroke();}
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
+  for(const part of s.debris){ctx.save();ctx.translate(part.x,part.y);ctx.rotate(part.angle);ctx.globalAlpha=Math.min(1,part.life);ctx.fillStyle='#b77b43';ctx.strokeStyle='#38281f';ctx.lineWidth=1;ctx.fillRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.strokeRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.restore();}
   if(expedition.showScene)expedition.drawPauseOverlay();
   if(s.flash>0&&!reduced){ctx.fillStyle=`rgba(255,93,134,${s.flash*.3})`;ctx.fillRect(0,0,W,H);}
+  ctx.restore();
 }
 function drawPlayerFrame(frame){
   if(frame===0){if(images.ship.complete&&images.ship.naturalWidth)ctx.drawImage(images.ship,-34,-34,68,68);return;}
@@ -771,5 +864,5 @@ $('replay').addEventListener('click',()=>{s.replays++;expedition.busy?expedition
 $('interval-reference').addEventListener('click',()=>playCapsule(true));
 $('help').addEventListener('click',()=>{if(s.mode==='start'){feedback('Включи звук и нажми «Вылететь»');}else pause(true);});
 // Read-only diagnostics for regression checks; deliberately no answer/skip hook.
-window.earGame=Object.freeze({snapshot:()=>JSON.parse(JSON.stringify({mode:s.mode,sector:s.sector,score:s.score,health:s.health,power:s.power,combo:s.combo,cleared:s.cleared,listening:s.listening,enemy:s.enemy,player:s.player,bullets:s.bullets,stats:s.stats,route:s.route,capsule:s.capsule,intervalStats:s.intervalStats,audio:{state:audio.context?.state,lastCue:audio.lastCue}}))});
+window.earGame=Object.freeze({snapshot:()=>JSON.parse(JSON.stringify({mode:s.mode,sector:s.sector,score:s.score,health:s.health,power:s.power,combo:s.combo,cleared:s.cleared,listening:s.listening,enemy:s.enemy,noteFlight:expedition.snapshot().special?.kind==='flightTones'?{required:expedition.snapshot().special.required,collected:expedition.snapshot().special.collected,cubes:expedition.snapshot().digits,result:expedition.snapshot().special.result}:null,ground:{travel:s.travel,delta:s.groundScrollDelta,combat:s.groundCombat,exploding:!!s.hydraBlast,safeNoteFlight:!!expedition.safeNoteFlight},player:s.player,bullets:s.bullets,stats:s.stats,route:s.route,capsule:s.capsule,intervalStats:s.intervalStats,audio:{state:audio.context?.state,lastCue:audio.lastCue}}))});
 startScreen();installLanguage();requestAnimationFrame(frame);

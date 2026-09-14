@@ -123,12 +123,12 @@ export class FlightAudio {
     this.note(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
     this.schedule(()=>{if(token===this.token)onEnd();},2.6);
   }
-  announce(text,onEnd){
+  announce(text,onEnd,{voice='male'}={}){
     this.stop();const token=this.token;
     if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance){this.schedule(()=>{if(token===this.token)onEnd();},.1);return;}
     const utterance=new window.SpeechSynthesisUtterance(text),voices=window.speechSynthesis.getVoices();
-    utterance.lang='en-US';utterance.rate=.76;utterance.pitch=.72;utterance.volume=.82;
-    utterance.voice=voices.find(v=>/Alex|Daniel|Reed|Ralph|Fred|Rocko/i.test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en[-_](US|GB)/i.test(v.lang))||null;
+    utterance.lang='en-US';utterance.rate=voice==='female'?.88:.8;utterance.pitch=voice==='female'?1.03:.85;utterance.volume=.82;
+    utterance.voice=voices.find(v=>(voice==='female'?/Samantha|Karen|Moira|Tessa|Serena|Ava|Allison|Susan|Zira|Jenny|Aria/i:/Alex|Daniel|Reed|Ralph|Fred|Rocko/i).test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en[-_](US|GB)/i.test(v.lang))||null;
     let finished=false;const finish=()=>{if(finished||token!==this.token)return;finished=true;onEnd();};
     utterance.onend=finish;utterance.onerror=finish;window.speechSynthesis.cancel();
     // Give iOS a short lead-in so the first letter name is not clipped.
@@ -136,6 +136,22 @@ export class FlightAudio {
     // Safari occasionally omits `onend`; keep a fallback, but never cut a
     // slow English voice off before it reaches "color tones".
     this.schedule(finish,Math.max(5.8,text.length*.13));
+  }
+  hydraExplosion({final=false}={}){
+    const ctx=this.context;if(!ctx||ctx.state!=='running')return;
+    const at=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type='triangle';osc.frequency.setValueAtTime(final?100:160,at);osc.frequency.exponentialRampToValueAtTime(28,at+.42);
+    gain.gain.setValueAtTime(final?.34:.16,at);gain.gain.exponentialRampToValueAtTime(.0001,at+.65);
+    osc.connect(gain);gain.connect(this.master);osc.start(at);osc.stop(at+.67);
+    this.voices.add(osc);osc.onended=()=>{this.voices.delete(osc);osc.disconnect();gain.disconnect();};
+    // Short metallic partials, no global stop and no allocation of a long buffer.
+    [34,41,55].forEach((note,i)=>this.note(note,at+i*.025,final?.42:.22,'synth',final?.16:.08));
+  }
+  auditionChord(tonic,chord,onEnd,mode='together',timbre='synth'){
+    this.stop();const token=this.token,notes=chordNotes(chord,tonic),order=mode==='down'?[...notes].reverse():notes;
+    const at=this.context.currentTime+.04,step=mode==='together'?0:.18;
+    order.forEach((note,i)=>timbre==='piano'?this.pianoNote(note,at+i*step,1.35,.58/Math.sqrt(notes.length)):this.note(note,at+i*step,1.35,'synth',.58/Math.sqrt(notes.length)));
+    this.lastCue={kind:'audition-chord',notes,mode,timbre};this.schedule(()=>{if(token===this.token)onEnd();},1.5+step*(notes.length-1));
   }
   trumpetChord(root,intervals,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime+.08,phrase=[0,7,10,12];

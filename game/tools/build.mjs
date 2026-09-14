@@ -20,4 +20,5 @@ for(const name of ['hydra','enemyships','corvette','fortress','scout-art','cruis
   const source=path.join(root,'assets',`${name}.webp`);
   if(fs.existsSync(source))fs.copyFileSync(source,path.join(output,'assets',`${name}.webp`));
 }
+for(const name of ['note-cube','note-drum','turret-base','turret-barrel','turret-ruin'])fs.copyFileSync(path.join(root,'assets',`${name}.webp`),path.join(output,'assets',`${name}.webp`));
 console.log('Static game build complete.');

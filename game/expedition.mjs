@@ -1,6 +1,7 @@
 import {QUALITIES,INTERVALS} from './music.mjs';
 import {IMPORTED_MELODIES} from './melodies-catalog.mjs';
 import {melodyIndicesForLevel} from './melody-levels.mjs';
+import {flightNotes,cubeLayout,cubeFace,partialToneCredit} from './flight-tones.mjs';
 
 export const PILOTS=[
   {name:'Новичок',sector:0,speed:.65,grace:9,obstacleGap:230,description:'I и V · спокойный полёт · помощь'},
@@ -183,6 +184,19 @@ export function createExpedition(api){
   }
   function reset(level=0){pilot=level;planet=level%2?'mars':'moon';teachers=[];turrets=[];walls=[];drops=[];digits=[];special=null;queue=[];timer=5;wallTimer=level===0?99:level===1?8:level===2?7:6.5;artifactTimer=9;turretTimer=8;index=dropIndex=wallIndex=turretIndex=0;cloak=shield=rapid=fuzz=hints=rhythmFocus=collectCooldown=0;render();}
   function render(){
+    if(special?.result){
+      const c=special,r=c.result;
+      if(renderedChallenge!==c){
+        $('special-panel').hidden=false;
+        $('special-title').textContent=`${r.heading} · ${Math.round(r.fraction*100)}%`;
+        $('special-detail').textContent=`${c.chordName} · нужны ${c.required.join(' → ')} · +${r.hp} HP · +${r.energy} энергии`;
+        $('special-options').replaceChildren();
+        const button=document.createElement('button');button.textContent='Продолжить полёт →';
+        button.addEventListener('click',()=>{if(special===c)continueToneResult();});
+        $('special-options').append(button);renderedChallenge=c;
+      }
+      return;
+    }
     const stamp=JSON.stringify([planet,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,special?.artifactType,special?.opening,special?.rollKind,special?.celebrating,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
     if(stamp===lastRender)return;lastRender=stamp;
     $('planet-name').textContent=`${planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
@@ -192,7 +206,7 @@ export function createExpedition(api){
     $('special-panel').dataset.kind=special?.kind||'';
     if(special){
       $('special-title').textContent=special.kind==='reveal'?`SALVAGE CHAMBER · ${ARTIFACTS[special.artifactType].name}`:special.kind==='roulette'?'ROCK TONGUE · RANDOM MODE':special.kind==='poly'?'DRUM MACHINE · RUDIMENTS':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?'MELODY MEMORY · KEY PILOT':special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='flightTones'?`TRUMPETER · ${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:special.kind==='tones'?`COLOR HEARING · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
-      $('special-detail').textContent=special.kind==='reveal'?(special.opening?'Замки открыты · энергетический контур запущен':'Полёт удержан · коснись находки, чтобы активировать'):special.kind==='roulette'?`Барабан выбирает испытание · ${rouletteLabel(special.rollKind)}`:special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?'Полёт удержан · назови тему по-английски или выбери название':special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.kind==='flightTones'?`Лови ноты аккорда · ${special.collected.length}/${special.required.length} · ${Math.ceil(special.time)}s`:special.kind==='tones'?`Выбери весь набор · отмечено ${special.selected.length} · затем нажми ОТВЕТИТЬ`:special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
+      $('special-detail').textContent=special.kind==='reveal'?(special.opening?'Замки открыты · энергетический контур запущен':'Полёт удержан · коснись находки, чтобы активировать'):special.kind==='roulette'?`Барабан выбирает испытание · ${rouletteLabel(special.rollKind)}`:special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?'Полёт удержан · назови тему по-английски или выбери название':special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.kind==='flightTones'?`По порядку · ${special.collected.join(' → ')||'Начни с первой ноты'} · ${special.collected.length}/${special.required.length} · ${Math.ceil(special.time)}s`:special.kind==='tones'?`Выбери весь набор · отмечено ${special.selected.length} · затем нажми ОТВЕТИТЬ`:special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
       const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:RUDIMENTS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):special.kind==='tones'?special.options.map(id=>({id,name:id,icon:''})):[];
       // Keep live buttons in place while the countdown changes: replacing them
       // between pointer-down and pointer-up used to discard some answers.
@@ -244,14 +258,11 @@ export function createExpedition(api){
   }
   function noteName(rootPc,tone){return ROOT_NAMES[(rootPc+TONE_OFFSETS[tone])%12];}
   function makeFlightToneCubes(c){
-    const distractors=ROOT_NAMES.filter(note=>!c.required.includes(note)).sort(()=>Math.random()-.5),cubeCount=Math.max(2,c.required.length);
-    digits=Array.from({length:cubeCount},(_,i)=>{
-      const target=c.required[i%c.required.length],wrong=distractors[i%distractors.length],faces=[target,target,wrong];
-      for(let j=faces.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[faces[j],faces[k]]=[faces[k],faces[j]];}
-      const phase=Math.floor(Math.random()*faces.length);
-      return {label:faces[phase],faces,phase,cube:true,color:'#f1bd67',x:70+(i%3)*(W-140)/2,y:160+Math.floor(i/3)*115,vx:(i%2?1:-1)*(18+Math.random()*18),vy:(i%3?1:-1)*17,age:Math.random()*2};
-    });
+    const labels=[...c.required.slice(c.collected.length,c.collected.length+4)];
+    const distractors=ROOT_NAMES.filter(note=>!c.required.includes(note));
+    digits=cubeLayout(labels,distractors,W,getH(),Math.random,s.player);
   }
+
   function startChallenge(kind,artifactType=null){
     if(special||s.listening)return false;
     if(!['active','resolving'].includes(s.mode))return false;
@@ -280,17 +291,10 @@ export function createExpedition(api){
       const quality=random(pilot===0?triads:pilot===1?sevenths:pilot===2?extended:legendary);
       const modes=pilot===0?['all']:pilot===1?['basic','guide','all']:pilot===2?['basic','guide','all']:['guide','all','all'];
       const toneMode=random(modes),rootPc=Math.floor(Math.random()*12);
-      const family=quality==='maj7sharp11'||quality==='augMaj7'?'maj7':quality.startsWith('m7b5')?'m7b5':quality.startsWith('m7')?'m7':quality.startsWith('7')?'7':quality;
-      let intervals=[...INTERVALS[quality]];
-      if(pilot===3){
-        const colors=[13,14,15,17,18,20,21].filter(interval=>!intervals.some(note=>(note-interval)%12===0));
-        const extraCount=1+Math.floor(Math.random()*Math.min(3,colors.length));
-        for(let i=colors.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[colors[i],colors[j]]=[colors[j],colors[i]];}
-        intervals=[...new Set([...intervals,...colors.slice(0,extraCount)])].sort((a,b)=>a-b);
-      }
-      const toneLabels=toneMode==='all'?null:TONE_PROGRAMS[family]?.[toneMode];
-      const required=toneLabels?[...new Set(toneLabels.map(tone=>noteName(rootPc,tone)))]:[...new Set(intervals.map(interval=>ROOT_NAMES[(rootPc+interval)%12]))];
-      special={...special,artifactType:7,quality,toneMode,rootPc,root:48+rootPc,chordName:`${ROOT_NAMES[rootPc]}${QUALITIES[quality].glyph}`,required,collected:[],intervals};
+      const intervals=[...INTERVALS[quality]];
+      const required=flightNotes(ROOT_NAMES[rootPc],intervals,toneMode,quality);
+      special={...special,artifactType:7,quality,toneMode,rootPc,root:48+rootPc,chordName:`${ROOT_NAMES[rootPc]}${QUALITIES[quality].glyph}`,required,collected:[],intervals,time:45+required.length*12};
+      walls=[];turrets=[];teachers=[];s.bullets=[];s.shots=[];s.drones=[];
       makeFlightToneCubes(special);
     }
     if(kind==='tones'){
@@ -304,6 +308,7 @@ export function createExpedition(api){
     // Reveal and roulette are transition scenes, not musical questions.
     // Replay (including resume from pause) must leave their animation alone.
     if(!special||special.kind==='reveal'||special.kind==='roulette')return;
+    if(special.result)return;
     if(special.celebrating){playMelodyCelebration();return;}
     const current=special,cue= current.cue=(current.cue||0)+1;s.listening=true;signal('♫ Слушай артефакт',true);render();syncPads();
     const done=()=>{if(special!==current||current.cue!==cue||current.celebrating||s.mode==='paused')return;s.listening=false;const prompt=current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':current.kind==='flightTones'?`Лови ноты ${current.toneMode.toUpperCase()} TONES для ${current.chordName}`:current.kind==='tones'?`Собери COLOR TONES для ${current.chordName}`:'Выбери услышанное';signal(prompt);render();syncPads();};
@@ -311,8 +316,11 @@ export function createExpedition(api){
     else if(special.kind==='guide')audio.guide(60+s.route.key,special.target,done);
     else if(special.kind==='chord')audio.chordOnly(special.root,INTERVALS[special.target],done);
     else if(special.kind==='poly')audio.poly(RUDIMENTS[special.target],done);
-    else if(special.kind==='flightTones')audio.announce(`Chord. ${ROOT_SPEECH[special.rootPc]} ${QUALITY_SPEECH[special.quality]||QUALITIES[special.quality].glyph}. Catch ${special.toneMode} tones.`,()=>{if(special===current)audio.trumpetChord(special.root,special.intervals,done);});
-    else if(special.kind==='tones')audio.announce(`Chord. ${ROOT_SPEECH[special.rootPc]} ${QUALITY_SPEECH[special.quality]||QUALITIES[special.quality].glyph}. Find the color tones.`,()=>{if(special===current)audio.trumpetChord(special.root,special.intervals,done);});
+    else if(['flightTones','tones'].includes(special.kind)){
+      const play=()=>{if(special===current)audio.chordOnly(current.root,current.intervals,done);};
+      if(current.announced)play();
+      else{current.announced=true;audio.announce(`Chord. ${ROOT_SPEECH[current.rootPc]} ${QUALITY_SPEECH[current.quality]||QUALITIES[current.quality].glyph}. ${current.kind==='tones'?(Math.random()<.5?'Find the color tones.':'Find the tensions.'):`Catch ${current.toneMode} tones.`}`,play,{voice:current.kind==='tones'?'female':'male'});}
+    }
     else if(special.kind==='melody')audio.melody(special.root,MELODIES[special.target],done);
     else if(special.kind==='mode')audio.scale(special.root,MODES[special.target],special.direction,done);
     else if(special.kind==='rhythm')audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
@@ -326,10 +334,29 @@ export function createExpedition(api){
     if(!c||['reveal','roulette'].includes(c.kind))return;
     api.onMistake?.({kind:c.kind,target:c.target,...(c.kind==='melody'?{melodyId:MELODIES[c.target].id,melodyName:MELODIES[c.target].name}:{}),interval:c.interval,intervals:c.intervals,direction:c.direction,root:c.root??60+s.route.key,quality:c.quality,toneMode:c.toneMode,required:c.required,chordName:c.chordName});
   }
-  function endChallenge(won,wrong=false){
+  function continueToneResult(){
+    if(!special?.result||!['active','resolving'].includes(s.mode))return false;
+    const c=special;special=null;renderedChallenge=null;lastRender='';render();syncPads();
+    if(c.deferredArtifacts?.length){const [type,...rest]=c.deferredArtifacts;artifact(type);if(special)special.deferredArtifacts=rest;}
+    else api.playCue();return true;
+  }
+  function endChallenge(won,wrong=false,credit=null){
     const c=special;if(!c)return;
     if(!won&&!c.misses)recordSpecialMistake(c);
     audio.stop();s.listening=false;special=null;digits=[];
+    if(['flightTones','tones'].includes(c.kind)){
+      const fraction=credit??(won?1:c.kind==='flightTones'?c.collected.length/c.required.length:0);
+      const hp=repair(fraction),energy=Math.round((c.kind==='tones'?45:40)*fraction);
+      s.energy=Math.min(99,s.energy+energy);s.score+=Math.round(250*fraction);
+      if(fraction>0){rapid=Math.max(rapid,14*fraction);shield=Math.max(shield,(c.kind==='tones'?12:8)*fraction);}
+      const percent=Math.round(fraction*100),hpLabel=Number(hp.toFixed(2));
+      const heading=won?'✓ Полный аккорд':fraction>0?'◐ Частичный результат':'✕ Неверный ответ';
+      feedback(`${heading} · ${percent}% · +${hpLabel} HP · +${energy} энергии`,fraction===0);
+      s.fireTimer=Math.max(s.fireTimer,4);render();renderHud();syncPads();
+      // Leave the result readable and keep combat suspended until the player continues.
+      special={...c,result:{fraction,heading,hp:hpLabel,energy},pause:true,selected:c.selected||[]};
+      captures=[];renderedChallenge=null;lastRender='';render();syncPads();return;
+    }
     if(won){s.score+=250;
       if(c.kind==='chord'){s.health=s.maxHealth||5;feedback(`${QUALITIES[c.target].glyph} · HP 100%`);}
       else if(c.kind==='rhythm'){shield=12;rapid=10;const hp=repair();feedback(`${RHYTHMS[c.target].name} · Rhythm Shield${hp?' · +1 HP':''}`);}
@@ -365,17 +392,18 @@ export function createExpedition(api){
     audio.melody(current.root,MELODIES[current.target],()=>{if(special===current&&current.cue===cue&&s.mode!=='paused')endChallenge(true);},{full:true});
   }
   function toggleToneChoice(label){
-    if(!special||special.kind!=='tones'||!['active','resolving'].includes(s.mode)||!special.options.includes(label))return;
+    if(!special||special.result||special.kind!=='tones'||!['active','resolving'].includes(s.mode)||!special.options.includes(label))return;
     const index=special.selected.indexOf(label);
     if(index>=0)special.selected.splice(index,1);else special.selected.push(label);
     lastRender='';render();
   }
   function answerToneSet(){
-    if(!special||special.kind!=='tones'||!['active','resolving'].includes(s.mode))return;
+    if(!special||special.result||special.kind!=='tones'||!['active','resolving'].includes(s.mode))return;
     if(!special.selected.length){feedback('Сначала выбери нужные тоны');return;}
     const chosen=new Set(special.selected),required=new Set(special.required);
     const correct=chosen.size===required.size&&[...required].every(label=>chosen.has(label));
-    endChallenge(correct,!correct);
+    const credit=partialToneCredit(special.required,special.selected);
+    endChallenge(correct,!correct,credit);
   }
   function useRhythmFocus(){
     if(!special||special.kind!=='rhythm'||!rhythmFocus||!['active','resolving'].includes(s.mode))return false;
@@ -405,13 +433,13 @@ export function createExpedition(api){
     if(result.complete)endChallenge(true);else{feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
   }
   function collectFlightTone(label){
-    if(!special||special.kind!=='flightTones'||s.listening)return;
-    const c=special,captured=digits.find(d=>d.label===label),correct=c.required.includes(label)&&!c.collected.includes(label);
+    if(!special||special.result||special.kind!=='flightTones'||s.listening)return;
+    const c=special,captured=digits.find(d=>d.label===label),correct=c.required[c.collected.length]===label;
     collectCooldown=.45;
     if(captured){captures.push({...captured,life:.55,correct});burst(captured.x,captured.y,correct?'#ffd27a':'#ff596e',correct?34:45);s.rings?.push({x:captured.x,y:captured.y,age:0});}
     if(!correct){endChallenge(false,true);return;}
     c.collected.push(label);digits=digits.filter(d=>d!==captured);s.score+=90;lastRender='';
-    if(c.required.every(note=>c.collected.includes(note)))endChallenge(true);else{feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
+    if(c.collected.length===c.required.length)endChallenge(true);else{if(!digits.some(d=>!d.rotating&&d.label===c.required[c.collected.length]))makeFlightToneCubes(c);feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
   }
   function applyArtifact(type){
     const kind=artifactKind(type);
@@ -448,7 +476,8 @@ export function createExpedition(api){
   }
   function artifact(type){
     if(!['active','resolving'].includes(s.mode))return;
-    if(special?.celebrating){(special.deferredArtifacts??=[]).push(type);return;}
+    if(special?.celebrating||special?.result){(special.deferredArtifacts??=[]).push(type);return;}
+    if(!hasArtifactScene(type)){applyArtifact(type);return;}
     audio.stop();s.listening=false;digits=[];queue=[];s.capsule=null;s.capsuleTimer=0;
     if(!hasArtifactScene(type)){applyArtifact(type);return;}
     special={kind:'reveal',artifactType:type,opening:false,pause:true,createdAt:Date.now(),collected:[],options:[]};
@@ -463,6 +492,19 @@ export function createExpedition(api){
     if(special?.pause){render();return;}
     collectCooldown=Math.max(0,collectCooldown-dt);
     captures=captures.filter(c=>(c.life-=dt)>0);
+    if(special?.kind==='flightTones'){
+      walls=[];turrets=[];teachers=[];
+      if(!s.listening){
+        special.time-=dt;
+        if(special.time<=0){endChallenge(false);return;}
+        for(const d of digits){
+          if(d.rotating&&Math.hypot(d.x-s.player.x,d.y-s.player.y)>85)d.age+=dt;
+          const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;
+          if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<29){collectFlightTone(d.label);break;}
+        }
+      }
+      render();return;
+    }
     for(const d of drops){d.age+=dt;d.y+=dt*38;if(Math.hypot(d.x-s.player.x,d.y-s.player.y)<33){d.age=99;artifact(d.type);break;}}
     drops=drops.filter(d=>d.age<22&&d.y<getH()+35);
     if(!s.listening&&!(special?.truceUntil>Date.now())){
@@ -473,10 +515,10 @@ export function createExpedition(api){
       if(!s.bookMission&&artifactTimer<=0){dropArtifact();artifactTimer=pilot===0?16:pilot===1?21:16;}
       const threat=turretThreat(pilot,s.totalCleared,s.bookMission?.chapter||0);turretTimer-=dt;
       if(threat.enabled&&turretTimer<=0&&turrets.length<threat.max){spawnTurret();turretTimer=threat.interval;}
-      for(const wall of walls){wall.y+=dt*42*PILOTS[pilot].speed;if(touchesWall(s.player,wall)){shipHit();s.player.tx=s.player.x=wall.x===0?wall.w+16:wall.x-16;}}
+      for(const wall of walls){wall.y+=s.groundScrollDelta??dt*42*PILOTS[pilot].speed;if(touchesWall(s.player,wall)){shipHit();s.player.tx=s.player.x=wall.x===0?wall.w+16:wall.x-16;}}
       walls=walls.filter(w=>w.y<getH()+80);
       for(const t of turrets){
-        if(t.hp<=0)continue;t.age+=dt;t.y+=dt*29*PILOTS[pilot].speed;t.muzzle=Math.max(0,t.muzzle-dt);
+        if(t.hp<=0){t.y+=s.groundScrollDelta??dt*29;continue;}t.age+=dt;t.y+=s.groundScrollDelta??dt*29*PILOTS[pilot].speed;t.muzzle=Math.max(0,t.muzzle-dt);
         t.aim=Math.atan2(s.player.y-t.y,s.player.x-t.x);
         if(Math.hypot(t.x-s.player.x,t.y-s.player.y)<29)shipHit();
         t.fire-=dt;
@@ -486,7 +528,7 @@ export function createExpedition(api){
           t.muzzle=.18;t.fire=Math.max(2.8,5.4-pilot*.38-Math.min(1.2,s.totalCleared*.08));
         }
       }
-      turrets=turrets.filter(t=>t.hp>0&&t.y<getH()+55);
+      turrets=turrets.filter(t=>t.y<getH()+55);
       for(const t of teachers){if(t.hp<=0)continue;t.age+=dt;t.x+=t.vx*dt;t.y+=t.vy*dt;
         if(t.x<30&&t.vx<0||t.x>W-30&&t.vx>0)t.vx*=-1;
         if(t.y<110&&t.vy<0||t.y>getH()-30&&t.vy>0)t.vy*=-1;
@@ -503,11 +545,20 @@ export function createExpedition(api){
   }
   function drawSprite(img,cell,cols,rows,x,y,size){if(!img?.complete||!img.naturalWidth)return;const sw=img.naturalWidth/cols,sh=img.naturalHeight/rows,scale=size/Math.max(sw,sh);api.ctx.drawImage(img,(cell%cols)*sw,Math.floor(cell/cols)*sh,sw,sh,x-sw*scale/2,y-sh*scale/2,sw*scale,sh*scale);}
   function drawFlightCube(ctx,d){
-    const turn=.7+.3*Math.abs(Math.cos(d.age*2.6));ctx.scale(turn,1);ctx.shadowColor='#ffc66d';ctx.shadowBlur=12;
-    const face=ctx.createLinearGradient(-26,-24,25,24);face.addColorStop(0,'#fff0a9');face.addColorStop(.28,'#d79b37');face.addColorStop(.7,'#7b481c');face.addColorStop(1,'#2d1b12');
-    ctx.fillStyle=face;ctx.strokeStyle='#f3ca78';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-25,-18);ctx.lineTo(-15,-26);ctx.lineTo(19,-23);ctx.lineTo(27,-12);ctx.lineTo(23,20);ctx.lineTo(12,27);ctx.lineTo(-20,22);ctx.lineTo(-28,10);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.shadowBlur=0;ctx.fillStyle='#160f0b';ctx.strokeStyle='#ffe0a0';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,17,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#fff1bf';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 20px ui-monospace,monospace';ctx.fillText(d.label,0,1);
+    const img=images[d.rotating?'note-drum':'note-cube'];
+    if(img?.complete&&img.naturalWidth)ctx.drawImage(img,-43,-43,86,86);
+    else{ctx.fillStyle='#e3bd77';ctx.fillRect(-29,-29,58,58);}
+    ctx.save();ctx.translate(d.rotating?-11:-10,d.rotating?0:6);ctx.transform(1,.11,0,1,0,0);
+    ctx.beginPath();ctx.ellipse(0,0,17,22,0,0,Math.PI*2);ctx.clip();
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#1b1711';ctx.font=`900 ${d.label.length>2?18:24}px Georgia`;
+    const turn=d.turn||0;ctx.fillText(d.label,0,-turn*46);if(turn)ctx.fillText(d.nextLabel,0,46-turn*46);
+    ctx.restore();
+    if(d.rotating){
+      ctx.fillStyle='#101c1ee8';ctx.strokeStyle='#f2c278';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(-23,-47,46,18,4);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#ffdda0';ctx.font='bold 12px Georgia';ctx.textAlign='center';ctx.fillText(`↑ ${cubeFace(d).next}` ,0,-34);
+    }
   }
+
   function physicalRelic(type){
     if(type===0||type===9)return images['artifact-guitar'];
     if(type===1||type===8)return images['artifact-keytar'];
@@ -531,10 +582,11 @@ export function createExpedition(api){
     for(const w of walls){ctx.save();ctx.beginPath();ctx.rect(w.x,w.y,w.w,w.h);ctx.clip();const tex=images[planet];if(tex?.complete&&tex.naturalWidth)ctx.drawImage(tex,0,tex.naturalHeight*.35,tex.naturalWidth,tex.naturalHeight*.2,w.x,w.y,w.w,w.h);ctx.fillStyle='#4b322b66';ctx.fillRect(w.x,w.y,w.w,w.h);ctx.restore();ctx.strokeStyle='#d2a265';ctx.lineWidth=3;ctx.strokeRect(w.x,w.y,w.w,w.h);ctx.fillStyle='#fbd492';for(let x=w.x+12;x<w.x+w.w;x+=30)ctx.fillRect(x,w.y+6,3,3);}
     for(const t of turrets){
       ctx.save();ctx.translate(t.x,t.y);
-      ctx.shadowColor=t.muzzle>0?'#ff9f5e':'#8d7054';ctx.shadowBlur=t.muzzle>0?18:6;
-      ctx.fillStyle='#171b1d';ctx.strokeStyle='#a4774d';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,23,0,Math.PI*2);ctx.fill();ctx.stroke();
-      ctx.strokeStyle='#5f4938';ctx.lineWidth=5;for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(Math.cos(a)*18,Math.sin(a)*18);ctx.lineTo(Math.cos(a)*27,Math.sin(a)*27);ctx.stroke();}
-      ctx.rotate(t.aim);ctx.fillStyle='#563b2c';ctx.strokeStyle='#d1a16c';ctx.lineWidth=2;ctx.fillRect(0,-7,31,14);ctx.strokeRect(0,-7,31,14);ctx.fillStyle=t.muzzle>0?'#fff0a8':'#68d8c3';ctx.fillRect(27,-4,8,8);
+      const base=images[t.hp<=0?'turret-ruin':'turret-base'],barrel=images['turret-barrel'];
+      const size=t.x<W/2?60:70;
+      if(base?.complete&&base.naturalWidth)ctx.drawImage(base,-size/2,-size/2,size,size);
+      if(t.hp>0){ctx.rotate(t.aim+Math.PI/2);if(barrel?.complete&&barrel.naturalWidth)ctx.drawImage(barrel,-size*.36,-size*.60,size*.72,size*.94);
+        if(t.muzzle>0){ctx.fillStyle='#fff0a8';ctx.beginPath();ctx.arc(0,-size*.52,5,0,Math.PI*2);ctx.fill();}}
       ctx.restore();
     }
     for(const t of teachers){
@@ -545,9 +597,9 @@ export function createExpedition(api){
     }
     for(const d of drops){drawRelic(d);ctx.strokeStyle=d.type>=7?`hsl(${(d.age*90+d.type*70)%360} 95% 72%)`:'#eec56a';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=d.type>=7?18:0;ctx.beginPath();ctx.arc(d.x,d.y,29+Math.sin(d.age*5)*2,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
     if(special?.kind==='flightTones'){
-      const lit=special.collected.length,H=getH(),x=W*.76,y=H*.34;
-      ctx.save();ctx.globalAlpha=.82;for(let i=0;i<4;i++){ctx.strokeStyle=`hsla(${(i*85+special.time*25)%360} 95% 68% / ${.28+lit*.18})`;ctx.lineWidth=2+i;ctx.beginPath();ctx.arc(x,y,63+i*14+Math.sin(special.time*3+i)*5,0,Math.PI*2);ctx.stroke();}
-      drawSprite(images.trumpeter,0,1,1,x,y,205);ctx.globalAlpha=1;ctx.fillStyle='#091820d9';ctx.strokeStyle=special.toneMode==='guide'?'#ffc66d':'#78f5d0';ctx.lineWidth=2;ctx.fillRect(18,105,255,43);ctx.strokeRect(18,105,255,43);ctx.fillStyle=ctx.strokeStyle;ctx.textAlign='left';ctx.font='bold 17px Georgia';ctx.fillText(`${special.toneMode.toUpperCase()} TONES · ${special.chordName}`,29,125);ctx.font='11px system-ui';ctx.fillText(`${special.collected.join(' · ')||'♫'}  ${special.collected.length}/${special.required.length}`,29,141);ctx.restore();
+      const lit=special.collected.length,H=getH(),x=W*.82,y=H*.18;
+      ctx.save();ctx.globalAlpha=.82;for(let i=0;i<4;i++){ctx.strokeStyle=`hsla(${(i*85+special.time*25)%360} 95% 68% / ${Math.min(.65,.22+lit*.08)})`;ctx.lineWidth=2+i;ctx.beginPath();ctx.arc(x,y,35+i*7+Math.sin(special.time*3+i)*2,0,Math.PI*2);ctx.stroke();}
+      drawSprite(images.trumpeter,0,1,1,x,y,115);ctx.restore();
     }
     for(const d of [...digits,...captures]){
       ctx.save();ctx.translate(d.x,d.y);
@@ -632,14 +684,15 @@ export function createExpedition(api){
     if(crate?.complete&&crate.naturalWidth){const target=Math.min(W*.72,H*.55),k=target/Math.max(crate.naturalWidth,crate.naturalHeight),dx=x-crate.naturalWidth*k/2,dy=y-crate.naturalHeight*k*.52,dw=crate.naturalWidth*k,dh=crate.naturalHeight*k;ctx.shadowColor='#ffbd66';ctx.shadowBlur=14+pulse*22;ctx.drawImage(crate,dx,dy,dw,dh);ctx.shadowBlur=0;}
     ctx.fillStyle='#101516e8';ctx.strokeStyle='#f0c57d';ctx.lineWidth=2;ctx.fillRect(W*.18,H*.76,W*.64,39);ctx.strokeRect(W*.18,H*.76,W*.64,39);ctx.fillStyle='#ffe4b1';ctx.textAlign='center';ctx.font='bold 15px ui-monospace,monospace';ctx.fillText(rouletteLabel(special.rollKind),x,H*.76+25);concertTitle('ROCK TONGUE · RANDOM MODE');ctx.restore();
   }
-  function drawPauseOverlay(){if(special?.kind==='reveal')drawArtifactReveal();else if(special?.kind==='roulette')drawRouletteOverlay();else if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else if(special?.kind==='tones'&&special.artifactType===11){concertBackdrop('vibraphonist',true);concertTitle('VIBRAPHONE · COLOR HEARING');}else if(special?.kind==='tones')concertPerformer('concert-trumpet-v65',images.trumpeter,'HARMONIC FLIGHT');else drawRhythmOverlay();}
+  function drawPauseOverlay(){if(special?.kind==='flightTones')return;if(special?.kind==='reveal')drawArtifactReveal();else if(special?.kind==='roulette')drawRouletteOverlay();else if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else if(special?.kind==='tones'&&special.artifactType===11){concertBackdrop('vibraphonist',true);concertTitle('VIBRAPHONE · COLOR HEARING');}else if(special?.kind==='tones')concertPerformer('concert-trumpet-v65',images.trumpeter,'HARMONIC FLIGHT');else drawRhythmOverlay();}
   function hitShot(b){
     for(const t of turrets){if(t.hp>0&&Math.hypot(b.x-t.x,b.y-t.y)<24){t.hp-=fuzz?2:1;if(t.hp<=0){burst(t.x,t.y,'#ffbd73',24);s.score+=60;}return true;}}
     for(const t of teachers){if(t.hp>0&&Math.hypot(b.x-t.x,b.y-t.y)<31){if(t.hp<=(fuzz?2:1))killTeacher(t);else t.hp-=fuzz?2:1;return true;}}
     return false;
   }
-  return {reset,render,tick,draw,drawPauseOverlay,hitShot,replay,resumeChallenge,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,collectFlightTone,toggleToneChoice,answerToneSet,artifact,activateArtifact,spawnTeacher,
+  return {continueToneResult,reset,render,tick,draw,drawPauseOverlay,hitShot,replay,resumeChallenge,hint,useRhythmFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,collectFlightTone,toggleToneChoice,answerToneSet,artifact,activateArtifact,spawnTeacher,
     get scenePaused(){return !!special?.pause;},
+    get safeNoteFlight(){return special?.kind==='flightTones';},
     get pausedCombat(){return !!special?.pause||!!special?.truceUntil&&Date.now()<special.truceUntil;},
     get showScene(){return !!special?.pause;},
     get pauseKind(){return special?.pause?special.kind:null;},

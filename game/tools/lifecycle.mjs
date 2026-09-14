@@ -3,6 +3,8 @@
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import fs from 'node:fs';
+import {MELODY_BANK,GENRE_COUNTS} from '../melody-bank.mjs';
+import {createIntelligence} from '../intelligence.mjs';
 import * as music from '../music.mjs';
 import * as intervals from '../intervals.mjs';
 import * as combat from '../combat.mjs';
@@ -21,7 +23,7 @@ const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elemen
 get('space').getContext=()=>({});get('enemy-label').append(new Element());
 class TestAudio {announce(text,onEnd){this.pending=onEnd;}trumpetChord(root,notes,onEnd){this.pending=onEnd;}hydraExplosion({final}){this.explosions=(this.explosions||0)+1;if(final)this.finalExplosions=(this.finalExplosions||0)+1;}rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
-const context=vm.createContext({...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
+const context=vm.createContext({MELODY_BANK,GENRE_COUNTS,createIntelligence,...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
   createDebrief:()=>({record(){},open(){}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
   installLanguage(){},loadFlightImage:async()=>{},createDebrief:()=>({record(){},open(){},log:{pendingCount:0}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
   document:{documentElement:new Element(),getElementById:get,createElement:()=>new Element(),querySelector:selector=>selector==='.cabinet'?get('cabinet'):null,querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
@@ -94,7 +96,7 @@ assert(get('bass-pads').children.length>=4);run('answerBookChord(s.enemy.chord,d
 // A grounded Hydra enters with the exact same displacement as the soil, then
 // locks both together. Listening suppresses unrelated random enemy waves here.
 await run('startRun(3,2);');run('spawnEnemy();s.listening=true;s.shotTimer=99;');
-const approach=state();run('update(.035);');const approaching=state();
+const approach=state();assert.equal(approach.enemy.maxHull,4*(100+approach.enemy.model*35),'Gun-only defeat requires four times the hits');run('update(.035);');const approaching=state();
 assert.equal(approaching.enemy.groundPhase,'approach');
 assert(Math.abs((approaching.enemy.y-approach.enemy.y)-(approaching.travel-approach.travel))<1e-8,'Base stays on the same patch of soil while approaching');
 run('for(let i=0;i<240;i++)update(.035);');assert.equal(state().enemy.groundPhase,'combat');
@@ -113,7 +115,10 @@ run('s.bullets=[];enemyVolley();');
 assert(state().bullets.every(b=>Math.hypot(b.x-(state().enemy.x+state().enemy.guns[0].x),b.y-(state().enemy.y+state().enemy.guns[0].y+17))>1),'Destroyed gun emits no volley');
 // Winning gives a finite chain blast before the next musical question, then
 // releases the terrain again; reduced-motion users get no camera shake.
-run('s.listening=false;answer("bass",s.enemy.chord.offset);answer("quality",s.enemy.chord.quality);');
+const beforeAnswerHull=state().enemy.hull;
+run('s.listening=false;answer("bass",s.enemy.chord.offset);');
+assert.equal(state().enemy.hull,beforeAnswerHull,'One component must not prematurely erase hull HP');
+run('answer("quality",s.enemy.chord.quality);');
 assert(state().hydraBlast);assert.equal(run('expedition.busy'),false);
 const blastTravel=state().travel;run('update(.25);');assert.equal(state().travel,blastTravel);assert.equal(state().shake,0);
 run('for(let i=0;i<30;i++)update(.035);');assert.equal(state().hydraBlast,null);

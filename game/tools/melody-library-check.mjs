@@ -13,7 +13,7 @@ const overlay=html=>{lastOverlay=html;actions=[];elements.clear();for(const matc
 const action=(label,fn)=>{const b=new Element();b.textContent=label;b.onclick=fn;actions.push(b);return b;};
 const library=createMelodyLibrary({overlay,action,enter:id=>menu=id,back:()=>menu='back',audio,isActive:()=>active,launch:()=>launches++});
 try{
-  library.open();assert.equal(menu,'melodies');assert.match(lastOverlay,/200 джазовых мелодий/);assert.equal(elements.get('melody-list').children.length,20);
+  library.open();assert.equal(menu,'melodies');assert.match(lastOverlay,/350 мелодий/);assert.equal(elements.get('melody-list').children.length,20);
   elements.get('melody-search').value='All the Things';elements.get('melody-search').oninput();assert.equal(elements.get('melody-list').children.length,1);
   elements.get('melody-list').children[0].click();assert.equal(menu,'melody-detail');assert.equal(elements.get('melody-title').textContent,'All the things you are');
   actions.find(b=>b.textContent==='▶ Фрагмент').click();await Promise.resolve();assert.equal(audio.calls.at(-1)[0],'melody');assert.equal(audio.calls.at(-1)[4].full,false);
@@ -22,4 +22,4 @@ try{
   library.open();actions.find(b=>b.textContent==='Клавишник · испытание').click();assert.equal(launches,1);
   active=false;library.cancel();assert.equal(audio.calls.at(-1)[0],'stop');
 }finally{globalThis.document=oldDocument;}
-console.log('Melody library checks passed: 200-theme menu, search, excerpt/full listening, stop and launch.');
+console.log('Melody library checks passed: 350-theme menu, search, excerpt/full listening, stop and launch.');

@@ -1,0 +1,358 @@
+{
+  "source": "https://rockcorpus.midside.com/melodic_transcriptions.html",
+  "archive": "https://rockcorpus.midside.com/melodic_transcriptions/rs200_melody_nlt.zip",
+  "attribution": "Trevor de Clercq and David Temperley, Rock Corpus, CC BY 4.0",
+  "caution": "Vocal melody onsets; exact offsets absent. Verify durations/rests against source notation before publishing audio.",
+  "tracks": [
+    {
+      "id": "hey_jude",
+      "sourceFile": "rs200_melody_nlt/hey_jude_dt.nlt",
+      "sha256": "24e5d462db7f12e5d627fb73089615f5aa2126b56aca1e0b699140f34fd1283c",
+      "noteOnsets": 531,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "yesterday",
+      "sourceFile": "rs200_melody_nlt/yesterday_tdc.nlt",
+      "sha256": "1f35b11d7e9b40c0f74a4688a4740477d9d06bfc34dc505459a1d79cdef10165",
+      "noteOnsets": 180,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "let_it_be",
+      "sourceFile": "rs200_melody_nlt/let_it_be_dt.nlt",
+      "sha256": "b0235728afa2297368a9bf4c06bad2541f0af645af4f9b16cc602b270f4cd9f0",
+      "noteOnsets": 341,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "imagine",
+      "sourceFile": "rs200_melody_nlt/imagine_tdc.nlt",
+      "sha256": "730b0f9db6881e1541dbad6f67916731bf873c012969f7f8edf4a083f2900bb4",
+      "noteOnsets": 220,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "hotel_california",
+      "sourceFile": "rs200_melody_nlt/hotel_california_dt.nlt",
+      "sha256": "be6d7023ab65f25119c678eacc4fdc87a799b50602bd6a8caea00327f875049b",
+      "noteOnsets": 443,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "house_of_the_rising_sun",
+      "sourceFile": "rs200_melody_nlt/house_of_the_rising_sun_dt.nlt",
+      "sha256": "27777dcdcfc1b89fdaebd93a47a0d73e2fcfbd2da02ad055933dd72e414d6fe1",
+      "noteOnsets": 191,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "bohemian_rhapsody",
+      "sourceFile": "rs200_melody_nlt/bohemian_rhapsody_tdc.nlt",
+      "sha256": "f217bfcc2036d04c664132feec26e1ac7cd75fa9a5dddeb01a2f36001d723553",
+      "noteOnsets": 539,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "smells_like_teen_spirit",
+      "sourceFile": "rs200_melody_nlt/smells_like_teen_spirit_dt.nlt",
+      "sha256": "0c4593157d228c6d05e4181f82374063b39e39bbc04a204f6fc19a1b95fc7e3b",
+      "noteOnsets": 396,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "satisfaction",
+      "sourceFile": "rs200_melody_nlt/satisfaction_dt.nlt",
+      "sha256": "055b07fc9f61c46465e1d8681ffb19648dd8565e2a5f2960c9a018ff952eedbd",
+      "noteOnsets": 355,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "stairway_to_heaven",
+      "sourceFile": "rs200_melody_nlt/stairway_to_heaven_tdc.nlt",
+      "sha256": "697aece15d24f81d1b341422922bc693fc1ccb76263abf0d8890cee21a8c3b4c",
+      "noteOnsets": 478,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "sweet_child_o_mine",
+      "sourceFile": "rs200_melody_nlt/sweet_child_o_mine_tdc.nlt",
+      "sha256": "d84b4dab21fda9675a35f370b42ee33a70491d14e51647433ba8b07fed51aef7",
+      "noteOnsets": 394,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "every_breath_you_take",
+      "sourceFile": "rs200_melody_nlt/every_breath_you_take_dt.nlt",
+      "sha256": "91026962214f4e7fd336b330947e7f17cb060aa97234b1426c4d749c479210c7",
+      "noteOnsets": 279,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "losing_my_religion",
+      "sourceFile": "rs200_melody_nlt/losing_my_religion_dt.nlt",
+      "sha256": "5273ef72f2a71631c1b9e374984eac7869dd5fc5f5b9e886951e61e91a6b6ef2",
+      "noteOnsets": 320,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "come_as_you_are",
+      "sourceFile": "rs200_melody_nlt/come_as_you_are_dt.nlt",
+      "sha256": "e54138dd7dde4589317a6f00004ad9bdd033fb9a02f23bd6b02108109dc3ce9f",
+      "noteOnsets": 232,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "enter_sandman",
+      "sourceFile": "rs200_melody_nlt/enter_sandman_tdc.nlt",
+      "sha256": "18dfea5ecaf4cb8995b1606a19d6e1bab6758b8ace14f596a41fe953592b80ac",
+      "noteOnsets": 234,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "back_in_black",
+      "sourceFile": "rs200_melody_nlt/back_in_black_dt.nlt",
+      "sha256": "6502d4be53196de7eedadabfc986c292b0eb84581563c9f4b2c4621869348624",
+      "noteOnsets": 298,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "paint_it_black",
+      "sourceFile": "rs200_melody_nlt/paint_it_black_dt.nlt",
+      "sha256": "0681b30065fa25a4684b13dd1eb9d04e562eeea14b004eba4c49b0efb215a499",
+      "noteOnsets": 451,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "light_my_fire",
+      "sourceFile": "rs200_melody_nlt/light_my_fire_tdc.nlt",
+      "sha256": "b8a794be3d8feb09b85a461ea2403630f5d27aef5960d961c471a3b2ea8523c0",
+      "noteOnsets": 256,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "johnny_b_goode",
+      "sourceFile": "rs200_melody_nlt/johnny_b_goode_dt.nlt",
+      "sha256": "8479c11ff42c8028c7fd22dac689afed9dc866956e57bcac75254aa964fc7c44",
+      "noteOnsets": 293,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "born_to_be_wild",
+      "sourceFile": "rs200_melody_nlt/born_to_be_wild_dt.nlt",
+      "sha256": "02a315e746c7755475aa6d911a6808e6a84e2ad860fec05022b672cabbfa8a82",
+      "noteOnsets": 264,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "california_dreamin",
+      "sourceFile": "rs200_melody_nlt/california_dreamin_tdc.nlt",
+      "sha256": "d88103e8f1a99e525dd01ae199ae0c92e28ace3def6795b84c48eb4ac70b4440",
+      "noteOnsets": 158,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "the_sounds_of_silence",
+      "sourceFile": "rs200_melody_nlt/the_sounds_of_silence_tdc.nlt",
+      "sha256": "a678cd884b93e2c0477be4f4cf046e4268a43fddee6b1845fb13accf4275c01d",
+      "noteOnsets": 283,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "help",
+      "sourceFile": "rs200_melody_nlt/help_dt.nlt",
+      "sha256": "28077b131556de1ba5fe3ca3490670d543538634c17af90b070da06469d4e819",
+      "noteOnsets": 331,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "a_hard_days_night",
+      "sourceFile": "rs200_melody_nlt/a_hard_days_night_tdc.nlt",
+      "sha256": "eb327d585967bd235fa674a1e695d2b42f5abdaf3a0cde66f0df91a77cf744e5",
+      "noteOnsets": 306,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "all_along_the_watchtower",
+      "sourceFile": "rs200_melody_nlt/all_along_the_watchtower_dt.nlt",
+      "sha256": "a6dc2bc30800e63c05e7026f31a0b72ca18ade294af12e948d13f31de1c2ce97",
+      "noteOnsets": 178,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "sunshine_of_your_love",
+      "sourceFile": "rs200_melody_nlt/sunshine_of_your_love_tdc.nlt",
+      "sha256": "60c510e6fbc8494123473f26b66f872202cbd82f02e6cc5ee31d08cd36ee28e4",
+      "noteOnsets": 261,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "whole_lotta_love",
+      "sourceFile": "rs200_melody_nlt/whole_lotta_love_tdc.nlt",
+      "sha256": "889e17ccb110c538de841ab56c2e946588e19b84a5acac27ece01bd4eb2d588c",
+      "noteOnsets": 348,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "with_or_without_you",
+      "sourceFile": "rs200_melody_nlt/with_or_without_you_dt.nlt",
+      "sha256": "b89b1936bd5a9336d2461c26f7577a6bf261d82f7af4b63f873843eaf46c92b5",
+      "noteOnsets": 250,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "one",
+      "sourceFile": "rs200_melody_nlt/one_tdc.nlt",
+      "sha256": "2a2e0d5d8b915020f60fe35914b8e603b306edc6459b54d8338b5e39971cbab4",
+      "noteOnsets": 318,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "tears_in_heaven",
+      "sourceFile": "rs200_melody_nlt/tears_in_heaven_tdc.nlt",
+      "sha256": "841ab9d48b1f27d1d9b31cbb9f88cacefbdcedebf0f3a02f298b00ab7b4961da",
+      "noteOnsets": 199,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "dream_on",
+      "sourceFile": "rs200_melody_nlt/dream_on_tdc.nlt",
+      "sha256": "8f4c273dadb6896148ca6921dd0d6898ecb28aed72bda87ec8936e30d6fb1048",
+      "noteOnsets": 407,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "go_your_own_way",
+      "sourceFile": "rs200_melody_nlt/go_your_own_way_tdc.nlt",
+      "sha256": "1e916e4430f328401dfb15f750abe31a8bfa1597a32c83868d286a5ace5a3d90",
+      "noteOnsets": 263,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "london_calling",
+      "sourceFile": "rs200_melody_nlt/london_calling_tdc.nlt",
+      "sha256": "ecfe9f5d71d2453bb6ab49d25b57d3230596eb09ad9294ee0de2aad44f2243e6",
+      "noteOnsets": 351,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "should_i_stay_or_should_i_go",
+      "sourceFile": "rs200_melody_nlt/should_i_stay_or_should_i_go_tdc.nlt",
+      "sha256": "f699d3cefc3d028aca00de3f34f23e5db61efc5e44161079fbb7183c20f85055",
+      "noteOnsets": 281,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "blitzkrieg_bop",
+      "sourceFile": "rs200_melody_nlt/blitzkrieg_bop_tdc.nlt",
+      "sha256": "644e4047fc93b700468682cb6712a2c7684bfed7b539e5cdd8648db7a127dd74",
+      "noteOnsets": 222,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "my_generation",
+      "sourceFile": "rs200_melody_nlt/my_generation_dt.nlt",
+      "sha256": "7ae11042e857ddea2685c78ac7763fdd43c2e9f0277dc32607cee37cd2b10da5",
+      "noteOnsets": 242,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "you_really_got_me",
+      "sourceFile": "rs200_melody_nlt/you_really_got_me_tdc.nlt",
+      "sha256": "2ca440081736544202124798d01c9fab611d34b7349771b5d8a376be205b4bb7",
+      "noteOnsets": 263,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "layla",
+      "sourceFile": "rs200_melody_nlt/layla_tdc.nlt",
+      "sha256": "4ad42408b327f5a7b016168af1c43c5a1672fa0bcb01ec1c57a64d46d4ab48ab",
+      "noteOnsets": 251,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "purple_haze",
+      "sourceFile": "rs200_melody_nlt/purple_haze_dt.nlt",
+      "sha256": "206aa9b70f3081e6502c5438e20ab9d718819a1ce8ddb53e7f52568f028d47fc",
+      "noteOnsets": 101,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "gimme_shelter",
+      "sourceFile": "rs200_melody_nlt/gimme_shelter_dt.nlt",
+      "sha256": "6ef141d23136acc43c87211b128017c444c0821325124d57624d52718361707a",
+      "noteOnsets": 284,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "sympathy_for_the_devil",
+      "sourceFile": "rs200_melody_nlt/sympathy_for_the_devil_dt.nlt",
+      "sha256": "389fc559c336d2fd95f1a3d85ea057681c6a80d39b0a74ab67186a3debe35453",
+      "noteOnsets": 517,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "free_fallin",
+      "sourceFile": "rs200_melody_nlt/free_fallin_tdc.nlt",
+      "sha256": "841dbf1b0466323817b4063b05eacb1cd41ddbab8f5d7193f8f24955d3d9f039",
+      "noteOnsets": 250,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "norwegian_wood",
+      "sourceFile": "rs200_melody_nlt/norwegian_wood_dt.nlt",
+      "sha256": "709cfa0e139ff61bf34327883a360271dee7ba7d45b56b7c6b18d21a3842c727",
+      "noteOnsets": 134,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "eleanor_rigby",
+      "sourceFile": "rs200_melody_nlt/eleanor_rigby_dt.nlt",
+      "sha256": "02b85e207a4cf7bbfd97af1d953417fc359bae14585886830f2f2f63b6cf6192",
+      "noteOnsets": 250,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "in_my_life",
+      "sourceFile": "rs200_melody_nlt/in_my_life_tdc.nlt",
+      "sha256": "a00a56c08c8404a1fc7baaee4ab7c8d7bca721e5faaabf189ed70fa7b8372ba7",
+      "noteOnsets": 210,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "while_my_guitar_gently_weeps",
+      "sourceFile": "rs200_melody_nlt/while_my_guitar_gently_weeps_dt.nlt",
+      "sha256": "09e28c359df797dc456b60c0b29795f88413cbe141b2ab7871469ed41acda82b",
+      "noteOnsets": 179,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "good_vibrations",
+      "sourceFile": "rs200_melody_nlt/good_vibrations_dt.nlt",
+      "sha256": "599496f519f8716cac429954be967908359f4df57286a08186d03c7a0343afbd",
+      "noteOnsets": 321,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "a_whiter_shade_of_pale",
+      "sourceFile": "rs200_melody_nlt/a_whiter_shade_of_pale_tdc.nlt",
+      "sha256": "cd1e45d71df3a4a54b09ba033fc4dbda8a1fbddf6744a287af2d6afb969df79b",
+      "noteOnsets": 232,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "born_to_run",
+      "sourceFile": "rs200_melody_nlt/born_to_run_dt.nlt",
+      "sha256": "bf229d781736c04ae117e3bda815e7a1289873a0c661b58ca65234b56d22f861",
+      "noteOnsets": 465,
+      "status": "source-available-not-imported"
+    },
+    {
+      "id": "proud_mary",
+      "sourceFile": "rs200_melody_nlt/proud_mary_dt.nlt",
+      "sha256": "988f60f2d6e1db2d01d3098fc43a151f8e538bad4c1b78dd9f69ad8391d8b385",
+      "noteOnsets": 229,
+      "status": "source-available-not-imported"
+    }
+  ]
+}

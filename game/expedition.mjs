@@ -1,5 +1,5 @@
 import {QUALITIES,INTERVALS} from './music.mjs';
-import {IMPORTED_MELODIES} from './melodies-catalog.mjs';
+import {MELODY_BANK} from './melody-bank.mjs';
 import {melodyIndicesForLevel} from './melody-levels.mjs';
 import {flightNotes,cubeLayout,cubeFace,partialToneCredit} from './flight-tones.mjs';
 
@@ -118,7 +118,7 @@ export const TONE_PROGRAMS={
   '7sus4':{basic:['1','5'],guide:['11','♭7'],color:[['9','13']]},
 };
 export const TONE_MODES=['basic','guide','color'];
-export const MELODIES=IMPORTED_MELODIES;
+export const MELODIES=MELODY_BANK;
 export const MODES=[
   {name:'Ionian',level:0,notes:[0,2,4,5,7,9,11,12]},{name:'Dorian',level:0,notes:[0,2,3,5,7,9,10,12]},{name:'Phrygian',level:0,notes:[0,1,3,5,7,8,10,12]},{name:'Lydian',level:0,notes:[0,2,4,6,7,9,11,12]},{name:'Mixolydian',level:0,notes:[0,2,4,5,7,9,10,12]},{name:'Aeolian',level:0,notes:[0,2,3,5,7,8,10,12]},{name:'Locrian',level:0,notes:[0,1,3,5,6,8,10,12]},
   {name:'Harmonic Minor',level:1,notes:[0,2,3,5,7,8,11,12]},{name:'Phrygian Dominant',level:1,notes:[0,1,4,5,7,8,10,12]},{name:'Melodic Minor',level:1,notes:[0,2,3,5,7,9,11,12]},{name:'Lydian Dominant',level:1,notes:[0,2,4,6,7,9,10,12]},{name:'Altered',level:1,notes:[0,1,3,4,6,8,10,12]},{name:'Locrian Natural 2',level:1,notes:[0,2,3,5,6,8,10,12]},
@@ -166,6 +166,7 @@ export function createExpedition(api){
   let cloak=0,shield=0,rapid=0,fuzz=0,hints=0,rhythmFocus=0,collectCooldown=0,lastRender='',captures=[],renderedChallenge=null;
   const $=id=>document.getElementById(id);
   const random=items=>items[Math.floor(Math.random()*items.length)];
+  const teach=(kind,items)=>api.intelligence?.settings.enabled?api.intelligence.pick(kind,items):random(items);
   const artifactKind=type=>type===0?'mode':type===1?'melody':type===2?'guide':type===6?'poly':type===7?'flightTones':type===8?'melody':type===9?'mode':type===10?'rhythm':type===11?'tones':null;
   const hasArtifactScene=type=>type!==3;
   const rouletteKinds=['mode','melody','guide','chord','poly','flightTones','tones','rhythm'];
@@ -175,6 +176,7 @@ export function createExpedition(api){
   let melodyDeck=[],melodyDeckLevel=-1,lastMelody=-1;
   function nextMelody(){
     const pool=melodyIndicesForLevel(pilot);
+    if(api.intelligence){lastMelody=api.intelligence.pick('melody',pool,{id:i=>MELODIES[i].id,genre:i=>MELODIES[i].genre||'jazz',progressive:true});return lastMelody;}
     if(!melodyDeck.length||melodyDeckLevel!==pilot){
       melodyDeck=[...pool];melodyDeckLevel=pilot;
       for(let i=melodyDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[melodyDeck[i],melodyDeck[j]]=[melodyDeck[j],melodyDeck[i]];}
@@ -270,10 +272,10 @@ export function createExpedition(api){
     special={kind:kind,artifactType,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','poly','melody','mode'].includes(kind),truceUntil:Date.now()+3500,beat:0,createdAt:Date.now()};
     s.bullets=[];
     if(kind==='numbers'){special.interval=random(pilot<2?[3,4,6,7]:[1,2,3,4,5,6,7,8,9,10,11,12]);special.direction=random(['up','down']);makeNumbers(special);}
-    if(kind==='guide'){special.target=random(['3','7']);makeNumbers(special);}
-    if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=random(special.options);special.root=48+Math.floor(Math.random()*12);}
-    if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=random(pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
-    if(kind==='poly'){special.options=RUDIMENTS.map((_,i)=>i).filter(i=>RUDIMENTS[i].level<=pilot);special.target=random(special.options);}
+    if(kind==='guide'){special.target=teach('guide',['3','7']);makeNumbers(special);}
+    if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=teach('chord',special.options);special.root=48+Math.floor(Math.random()*12);}
+    if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=teach('rhythm',pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
+    if(kind==='poly'){special.options=RUDIMENTS.map((_,i)=>i).filter(i=>RUDIMENTS[i].level<=pilot);special.target=teach('poly',special.options);}
     if(kind==='melody'){
       special.target=nextMelody();
       const others=melodyIndicesForLevel(pilot).filter(i=>i!==special.target);
@@ -342,6 +344,7 @@ export function createExpedition(api){
   }
   function endChallenge(won,wrong=false,credit=null){
     const c=special;if(!c)return;
+    api.intelligence?.record(c.kind,c.kind==='melody'?MELODIES[c.target].id:c.target??c.interval??`${c.quality}:${c.toneMode}`,credit??(won&&!c.misses?1:0));
     if(!won&&!c.misses)recordSpecialMistake(c);
     audio.stop();s.listening=false;special=null;digits=[];
     if(['flightTones','tones'].includes(c.kind)){
@@ -413,7 +416,7 @@ export function createExpedition(api){
   }
   function answerSpoken(text){
     if(!special||!['melody','mode'].includes(special.kind)||!['active','resolving'].includes(s.mode))return false;const heard=String(text).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(),items=special.kind==='melody'?MELODIES:MODES;
-    const match=special.options.find(i=>(items[i].aliases||[items[i].name.toLowerCase()]).some(alias=>heard.includes(alias)));
+    const match=special.options.find(i=>(items[i].aliases||[items[i].name.toLowerCase()]).some(alias=>heard.includes(alias.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim())));
     if(match===undefined){feedback(`Не расслышал название: “${text}”`,true);return false;}answerSpecial(match);return true;
   }
   function collectNumber(label){

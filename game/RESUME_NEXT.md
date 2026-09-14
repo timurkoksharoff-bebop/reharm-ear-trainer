@@ -1,4 +1,48 @@
+# Space Music College — BUILD 078, current checkpoint
+
+**078 prepared locally; publication verification pending.** Previous live release077.
+Actual code now integrates **200 jazz + 50 rock + 100 classical = 350 melodies**.
+Read BUILD_078_NOTES.md and MELODY_CATALOG_SOURCES.md for verified scope/limits.
+The earlier entries below about “sources only” are superseded by this checkpoint.
+
+Completed: real melody imports, source provenance, genre preference, mixed
+level pools48/100/200/350, adaptive genre-balanced selection and local learning
+history, Hydra x4 gun-only durability / instant defeat on full correct answer.
+Mobile browser exercised all three genres, excerpt/full/stop and preference
+persistence. Canonical tests passed. No raw source archives or PDFs published.
+
+Remaining: adaptive whole harmony routes and base intervals; 50/50 old cube/
+cymbal bonuses and SAY TITLE replacement; art consistency audit; additional
+melody-by-melody listening corrections after user testing. Classical bank is
+familiar-first plus advanced teaching repertoire, not100 equally famous tunes.
+DCML65 themes are noncommercial-sharealike; commercial use needs replacement
+or permission. This is recorded in source documentation and library metadata.
+
+## Earlier checkpoints (historical; top section takes precedence)
+
 # Space Music College — актуальный контекст и план, 14 сентября 2026
+
+## Сверка после паузы
+
+Все изменения 078 сохранились локально, но не закоммичены и не опубликованы.
+Работы по rock/classical остановились из-за лимита использования: готовых
+`rock-melodies.mjs` / `classical-melodies.mjs` нет. Не считать их внедрёнными.
+Сохранились ROCK_050_SOURCES.json (50 выбранных источников) и скачанный архив
+/tmp/smc-rock-melodies.zip. Следующее действие — реальный импорт этих 50 мелодий.
+Последнее улучшение Intelligence в исходнике: знакомые стартовые темы отдельно
+по жанрам, баланс жанров независимо от размера каталога, новые темы не закрываются
+после последующей ошибки, защита от повреждённых сохранений. Тест модуля прошёл;
+после этих последних изменений bundle нужно пересобрать перед браузерным тестом.
+Потом: классика до 100 узнаваемых тем, подключение жанров к общему банку,
+адаптация маршрутов гидры и интервалов, проверка/публикация 078.
+
+## Последняя поправка: прочность гидры
+
+В 078 локально: корпус выдерживает в 4 раза больше обычных попаданий.
+Правильная ступень по отдельности больше не снимает 45% корпуса; полное
+определение аккорда сразу запускает детонацию независимо от оставшейся HP.
+Пушки сохраняют собственную прочность. Проверка lifecycle охватывает оба пути.
+Не опубликовано; параллельный приоритет 50 rock / 100 classical сохраняется.
 
 ## BUILD 077 — опубликована, 14 сентября 2026
 
@@ -8,11 +52,19 @@
 note-drum.webp совпадает с локальным. Мобильная ссылка:
 https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/game/?release=077
 
-**Следующая сборка — 078:** разделить старый кубик и старую тарелку как
-50/50-бонусы, заменить SAY TITLE, проверить соответствие остальных артефактов.
-После этого — 50 rock / 100 classical и жанровые предпочтения. Нижние A/B
-списки сохраняют спецификацию; состояние завершённых задач определяет этот
-верхний итог 077 и BUILD_077_NOTES.md.
+**Следующая сборка — 078, приоритет изменён пользователем:** 50 узнаваемых
+рок-мелодий + 100 классических, жанровые настройки перед полётом и Intelligence.
+50/50 старого кубика/тарелки, SAY TITLE и прочие шероховатости остаются в очереди.
+
+Локальная работа 078 (ещё НЕ опубликована): модуль `intelligence.mjs`, отдельное
+хранилище успешных/ошибочных ответов, освоение и постепенное открытие репертуара,
+подключение к выбору мелодий и результатам заданий/щитов гидры. Настройки в ангаре.
+Пока только существующие 200 мелодий; рок/классика ещё не добавлены. Адаптивный выбор ритмов, парадидлов, guide и отдельного chord-задания подключён.
+Маршруты гидры/основные интервалы ещё предстоит подключить к выборке; их
+гармонический контекст нельзя разрушать перестановкой отдельных аккордов.
+Источник rock: https://rockcorpus.midside.com/ (200 вокальных мелодий, CC BY4.0;
+есть только onset, длительности требуют аккуратной обработки). Classical:
+OpenScore / Hauptstimme (главная тема в оркестровых партитурах), проверка впереди.
 
 - Встроены прозрачные растровые кубики: до четырёх фиксированных нот и один
   медленный барабан (4,2 s удержание + 0,6 s смена, замирает возле корабля).
@@ -36,6 +88,21 @@ https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/game/?release=077
 - **Дальше:** B2 (разделение старого кубика/тарелки, 50/50, SAY TITLE),
   музыкальный контент 50 rock + 100 classical, жанровой профиль/Intelligence.
   Смешанный график летающих и наземных гидр тоже ещё не внедрён.
+
+### Контрольная точка 078, 14 сентября
+
+- 50 рок-кандидатов сопоставлены с реальными файлами корпуса; SHA и количество
+  нот в `ROCK_050_SOURCES.json`. Это НЕ 50 готовых игровых мелодий.
+- Архив скачан `/tmp/smc-rock-melodies.zip`, повторяемый URL есть в manifest.
+- Classical: Hauptstimme имеет готовые `_melody.mxl`, CC0 партитуры,
+  CC-BY-SA annotations. Не брать 100 движений симфоний только ради числа:
+  нужен узнаваемый набор с Моцартом, Шопеном, Чайковским и другими.
+- Проверены intelligence-check, expedition-check, lifecycle, check; bundle
+  пересобран. Chrome 390×844: экран настроек открывается, Рок выбирается,
+  ошибок JS нет. Основной tests/smoke.cjs ранее отсутствовал.
+- Следом: импорт реальных 50/100, жанровые пулы по уровням, проверка ритма/
+  пауз/узнаваемости; затем обучение на реальных маршрутах и интервалах.
+- Не опубликовано: мобильная версия остаётся 077.
 
 ## ЧИТАТЬ СНАЧАЛА: единая точка продолжения
 

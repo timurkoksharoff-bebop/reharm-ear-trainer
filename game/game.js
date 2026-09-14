@@ -1,3 +1,5 @@
+import {MELODY_BANK,GENRE_COUNTS} from './melody-bank.mjs';
+import {createIntelligence} from './intelligence.mjs';
 import {createDebrief} from './debrief.mjs';
 import {createMelodyLibrary} from './melody-library.mjs';
 import {createStandardsLibrary} from './standards-library.mjs';
@@ -9,6 +11,7 @@ import {pressure,formation,stepDrone,hitCircle} from './combat.mjs';
 import {INTERVAL_TARGETS,INTERVAL_MODES,targetForSector,createCapsule,capsuleOutcome} from './intervals.mjs';
 import {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,NOTE_NAMES,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,RUDIMENTS,rudimentScore,createExpedition} from './expedition.mjs';
 
+const intelligence=createIntelligence(localStorage);
 const $=id=>document.getElementById(id);
 const canvas=$('space'),ctx=canvas.getContext('2d'),audio=new FlightAudio();
 function syncViewportHeight(){
@@ -69,7 +72,7 @@ function listenTitle(){
 }
 const debrief=createDebrief({storage:localStorage,audio,overlay,action,enter:enterMenu,back:menuBack,setMode:()=>{s.mode='debrief';s.listening=false;s.keys.clear();},isActive:()=>s.mode==='debrief'});
 function recordHydraMistake(){if(s.enemy?.chord){debrief.record({kind:'hydra',chord:s.enemy.chord,level:expedition.level,tonic:(s.route.register??48)+s.route.key});s.enemy.reviewRecorded=true;}}
-const expedition=createExpedition({onMistake:item=>debrief.record(item),s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
+const expedition=createExpedition({intelligence,onMistake:item=>debrief.record(item),s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
 const stars=Array.from({length:85},()=>({x:Math.random()*480,y:Math.random()*1100,z:.25+Math.random(),r:Math.random()*1.3+.3}));
 const MACHINES=['РАЗВЕДЧИК','КОРВЕТ','КРЕЙСЕР','КРЕПОСТЬ'];
 const MACHINE_CROPS=[[135,20,380,490],[675,20,490,505],[60,530,520,640],[588,515,666,720]];
@@ -271,7 +274,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 077</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 078</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -284,11 +287,23 @@ function openFlightConsole(){
   const boxes=portrait?[[9,60,39,7],[49,60,41,7],[9,67.5,39,7],[49,67.5,41,7]]:[[15,37,34,13],[50,37,35,13],[15,52,34,14],[50,52,35,14]];
   names.forEach((name,i)=>consoleButton(name,boxes[i],()=>{consolePilot=i;openFlightConsole();},i===consolePilot));
   $('console-status').textContent=`${names[consolePilot]} · ${PILOTS[consolePilot].description}`;
+  consoleButton('INTELLIGENCE · ЖАНРЫ',portrait?[20,51,60,7]:[35,24,33,8],openLearningSettings);
   consoleButton('LAUNCH',portrait?[20,76,58,8]:[34,71,31,13],()=>startRun(PILOTS[consolePilot].sector,consolePilot));
   consoleButton('MISSIONS',portrait?[8,86,20,6]:[4,80,12,9],()=>openBookFlight());
   consoleButton('HANGAR',portrait?[29,86,20,6]:[17,80,12,9],openHangar);
   consoleButton('SOUND LAB',portrait?[50,86,21,6]:[72,80,14,9],()=>openSoundLab());
   consoleButton('RU / EN',portrait?[72,86,20,6]:[87,82,12,9],()=>$('language').click());
+}
+function openLearningSettings(){
+  enterMenu('learning',openLearningSettings);
+  const settings=intelligence.settings;
+  overlay(`<h2>Перед полётом</h2><p>Intelligence чаще возвращает трудные темы и постепенно открывает новые. Освоенные тоже повторяются.</p><div id="learning-options" class="study-tabs"></div><p>Жанр задаёт предпочтение в смешанном репертуаре. ${GENRE_COUNTS.jazz} джазовых · ${GENRE_COUNTS.rock} рок · ${GENRE_COUNTS.classical} классических мелодий.</p>`);
+  const wrap=$('learning-options');
+  for(const [label,change,selected] of [
+    ['Intelligence: '+(settings.enabled?'включён':'выключен'),{enabled:!settings.enabled},settings.enabled],
+    ...[['mixed','Смешанный'],['jazz','Джаз'],['rock','Рок'],['classical','Классика']].map(([genre,label])=>[label,{genre},genre===settings.genre])
+  ]){const b=document.createElement('button');b.textContent=(selected?'✓ ':'')+label;b.addEventListener('click',()=>{intelligence.configure(change);openLearningSettings();});wrap.append(b);}
+  action('← В ангар',openFlightConsole);
 }
 function openSoundLab(selection=0){
   enterMenu('sound-lab',()=>openSoundLab(selection));
@@ -299,7 +314,7 @@ function openSoundLab(selection=0){
   $('console-status').textContent='SOUND LAB · открой нужный раздел';
   consoleButton('RU / EN',[57,42,11,7],()=>$('language').click());
   const quick=document.createElement('div');quick.className='console-quick';
-  for(const [label,fn] of [['♫ МЕЛОДИИ · 200',openMelodies],['▶ RHYTHM · проверить режим',()=>launchEncounter(10)],['▶ DRUM MACHINE',()=>launchEncounter(6)],['CREW · персонажи',openCrewGallery],['РАЗБОР ПОЛЁТА',debrief.open]]){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);quick.append(b);}
+  for(const [label,fn] of [[`♫ МЕЛОДИИ · ${MELODY_BANK.length}`,openMelodies],['▶ RHYTHM · проверить режим',()=>launchEncounter(10)],['▶ DRUM MACHINE',()=>launchEncounter(6)],['CREW · персонажи',openCrewGallery],['РАЗБОР ПОЛЁТА',debrief.open]]){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);quick.append(b);}
   $('console-scene').append(quick);
 }
 function openBookFlight(chapter=1){
@@ -323,7 +338,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 077 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 078 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и all tones · ловля нот</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -529,7 +544,7 @@ function showIntervalLesson(){
 function spawnEnemy(){
   hideOverlay();s.mode='active';s.listening=false;weaponTab='bass';
   const model=expedition.level===0?Math.min(2,s.sector):expedition.level;
-  s.enemy={chord:s.route.sequence[s.position],model,shields:{bass:false,quality:s.sector<2},x:W/2,y:-machineSize(model)*.6,holdY:Math.max(155,Math.min(playableHeight()*.36,230)),groundPhase:'approach',suspended:false,hull:100+model*35,maxHull:100+model*35,age:0,misses:0,hit:0,muzzle:0,guns:enemyGuns(model)};
+  s.enemy={chord:s.route.sequence[s.position],model,shields:{bass:false,quality:s.sector<2},x:W/2,y:-machineSize(model)*.6,holdY:Math.max(155,Math.min(playableHeight()*.36,230)),groundPhase:'approach',suspended:false,hull:4*(100+model*35),maxHull:4*(100+model*35),age:0,misses:0,hit:0,muzzle:0,guns:enemyGuns(model)};
   $('enemy-label').hidden=false;$('enemy-label').firstElementChild.textContent=s.bookMission?`${s.route.code} · HYDRA ${String(s.position+1).padStart(2,'0')}/${String(s.route.sequence.length).padStart(2,'0')}`:`HYDRA · ${MACHINES[s.enemy.model]} / ${String(s.totalCleared+1).padStart(2,'0')}`;
   $('dock-label').textContent=s.bookMission||s.sector>=2?'ОДИН АККОРД — ОДИН ВЫСТРЕЛ':'УЗНАЙ СИГНАЛ — ВЫСТРЕЛИ';
   $('dock-tip').textContent=s.bookMission||s.sector>=2?'Выбери готовый аккорд: ступень и тип на одной плашке':'Выбери ступень относительно тоники I';
@@ -567,9 +582,10 @@ function playCue(referenceOnly=false){
 function answer(kind,value,button){
   if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
   const outcome=answerResult(s.enemy.chord,s.enemy.shields,kind,value);if(outcome.ignored)return;
+  intelligence.record('hydra-'+kind,kind==='bass'?s.enemy.chord.offset:s.enemy.chord.quality,outcome.correct?1:0);
   s.attempts++;s.stats[kind][outcome.correct?'hit':'miss']++;
   if(outcome.correct){
-    s.correct++;s.enemy.shields=outcome.shields;s.beam=.3;s.enemy.hit=.25;s.enemy.hull=Math.max(1,s.enemy.hull-s.enemy.maxHull*.45);s.score+=kind==='bass'?100:150;awardScrap(kind==='bass'?7:10);
+    s.correct++;s.enemy.shields=outcome.shields;s.beam=.3;s.enemy.hit=.25;s.score+=kind==='bass'?100:150;awardScrap(kind==='bass'?7:10);
       if(kind==='bass'){s.power=Math.min(3,s.power+1);s.overdrive=7;feedback('Щит пробит · ВЕЕРНЫЙ ОГОНЬ');}
     else feedback(`${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.glyph??s.enemy.chord.quality} · тип распознан`);
     if(!outcome.destroyed)weaponTab=kind==='bass'?'quality':'bass';

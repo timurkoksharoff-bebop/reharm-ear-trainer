@@ -1,3 +1,4 @@
+import {MELODY_BANK} from './melody-bank.mjs';
 import {IMPORTED_MELODIES} from './melodies-catalog.mjs';
 
 // Editorial recognition order for flights. The full library remains available
@@ -35,9 +36,12 @@ const indexes=titles=>titles.map(title=>indexByTitle.get(normalize(title))).filt
 export const STUDENT_MELODY_INDICES=Object.freeze(indexes(STUDENT_TITLES));
 export const NOVICE_MELODY_INDICES=Object.freeze(STUDENT_MELODY_INDICES.slice(0,24));
 export const MASTER_MELODY_INDICES=Object.freeze([...STUDENT_MELODY_INDICES,...indexes(MASTER_EXTRA_TITLES)]);
-export const LEGEND_MELODY_INDICES=Object.freeze(IMPORTED_MELODIES.map((_,index)=>index));
-export const MELODY_LEVEL_COUNTS=Object.freeze([NOVICE_MELODY_INDICES.length,STUDENT_MELODY_INDICES.length,MASTER_MELODY_INDICES.length,LEGEND_MELODY_INDICES.length]);
+export const LEGEND_MELODY_INDICES=Object.freeze(MELODY_BANK.map((_,index)=>index));
+export const MELODY_LEVEL_COUNTS=Object.freeze([0,1,2,3].map(level=>melodyIndicesForLevel(level).length));
 
 export function melodyIndicesForLevel(level=0){
-  return level<=0?NOVICE_MELODY_INDICES:level===1?STUDENT_MELODY_INDICES:level===2?MASTER_MELODY_INDICES:LEGEND_MELODY_INDICES;
+  const jazz=level<=0?NOVICE_MELODY_INDICES:level===1?STUDENT_MELODY_INDICES:level===2?MASTER_MELODY_INDICES:IMPORTED_MELODIES.map((_,i)=>i);
+  const cap=level<=0?12:level===1?25:level===2?50:Infinity;
+  const extras=['rock','classical'].flatMap(genre=>MELODY_BANK.map((m,i)=>({m,i})).filter(x=>x.m.genre===genre).slice(0,cap).map(x=>x.i));
+  return [...jazz,...extras];
 }

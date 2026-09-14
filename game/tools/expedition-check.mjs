@@ -15,7 +15,7 @@ assert(gradeNumber({kind:'numbers',interval:7,direction:'up',collected:[]},'5').
 assert(!gradeNumber({kind:'numbers',interval:7,direction:'down',collected:[]},'1').correct);
 for(let i=0;i<30;i++)for(const pilot of PILOTS){const walls=obstacleRow(i,480,pilot.obstacleGap);assert.equal(Math.round(walls[1].x-walls[0].w),pilot.obstacleGap);assert(!touchesWall({x:(walls[0].w+walls[1].x)/2,y:-50},walls[0]));assert(touchesWall({x:2,y:-50},walls[0]));}
 assert.equal(RHYTHMS.length,20);assert.equal(new Set(RHYTHMS.map(r=>r.name)).size,20);
-assert.equal(MELODIES.length,200);assert.equal(new Set(MELODIES.map(m=>m.name.toLowerCase())).size,200);assert(MODES.filter(m=>m.level===0).length===7);assert(MODES.some(m=>m.name==='Bebop Dominant'));
+assert.equal(MELODIES.length,350);assert.equal(new Set(MELODIES.map(m=>m.name.toLowerCase())).size,350);assert(MODES.filter(m=>m.level===0).length===7);assert(MODES.some(m=>m.name==='Bebop Dominant'));
 for(const pattern of RHYTHMS){assert(/^[\x00-\x7F–·]+$/.test(pattern.name));for(const e of pattern.events)assert(e.beat>=0&&e.beat<(pattern.beats||8));}
 assert.deepEqual(RHYTHMS.find(r=>r.name==='Son Clave 3–2').events.map(e=>e.beat),[0,1.5,3,5,6]);
 assert.deepEqual(TONE_PROGRAMS['7'].guide,['3','♭7']);
@@ -102,7 +102,7 @@ world.replay();assert(audio.melodyOptions.full,'Replay during reward repeats the
 audio.stop();s.mode='paused';world.tick(10);s.mode='active';world.resumeChallenge();assert(audio.melodyOptions.full,'Pause resumes full performance');
 const resumedEnd=audio.pending;world.artifact(6);assert.equal(world.snapshot().special.kind,'melody','Another relic waits until the theme finishes');
 resumedEnd();assert.equal(world.snapshot().special.kind,'reveal');assert.equal(world.snapshot().special.artifactType,6);const rewarded=s.score;resumedEnd();assert.equal(s.score,rewarded);
-world.reset(1);const rotation=new Set();for(let i=0;i<120;i++){world.startChallenge('melody');rotation.add(world.snapshot().special.target);world.answerSpecial(world.snapshot().special.target);audio.pending();}assert.equal(rotation.size,50,'Student rotation stays inside the 50-theme level pool');
+world.reset(1);const rotation=new Set();for(let i=0;i<220;i++){world.startChallenge('melody');rotation.add(world.snapshot().special.target);world.answerSpecial(world.snapshot().special.target);audio.pending();}assert.equal(rotation.size,100,'Student rotation stays inside the 100-theme mixed level pool');
 assert.equal(RUDIMENTS.length,8);
 for(const r of RUDIMENTS){assert.equal(r.events.length,r.sticking.length);assert(r.events.some(e=>e.velocity===1));assert(r.events.some(e=>e.velocity<1));}
 const signatures=RUDIMENTS.map(r=>Array.from({length:96},(_,i)=>r.events[i%r.events.length].velocity).join(','));

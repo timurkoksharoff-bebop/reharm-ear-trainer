@@ -1,0 +1,1802 @@
+[
+  {
+    "id": "classical-beethoven-f-r-elise",
+    "name": "Beethoven — Für Elise",
+    "aliases": [
+      "Beethoven — Für Elise"
+    ],
+    "genre": "classical",
+    "tempo": 72.0,
+    "preview": 104,
+    "firstMidi": 76,
+    "measures": 39,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Fur_Elise.mxl",
+    "sourceSha256": "21787ffe3196193718ecfdca7c8b631d63d7fe66b532635f4c5e9cab039c524f",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-beethoven-ode-to-joy",
+    "name": "Beethoven — Ode to Joy",
+    "aliases": [
+      "Beethoven — Ode to Joy"
+    ],
+    "genre": "classical",
+    "tempo": 140.0,
+    "preview": 30,
+    "firstMidi": 71,
+    "measures": 17,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Ode_to_Joy_Easy_variation.mxl",
+    "sourceSha256": "96e7b89cd7509749e554f8e7aaa4e566a33fdc9b7968115ed44b96da8c2f12b1",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-swan-lake",
+    "name": "Tchaikovsky — Swan Lake",
+    "aliases": [
+      "Tchaikovsky — Swan Lake"
+    ],
+    "genre": "classical",
+    "tempo": 100.0,
+    "preview": 38,
+    "firstMidi": 78,
+    "measures": 24,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Swan_Lake.mxl",
+    "sourceSha256": "5118e682a0b09e2b6e5107b3138edae211f6f63752fdd5ce7bd1ade55c7258b1",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-rondo-alla-turca",
+    "name": "Mozart — Rondo alla Turca",
+    "aliases": [
+      "Mozart — Rondo alla Turca"
+    ],
+    "genre": "classical",
+    "tempo": 120.0,
+    "preview": 76,
+    "firstMidi": 71,
+    "measures": 64,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Piano_Sonata_No._11_K._331_3rd_Movement_Rondo_alla_Turca.mxl",
+    "sourceSha256": "fecc02bf1ba2ce6c45977a2c614afe17ba1bdc59eb30de098401ce5fb031af83",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-pachelbel-canon-in-d",
+    "name": "Pachelbel — Canon in D",
+    "aliases": [
+      "Pachelbel — Canon in D"
+    ],
+    "genre": "classical",
+    "tempo": 100.0,
+    "preview": 16,
+    "firstMidi": 78,
+    "measures": 98,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Canon_in_D.mxl",
+    "sourceSha256": "23762273abf1d6bd7001c89dc620bee6accf0045573078e2865e086df2f1bb14",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-chopin-nocturne-op-9-no-2",
+    "name": "Chopin — Nocturne Op. 9 No. 2",
+    "aliases": [
+      "Chopin — Nocturne Op. 9 No. 2"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 51,
+    "firstMidi": 70,
+    "measures": 53,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Chopin_-_Nocturne_Op_9_No_2_E_Flat_Major.mxl",
+    "sourceSha256": "271cb6b0be8bad3f784bad4ea30fba26848f929d257b47ec9b43a77d39bc7969",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-satie-gymnop-die-no-1",
+    "name": "Satie — Gymnopédie No. 1",
+    "aliases": [
+      "Satie — Gymnopédie No. 1"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 19,
+    "firstMidi": 78,
+    "measures": 30,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Erik_Satie_-_Gymnopedie_No.1.mxl",
+    "sourceSha256": "dc0191ae303450692632fa60aec1b10b2528a0bab54159e530911ed2e8eeaafe",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-debussy-clair-de-lune",
+    "name": "Debussy — Clair de lune",
+    "aliases": [
+      "Debussy — Clair de lune"
+    ],
+    "genre": "classical",
+    "tempo": 48.0,
+    "preview": 35,
+    "firstMidi": 80,
+    "measures": 80,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Clair_de_Lune__Debussy.mxl",
+    "sourceSha256": "1c2b0c329295a2b1cd1387f18a063fbb5672721574dbd32cf91a5daf0f551072",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-dance-of-the-sugar-plum-fairy",
+    "name": "Tchaikovsky — Dance of the Sugar Plum Fairy",
+    "aliases": [
+      "Tchaikovsky — Dance of the Sugar Plum Fairy"
+    ],
+    "genre": "classical",
+    "tempo": 70.0002,
+    "preview": 79,
+    "firstMidi": 64,
+    "measures": 26,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Dance_of_the_sugar_plum_fairy.mxl",
+    "sourceSha256": "e60c154a846be67a13fc9ed51108af8b17377eb6dcfbab40857e45419b761b90",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-petzold-minuet-in-g-bwv-anh-114",
+    "name": "Petzold — Minuet in G, BWV Anh. 114",
+    "aliases": [
+      "Petzold — Minuet in G, BWV Anh. 114"
+    ],
+    "genre": "classical",
+    "tempo": 126.0,
+    "preview": 44,
+    "firstMidi": 74,
+    "measures": 24,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Bach_Minuet_in_G_Major_BWV_Anh._114.mxl",
+    "sourceSha256": "490aba9a679e06429e0b7e6e58e50701658389d64c3b5c91511af3ec68355b4d",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-joplin-the-entertainer",
+    "name": "Joplin — The Entertainer",
+    "aliases": [
+      "Joplin — The Entertainer"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 73,
+    "firstMidi": 86,
+    "measures": 46,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "The_Entertainer_-_Scott_Joplin_-_1902.mxl",
+    "sourceSha256": "e11fc1386747c1dd5d1ca352b65da23653d15d241aee17a2f42354c14f61eba7",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-beethoven-symphony-no-5-opening",
+    "name": "Beethoven — Symphony No. 5, opening",
+    "aliases": [
+      "Beethoven — Symphony No. 5, opening"
+    ],
+    "genre": "classical",
+    "tempo": 164.0,
+    "preview": 40,
+    "firstMidi": 67,
+    "measures": 254,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Beethoven_Symphony_No._5_1st_movement_Piano_solo.mxl",
+    "sourceSha256": "4e3c41a54baedf019233a322da524264d1560a772d3f677849e0a9872bb07f71",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-bach-air-on-the-g-string",
+    "name": "Bach — Air on the G String",
+    "aliases": [
+      "Bach — Air on the G String"
+    ],
+    "genre": "classical",
+    "tempo": 66.0,
+    "preview": 27,
+    "firstMidi": 71,
+    "measures": 37,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "J._S._Bach_-_Air_on_the_G_String_Piano_arrangement.mxl",
+    "sourceSha256": "f775a5978f723b7d6ab17103c94de6a0c663753d4379b1a1ee1be92f0c33de84",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-brahms-hungarian-dance-no-5",
+    "name": "Brahms — Hungarian Dance No. 5",
+    "aliases": [
+      "Brahms — Hungarian Dance No. 5"
+    ],
+    "genre": "classical",
+    "tempo": 130.0,
+    "preview": 53,
+    "firstMidi": 62,
+    "measures": 51,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Hungarian_Dance_No_5_in_G_Minor.mxl",
+    "sourceSha256": "578d9e52c3daf51c1e5be3ac826535bab30eed25711870b142c68c6001b52823",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-waltz-of-the-flowers",
+    "name": "Tchaikovsky — Waltz of the Flowers",
+    "aliases": [
+      "Tchaikovsky — Waltz of the Flowers"
+    ],
+    "genre": "classical",
+    "tempo": 183.0,
+    "preview": 33,
+    "firstMidi": 57,
+    "measures": 56,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Waltz_of_the_Flowers.mxl",
+    "sourceSha256": "745f06e9e8ea0d2e9f2fc6d1b8c63c3195238acbb57826144376982edd6432c6",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schubert-ave-maria",
+    "name": "Schubert — Ave Maria",
+    "aliases": [
+      "Schubert — Ave Maria"
+    ],
+    "genre": "classical",
+    "tempo": 40.0,
+    "preview": 105,
+    "firstMidi": 65,
+    "measures": 17,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Ave_Maria_D839_-_Schubert_-_Solo_Piano_Arrg..mxl",
+    "sourceSha256": "b29154686ca9dc995d603ef13cc9c3258938e57d800000a559ab7938095fb0da",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schubert-st-ndchen",
+    "name": "Schubert — Ständchen",
+    "aliases": [
+      "Schubert — Ständchen"
+    ],
+    "genre": "classical",
+    "tempo": 58.0,
+    "preview": 43,
+    "firstMidi": 69,
+    "measures": 83,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Schubert_Serenade_-_Standchen_-_By_Lizst.mxl",
+    "sourceSha256": "61f0839768b7c6407501b4d8e8ab04fe0ba1564d0ae6db598126f01e4b47ec3e",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-beethoven-path-tique-adagio-cantabile",
+    "name": "Beethoven — Pathétique, Adagio cantabile",
+    "aliases": [
+      "Beethoven — Pathétique, Adagio cantabile"
+    ],
+    "genre": "classical",
+    "tempo": 31.5,
+    "preview": 53,
+    "firstMidi": 60,
+    "measures": 37,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Sonate_No._8_Pathetique_2nd_Movement.mxl",
+    "sourceSha256": "88482d188e4b104d375f5ba065839fd0e8440e4efcb3a652f4b0ae6145faa3c0",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-debussy-arabesque-no-1",
+    "name": "Debussy — Arabesque No. 1",
+    "aliases": [
+      "Debussy — Arabesque No. 1"
+    ],
+    "genre": "classical",
+    "tempo": 120.0,
+    "preview": 53,
+    "firstMidi": 73,
+    "measures": 105,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Arabesque_L._66_No._1_in_E_Major.mxl",
+    "sourceSha256": "d526127174a299c24486e9b5b074528c2153e8a4c5c82e3c1d9ad331032bb2b4",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-satie-gnossienne-no-1",
+    "name": "Satie — Gnossienne No. 1",
+    "aliases": [
+      "Satie — Gnossienne No. 1"
+    ],
+    "genre": "classical",
+    "tempo": 102.0,
+    "preview": 25,
+    "firstMidi": 72,
+    "measures": 81,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Gnossienne_No._1.mxl",
+    "sourceSha256": "bac538dd28460a808f3d24a30900a9453fb4fc7b578a3b57c5d05384f3951840",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-bach-toccata-and-fugue-in-d-minor",
+    "name": "Bach — Toccata and Fugue in D minor",
+    "aliases": [
+      "Bach — Toccata and Fugue in D minor"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 130,
+    "firstMidi": 81,
+    "measures": 143,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Bach_Toccata_and_Fugue_in_D_Minor_Piano_solo.mxl",
+    "sourceSha256": "504e160a588bf1b7cff067dd6855720f0e694830e4fa1c945bd5a1e1265a15b2",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-rimsky-korsakov-flight-of-the-bumblebee",
+    "name": "Rimsky-Korsakov — Flight of the Bumblebee",
+    "aliases": [
+      "Rimsky-Korsakov — Flight of the Bumblebee"
+    ],
+    "genre": "classical",
+    "tempo": 144.0,
+    "preview": 128,
+    "firstMidi": 88,
+    "measures": 50,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Flight_of_the_Bumblebee.mxl",
+    "sourceSha256": "05e65c9bd597f9e60996066beec6b1a775ed1e0d635e7c811dfb116657ea1a51",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-lacrimosa",
+    "name": "Mozart — Lacrimosa",
+    "aliases": [
+      "Mozart — Lacrimosa"
+    ],
+    "genre": "classical",
+    "tempo": 64.0002,
+    "preview": 46,
+    "firstMidi": 73,
+    "measures": 45,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Lacrimosa_-_Requiem.mxl",
+    "sourceSha256": "191331e36f0576506c2d76aaaf50265ff58450f6f629ac0974fa9166fc2e07f9",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-liszt-liebestraum-no-3",
+    "name": "Liszt — Liebestraum No. 3",
+    "aliases": [
+      "Liszt — Liebestraum No. 3"
+    ],
+    "genre": "classical",
+    "tempo": 152.0,
+    "preview": 64,
+    "firstMidi": 63,
+    "measures": 147,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Liebestraum_No._3_in_A_Major.mxl",
+    "sourceSha256": "1b99e590cf32f458973d9caea7c51774833286d41be303d80b2c756355147643",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-liszt-la-campanella",
+    "name": "Liszt — La Campanella",
+    "aliases": [
+      "Liszt — La Campanella"
+    ],
+    "genre": "classical",
+    "tempo": 97.0,
+    "preview": 100,
+    "firstMidi": 99,
+    "measures": 111,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "La_Campanella_-_Grandes_Etudes_de_Paganini_No._3_-_Franz_Liszt.mxl",
+    "sourceSha256": "2da9b329953a588aa0bc430aa798216fb726b5eaf6bcdeba0e45e454990324bd",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-chopin-ballade-no-1",
+    "name": "Chopin — Ballade No. 1",
+    "aliases": [
+      "Chopin — Ballade No. 1"
+    ],
+    "genre": "classical",
+    "tempo": 68.0,
+    "preview": 40,
+    "firstMidi": 60,
+    "measures": 364,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Chopin_-_Ballade_no._1_in_G_minor_Op._23.mxl",
+    "sourceSha256": "2badc459bef62413448a93dda8f86598dd93d35f8f81c287f355737090e174de",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-chopin-nocturne-op-9-no-1",
+    "name": "Chopin — Nocturne Op. 9 No. 1",
+    "aliases": [
+      "Chopin — Nocturne Op. 9 No. 1"
+    ],
+    "genre": "classical",
+    "tempo": 116.0,
+    "preview": 67,
+    "firstMidi": 82,
+    "measures": 125,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Chopin_-_Nocturne_Op._9_No._1.mxl",
+    "sourceSha256": "858f821a7b410fe3667fc0196ac7fb47c831f203f4c0a363ccd5b5b752c50f6a",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-chopin-nocturne-in-c-sharp-minor-posthumous",
+    "name": "Chopin — Nocturne in C-sharp minor, posthumous",
+    "aliases": [
+      "Chopin — Nocturne in C-sharp minor, posthumous"
+    ],
+    "genre": "classical",
+    "tempo": 64.9998,
+    "preview": 30,
+    "firstMidi": 73,
+    "measures": 62,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Nocturne_in_C_sharp_Minor.mxl",
+    "sourceSha256": "31b11d67ba4afd376f6ef81a30420fa8c03af708c40fe392a70ec567f8db7502",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-chopin-waltz-in-a-minor-posthumous",
+    "name": "Chopin — Waltz in A minor, posthumous",
+    "aliases": [
+      "Chopin — Waltz in A minor, posthumous"
+    ],
+    "genre": "classical",
+    "tempo": 120.0,
+    "preview": 42,
+    "firstMidi": 64,
+    "measures": 42,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Waltz_in_A_MinorChopin.mxl",
+    "sourceSha256": "07c809a6d0f4bab8c6a3f11a10694087c8ecc8bd421e9ee0977cd17339a06613",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-chopin-waltz-op-64-no-2",
+    "name": "Chopin — Waltz Op. 64 No. 2",
+    "aliases": [
+      "Chopin — Waltz Op. 64 No. 2"
+    ],
+    "genre": "classical",
+    "tempo": 120.0,
+    "preview": 15,
+    "firstMidi": 68,
+    "measures": 144,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Waltz_Opus_64_No._2_in_C_Minor.mxl",
+    "sourceSha256": "2fafb3a6bd7e4775c662195a1bd8ddd6b8ce19c6034a8c6040ba9fd6c3c1ec50",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-chopin-prelude-op-28-no-4",
+    "name": "Chopin — Prelude Op. 28 No. 4",
+    "aliases": [
+      "Chopin — Prelude Op. 28 No. 4"
+    ],
+    "genre": "classical",
+    "tempo": 50.0,
+    "preview": 18,
+    "firstMidi": 59,
+    "measures": 25,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Prlude_No._4_in_E_Minor_Op._28_-_Frdric_Chopin.mxl",
+    "sourceSha256": "af16b22270dd243a6c4ecb627b840f4450e1d477ae2bc7c885ccb0ba25c4fd5d",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-joplin-maple-leaf-rag",
+    "name": "Joplin — Maple Leaf Rag",
+    "aliases": [
+      "Joplin — Maple Leaf Rag"
+    ],
+    "genre": "classical",
+    "tempo": 100.0,
+    "preview": 90,
+    "firstMidi": 68,
+    "measures": 42,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Maple_Leaf_Rag_Scott_Joplin.mxl",
+    "sourceSha256": "5fe979be991095d18bb9ee3394bf70d26237e37903ab7e751ee32e30b8e6460a",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-handel-halvorsen-passacaglia",
+    "name": "Handel / Halvorsen — Passacaglia",
+    "aliases": [
+      "Handel / Halvorsen — Passacaglia"
+    ],
+    "genre": "classical",
+    "tempo": 130.0,
+    "preview": 54,
+    "firstMidi": 72,
+    "measures": 72,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Passacaglia.mxl",
+    "sourceSha256": "4ae1a8c0d468a6d7ad2f122027542bb6dddd41c52acdaea8e3b603233f0cf493",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-ah-vous-dirai-je-maman",
+    "name": "Mozart — Ah, vous dirai-je, maman",
+    "aliases": [
+      "Mozart — Ah, vous dirai-je, maman"
+    ],
+    "genre": "classical",
+    "tempo": 120.0,
+    "preview": 34,
+    "firstMidi": 72,
+    "measures": 171,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "12_Variations_of_Twinkle_Twinkle_Little_Star.mxl",
+    "sourceSha256": "e82399bf868a9d8f93e1d9b5999bb231591e03257a7e2971cc379d3690b74112",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-beethoven-moonlight-sonata-presto-agitato",
+    "name": "Beethoven — Moonlight Sonata, Presto agitato",
+    "aliases": [
+      "Beethoven — Moonlight Sonata, Presto agitato"
+    ],
+    "genre": "classical",
+    "tempo": 164.0,
+    "preview": 90,
+    "firstMidi": 61,
+    "measures": 204,
+    "source": "MuseTrainer public-domain score library",
+    "license": "Public-domain score; repository source metadata",
+    "sourceFile": "Sonate_No._14_Moonlight_3rd_Movement.mxl",
+    "sourceSha256": "49998f449f3aa44620272029af30ca3221a954c999c24c9f338af6da65be016b",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-tr-umerei-n07",
+    "name": "Schumann — Träumerei · n07",
+    "aliases": [
+      "Schumann — Träumerei · n07"
+    ],
+    "genre": "classical",
+    "tempo": 50.0,
+    "preview": 41,
+    "firstMidi": 60,
+    "measures": 24,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n07.notes.tsv",
+    "sourceSha256": "8b0dfcf4d79a41fbbe196f9b5ffa2787dd89fa5d86e9e34a6fba58738c8ae540",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-von-fremden-l-ndern-und-menschen-n01",
+    "name": "Schumann — Von fremden Ländern und Menschen · n01",
+    "aliases": [
+      "Schumann — Von fremden Ländern und Menschen · n01"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 37,
+    "firstMidi": 71,
+    "measures": 11,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n01.notes.tsv",
+    "sourceSha256": "c2e31b3dc0a6640ee841603f0923a9d48c8a3b6e748b4745a74b949b7ed0b419",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-kind-im-einschlummern-n12",
+    "name": "Schumann — Kind im Einschlummern · n12",
+    "aliases": [
+      "Schumann — Kind im Einschlummern · n12"
+    ],
+    "genre": "classical",
+    "tempo": 46.0,
+    "preview": 59,
+    "firstMidi": 71,
+    "measures": 16,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n12.notes.tsv",
+    "sourceSha256": "7986db745dfe672fbdb60f43697a70261f0ef5d8b43d40ec1cd16b96233aedb7",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-am-kamin-n08",
+    "name": "Schumann — Am Kamin · n08",
+    "aliases": [
+      "Schumann — Am Kamin · n08"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 54,
+    "firstMidi": 72,
+    "measures": 17,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n08.notes.tsv",
+    "sourceSha256": "27e18dd22c75f9341bf39d5732eb1e193e5f81dd6d09285f455f58f31cab1cd5",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-hasche-mann-n03",
+    "name": "Schumann — Hasche-Mann · n03",
+    "aliases": [
+      "Schumann — Hasche-Mann · n03"
+    ],
+    "genre": "classical",
+    "tempo": 120.0,
+    "preview": 90,
+    "firstMidi": 71,
+    "measures": 16,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n03.notes.tsv",
+    "sourceSha256": "225d90f113c6a0798731098250f3ab595fd3ca6f5bdb5cb1073f145f1abb1a07",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-bittendes-kind-n04",
+    "name": "Schumann — Bittendes Kind · n04",
+    "aliases": [
+      "Schumann — Bittendes Kind · n04"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 56,
+    "firstMidi": 71,
+    "measures": 8,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n04.notes.tsv",
+    "sourceSha256": "d79062fd2025865325e5d790f3f711916cceec26b1d9bf8d816adaf460e9321b",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-gl-ckes-genug-n05",
+    "name": "Schumann — Glückes genug · n05",
+    "aliases": [
+      "Schumann — Glückes genug · n05"
+    ],
+    "genre": "classical",
+    "tempo": 66.0,
+    "preview": 67,
+    "firstMidi": 68,
+    "measures": 9,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n05.notes.tsv",
+    "sourceSha256": "53fdbab4235df151f433552ddd1463cba1de62a2b42ddd19e52d5061eba32e93",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-wichtige-begebenheit-n06",
+    "name": "Schumann — Wichtige Begebenheit · n06",
+    "aliases": [
+      "Schumann — Wichtige Begebenheit · n06"
+    ],
+    "genre": "classical",
+    "tempo": 138.0,
+    "preview": 34,
+    "firstMidi": 81,
+    "measures": 18,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n06.notes.tsv",
+    "sourceSha256": "c9eff41d29d68791ccd2e4b68b5347628a74bf0e92d66ceca127c1cd20377f79",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-ritter-von-steckenpferd-n09",
+    "name": "Schumann — Ritter von Steckenpferd · n09",
+    "aliases": [
+      "Schumann — Ritter von Steckenpferd · n09"
+    ],
+    "genre": "classical",
+    "tempo": 240.0,
+    "preview": 43,
+    "firstMidi": 79,
+    "measures": 18,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n09.notes.tsv",
+    "sourceSha256": "d53d43189859888a8dff27a4e5eb88e4c5d16127e397729b0a6193648973389e",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-fast-zu-ernst-n10",
+    "name": "Schumann — Fast zu ernst · n10",
+    "aliases": [
+      "Schumann — Fast zu ernst · n10"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 63,
+    "firstMidi": 63,
+    "measures": 15,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n10.notes.tsv",
+    "sourceSha256": "d4898953d1f969f0f29e27de30f9417edd407b765320bb3d5b825b02e967326d",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-f-rchtenmachen-n11",
+    "name": "Schumann — Fürchtenmachen · n11",
+    "aliases": [
+      "Schumann — Fürchtenmachen · n11"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 67,
+    "firstMidi": 71,
+    "measures": 24,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n11.notes.tsv",
+    "sourceSha256": "c3de992073c66b8b53fbb08f67034a7766784024eabe7669a902284a4a67ce80",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-der-dichter-spricht-n13",
+    "name": "Schumann — Der Dichter spricht · n13",
+    "aliases": [
+      "Schumann — Der Dichter spricht · n13"
+    ],
+    "genre": "classical",
+    "tempo": 112.0,
+    "preview": 20,
+    "firstMidi": 66,
+    "measures": 29,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n13.notes.tsv",
+    "sourceSha256": "85d7483117ee1b0d26cc08def7af68f5e98dccb5d3e6198f9a1395a338ee279f",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-schumann-kuriose-geschichte-n02",
+    "name": "Schumann — Kuriose Geschichte · n02",
+    "aliases": [
+      "Schumann — Kuriose Geschichte · n02"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 45,
+    "firstMidi": 66,
+    "measures": 30,
+    "source": "DCMLab/schumann_kinderszenen",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "schumann_kinderszenen-main/notes/n02.notes.tsv",
+    "sourceSha256": "643ef7258ba1bf80d4f0b76ac71ceeeaf4623e0b213d95495c1e61b73140bc5b",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-june-barcarolle-op37a06",
+    "name": "Tchaikovsky — June: Barcarolle · op37a06",
+    "aliases": [
+      "Tchaikovsky — June: Barcarolle · op37a06"
+    ],
+    "genre": "classical",
+    "tempo": 79.9998,
+    "preview": 46,
+    "firstMidi": 62,
+    "measures": 94,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a06.notes.tsv",
+    "sourceSha256": "530519c382ffedd01b0b49bfc41df2b3d20990fd59a772027485e6ad122b8ab7",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-november-troika-op37a11",
+    "name": "Tchaikovsky — November: Troika · op37a11",
+    "aliases": [
+      "Tchaikovsky — November: Troika · op37a11"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 42,
+    "firstMidi": 73,
+    "measures": 82,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a11.notes.tsv",
+    "sourceSha256": "e890c47face29eaeb6f6cf3d200762c577d065f4d408e9c6f4ccacedc5be7653",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-october-autumn-song-op37a10",
+    "name": "Tchaikovsky — October: Autumn Song · op37a10",
+    "aliases": [
+      "Tchaikovsky — October: Autumn Song · op37a10"
+    ],
+    "genre": "classical",
+    "tempo": 79.9998,
+    "preview": 47,
+    "firstMidi": 77,
+    "measures": 56,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a10.notes.tsv",
+    "sourceSha256": "1c1f97a059003d0ad84e056934f1856e9369cfd61a47cd6542d2764990161c1b",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-april-snowdrop-op37a04",
+    "name": "Tchaikovsky — April: Snowdrop · op37a04",
+    "aliases": [
+      "Tchaikovsky — April: Snowdrop · op37a04"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 36,
+    "firstMidi": 65,
+    "measures": 65,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a04.notes.tsv",
+    "sourceSha256": "7fe1c444358b1a34569cd62d1ba65b536253082079f825a4d5025419eddcb671",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-december-christmas-op37a12",
+    "name": "Tchaikovsky — December: Christmas · op37a12",
+    "aliases": [
+      "Tchaikovsky — December: Christmas · op37a12"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 29,
+    "firstMidi": 68,
+    "measures": 131,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a12.notes.tsv",
+    "sourceSha256": "4ea81eddbc015aaa4816ca7e7151d0edcdbc4d47b7a23ec849cb29054e6fc639",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-january-at-the-fireside-op37a01",
+    "name": "Tchaikovsky — January: At the Fireside · op37a01",
+    "aliases": [
+      "Tchaikovsky — January: At the Fireside · op37a01"
+    ],
+    "genre": "classical",
+    "tempo": 90.0,
+    "preview": 62,
+    "firstMidi": 66,
+    "measures": 77,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a01.notes.tsv",
+    "sourceSha256": "b97cd0cb5d94c96c8330adbbfc80f6baed64a551e4770755ec2f127e41a873b7",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-february-carnaval-op37a02",
+    "name": "Tchaikovsky — February: Carnaval · op37a02",
+    "aliases": [
+      "Tchaikovsky — February: Carnaval · op37a02"
+    ],
+    "genre": "classical",
+    "tempo": 150.0,
+    "preview": 68,
+    "firstMidi": 81,
+    "measures": 84,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a02.notes.tsv",
+    "sourceSha256": "fe79b9b22ea7777f7f946969c9b2e3af168434bd5b2267a3d11e16c08206b7f2",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-march-song-of-the-lark-op37a03",
+    "name": "Tchaikovsky — March: Song of the Lark · op37a03",
+    "aliases": [
+      "Tchaikovsky — March: Song of the Lark · op37a03"
+    ],
+    "genre": "classical",
+    "tempo": 40.0,
+    "preview": 93,
+    "firstMidi": 67,
+    "measures": 22,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a03.notes.tsv",
+    "sourceSha256": "218e585bb152c6dc0dc76d4b458841f5a9e0426273434e7530b9fca03e0c62f4",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-may-starlight-nights-op37a05",
+    "name": "Tchaikovsky — May: Starlight Nights · op37a05",
+    "aliases": [
+      "Tchaikovsky — May: Starlight Nights · op37a05"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 38,
+    "firstMidi": 74,
+    "measures": 69,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a05.notes.tsv",
+    "sourceSha256": "a5d7b9a95c76230d1d7597537342534d2e3a594306fb326a1c5b110f04c294be",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-july-song-of-the-reaper-op37a07",
+    "name": "Tchaikovsky — July: Song of the Reaper · op37a07",
+    "aliases": [
+      "Tchaikovsky — July: Song of the Reaper · op37a07"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 31,
+    "firstMidi": 75,
+    "measures": 56,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a07.notes.tsv",
+    "sourceSha256": "2d660c86d5cd727c029e8053c04f833f8c142e2cbe4e3d551b3006fc36644b3f",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-august-harvest-song-op37a08",
+    "name": "Tchaikovsky — August: Harvest Song · op37a08",
+    "aliases": [
+      "Tchaikovsky — August: Harvest Song · op37a08"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 50,
+    "firstMidi": 71,
+    "measures": 149,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a08.notes.tsv",
+    "sourceSha256": "e010a1a73eec71f6a25223e8974434a8fe507aaa5981210852db20c7eb3a5ea4",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-tchaikovsky-september-hunting-song-op37a09",
+    "name": "Tchaikovsky — September: Hunting Song · op37a09",
+    "aliases": [
+      "Tchaikovsky — September: Hunting Song · op37a09"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 35,
+    "firstMidi": 74,
+    "measures": 90,
+    "source": "DCMLab/tchaikovsky_seasons",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "tchaikovsky_seasons-main/notes/op37a09.notes.tsv",
+    "sourceSha256": "c99d7e26040963c48c0ba523103f33044b04ce4e3746e71b6bc07bcfbaa8fced",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-arietta-op12n01",
+    "name": "Grieg — Arietta · op12n01",
+    "aliases": [
+      "Grieg — Arietta · op12n01"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 58,
+    "firstMidi": 79,
+    "measures": 12,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op12n01.notes.tsv",
+    "sourceSha256": "06e168ee3a842c6c4b1df5004601c791c8662b842d3984443e03d2335cf6e1d7",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-til-varen-op43n06",
+    "name": "Grieg — Til varen · op43n06",
+    "aliases": [
+      "Grieg — Til varen · op43n06"
+    ],
+    "genre": "classical",
+    "tempo": 252.0,
+    "preview": 7,
+    "firstMidi": 77,
+    "measures": 54,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op43n06.notes.tsv",
+    "sourceSha256": "0bbfe38dfae88f5a9e850e2e0fb62ca6325bde1464e427233ffb40fa66fd2ce0",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-bryllupsdag-pa-troldhaugen-op65n06",
+    "name": "Grieg — Bryllupsdag pa Troldhaugen · op65n06",
+    "aliases": [
+      "Grieg — Bryllupsdag pa Troldhaugen · op65n06"
+    ],
+    "genre": "classical",
+    "tempo": 124.99980000000001,
+    "preview": 60,
+    "firstMidi": 57,
+    "measures": 153,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op65n06.notes.tsv",
+    "sourceSha256": "30bbdbf7f128d560a7fcacd0fe12dcfc5e0e501b3db42f39031471799f2fdf00",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-notturno-op54n04",
+    "name": "Grieg — Notturno · op54n04",
+    "aliases": [
+      "Grieg — Notturno · op54n04"
+    ],
+    "genre": "classical",
+    "tempo": 90.0,
+    "preview": 23,
+    "firstMidi": 48,
+    "measures": 61,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op54n04.notes.tsv",
+    "sourceSha256": "51598df3b35b203eff66b98e403afc9ff6c19f8a999cf379afbfdf9957a91170",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-sommerfugl-op43n01",
+    "name": "Grieg — Sommerfugl · op43n01",
+    "aliases": [
+      "Grieg — Sommerfugl · op43n01"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 87,
+    "firstMidi": 78,
+    "measures": 42,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op43n01.notes.tsv",
+    "sourceSha256": "d9d889b78779ed6fd542d5b6679fe6f815f4270168369f2da5bc6c88cecb5e6c",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-liten-fugl-op43n04",
+    "name": "Grieg — Liten fugl · op43n04",
+    "aliases": [
+      "Grieg — Liten fugl · op43n04"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 66,
+    "firstMidi": 81,
+    "measures": 26,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op43n04.notes.tsv",
+    "sourceSha256": "47226aa04e90242dd226e4633e271902d1864ae8a58140436c7d335d2cb06864",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-trolltog-op54n03",
+    "name": "Grieg — Trolltog · op54n03",
+    "aliases": [
+      "Grieg — Trolltog · op54n03"
+    ],
+    "genre": "classical",
+    "tempo": 142.0002,
+    "preview": 97,
+    "firstMidi": 62,
+    "measures": 96,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op54n03.notes.tsv",
+    "sourceSha256": "6afe2389c18905cf16ba2ca58d886557914f92858497bf31e7da3f9991afb0e9",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-klokkeklang-op54n06",
+    "name": "Grieg — Klokkeklang · op54n06",
+    "aliases": [
+      "Grieg — Klokkeklang · op54n06"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 34,
+    "firstMidi": 79,
+    "measures": 41,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op54n06.notes.tsv",
+    "sourceSha256": "fd41437595326b60b672103a99782541c2fe2ca591d07f9bc1bebad0006f8859",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-heimweh-op57n06",
+    "name": "Grieg — Heimweh · op57n06",
+    "aliases": [
+      "Grieg — Heimweh · op57n06"
+    ],
+    "genre": "classical",
+    "tempo": 60.0,
+    "preview": 45,
+    "firstMidi": 64,
+    "measures": 72,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op57n06.notes.tsv",
+    "sourceSha256": "1d7175c3d73f86fea208b33c39700109b663b773735ab2b895a527558aaa17e1",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-hjemad-op62n06",
+    "name": "Grieg — Hjemad · op62n06",
+    "aliases": [
+      "Grieg — Hjemad · op62n06"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 63,
+    "firstMidi": 71,
+    "measures": 74,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op62n06.notes.tsv",
+    "sourceSha256": "56d6c3f1f641fc2c28653092ad46e1b7fa0c8a97e969821e650318415d2d30f4",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-for-dine-fotter-op68n03",
+    "name": "Grieg — For dine fotter · op68n03",
+    "aliases": [
+      "Grieg — For dine fotter · op68n03"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 34,
+    "firstMidi": 62,
+    "measures": 56,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op68n03.notes.tsv",
+    "sourceSha256": "bd2b8b5cade40fac55212926ceaf9c4165d5da4c7fc7d82552b1ae5c5037cc5c",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-efterklang-op71n07",
+    "name": "Grieg — Efterklang · op71n07",
+    "aliases": [
+      "Grieg — Efterklang · op71n07"
+    ],
+    "genre": "classical",
+    "tempo": 189.00000000000003,
+    "preview": 18,
+    "firstMidi": 79,
+    "measures": 56,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op71n07.notes.tsv",
+    "sourceSha256": "d48d81967539cf1c24805246b54c46454a635e7c4b7c72a7425d1950a50184f8",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-berceuse-op38n01",
+    "name": "Grieg — Berceuse · op38n01",
+    "aliases": [
+      "Grieg — Berceuse · op38n01"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 38,
+    "firstMidi": 67,
+    "measures": 43,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op38n01.notes.tsv",
+    "sourceSha256": "bf14fa7cafda990fa8eb766ef4bbe6cb99f6101244038284e77c511f352313e6",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-alfedans-op12n04",
+    "name": "Grieg — Alfedans · op12n04",
+    "aliases": [
+      "Grieg — Alfedans · op12n04"
+    ],
+    "genre": "classical",
+    "tempo": 132.0,
+    "preview": 48,
+    "firstMidi": 76,
+    "measures": 54,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op12n04.notes.tsv",
+    "sourceSha256": "c9cda8a852e6216a4fbf6663d87241f3d373458fedff107da29dd9d1c8acf9b2",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-folkevise-op12n05",
+    "name": "Grieg — Folkevise · op12n05",
+    "aliases": [
+      "Grieg — Folkevise · op12n05"
+    ],
+    "genre": "classical",
+    "tempo": 100.0002,
+    "preview": 47,
+    "firstMidi": 61,
+    "measures": 30,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op12n05.notes.tsv",
+    "sourceSha256": "374bd8f4a1b24a4dde680f9ac7d60f81ff1c89511a1e532fb2fca0a363a08798",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-norsk-op12n06",
+    "name": "Grieg — Norsk · op12n06",
+    "aliases": [
+      "Grieg — Norsk · op12n06"
+    ],
+    "genre": "classical",
+    "tempo": 150.0,
+    "preview": 9,
+    "firstMidi": 81,
+    "measures": 42,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op12n06.notes.tsv",
+    "sourceSha256": "6d9ce23fcd665508c9c959b5a15892c21e8119a54d170936879ca2a4dd198294",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-albumblad-op12n07",
+    "name": "Grieg — Albumblad · op12n07",
+    "aliases": [
+      "Grieg — Albumblad · op12n07"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 56,
+    "firstMidi": 71,
+    "measures": 28,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op12n07.notes.tsv",
+    "sourceSha256": "23ec8e6bde7adda5d9a0490b8aa2d1f25a93ba84eff3e268e047fdd879085584",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-vals-op12n02",
+    "name": "Grieg — Vals · op12n02",
+    "aliases": [
+      "Grieg — Vals · op12n02"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 35,
+    "firstMidi": 64,
+    "measures": 57,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op12n02.notes.tsv",
+    "sourceSha256": "d652e36c0766a0123ca77f51af810e700abc7e65f9fb219d325ae0718be86cb1",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-elegi-op38n06",
+    "name": "Grieg — Elegi · op38n06",
+    "aliases": [
+      "Grieg — Elegi · op38n06"
+    ],
+    "genre": "classical",
+    "tempo": 79.9998,
+    "preview": 45,
+    "firstMidi": 76,
+    "measures": 35,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op38n06.notes.tsv",
+    "sourceSha256": "fac53e17c1d48309d95cb49803b66e5f33e84b2594f04a342b837e8198113b23",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-melodi-op47n03",
+    "name": "Grieg — Melodi · op47n03",
+    "aliases": [
+      "Grieg — Melodi · op47n03"
+    ],
+    "genre": "classical",
+    "tempo": 100.0002,
+    "preview": 24,
+    "firstMidi": 72,
+    "measures": 79,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op47n03.notes.tsv",
+    "sourceSha256": "34403732454d52c94992d1a45992e7667c487fcf9d185f7babd9ccab8ace1b9d",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-grieg-springtanz-op47n06",
+    "name": "Grieg — Springtanz · op47n06",
+    "aliases": [
+      "Grieg — Springtanz · op47n06"
+    ],
+    "genre": "classical",
+    "tempo": 100,
+    "preview": 56,
+    "firstMidi": 67,
+    "measures": 54,
+    "source": "DCMLab/grieg_lyric_pieces",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "grieg_lyric_pieces-main/notes/op47n06.notes.tsv",
+    "sourceSha256": "84be829d371041102c2f7e5d64f8650c917968d9cfa711af0e85f1c59364febd",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k279-i-allegro-k279-1",
+    "name": "Mozart — Piano Sonata K279, I. Allegro · K279-1",
+    "aliases": [
+      "Mozart — Piano Sonata K279, I. Allegro · K279-1"
+    ],
+    "genre": "classical",
+    "tempo": 120.0,
+    "preview": 79,
+    "firstMidi": 72,
+    "measures": 100,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K279-1.notes.tsv",
+    "sourceSha256": "07a390c585dfa7b94d3fae19b3a9f10e9a2fa4bcf4a0c47a3a986bd2b49bf48f",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k280-i-allegro-assai-k280-1",
+    "name": "Mozart — Piano Sonata K280, I. Allegro assai · K280-1",
+    "aliases": [
+      "Mozart — Piano Sonata K280, I. Allegro assai · K280-1"
+    ],
+    "genre": "classical",
+    "tempo": 136.0,
+    "preview": 60,
+    "firstMidi": 72,
+    "measures": 108,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K280-1.notes.tsv",
+    "sourceSha256": "f7c65953ef47e13d42cd6ab5a05933790e45da40b131cdfe696b5f79ba7f7baf",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k281-i-allegro-k281-1",
+    "name": "Mozart — Piano Sonata K281, I. Allegro · K281-1",
+    "aliases": [
+      "Mozart — Piano Sonata K281, I. Allegro · K281-1"
+    ],
+    "genre": "classical",
+    "tempo": 68.0,
+    "preview": 164,
+    "firstMidi": 70,
+    "measures": 54,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K281-1.notes.tsv",
+    "sourceSha256": "201154abd6b34008e0000001a65438607fce00e4a5f0f5d58820cd9c6c843a60",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k282-i-adagio-k282-1",
+    "name": "Mozart — Piano Sonata K282, I. Adagio · K282-1",
+    "aliases": [
+      "Mozart — Piano Sonata K282, I. Adagio · K282-1"
+    ],
+    "genre": "classical",
+    "tempo": 45.0,
+    "preview": 60,
+    "firstMidi": 70,
+    "measures": 36,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K282-1.notes.tsv",
+    "sourceSha256": "1610d8b2afbbb5fbe277c436c8e03182e93dad77b5d9558783d22a31b523b7d5",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k283-i-allegro-k283-1",
+    "name": "Mozart — Piano Sonata K283, I. Allegro · K283-1",
+    "aliases": [
+      "Mozart — Piano Sonata K283, I. Allegro · K283-1"
+    ],
+    "genre": "classical",
+    "tempo": 150.0,
+    "preview": 59,
+    "firstMidi": 74,
+    "measures": 90,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K283-1.notes.tsv",
+    "sourceSha256": "61bba75d0d10f5f9ba06f88c73ca5155735ba3cfde51fd936df2d85ee5b08098",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k284-i-allegro-k284-1",
+    "name": "Mozart — Piano Sonata K284, I. Allegro · K284-1",
+    "aliases": [
+      "Mozart — Piano Sonata K284, I. Allegro · K284-1"
+    ],
+    "genre": "classical",
+    "tempo": 144.0,
+    "preview": 72,
+    "firstMidi": 74,
+    "measures": 127,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K284-1.notes.tsv",
+    "sourceSha256": "29286541f5827e3837fb433dccfce6f0ca1361bd1329db1a724eaa50dbe2e6e5",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k309-i-allegro-con-spirito-k309-1",
+    "name": "Mozart — Piano Sonata K309, I. Allegro con spirito · K309-1",
+    "aliases": [
+      "Mozart — Piano Sonata K309, I. Allegro con spirito · K309-1"
+    ],
+    "genre": "classical",
+    "tempo": 164.0,
+    "preview": 38,
+    "firstMidi": 72,
+    "measures": 155,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K309-1.notes.tsv",
+    "sourceSha256": "d41cbe9b896e9c4eb3c9858b00b2597803894642a74715b7dbb0657374908330",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k310-i-allegro-con-spirito-k310-1",
+    "name": "Mozart — Piano Sonata K310, I. Allegro con spirito · K310-1",
+    "aliases": [
+      "Mozart — Piano Sonata K310, I. Allegro con spirito · K310-1"
+    ],
+    "genre": "classical",
+    "tempo": 136.0,
+    "preview": 51,
+    "firstMidi": 76,
+    "measures": 133,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K310-1.notes.tsv",
+    "sourceSha256": "ce4a795466c2fd36c8ef24aac91a5a25bc2910b4873f02b94d69a483bb5559f4",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k311-i-allegro-maestoso-k311-1",
+    "name": "Mozart — Piano Sonata K311, I. Allegro maestoso · K311-1",
+    "aliases": [
+      "Mozart — Piano Sonata K311, I. Allegro maestoso · K311-1"
+    ],
+    "genre": "classical",
+    "tempo": 152.0,
+    "preview": 56,
+    "firstMidi": 74,
+    "measures": 112,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K311-1.notes.tsv",
+    "sourceSha256": "9c94d92e2c5021ec2434f3e436c0ce571703691335f3ec09ea7af660c408f842",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k330-i-allegro-moderato-k330-1",
+    "name": "Mozart — Piano Sonata K330, I. Allegro moderato · K330-1",
+    "aliases": [
+      "Mozart — Piano Sonata K330, I. Allegro moderato · K330-1"
+    ],
+    "genre": "classical",
+    "tempo": 68.0,
+    "preview": 139,
+    "firstMidi": 79,
+    "measures": 75,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K330-1.notes.tsv",
+    "sourceSha256": "9cc5a2a88d3e7ec0ae8ca5703453660235bf25eaf82ba19af523bff813302a4f",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k331-i-andante-grazioso-k331-1",
+    "name": "Mozart — Piano Sonata K331, I. Andante grazioso · K331-1",
+    "aliases": [
+      "Mozart — Piano Sonata K331, I. Andante grazioso · K331-1"
+    ],
+    "genre": "classical",
+    "tempo": 75.0,
+    "preview": 52,
+    "firstMidi": 73,
+    "measures": 109,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K331-1.notes.tsv",
+    "sourceSha256": "15c13487525d3922a1027f591393d67f4fddff260d7a2ed53d2b6c1f62e04ac6",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k332-i-allegro-k332-1",
+    "name": "Mozart — Piano Sonata K332, I. Allegro · K332-1",
+    "aliases": [
+      "Mozart — Piano Sonata K332, I. Allegro · K332-1"
+    ],
+    "genre": "classical",
+    "tempo": 150.0,
+    "preview": 29,
+    "firstMidi": 65,
+    "measures": 172,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K332-1.notes.tsv",
+    "sourceSha256": "9518554dc7ec9bb09d22b46fa7283ce744a87976ec1cad3f99b658ea3be676de",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k333-i-allegro-k333-1",
+    "name": "Mozart — Piano Sonata K333, I. Allegro · K333-1",
+    "aliases": [
+      "Mozart — Piano Sonata K333, I. Allegro · K333-1"
+    ],
+    "genre": "classical",
+    "tempo": 136.0,
+    "preview": 72,
+    "firstMidi": 77,
+    "measures": 165,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K333-1.notes.tsv",
+    "sourceSha256": "40f4ce51a41000025bc71c7f1fccdf34c90cfed53216a6ff755df4224d3c2458",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k457-i-molto-allegro-k457-1",
+    "name": "Mozart — Piano Sonata K457, I. Molto allegro · K457-1",
+    "aliases": [
+      "Mozart — Piano Sonata K457, I. Molto allegro · K457-1"
+    ],
+    "genre": "classical",
+    "tempo": 200.0,
+    "preview": 36,
+    "firstMidi": 60,
+    "measures": 184,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K457-1.notes.tsv",
+    "sourceSha256": "bd5466f59814eed7c9e0980748037d72f0bf85293935a03c440d656b9b6af199",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k533-i-allegro-k533-1",
+    "name": "Mozart — Piano Sonata K533, I. Allegro · K533-1",
+    "aliases": [
+      "Mozart — Piano Sonata K533, I. Allegro · K533-1"
+    ],
+    "genre": "classical",
+    "tempo": 200.0,
+    "preview": 44,
+    "firstMidi": 72,
+    "measures": 239,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K533-1.notes.tsv",
+    "sourceSha256": "ab448cad4103256bdf3974474c5598aa7d9a47be41a04e72da89ae0fff99dd35",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k545-i-allegro-k545-1",
+    "name": "Mozart — Piano Sonata K545, I. Allegro · K545-1",
+    "aliases": [
+      "Mozart — Piano Sonata K545, I. Allegro · K545-1"
+    ],
+    "genre": "classical",
+    "tempo": 148.0,
+    "preview": 77,
+    "firstMidi": 72,
+    "measures": 73,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K545-1.notes.tsv",
+    "sourceSha256": "6e67611704cf0ecb83d10ee574f2095180b30a0b121ff8ed983d30e51cde0551",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k570-i-allegro-k570-1",
+    "name": "Mozart — Piano Sonata K570, I. Allegro · K570-1",
+    "aliases": [
+      "Mozart — Piano Sonata K570, I. Allegro · K570-1"
+    ],
+    "genre": "classical",
+    "tempo": 162.0,
+    "preview": 50,
+    "firstMidi": 70,
+    "measures": 156,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K570-1.notes.tsv",
+    "sourceSha256": "0b8501f172b6498d202ffba50cd8ee55e25581f2a115c0c4d57cb632c5a76f1f",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-mozart-piano-sonata-k576-i-allegro-k576-1",
+    "name": "Mozart — Piano Sonata K576, I. Allegro · K576-1",
+    "aliases": [
+      "Mozart — Piano Sonata K576, I. Allegro · K576-1"
+    ],
+    "genre": "classical",
+    "tempo": 138.0,
+    "preview": 69,
+    "firstMidi": 57,
+    "measures": 120,
+    "source": "DCMLab/mozart_piano_sonatas",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "mozart_piano_sonatas-main/notes/K576-1.notes.tsv",
+    "sourceSha256": "a7d9926e023386c5182cffd159d84f128f3f941c73ebc2c7afd5bd6ed4542815",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  },
+  {
+    "id": "classical-debussy-prelude-l075-01-suite-prelude",
+    "name": "Debussy — Prelude · l075-01_suite_prelude",
+    "aliases": [
+      "Debussy — Prelude · l075-01_suite_prelude"
+    ],
+    "genre": "classical",
+    "tempo": 90.0,
+    "preview": 76,
+    "firstMidi": 79,
+    "measures": 88,
+    "source": "DCMLab/debussy_suite_bergamasque",
+    "license": "CC BY-NC-SA 4.0",
+    "sourceFile": "debussy_suite_bergamasque-main/notes/l075-01_suite_prelude.notes.tsv",
+    "sourceSha256": "68a8d25da66ae3ddce51bedec22ebc2d61a823592a631249906ea632745fd013",
+    "form": "written-melodic-voice",
+    "reduction": "Selected score voice; highest simultaneous note; ties retained. Written form, repeats not expanded."
+  }
+]

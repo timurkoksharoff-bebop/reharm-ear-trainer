@@ -18,3 +18,6 @@
   MELODY_CATALOG_SOURCES.md before any commercial distribution.
 - Rebuilt classic bundle and static output, service-worker bumped to0.78.
 - macOS wrapper is not part of this PWA release.
+
+Published: commit7839889, origin/main. Public mobile page and all three genre
+playback paths verified in Chrome390×844. URL: /game/?release=078.

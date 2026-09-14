@@ -1,6 +1,9 @@
 # Space Music College — BUILD 078, current checkpoint
 
-**078 prepared locally; publication verification pending.** Previous live release077.
+**078 опубликована и проверена.** Коммит `7839889` в origin/main.
+Мобильная ссылка: https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/game/?release=078
+Публичная страница показывает078; на ней Chrome390×844 проверил сохранение
+жанра и фрагмент/полное воспроизведение Hey Jude, Für Elise и All the Things You Are.
 Actual code now integrates **200 jazz + 50 rock + 100 classical = 350 melodies**.
 Read BUILD_078_NOTES.md and MELODY_CATALOG_SOURCES.md for verified scope/limits.
 The earlier entries below about “sources only” are superseded by this checkpoint.

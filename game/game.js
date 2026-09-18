@@ -1,3 +1,6 @@
+import {createIceEvent} from './ice-event.mjs';
+import {createSeasonPlanet} from './seasons.mjs';
+import {createRaiders} from './raiders.mjs';
 import {MELODY_BANK,GENRE_COUNTS} from './melody-bank.mjs';
 import {createIntelligence} from './intelligence.mjs';
 import {createDebrief} from './debrief.mjs';
@@ -36,11 +39,11 @@ function measureDeck(){
   cabinet.style.setProperty('--deck-height',`${Math.max(0,flight.bottom-dock.top)}px`);
 }
 new ResizeObserver(measureDeck).observe(document.querySelector('.cockpit'));
-const imageNames=['note-cube','note-drum','turret-base','turret-barrel','turret-ruin','concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','artifact-guitar','artifact-keytar','artifact-pedal','artifact-cymbal','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers'];
+const imageNames=['artifact-drum-engine','artifact-rudiments','cyber-sable','enemy-topdown','note-cube','note-drum','turret-base','turret-barrel','turret-ruin','concert-trumpet-v65','concert-guitar-v65','concert-keys-v65','concert-drums-v65','crate-bass','crate-roulette','crate-trumpet','crate-vibraphone','artifact-guitar','artifact-keytar','artifact-pedal','artifact-cymbal','artifact-yellow-submarine','hydra','enemyships','corvette','fortress','drummachine','trumpeter','keytarist','guitarist','drummer','drummergirl','vibraphonist','keytarExact','guitarExact','band','ship','terrain','drone','moon','mars','teachers'];
 const images=Object.fromEntries(imageNames.map(name=>[name,new Image()]));
 const coreImageNames=['hydra','enemyships','corvette','fortress','ship','terrain','drone','moon','mars'];
 const optionalImageNames=imageNames.filter(name=>!coreImageNames.includes(name));
-const imageUrl=name=>['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:name==='teachers'?'assets/teachers-v2.webp':`assets/${name}.webp`;
+const imageUrl=name=>['artifact-drum-engine','artifact-rudiments'].includes(name)?`assets/${name}.png`:name==='cyber-sable'?'assets/cyber-sable.png':name==='enemy-topdown'?'assets/enemy-topdown.png':['keytarExact','guitarExact'].includes(name)?`assets/${name==='keytarExact'?'keytar-exact':'guitar-exact'}.svg`:name==='teachers'?'assets/teachers-v2.webp':`assets/${name}.webp`;
 async function prepareFlightImages(onProgress=()=>{},names=coreImageNames,strict=true){
   let ready=0;const entries=names.map(name=>[name,images[name]]);
   const results=await Promise.allSettled(entries.map(async([name,img])=>{await loadFlightImage(img,imageUrl(name));onProgress(++ready,entries.length);}));
@@ -50,13 +53,27 @@ function warmOptionalImages(){return prepareFlightImages(()=>{},optionalImageNam
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const BASE_SHIELD=12,MAX_SHIELD=20;
+const PLANET_CHOICE_KEY='ear-reharm-game.planet.v1';
+const PLANETS=[
+  {id:'original',number:'01',title:'Выжженная орбита',description:'Луна и Марс · каменные равнины и боевой маршрут.',available:true,tone:'rust'},
+  {id:'seasons',number:'02',title:'Сад Эха',description:'Ambient chill · живая река, биолюминесценция и гармонические маршруты.',available:true,tone:'garden',ambient:'garden-flight.html'},
+  {id:'ocean',number:'03',title:'Океан Линз',description:'Водный мир · отражения, течения и длинные гармонии.',available:false,tone:'ocean'},
+  {id:'ice',number:'04',title:'Ледяной архив',description:'Белая тишина · замёрзшие сигналы и хрупкие интервалы.',available:false,tone:'ice'},
+  {id:'desert',number:'05',title:'Янтарная пустыня',description:'Слоистые каньоны · редкие источники света и воздуха.',available:false,tone:'desert'},
+  {id:'night',number:'06',title:'Ночная теплица',description:'Грибы, светлячки и полностью фосфоресцирующая ночь.',available:false,tone:'night'},
+];
+function savedPlanetChoice(){try{const value=localStorage.getItem(PLANET_CHOICE_KEY);return PLANETS.some(planet=>planet.id===value&&planet.available)?value:'original';}catch{return 'original';}}
+const planetTitle=()=>PLANETS.find(planet=>planet.id===s.planetChoice)?.title||PLANETS[0].title;
 let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[],runToken=0,qualityBank=0,weaponTab='bass';
-const s={mode:'start',sector:0,route:null,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:BASE_SHIELD,maxHealth:BASE_SHIELD,power:1,
+const s={mode:'start',planetChoice:savedPlanetChoice(),sector:0,route:null,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:BASE_SHIELD,maxHealth:BASE_SHIELD,power:1,
   listening:false,enemy:null,bullets:[],shots:[],particles:[],beam:0,flash:0,shotTimer:0,invulnerable:0,
   fireTimer:0,resolveTimer:0,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},
   drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,
   capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0},
   bookMission:null,player:{x:240,y:500,tx:240,ty:500},keys:new Set(),pointer:null,feedbackTimer:0};
+const seasonPlanet=createSeasonPlanet({width:W,height:()=>playableHeight(),reducedMotion:reduced});
+const raiders=createRaiders({image:images['enemy-topdown'],width:()=>W,height:playableHeight,player:()=>s.player,hurt:()=>shipHit(),drops:()=>expedition.snapshot().drops,notify:message=>feedback(message,true)});
+const iceEvent=createIceEvent({image:images['cyber-sable'],width:()=>W,height:playableHeight,player:()=>s.player,notify:message=>feedback(message,true),obstacles:()=>{const world=expedition.snapshot();return [...world.walls,...world.turrets.map(t=>({x:t.x,y:t.y,r:35})),...(s.enemy&&!expedition.safeNoteFlight&&!s.enemy.suspended?[{x:s.enemy.x,y:s.enemy.y,r:machineSize(s.enemy.model)*.55}]:[])];}});
 let activeRecognition=null;
 function listenTitle(){
   const Engine=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -274,7 +291,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 078</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 080</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -286,23 +303,45 @@ function openFlightConsole(){
   const names=['NOVICE','STUDENT','MASTER','LEGEND'];
   const boxes=portrait?[[9,60,39,7],[49,60,41,7],[9,67.5,39,7],[49,67.5,41,7]]:[[15,37,34,13],[50,37,35,13],[15,52,34,14],[50,52,35,14]];
   names.forEach((name,i)=>consoleButton(name,boxes[i],()=>{consolePilot=i;openFlightConsole();},i===consolePilot));
-  $('console-status').textContent=`${names[consolePilot]} · ${PILOTS[consolePilot].description}`;
+  $('console-status').textContent=`${names[consolePilot]} · ${PILOTS[consolePilot].description} · ${intelligence.settings.genres.map(g=>({jazz:'Джаз',rock:'Рок',classical:'Классика'})[g]).join(' + ')} · ${planetTitle()}`;
   consoleButton('INTELLIGENCE · ЖАНРЫ',portrait?[20,51,60,7]:[35,24,33,8],openLearningSettings);
   consoleButton('LAUNCH',portrait?[20,76,58,8]:[34,71,31,13],()=>startRun(PILOTS[consolePilot].sector,consolePilot));
   consoleButton('MISSIONS',portrait?[8,86,20,6]:[4,80,12,9],()=>openBookFlight());
   consoleButton('HANGAR',portrait?[29,86,20,6]:[17,80,12,9],openHangar);
   consoleButton('SOUND LAB',portrait?[50,86,21,6]:[72,80,14,9],()=>openSoundLab());
   consoleButton('RU / EN',portrait?[72,86,20,6]:[87,82,12,9],()=>$('language').click());
+  const quick=document.createElement('div');quick.className='console-quick';
+  const planetButton=document.createElement('button');planetButton.textContent=`ПЛАНЕТА · ${planetTitle()}`;planetButton.addEventListener('click',openPlanetSettings);quick.append(planetButton);$('console-scene').append(quick);
+}
+function selectPlanet(choice){
+  if(!PLANETS.some(planet=>planet.id===choice&&planet.available))return;
+  s.planetChoice=choice;
+  try{localStorage.setItem(PLANET_CHOICE_KEY,choice);}catch{}
+}
+function openPlanetSettings(){
+  enterMenu('planets',openPlanetSettings);
+  overlay('<span class="eyebrow">КАРТА ПЛАНЕТ · 06 СЛОТОВ</span><h2>Куда полетим?</h2><p class="compact">Два мира доступны в этой сборке. Остальные слоты показывают будущий масштаб путешествия.</p><div id="planet-grid" class="planet-grid"></div>');
+  for(const planet of PLANETS){
+    const selected=s.planetChoice===planet.id,card=document.createElement('button');card.className=`planet-card ${planet.tone}${selected?' selected':''}`;card.disabled=!planet.available;card.setAttribute('aria-pressed',String(selected));
+    card.innerHTML=`<span>${planet.number}</span><b>${selected?'✓ ':''}${planet.title}</b><small>${planet.description}</small><i>${planet.available?'ДОСТУПНА':'СКОРО'}</i>`;
+    if(planet.available)card.addEventListener('click',()=>{selectPlanet(planet.id);openPlanetSettings();});$('planet-grid').append(card);
+  }
+  if(s.planetChoice==='seasons')action('AMBIENT CHILL · приборный полёт',()=>{location.href='garden-flight.html';});
+  action('Вылететь →',()=>startRun(PILOTS[consolePilot].sector,consolePilot));
+  action('← В ангар',openFlightConsole,true);
 }
 function openLearningSettings(){
   enterMenu('learning',openLearningSettings);
   const settings=intelligence.settings;
-  overlay(`<h2>Перед полётом</h2><p>Intelligence чаще возвращает трудные темы и постепенно открывает новые. Освоенные тоже повторяются.</p><div id="learning-options" class="study-tabs"></div><p>Жанр задаёт предпочтение в смешанном репертуаре. ${GENRE_COUNTS.jazz} джазовых · ${GENRE_COUNTS.rock} рок · ${GENRE_COUNTS.classical} классических мелодий.</p>`);
+  overlay(`<h2>Перед полётом</h2><p>Выбери один, два или все три жанра. Мелодии будут только из выбранных разделов.</p><div id="learning-options" class="study-tabs"></div><p>Intelligence повторяет трудные темы и постепенно добавляет новые. Гармонические задания пока не ограничены жанром.</p>`);
   const wrap=$('learning-options');
-  for(const [label,change,selected] of [
-    ['Intelligence: '+(settings.enabled?'включён':'выключен'),{enabled:!settings.enabled},settings.enabled],
-    ...[['mixed','Смешанный'],['jazz','Джаз'],['rock','Рок'],['classical','Классика']].map(([genre,label])=>[label,{genre},genre===settings.genre])
-  ]){const b=document.createElement('button');b.textContent=(selected?'✓ ':'')+label;b.addEventListener('click',()=>{intelligence.configure(change);openLearningSettings();});wrap.append(b);}
+  for(const [genre,label] of [['jazz','Джаз'],['classical','Классика'],['rock','Рок']]){
+    const selected=settings.genres.includes(genre),b=document.createElement('button');b.textContent=(selected?'✓ ':'')+label;b.setAttribute('aria-pressed',String(selected));
+    b.addEventListener('click',()=>{const next=selected?settings.genres.filter(g=>g!==genre):[...settings.genres,genre];if(!next.length){feedback('Оставь хотя бы один жанр');return;}intelligence.configure({genres:next});openLearningSettings();});wrap.append(b);
+  }
+  const toggle=document.createElement('button');toggle.textContent='Intelligence: '+(settings.enabled?'включён':'выключен');toggle.addEventListener('click',()=>{intelligence.configure({enabled:!settings.enabled});openLearningSettings();});wrap.append(toggle);
+  action(`Планета · ${planetTitle()}`,openPlanetSettings,true);
+  action('Вылететь →',()=>startRun(PILOTS[consolePilot].sector,consolePilot));
   action('← В ангар',openFlightConsole);
 }
 function openSoundLab(selection=0){
@@ -326,9 +365,9 @@ function openBookFlight(chapter=1){
   action('GALACTIC TOUR · 1460 стандартов',openStandards);action('Вернуться',menuBack,true);
 }
 const standardsLibrary=createStandardsLibrary({overlay,action,enter:enterMenu,back:menuBack,stop:()=>audio.stop(),start:(route,level)=>startRun(3,level,{route}),listen:async route=>{try{await audio.unlock();if(s.mode!=='start')return;const preview={...route,sequence:route.sequence.slice(0,8)};audio.progression(preview,preview.sequence.length-1,()=>{},()=>{},true);}catch(e){feedback(e.message,true);}}});
-function openStandards(){s.mode='start';audio.stop();s.listening=false;expedition.reset();syncPads();standardsLibrary.open();}
+function openStandards(){s.mode='start';audio.stop();s.listening=false;iceEvent.reset();expedition.reset();syncPads();standardsLibrary.open();}
 const melodyLibrary=createMelodyLibrary({overlay,action,enter:enterMenu,back:menuBack,audio,isActive:()=>s.mode==='start'&&['melodies','melody-detail'].includes(currentMenu?.id),launch:()=>launchEncounter(1)});
-function openMelodies(){s.mode='start';s.listening=false;expedition.reset();syncPads();melodyLibrary.open();}
+function openMelodies(){s.mode='start';s.listening=false;iceEvent.reset();expedition.reset();syncPads();melodyLibrary.open();}
 function missionBack(){s.bookMission?.route?openStandards():openBookFlight(s.bookMission?.chapter||1);}
 function missionReplay(){s.bookMission?.route?startRun(3,expedition.level,s.bookMission):startBookRun(s.bookMission.chapter,s.bookMission.index);}
 function startBookRun(chapter,index){return startRun(3,Math.min(3,Math.floor((chapter-1)/5)),{chapter,index});}
@@ -338,7 +377,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 078 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 080 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и all tones · ловля нот</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -378,7 +417,7 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
   try{await audio.unlock();if(token!==runToken)return;
     await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Основная графика · ${ready}/${total}</h2><p>Корабль и поверхность планеты</p>`);});if(token!==runToken)return;
     const build=shipBuild();Object.assign(s,{sector,bookMission,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
-    expedition.reset(level);beginSector(sector);warmOptionalImages();
+    seasonPlanet.reset();iceEvent.reset();expedition.reset(level);beginSector(sector);warmOptionalImages();
   }catch(e){if(token!==runToken)return;s.mode='start';overlay(`<h2>Подготовка прервана</h2><p>${e.message}</p>`);action('Попробовать ещё',()=>startRun(sector,level));}
 }
 function beginSector(sector){
@@ -507,7 +546,7 @@ async function playStudy(){
 }
 function artifactGuide(){
   enterMenu('artifact-guide',artifactGuide);
-  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster вызывает гитариста и ладовый режим. Keytar вызывает клавишника и мелодический режим. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: механические хищники нейтрализуются.<br><br>Механическая рулетка выбирает случайное испытание. Реликвия барабанщика останавливает полёт и запускает распознавание стиля или партии. Тарелка Zildjian запасает RHYTHM FOCUS: во время задания она убирает половину неверных вариантов.<br><br>Трубач продолжает полёт и просит поймать названия нот BASIC, GUIDE или ALL TONES. Вибрафонистка останавливает полёт для спокойного распознавания COLOR TONES. На старших уровнях аккорды трубача содержат надстройки, но поле целей остаётся разреженным.<br><br>Механические хищники оставляют подсказки, автомат, невидимость и защиту. Для нейтрализации также используй обычные заряды.</p>');
+  overlay('<span class="eyebrow">ПАМЯТКА ПИЛОТА</span><h2>Слушай. Лови. Усиливайся.</h2><p class="compact">Услышь интервал и поймай одну цифру: малая терция — ♭3, квинта — 5, малая септима — ♭7, большая — 7. Направление звучания не меняет ответ. Для тритона появится один верный жетон: ♭5 или ♯4. Ошибочный захват завершает попытку.<br><br>Telecaster вызывает гитариста и ладовый режим. Keytar вызывает клавишника и мелодический режим. Overdrive — двойной урон и защита. Jazz Bass — услышь 3 или 7 аккорда и поймай цифру: механические хищники нейтрализуются.<br><br>Yellow Submarine обозначает The Beatles вообще и открывает отдельную комнату группы. На NOVICE среди шести названий две любые песни Beatles; на STUDENT — три, на MASTER — четыре, на LEGEND — все шесть. MELODY FOCUS 50/50 убирает половину неверных вариантов.<br><br>Механическая рулетка выбирает случайное испытание. Реликвия барабанщика останавливает полёт и запускает распознавание стиля или партии. Тарелка Zildjian запасает RHYTHM FOCUS: во время задания она убирает половину неверных вариантов.<br><br>Трубач продолжает полёт и просит поймать названия нот BASIC, GUIDE или ALL TONES. Вибрафонистка останавливает полёт для спокойного распознавания COLOR TONES. На старших уровнях аккорды трубача содержат надстройки, но поле целей остаётся разреженным.<br><br>Механические хищники оставляют подсказки, автомат, невидимость и защиту. Для нейтрализации также используй обычные заряды.</p>');
   action('Сразу в бой →',()=>spawnEnemy());
   action('Попробовать сбор интервалов',()=>{spawnEnemy();audio.stop();s.listening=false;expedition.startChallenge('numbers');},true);
   ARTIFACTS.forEach((item,i)=>action(`Попробовать ${item.name}`,()=>{spawnEnemy();audio.stop();s.listening=false;expedition.artifact(i);if(i===3)playCue();},true));
@@ -643,7 +682,7 @@ function finish(won,revisit=false){
   if(won&&s.bookMission){audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true);action('↻ Прослушать весь маршрут',()=>audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true),true);}
   action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другие тональности'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(s.sector===3?3:0):s.sector,expedition.level));
   action(`Разбор полёта · ${debrief.log.pendingCount} ошибок`,debrief.open);
-  action('Выбрать уровень',()=>{s.mode='start';expedition.reset();startScreen();},true);
+  action('Выбрать уровень',()=>{s.mode='start';iceEvent.reset();expedition.reset();startScreen();},true);
   action('Ангар · потратить детали',openHangar,true);
   if(s.bookMission)action('Карта миссий',missionBack,true);
   if(won)action('Все ступени и аккорды',()=>startRun(3),true);
@@ -654,7 +693,7 @@ function pause(help=false){
   const pausedMode=s.mode;enterMenu('pause',()=>{s.mode=pausedMode;pause(help);});
   previousMode=s.mode;s.mode='paused';audio.stop();s.listening=false;s.keys.clear();s.pointer=null;syncPads();expedition.render();
   overlay(`<span class="eyebrow">${help?'ПОЛЁТ ПО СЛУХУ':'ПАУЗА'}</span><h2>${help?'Твой слух — оружие.':'Держим позицию.'}</h2><p>Тяни корабль по полю, чтобы уклоняться. Сначала звучит тоника I, потом сигнал гидры. Нажми подходящую кнопку, чтобы пробить щит.</p><p class="compact">Стрелки — движение · 1–4 — первые ступени · QWER — первые типы · пробел — слушать · Esc — пауза.<br>В хроматическом полёте: все кнопки доступны касанием; типы — в двух вкладках.<br>Три победы подряд восстанавливают щит.</p>`);
-  action('Продолжить полёт',resume);action('На базу',()=>{++runToken;audio.stop();s.mode='start';s.enemy=null;s.capsule=null;s.bullets=[];s.shots=[];expedition.reset();$('enemy-label').hidden=true;startScreen();},true);
+  action('Продолжить полёт',resume);action('На базу',()=>{++runToken;audio.stop();s.mode='start';s.enemy=null;s.capsule=null;s.bullets=[];s.shots=[];iceEvent.reset();expedition.reset();$('enemy-label').hidden=true;startScreen();},true);
   action('♫ Ознакомление со звуками',()=>openStudy(),true);
 }
 async function resume(){
@@ -698,6 +737,7 @@ function resolveCapsule(caught){
 }
 function update(dt){
   if(['paused','study','trainer','debrief'].includes(s.mode))return;
+  if(!['active','resolving'].includes(s.mode))iceEvent.reset();
   clock+=dt;
   if(s.feedbackTimer>0){s.feedbackTimer-=dt;if(s.feedbackTimer<=0)$('feedback').classList.remove('visible');}
   s.flash=Math.max(0,s.flash-dt);s.beam=Math.max(0,s.beam-dt);s.invulnerable=Math.max(0,s.invulnerable-dt);
@@ -705,14 +745,17 @@ function update(dt){
   if(expedition.scenePaused){expedition.tick(dt);return;}
   const playing=['active','resolving'].includes(s.mode);
   stepGround(dt,playing);
+  if(playing&&s.planetChoice==='seasons')seasonPlanet.update(dt,{scroll:s.groundScrollDelta});
     if(playing){
-    const p=s.player,speed=shipBuild().speed*dt;
+    const p=s.player,speed=iceEvent.frozen?0:shipBuild().speed*dt;
+    if(iceEvent.frozen){p.tx=p.x;p.ty=p.y;}
     if(s.keys.has('arrowleft')||s.keys.has('a'))p.tx-=speed;
     if(s.keys.has('arrowright')||s.keys.has('d'))p.tx+=speed;
     if(s.keys.has('arrowup')||s.keys.has('w'))p.ty-=speed;
     if(s.keys.has('arrowdown')||s.keys.has('s'))p.ty+=speed;
     p.tx=clamp(p.tx,25,W-25);p.ty=clamp(p.ty,115,playableHeight()-35);p.x+=(p.tx-p.x)*Math.min(1,dt*16);p.y+=(p.ty-p.y)*Math.min(1,dt*16);p.y=Math.min(p.y,playableHeight()-35);
     expedition.tick(dt);
+    if(!s.listening&&!expedition.scenePaused)iceEvent.tick(dt,{digits:expedition.snapshot().digits,scroll:s.groundScrollDelta});
     collideHydraBody();
     const safeFlight=!!expedition.safeNoteFlight;
     if(s.mode==='active'&&s.enemy)$('enemy-label').hidden=safeFlight;
@@ -722,6 +765,7 @@ function update(dt){
     if(!reduced)burst(p.x,p.y+24,'#5efbdd',1);
     if(s.enemy&&!safeFlight){s.enemy.age+=dt;s.enemy.hit=Math.max(0,s.enemy.hit-dt);s.enemy.muzzle=Math.max(0,(s.enemy.muzzle||0)-dt);}
     if(!safeFlight&&!s.hydraBlast&&!s.listening&&!expedition.pausedCombat){
+      raiders.tick(dt);
       const difficulty=pressure(expedition.level,s.combo,s.health);
       s.waveTimer-=dt;if(s.waveTimer<=0&&s.drones.length<10){s.drones.push(...formation(s.waveIndex++,W,difficulty));s.waveTimer=s.mode==='resolving'?2.3:6;}
       for(const d of s.drones){stepDrone(d,dt*expedition.pilot.speed,W);if(d.fire<=0&&d.y>20&&d.y<H*.6&&!expedition.cloaked){d.fire=10;const a=Math.atan2(p.y-d.y,p.x-d.x);s.bullets.push({x:d.x,y:d.y,vx:Math.cos(a)*75,vy:Math.sin(a)*75,r:5});}if(d.y>0&&hitCircle(d,p,25)){d.hp=0;shipHit();}}
@@ -739,8 +783,9 @@ function update(dt){
     }
   }
   stepHydraDestruction(dt);
-  if(!['active','resolving'].includes(s.mode)||expedition.safeNoteFlight||s.hydraBlast){s.shots=[];s.bullets=[];s.drones=[];}
+  if(!['active','resolving'].includes(s.mode)||expedition.safeNoteFlight||s.hydraBlast){s.shots=[];s.bullets=[];s.drones=[];raiders.reset();}
   s.shots.forEach(b=>{b.y-=500*dt;b.x+=(b.vx||0)*dt;
+    if(raiders.hit(b)){b.y=-30;return;}
     if(expedition.hitShot(b)){b.y=-30;return;}
     for(const d of s.drones){if(d.hp>0&&d.y>0&&hitCircle(b,d,22)){d.hp--;d.hit=.15;b.y=-30;if(d.hp<=0){s.droneKills++;s.score+=20;awardScrap(2);burst(d.x,d.y,'#f7cd7f',12);renderHud();}break;}}
     if(s.enemy&&s.mode==='active'&&!expedition.safeNoteFlight){
@@ -793,6 +838,9 @@ function drawHydraGun(port,e){
 function draw(){
   ctx.clearRect(0,0,W,H);ctx.save();
   if(s.shake>0&&!reduced){const amount=Math.min(4,s.shake*12);ctx.translate(Math.sin(clock*93)*amount,Math.cos(clock*77)*amount*.65);}
+  if(s.planetChoice==='seasons'){
+    ctx.fillStyle='#102425';ctx.fillRect(0,0,W,H);seasonPlanet.drawGround(ctx);
+  }else{
   const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#111328');bg.addColorStop(.6,'#090f21');bg.addColorStop(1,'#102b34');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
   const terrain=images[expedition.planet];
   if(terrain.complete&&terrain.naturalWidth){const tileHeight=W*terrain.naturalHeight/terrain.naturalWidth,offset=s.travel%tileHeight;ctx.globalAlpha=.72;for(let y=offset-tileHeight;y<H;y+=tileHeight)ctx.drawImage(terrain,0,y,W,tileHeight);ctx.globalAlpha=1;ctx.fillStyle='#08102128';ctx.fillRect(0,0,W,H);}
@@ -801,6 +849,8 @@ function draw(){
   // Navigational grid and scrolling rail marks, not a decorative scene asset.
   ctx.strokeStyle='#7695bd0d';ctx.lineWidth=1;for(let x=0;x<=W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
   for(let y=s.travel%70;y<H;y+=70){ctx.fillStyle='#a6c5d52b';ctx.fillRect(12,y,4,1);ctx.fillRect(W-16,y,4,1);}
+  }
+  iceEvent.drawGround(ctx);
   const activeEnemy=s.enemy&&s.mode!=='resolving'&&!expedition.safeNoteFlight&&!s.enemy.suspended;
   if(activeEnemy||s.hydraBlast||s.mode==='start'){
     const e=s.hydraBlast?.enemy||(activeEnemy?s.enemy:{x:W/2,y:H*.37,age:clock,shields:{bass:false,quality:false},hit:0});
@@ -822,12 +872,14 @@ function draw(){
   ctx.shadowColor='#79f5d0';ctx.shadowBlur=reduced?0:9;ctx.fillStyle='#a2ffe0';for(const b of s.shots)ctx.fillRect(b.x-1.5,b.y,3,12);ctx.shadowBlur=0;
   for(const d of s.drones){if(d.y<0)continue;ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.age+d.phase)*.2);if(images.drone.complete&&images.drone.naturalWidth)ctx.drawImage(images.drone,-20,-20,40,40);if(d.hit>0){ctx.fillStyle='#fff8';ctx.fillRect(-13,-9,26,18);}ctx.restore();}
   for(const b of s.bullets){ctx.fillStyle='#ff7ea72b';ctx.beginPath();ctx.arc(b.x,b.y,11,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffbdc8';ctx.beginPath();ctx.arc(b.x,b.y,4,0,Math.PI*2);ctx.fill();}
+  raiders.draw(ctx);
   expedition.draw();
+  iceEvent.drawActors(ctx);
   const p=s.player;
   ctx.save();ctx.translate(p.x,p.y);if(s.invulnerable>0||expedition.cloaked)ctx.globalAlpha=.45+Math.sin(clock*30)*.3;
   if(expedition.invincible){ctx.strokeStyle='#ffe69a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,36,0,Math.PI*2);ctx.stroke();}
   ctx.strokeStyle='#79f5d029';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,35,0,Math.PI*2);ctx.stroke();
-  ctx.save();ctx.translate(18,25);ctx.scale(.86,.7);ctx.filter='brightness(0) blur(2px)';ctx.globalAlpha=.45;drawPlayerFrame(shipBuild().frame.frame);ctx.restore();
+  ctx.save();ctx.translate(18,25);ctx.scale(.86,.7);ctx.globalAlpha=.45;if(iceEvent.snapshot().age>=0){ctx.globalAlpha=.2;drawPlayerFrame(shipBuild().frame.frame);}else{drawShipShadow(shipBuild().frame.frame);}ctx.restore();
   drawPlayerFrame(shipBuild().frame.frame);
   ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,-6,2,0,Math.PI*2);ctx.fill();ctx.restore();
   if(s.beam>0&&s.enemy&&!expedition.safeNoteFlight){ctx.strokeStyle='#bdffe7';ctx.lineWidth=4+s.beam*20;ctx.globalAlpha=s.beam/.3;ctx.beginPath();ctx.moveTo(p.x,p.y-26);ctx.lineTo(s.enemy.x,s.enemy.y+30);ctx.stroke();ctx.globalAlpha=1;}
@@ -835,9 +887,19 @@ function draw(){
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
   for(const part of s.debris){ctx.save();ctx.translate(part.x,part.y);ctx.rotate(part.angle);ctx.globalAlpha=Math.min(1,part.life);ctx.fillStyle='#b77b43';ctx.strokeStyle='#38281f';ctx.lineWidth=1;ctx.fillRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.strokeRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.restore();}
+  if(s.planetChoice==='seasons')seasonPlanet.drawAtmosphere(ctx);
+  iceEvent.drawHud(ctx);
   if(expedition.showScene)expedition.drawPauseOverlay();
   if(s.flash>0&&!reduced){ctx.fillStyle=`rgba(255,93,134,${s.flash*.3})`;ctx.fillRect(0,0,W,H);}
   ctx.restore();
+}
+const shipShadowCanvas=document.createElement('canvas');shipShadowCanvas.width=100;shipShadowCanvas.height=100;
+function drawShipShadow(frame){
+  const shadow=shipShadowCanvas.getContext('2d');shadow.clearRect(0,0,100,100);
+  const source=frame===1?images.enemyships:frame===2?images.corvette:images.fortress;
+  if(!source.complete||!source.naturalWidth)return;
+  const crop=frame===1?MACHINE_CROPS[0]:[0,0,source.naturalWidth,source.naturalHeight];
+  shadow.drawImage(source,...crop,10,10,80,80);shadow.globalCompositeOperation='source-in';shadow.fillStyle='#000';shadow.fillRect(0,0,100,100);shadow.globalCompositeOperation='source-over';ctx.drawImage(shipShadowCanvas,-40,-40,80,80);
 }
 function drawPlayerFrame(frame){
   if(frame===0){if(images.ship.complete&&images.ship.naturalWidth)ctx.drawImage(images.ship,-34,-34,68,68);return;}
@@ -848,7 +910,7 @@ function drawPlayerFrame(frame){
   ctx.strokeStyle='#8daaa5';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,size*.45,0,Math.PI*2);ctx.stroke();
 }
 function frame(now){const dt=Math.min(.035,(now-last)/1000||.016);last=now;update(dt);draw();requestAnimationFrame(frame);}
-function movePointer(event){const rect=canvas.getBoundingClientRect();s.player.tx=(event.clientX-rect.left)*W/rect.width;s.player.ty=(event.clientY-rect.top)*H/rect.height-28;}
+function movePointer(event){if(iceEvent.frozen)return;const rect=canvas.getBoundingClientRect();s.player.tx=(event.clientX-rect.left)*W/rect.width;s.player.ty=(event.clientY-rect.top)*H/rect.height-28;}
 canvas.addEventListener('pointerdown',e=>{if(!['active','resolving'].includes(s.mode))return;if(expedition.activateArtifact())return;s.pointer=e.pointerId;canvas.setPointerCapture(e.pointerId);movePointer(e);});
 canvas.addEventListener('pointermove',e=>{if(e.pointerId===s.pointer)movePointer(e);});
 for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>s.pointer=null);
@@ -874,11 +936,11 @@ window.addEventListener('pagehide',()=>{audio.stop();activeRecognition?.abort();
 ['bank-basic','bank-altered'].forEach((id,i)=>$(id).addEventListener('click',()=>{qualityBank=i;buildPads();}));
 ['weapon-root','weapon-type'].forEach((id,i)=>$(id).addEventListener('click',()=>{weaponTab=i?'quality':'bass';syncPads();}));
 $('hint').addEventListener('click',()=>expedition.hint());
-$('home').addEventListener('click',()=>{++runToken;audio.stop();s.listening=false;s.keys.clear();s.pointer=null;expedition.reset(0);startScreen();});
+$('home').addEventListener('click',()=>{++runToken;audio.stop();s.listening=false;s.keys.clear();s.pointer=null;iceEvent.reset();expedition.reset(0);startScreen();});
 $('pause').addEventListener('click',()=>s.mode==='paused'?resume():pause());
 $('replay').addEventListener('click',()=>{s.replays++;expedition.busy?expedition.replay():s.capsule?playCapsule():playCue(!!s.bookMission);});
 $('interval-reference').addEventListener('click',()=>playCapsule(true));
 $('help').addEventListener('click',()=>{if(s.mode==='start'){feedback('Включи звук и нажми «Вылететь»');}else pause(true);});
 // Read-only diagnostics for regression checks; deliberately no answer/skip hook.
-window.earGame=Object.freeze({snapshot:()=>JSON.parse(JSON.stringify({mode:s.mode,sector:s.sector,score:s.score,health:s.health,power:s.power,combo:s.combo,cleared:s.cleared,listening:s.listening,enemy:s.enemy,noteFlight:expedition.snapshot().special?.kind==='flightTones'?{required:expedition.snapshot().special.required,collected:expedition.snapshot().special.collected,cubes:expedition.snapshot().digits,result:expedition.snapshot().special.result}:null,ground:{travel:s.travel,delta:s.groundScrollDelta,combat:s.groundCombat,exploding:!!s.hydraBlast,safeNoteFlight:!!expedition.safeNoteFlight},player:s.player,bullets:s.bullets,stats:s.stats,route:s.route,capsule:s.capsule,intervalStats:s.intervalStats,audio:{state:audio.context?.state,lastCue:audio.lastCue}}))});
+window.earGame=Object.freeze({snapshot:()=>JSON.parse(JSON.stringify({mode:s.mode,sector:s.sector,score:s.score,health:s.health,power:s.power,combo:s.combo,cleared:s.cleared,listening:s.listening,enemy:s.enemy,noteFlight:expedition.snapshot().special?.kind==='flightTones'?{required:expedition.snapshot().special.required,collected:expedition.snapshot().special.collected,cubes:expedition.snapshot().digits,result:expedition.snapshot().special.result}:null,ground:{travel:s.travel,delta:s.groundScrollDelta,combat:s.groundCombat,exploding:!!s.hydraBlast,safeNoteFlight:!!expedition.safeNoteFlight},planet:{choice:s.planetChoice,...(s.planetChoice==='seasons'?seasonPlanet.snapshot():{})},player:s.player,bullets:s.bullets,stats:s.stats,route:s.route,capsule:s.capsule,intervalStats:s.intervalStats,audio:{state:audio.context?.state,lastCue:audio.lastCue}}))});
 startScreen();installLanguage();requestAnimationFrame(frame);

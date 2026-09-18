@@ -9,6 +9,9 @@ export function createIntelligence(storage,rng=Math.random){
         for(const [id,r] of Object.entries(data.recent))if(!Array.isArray(r))delete data.recent[id];
       }
     }}catch{}
+  const validGenres=['jazz','classical','rock'];
+  data.genres=Array.isArray(data.genres)?data.genres.filter(g=>validGenres.includes(g)):data.genre==='mixed'?[...validGenres]:[data.genre];
+  if(!data.genres.length)data.genres=[...validGenres];
   const save=()=>{try{storage.setItem(key,JSON.stringify(data));}catch{}};
   const mastered=t=>t&&t.streak>=3&&t.quality>=.8;
   function record(domain,id,credit){
@@ -26,10 +29,11 @@ export function createIntelligence(storage,rng=Math.random){
   }
   function pick(domain,items,{id=x=>String(x),genre=()=>null,progressive=false,evidence=null}={}){
     if(!items.length)return null;
-    let pool=items;
+    let pool=items.filter(x=>!validGenres.includes(genre(x))||data.genres.includes(genre(x)));
+    if(!pool.length)return null;
     if(data.enabled&&progressive){
       // Start with familiar themes in EACH genre, so rock isn't locked behind jazz.
-      const groups=new Map();for(const item of items){const g=genre(item)||'all';if(!groups.has(g))groups.set(g,[]);groups.get(g).push(item);}
+      const groups=new Map();for(const item of pool){const g=genre(item)||'all';if(!groups.has(g))groups.set(g,[]);groups.get(g).push(item);}
       pool=[];
       for(const [g,group] of groups){
         const known=group.filter(x=>mastered(data.topics[`${domain}:${id(x)}`])).length;
@@ -44,7 +48,7 @@ export function createIntelligence(storage,rng=Math.random){
     const weights=pool.map(x=>{
       const g=genre(x)||'all';
       // Balance genres before topic weights; a large jazz catalog cannot drown rock.
-      const preference=data.genre==='mixed'||g==='all'||g===data.genre?1:.25;
+      const preference=1;
       const evidenceTopics=evidence?.(x);
       const weight=evidenceTopics?.length?evidenceTopics.reduce((sum,[kind,key])=>sum+topicWeight(kind,key),0)/evidenceTopics.length:topicWeight(domain,id(x));
       return weight*preference/genreCounts.get(g);
@@ -53,5 +57,5 @@ export function createIntelligence(storage,rng=Math.random){
     for(let i=0;i<weights.length;i++){roll-=weights[i];if(roll<0){index=i;break;}}
     const selected=pool[index];data.recent[domain]=[...recent,id(selected)].slice(-8);save();return selected;
   }
-  return {record,pick,configure(settings){if(typeof settings.enabled==='boolean')data.enabled=settings.enabled;if(['mixed','jazz','rock','classical'].includes(settings.genre))data.genre=settings.genre;save();},get settings(){return {enabled:data.enabled,genre:data.genre};},snapshot:()=>JSON.parse(JSON.stringify(data))};
+  return {record,pick,configure(settings){if(typeof settings.enabled==='boolean')data.enabled=settings.enabled;if(['mixed','jazz','rock','classical'].includes(settings.genre)){data.genre=settings.genre;data.genres=settings.genre==='mixed'?[...validGenres]:[settings.genre];}if(Array.isArray(settings.genres)){const next=[...new Set(settings.genres)].filter(g=>validGenres.includes(g));if(next.length){data.genres=next;data.genre=next.length===1?next[0]:'mixed';}}save();},get settings(){return {enabled:data.enabled,genre:data.genre,genres:[...data.genres]};},snapshot:()=>JSON.parse(JSON.stringify(data))};
 }

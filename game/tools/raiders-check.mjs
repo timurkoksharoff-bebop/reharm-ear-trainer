@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {createRaiders} from '../raiders.mjs';
+let hits=0;const loot=[];const r=createRaiders({image:{},width:()=>480,height:()=>590,player:()=>({x:240,y:400}),hurt:()=>hits++,drops:()=>loot,notify:()=>{}});
+for(let i=0;i<1200;i++)r.tick(1/60);
+assert(r.snapshot().units.length>0);assert(r.snapshot().mist.length<=120);
+assert(r.snapshot().units.some(u=>u.kind===2));
+assert(r.snapshot().units.find(u=>u.kind===2).trail.length<=180);
+const crow=r.snapshot().units.find(u=>u.kind===1);assert(crow);crow.loot={type:3,age:0};crow.hp=1;assert(r.hit(crow));assert.equal(loot[0].type,3);
+r.reset();assert.equal(r.snapshot().units.length,0);assert.equal(r.snapshot().mist.length,0);
+console.log('Raiders: spawning, bounded trails/fog, stolen reward recovery and reset passed.');

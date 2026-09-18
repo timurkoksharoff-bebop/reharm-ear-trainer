@@ -13,7 +13,9 @@ export function flightNotes(root,intervals,mode='all',quality=''){
 }
 export function partialToneCredit(required,selected){
   const unique=[...new Set(selected)];
-  return !required.length||unique.some(n=>!required.includes(n))?0:unique.length/required.length;
+  if(!required.length)return 0;
+  const hits=unique.filter(n=>required.includes(n)).length,extra=unique.length-hits;
+  return Math.max(0,Math.min(1,(hits-.4*extra)/required.length));
 }
 export function cubeFace(cube){
   if(!cube.rotating)return {label:cube.label,next:null,turn:0};
@@ -28,6 +30,21 @@ export function cubeLayout(required,distractors,width,height,rng=Math.random,pla
   const faces=[distractors[0],distractors[1],required.at(-1)].filter(Boolean);
   cubes.push({...slots[4],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:0});
   // Never materialize a newly replenished target on the ship.
+  for(const cube of cubes)if(Math.hypot(cube.x-player.x,cube.y-player.y)<85)cube.y=Math.max(155,cube.y-110);
+  return cubes;
+}
+
+export function numberCubeLayout(target,distractors,width,height,rng=Math.random,player={x:width/2,y:height-40}){
+  // Interval capture keeps one unambiguous answer. Four readable cubes stay
+  // still; the center drum slowly cycles through wrong labels as a moving risk.
+  const slots=[{x:width*.2,y:height*.33},{x:width*.8,y:height*.33},{x:width*.2,y:height*.62},{x:width*.8,y:height*.62},{x:width*.5,y:height*.46}];
+  const wrong=[...new Set(distractors.filter(label=>label!==target))];
+  for(let i=wrong.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[wrong[i],wrong[j]]=[wrong[j],wrong[i]];}
+  const fixed=[target,...wrong.slice(0,3)];
+  for(let i=fixed.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[fixed[i],fixed[j]]=[fixed[j],fixed[i]];}
+  const cubes=fixed.map((label,i)=>({...slots[i],label,cube:true,rotating:false,color:'#f1bd67',age:0}));
+  const faces=wrong.slice(3,6);
+  if(faces.length)cubes.push({...slots[4],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:0});
   for(const cube of cubes)if(Math.hypot(cube.x-player.x,cube.y-player.y)<85)cube.y=Math.max(155,cube.y-110);
   return cubes;
 }

@@ -7,15 +7,18 @@
   <meta name="description" content="Слушай сигнал. Ломай щиты. Лети дальше. Музыкальная космическая аркада Space Music College.">
   <title>Space Music College</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%2371f6d1' d='M32 4 58 54 32 43 6 54Z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="game.css?v=0.77">
-  <link rel="stylesheet" href="industrial.css?v=0.77">
+  <link rel="manifest" href="manifest.webmanifest?v=0.80">
+  <link rel="apple-touch-icon" href="../icon-180.png?v=0.33">
+  <link rel="stylesheet" href="game.css?v=0.80">
+  <link rel="stylesheet" href="industrial.css?v=0.80">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <script>
     window.addEventListener('error',event=>{const el=document.getElementById('startup-error');if(el){el.hidden=false;el.textContent='Ошибка запуска: '+event.message;}});
     // A previously visited Trainer can own this development origin. Match the
     // Trainer's localhost policy so its cache cannot serve an older game build.
-    if ('serviceWorker' in navigator && ['localhost','127.0.0.1','[::1]'].includes(location.hostname)) {
+    const isLocalHost=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
+    if ('serviceWorker' in navigator && isLocalHost) {
       navigator.serviceWorker.getRegistrations().then(async registrations => {
         const controlled = !!navigator.serviceWorker.controller;
         await Promise.all(registrations.map(registration => registration.unregister()));
@@ -24,6 +27,8 @@
           location.reload();
         }
       }).catch(() => {});
+    } else if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      window.addEventListener('load',()=>navigator.serviceWorker.register('../service-worker.js?v=0.80').catch(()=>{}));
     }
   </script>
 </head>
@@ -32,7 +37,7 @@
   <main class="cabinet">
     <header class="topbar">
       <a class="wordmark" href="./" aria-label="Space Music College, начало"><span class="brand-mark">≋</span><span>SPACE MUSIC <b>COLLEGE</b></span></a>
-      <span class="prototype">BUILD 078</span>
+      <span class="prototype">BUILD 080</span>
       <button id="home" class="home-button" type="button" aria-label="Вернуться в главное меню">HOME</button>
       <button id="language" class="language" type="button">RU / EN</button>
       <button id="pause" class="icon-button" aria-label="Пауза" disabled>Ⅱ</button>
@@ -69,7 +74,7 @@
     </section>
     <footer><span>Тяни корабль · стрельба автоматическая</span><button id="help" aria-label="Как играть">?</button></footer>
   </main>
-  <link rel="stylesheet" href="console.css?v=0.77">
-  <script src="game.bundle.js?v=0.77"></script>
+  <link rel="stylesheet" href="console.css?v=0.80">
+  <script src="game.bundle.js?v=0.80"></script>
 </body>
 </html>

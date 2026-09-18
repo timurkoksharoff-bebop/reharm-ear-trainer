@@ -9,7 +9,7 @@ const PIANO_SAMPLES=[
 // A sustained, pitch-stable two-oscillator arcade synth. No sample/network
 // dependency and no detuning/vibrato that could blur interval recognition.
 export class FlightAudio {
-  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;this.pianoBuffers=new Map();this.pianoPromise=null;}
+  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;this.pianoBuffers=new Map();this.pianoPromise=null;this.commandBuffers=new Map();this.commandPromise=null;}
   async unlock(){
     const Engine=window.AudioContext||window.webkitAudioContext;
     if(!Engine)throw new Error('Браузер не поддерживает Web Audio. Открой игру в Safari или Chrome.');
@@ -22,6 +22,7 @@ export class FlightAudio {
     await this.context.resume();
     if(this.context.state!=='running')throw new Error('Звук приостановлен. Нажми «Продолжить» ещё раз.');
     this.note(57,this.context.currentTime,.07,'soft',.00003);
+    this.prepareCommands();
   }
   note(midi,at,duration,timbre='synth',level=.38){
     const ctx=this.context;if(!ctx)return;
@@ -123,19 +124,51 @@ export class FlightAudio {
     this.note(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
     this.schedule(()=>{if(token===this.token)onEnd();},2.6);
   }
-  announce(text,onEnd,{voice='male'}={}){
+  prepareCommands(){
+    if(!this.context)return Promise.resolve();
+    if(this.commandPromise)return this.commandPromise;
+    this.commandPromise=Promise.allSettled(['male-basic','male-guide','male-all','female-color'].filter(key=>!this.commandBuffers.has(key)).map(async key=>{
+      const response=await fetch(`assets/voices/${key}.wav`,{signal:AbortSignal.timeout(6000)});
+      if(!response.ok)throw new Error('Voice file missing');
+      this.commandBuffers.set(key,await this.context.decodeAudioData(await response.arrayBuffer()));
+    })).then(()=>{this.commandPromise=null;});return this.commandPromise;
+  }
+  announceCommand(key,text,onEnd,voice){
     this.stop();const token=this.token;
-    if(typeof window==='undefined'||!window.speechSynthesis||!window.SpeechSynthesisUtterance){this.schedule(()=>{if(token===this.token)onEnd();},.1);return;}
-    const utterance=new window.SpeechSynthesisUtterance(text),voices=window.speechSynthesis.getVoices();
+    const play=()=>{if(token!==this.token)return;const buffer=this.commandBuffers.get(key);
+      if(!buffer){this.announce(text,onEnd,{voice});return;}
+      this.speechStatus={state:'speaking',voice,text,source:'recording'};
+      const source=this.context.createBufferSource();source.buffer=buffer;source.connect(this.master);this.voices.add(source);
+      source.onended=()=>{this.voices.delete(source);source.disconnect();if(token===this.token){this.speechStatus.state='complete';onEnd(true);}};
+      source.start();
+    };
+    if(this.commandBuffers.has(key))play();else this.prepareCommands().then(play);
+  }
+  announce(text,onEnd,{voice='male',command=null}={}){
+    if(command&&this.context){this.announceCommand(command,text,onEnd,voice);return;}
+    this.stop();const token=this.token;
+    const synth=typeof window!=='undefined'&&window.speechSynthesis;
+    this.speechStatus={state:'starting',voice,text};
+    if(!synth||!window.SpeechSynthesisUtterance){this.speechStatus.state='unavailable';onEnd(false);return;}
+    const utterance=new window.SpeechSynthesisUtterance(text),voices=synth.getVoices();
+    // Keep a strong reference: WebKit may otherwise lose the speech callbacks.
+    this.utterance=utterance;
     utterance.lang='en-US';utterance.rate=voice==='female'?.88:.8;utterance.pitch=voice==='female'?1.03:.85;utterance.volume=.82;
     utterance.voice=voices.find(v=>(voice==='female'?/Samantha|Karen|Moira|Tessa|Serena|Ava|Allison|Susan|Zira|Jenny|Aria/i:/Alex|Daniel|Reed|Ralph|Fred|Rocko/i).test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en[-_](US|GB)/i.test(v.lang))||null;
-    let finished=false;const finish=()=>{if(finished||token!==this.token)return;finished=true;onEnd();};
-    utterance.onend=finish;utterance.onerror=finish;window.speechSynthesis.cancel();
-    // Give iOS a short lead-in so the first letter name is not clipped.
-    this.schedule(()=>{if(token===this.token)window.speechSynthesis.speak(utterance);},.18);
-    // Safari occasionally omits `onend`; keep a fallback, but never cut a
-    // slow English voice off before it reaches "color tones".
-    this.schedule(finish,Math.max(5.8,text.length*.13));
+    let finished=false,started=false;
+    const finish=ok=>{if(finished||token!==this.token)return;finished=true;this.utterance=null;this.speechStatus.state=ok?'complete':'failed';onEnd(ok);};
+    utterance.onstart=()=>{started=true;this.speechStatus.state='speaking';};
+    utterance.onend=()=>finish(true);
+    utterance.onerror=event=>{this.speechStatus.error=event.error;finish(false);};
+    // Speak synchronously, preserving a tap's activation on mobile Safari.
+    // Do not cancel a second time just before speaking.
+    try{synth.resume();synth.speak(utterance);}catch(error){this.speechStatus.error=String(error);finish(false);}
+    const watchdog=()=>{
+      if(finished||token!==this.token)return;
+      if(started&&synth.speaking){this.schedule(watchdog,1);return;}
+      finish(false);
+    };
+    this.schedule(watchdog,Math.max(8,text.length*.2));
   }
   hydraExplosion({final=false}={}){
     const ctx=this.context;if(!ctx||ctx.state!=='running')return;

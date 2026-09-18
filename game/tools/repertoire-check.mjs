@@ -13,8 +13,10 @@ assert.deepEqual(notes('Ode to Joy',9),[0,0,1,3,3,1,0,-2,-4]);
 assert.deepEqual(notes('Canon in D',8),[0,-2,-4,-5,-7,-9,-7,-5]);
 assert.deepEqual(ROCK_MELODIES.find(m=>m.id==='rock-hey-jude').events.filter(e=>e[0]!==null).slice(0,6).map(e=>e[0]),[0,-3,-3,0,2,-5]);
 let seed=47;const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);
-const tutor=createIntelligence({getItem:()=>null,setItem(){}},rng);tutor.configure({genre:'rock'});
+const tutor=createIntelligence({getItem:()=>null,setItem(){}},rng);tutor.configure({genres:['jazz','rock','classical']});
 const pool=melodyIndicesForLevel(1),counts={jazz:0,rock:0,classical:0};
 for(let n=0;n<1000;n++){const i=tutor.pick('melody',pool,{id:i=>MELODY_BANK[i].id,genre:i=>MELODY_BANK[i].genre,progressive:true});counts[MELODY_BANK[i].genre]++;}
-assert(counts.rock>counts.jazz&&counts.rock>counts.classical);assert(counts.jazz>0&&counts.classical>0);
+assert(Object.values(counts).every(count=>count>250),'Mixed selection keeps every enabled genre in rotation');
+const rockOnly=createIntelligence({getItem:()=>null,setItem(){}},rng);rockOnly.configure({genres:['rock']});
+for(let n=0;n<100;n++){const i=rockOnly.pick('melody',pool,{id:i=>MELODY_BANK[i].id,genre:i=>MELODY_BANK[i].genre,progressive:true});assert.equal(MELODY_BANK[i].genre,'rock');}
 console.log('Repertoire: 200 jazz + 50 rock + 100 classical; IDs, source hashes, durations, known opening pitches and genre rotation OK',counts);

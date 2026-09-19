@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d2326">
   <title>Сад Эха · первый полёт</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="garden-flight.css">
+  <link rel="stylesheet" href="garden-flight.css?v=0.81">
 </head>
 <body class="training">
   <canvas id="world" aria-label="Полёт над Садом Эха. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -24,10 +24,9 @@
   </main>
   <p id="gesture" class="gesture hud">Веди корабль пальцем или стрелками</p>
 
-  <section id="harmony-hud" class="harmony-hud hud" data-variant="console" aria-label="Навигационная гармоническая панель">
-    <div class="hud-grid" aria-hidden="true"></div>
+  <section id="harmony-hud" class="harmony-hud hud" data-variant="minimal" aria-label="Навигационная гармоническая панель">
     <aside class="route-panel glass-panel">
-      <div class="panel-kicker"><span class="signal-dot"></span> МАРШРУТ / ГЛАВА 01</div>
+      <div class="panel-kicker"><span class="signal-dot"></span> МАРШРУТ</div>
       <div class="route-heading"><strong id="mission-code">C01 · F1·6</strong><span id="route-progress">1 / 4</span></div>
       <ol id="chord-route" class="chord-route" aria-label="Цепочка аккордов"></ol>
       <div class="round-line"><span>КРУГ <b id="round-number">01</b></span><span id="bar-countdown">4.0 сек</span></div>
@@ -41,29 +40,16 @@
     </div>
 
     <aside class="answers-panel glass-panel">
-      <div class="panel-kicker">НАДСТРОЙКА / ТИП АККОРДА</div>
+      <div class="panel-kicker">ТИП / НАДСТРОЙКА</div>
       <div id="quality-options" class="answer-options quality-options"></div>
       <p id="answer-feedback" class="answer-feedback" aria-live="polite">Нажми аккорд, пока он звучит</p>
     </aside>
 
     <section class="degrees-panel glass-panel" aria-label="Ступень аккорда">
-      <div class="panel-kicker">СТУПЕНЬ / КОРЕНЬ СИГНАЛА</div>
+      <div class="panel-kicker">СТУПЕНЬ</div>
       <div id="degree-options" class="degree-options"></div>
     </section>
-
-    <footer class="hud-console">
-      <label class="exercise-picker"><span>ГЛАВА 01</span><select id="exercise-select" aria-label="Упражнение первой главы"></select></label>
-      <div class="hud-switch" role="group" aria-label="Вид приборной панели">
-        <span>ПАНЕЛЬ</span>
-        <button data-hud="console" aria-pressed="true">01</button><button data-hud="visor" aria-pressed="false">02</button><button data-hud="minimal" aria-pressed="false">03</button>
-      </div>
-      <div class="sound-switch" role="group" aria-label="Тембр синтезатора">
-        <span>ЗВУК</span>
-        <button data-pad="velvet" aria-pressed="true">Туман</button><button data-pad="deep" aria-pressed="false">Глубина</button><button data-pad="air" aria-pressed="false">Воздух</button>
-      </div>
-      <button id="library-open" class="library-open">＋ Маршруты</button>
-      <small id="mission-source">Chapter 1 · Fig. 1.6 · printed p. 9</small>
-    </footer>
+    <small id="mission-source" class="mission-source">Chapter 1 · Fig. 1.6 · printed p. 9</small>
   </section>
 
   <section id="sequence-studio" class="sequence-studio" hidden aria-label="Библиотека маршрутов">
@@ -96,6 +82,11 @@
       <button id="settings" aria-expanded="false" aria-controls="settings-panel">Настроить</button>
     </div>
     <div id="settings-panel" hidden>
+      <div class="music-settings">
+        <label class="exercise-picker"><span>Маршрут</span><select id="exercise-select" aria-label="Маршрут первой главы"></select></label>
+        <fieldset class="sound-switch"><legend>Тембр синтезатора</legend><div role="group" aria-label="Тембр синтезатора"><button data-pad="felt" aria-pressed="true">Фетровое пиано</button><button data-pad="deep" aria-pressed="false">Глубокий хор</button><button data-pad="air" aria-pressed="false">Воздушное стекло</button></div></fieldset>
+        <button id="library-open" class="library-open">＋ Мои маршруты</button>
+      </div>
       <label>Скорость <input id="speed" type="range" min="0" max="2" step="0.1" value="0.6"><output id="speed-value">0.6×</output></label>
       <label>Высота <input id="altitude" type="range" min="0.55" max="1.25" step="0.05" value="0.8"><output id="altitude-value">0.80</output></label>
       <label class="check"><input id="wander" type="checkbox"> Путешествовать между состояниями</label>
@@ -104,6 +95,6 @@
   </section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p>Приближаемся к Саду Эха…</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden>Попробовать снова</button></div>
-  <script type="module" src="garden-flight.mjs"></script>
+  <script type="module" src="garden-flight.mjs?v=0.81"></script>
 </body>
 </html>

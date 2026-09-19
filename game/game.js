@@ -1,5 +1,4 @@
 import {createIceEvent} from './ice-event.mjs';
-import {createSeasonPlanet} from './seasons.mjs';
 import {createRaiders} from './raiders.mjs';
 import {MELODY_BANK,GENRE_COUNTS} from './melody-bank.mjs';
 import {createIntelligence} from './intelligence.mjs';
@@ -56,22 +55,29 @@ const BASE_SHIELD=12,MAX_SHIELD=20;
 const PLANET_CHOICE_KEY='ear-reharm-game.planet.v1';
 const PLANETS=[
   {id:'original',number:'01',title:'Выжженная орбита',description:'Луна и Марс · каменные равнины и боевой маршрут.',available:true,tone:'rust'},
-  {id:'seasons',number:'02',title:'Сад Эха',description:'Ambient chill · живая река, биолюминесценция и гармонические маршруты.',available:true,tone:'garden',ambient:'garden-flight.html'},
+  {id:'garden',number:'02',title:'Сад Эха',description:'Ambient chill · живая река, биолюминесценция и гармонические маршруты.',available:true,tone:'garden',ambient:'garden-flight.html'},
   {id:'ocean',number:'03',title:'Океан Линз',description:'Водный мир · отражения, течения и длинные гармонии.',available:false,tone:'ocean'},
   {id:'ice',number:'04',title:'Ледяной архив',description:'Белая тишина · замёрзшие сигналы и хрупкие интервалы.',available:false,tone:'ice'},
   {id:'desert',number:'05',title:'Янтарная пустыня',description:'Слоистые каньоны · редкие источники света и воздуха.',available:false,tone:'desert'},
   {id:'night',number:'06',title:'Ночная теплица',description:'Грибы, светлячки и полностью фосфоресцирующая ночь.',available:false,tone:'night'},
 ];
-function savedPlanetChoice(){try{const value=localStorage.getItem(PLANET_CHOICE_KEY);return PLANETS.some(planet=>planet.id===value&&planet.available)?value:'original';}catch{return 'original';}}
+function savedPlanetChoice(){
+  try{
+    // BUILD 080 accidentally stored the standalone Echo Garden as a skin for
+    // the combat flight. Migrate that sticky value back to the original world.
+    const value=localStorage.getItem(PLANET_CHOICE_KEY);
+    if(value==='seasons'||value==='garden')localStorage.setItem(PLANET_CHOICE_KEY,'original');
+  }catch{}
+  return 'original';
+}
 const planetTitle=()=>PLANETS.find(planet=>planet.id===s.planetChoice)?.title||PLANETS[0].title;
 let W=480,H=590,last=0,clock=0,previousMode='active',lessonIndex=0,lessonItems=[],runToken=0,qualityBank=0,weaponTab='bass';
-const s={mode:'start',planetChoice:savedPlanetChoice(),sector:0,route:null,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:BASE_SHIELD,maxHealth:BASE_SHIELD,power:1,
+const s={mode:'start',planetChoice:savedPlanetChoice(),runLevel:0,sector:0,route:null,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:BASE_SHIELD,maxHealth:BASE_SHIELD,power:1,
   listening:false,enemy:null,bullets:[],shots:[],particles:[],beam:0,flash:0,shotTimer:0,invulnerable:0,
   fireTimer:0,resolveTimer:0,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},
   drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,
   capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0},
   bookMission:null,player:{x:240,y:500,tx:240,ty:500},keys:new Set(),pointer:null,feedbackTimer:0};
-const seasonPlanet=createSeasonPlanet({width:W,height:()=>playableHeight(),reducedMotion:reduced});
 const raiders=createRaiders({image:images['enemy-topdown'],width:()=>W,height:playableHeight,player:()=>s.player,hurt:()=>shipHit(),drops:()=>expedition.snapshot().drops,notify:message=>feedback(message,true)});
 const iceEvent=createIceEvent({image:images['cyber-sable'],width:()=>W,height:playableHeight,player:()=>s.player,notify:message=>feedback(message,true),obstacles:()=>{const world=expedition.snapshot();return [...world.walls,...world.turrets.map(t=>({x:t.x,y:t.y,r:35})),...(s.enemy&&!expedition.safeNoteFlight&&!s.enemy.suspended?[{x:s.enemy.x,y:s.enemy.y,r:machineSize(s.enemy.model)*.55}]:[])];}});
 let activeRecognition=null;
@@ -291,7 +297,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 080</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 081</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -301,7 +307,9 @@ function openFlightConsole(){
   consoleScene(portrait?'console-portrait.jpg':'console-flight.jpg','Космический ангар. Выбери уровень и нажми Launch.');
   if(portrait)$('console-scene').classList.add('console-portrait');
   const names=['NOVICE','STUDENT','MASTER','LEGEND'];
-  const boxes=portrait?[[9,60,39,7],[49,60,41,7],[9,67.5,39,7],[49,67.5,41,7]]:[[15,37,34,13],[50,37,35,13],[15,52,34,14],[50,52,35,14]];
+  // Portrait artwork includes a latch and lamp beside every painted label.
+  // Keep the interactive/selected outline on the label plate itself.
+  const boxes=portrait?[[15.2,61.1,31.9,5.7],[50.5,61.1,33.3,5.7],[15.2,68.3,31.9,5.8],[50.5,68.3,33.3,5.8]]:[[15,37,34,13],[50,37,35,13],[15,52,34,14],[50,52,35,14]];
   names.forEach((name,i)=>consoleButton(name,boxes[i],()=>{consolePilot=i;openFlightConsole();},i===consolePilot));
   $('console-status').textContent=`${names[consolePilot]} · ${PILOTS[consolePilot].description} · ${intelligence.settings.genres.map(g=>({jazz:'Джаз',rock:'Рок',classical:'Классика'})[g]).join(' + ')} · ${planetTitle()}`;
   consoleButton('INTELLIGENCE · ЖАНРЫ',portrait?[20,51,60,7]:[35,24,33,8],openLearningSettings);
@@ -311,23 +319,22 @@ function openFlightConsole(){
   consoleButton('SOUND LAB',portrait?[50,86,21,6]:[72,80,14,9],()=>openSoundLab());
   consoleButton('RU / EN',portrait?[72,86,20,6]:[87,82,12,9],()=>$('language').click());
   const quick=document.createElement('div');quick.className='console-quick';
-  const planetButton=document.createElement('button');planetButton.textContent=`ПЛАНЕТА · ${planetTitle()}`;planetButton.addEventListener('click',openPlanetSettings);quick.append(planetButton);$('console-scene').append(quick);
+  const planetButton=document.createElement('button');planetButton.textContent='◉ ПЛАНЕТЫ';planetButton.setAttribute('aria-label',`Планеты. Сейчас: ${planetTitle()}`);planetButton.addEventListener('click',openPlanetSettings);quick.append(planetButton);$('console-scene').append(quick);
 }
 function selectPlanet(choice){
-  if(!PLANETS.some(planet=>planet.id===choice&&planet.available))return;
-  s.planetChoice=choice;
-  try{localStorage.setItem(PLANET_CHOICE_KEY,choice);}catch{}
+  if(choice!=='original')return;
+  s.planetChoice='original';
+  try{localStorage.setItem(PLANET_CHOICE_KEY,'original');}catch{}
 }
 function openPlanetSettings(){
   enterMenu('planets',openPlanetSettings);
   overlay('<span class="eyebrow">КАРТА ПЛАНЕТ · 06 СЛОТОВ</span><h2>Куда полетим?</h2><p class="compact">Два мира доступны в этой сборке. Остальные слоты показывают будущий масштаб путешествия.</p><div id="planet-grid" class="planet-grid"></div>');
+  $('overlay').firstElementChild.classList.add('planet-menu');
   for(const planet of PLANETS){
-    const selected=s.planetChoice===planet.id,card=document.createElement('button');card.className=`planet-card ${planet.tone}${selected?' selected':''}`;card.disabled=!planet.available;card.setAttribute('aria-pressed',String(selected));
-    card.innerHTML=`<span>${planet.number}</span><b>${selected?'✓ ':''}${planet.title}</b><small>${planet.description}</small><i>${planet.available?'ДОСТУПНА':'СКОРО'}</i>`;
-    if(planet.available)card.addEventListener('click',()=>{selectPlanet(planet.id);openPlanetSettings();});$('planet-grid').append(card);
+    const card=document.createElement('button');card.className=`planet-card ${planet.tone}`;card.disabled=!planet.available;
+    card.innerHTML=`<span>${planet.number}</span><b>${planet.title}</b><small>${planet.description}</small><i>${planet.available?'ЛЕТЕТЬ':'СКОРО'}</i>`;
+    if(planet.available)card.addEventListener('click',()=>{if(planet.ambient){location.href=planet.ambient;return;}selectPlanet(planet.id);startRun(PILOTS[consolePilot].sector,consolePilot);});$('planet-grid').append(card);
   }
-  if(s.planetChoice==='seasons')action('AMBIENT CHILL · приборный полёт',()=>{location.href='garden-flight.html';});
-  action('Вылететь →',()=>startRun(PILOTS[consolePilot].sector,consolePilot));
   action('← В ангар',openFlightConsole,true);
 }
 function openLearningSettings(){
@@ -377,7 +384,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 080 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 081 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и all tones · ловля нот</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -416,8 +423,10 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
   const token=++runToken;s.mode='loading';overlay('<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Включаем звук…</h2><p>Запускаем синтезатор корабля.</p>');
   try{await audio.unlock();if(token!==runToken)return;
     await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Основная графика · ${ready}/${total}</h2><p>Корабль и поверхность планеты</p>`);});if(token!==runToken)return;
-    const build=shipBuild();Object.assign(s,{sector,bookMission,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
-    seasonPlanet.reset();iceEvent.reset();expedition.reset(level);beginSector(sector);warmOptionalImages();
+    const build=shipBuild();Object.assign(s,{sector,bookMission,runLevel:level,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
+    s.planetChoice='original';
+    try{localStorage.setItem(PLANET_CHOICE_KEY,'original');}catch{}
+    iceEvent.reset();expedition.reset(level);beginSector(sector);warmOptionalImages();
   }catch(e){if(token!==runToken)return;s.mode='start';overlay(`<h2>Подготовка прервана</h2><p>${e.message}</p>`);action('Попробовать ещё',()=>startRun(sector,level));}
 }
 function beginSector(sector){
@@ -680,7 +689,7 @@ function finish(won,revisit=false){
   const failedChord=!won&&s.enemy?.chord?`<p class="failed-chord">ПОСЛЕДНЯЯ ГИДРА · <strong>${chordSymbol(s.enemy.chord)}</strong><br><small>${DEGREES[s.enemy.chord.offset].label} · ${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.label??s.enemy.chord.quality}</small></p>`:'';
   overlay(`<span class="eyebrow">${s.bookMission?s.route.code:won?'МАРШРУТ ЗАВЕРШЁН':'КОРАБЛЬ ВЕРНУЛСЯ НА БАЗУ'}</span><h2>${won?'Маршрут взят.':'Ещё один вылет?'}</h2><p>${won&&s.bookMission?'Все гидры уничтожены. Сейчас маршрут прозвучит целиком вертикальными аккордами.':won?'Ступени и цифровки аккордов становятся частью твоего оружия.':'Сигналы становятся знакомее с каждым полётом. Попробуем этот сектор ещё раз.'}</p>${failedChord}<div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>◉ ${returnScrap}</strong><span>CREDITS</span></div><div><strong>${accuracy}%</strong><span>ПОПАДАНИЙ</span></div></div><p class="compact">Бас: ${s.stats.bass.hit}/${s.stats.bass.hit+s.stats.bass.miss} · Тип: ${s.stats.quality.hit}/${s.stats.quality.hit+s.stats.quality.miss}<br>Капсулы: ${s.intervalStats.caught} верных · ${s.intervalStats.wrong} чужих</p>`);
   if(won&&s.bookMission){audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true);action('↻ Прослушать весь маршрут',()=>audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true),true);}
-  action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другие тональности'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(s.sector===3?3:0):s.sector,expedition.level));
+  action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другая тональность'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(s.sector===3?3:0):s.sector,s.runLevel));
   action(`Разбор полёта · ${debrief.log.pendingCount} ошибок`,debrief.open);
   action('Выбрать уровень',()=>{s.mode='start';iceEvent.reset();expedition.reset();startScreen();},true);
   action('Ангар · потратить детали',openHangar,true);
@@ -745,8 +754,7 @@ function update(dt){
   if(expedition.scenePaused){expedition.tick(dt);return;}
   const playing=['active','resolving'].includes(s.mode);
   stepGround(dt,playing);
-  if(playing&&s.planetChoice==='seasons')seasonPlanet.update(dt,{scroll:s.groundScrollDelta});
-    if(playing){
+  if(playing){
     const p=s.player,speed=iceEvent.frozen?0:shipBuild().speed*dt;
     if(iceEvent.frozen){p.tx=p.x;p.ty=p.y;}
     if(s.keys.has('arrowleft')||s.keys.has('a'))p.tx-=speed;
@@ -838,9 +846,6 @@ function drawHydraGun(port,e){
 function draw(){
   ctx.clearRect(0,0,W,H);ctx.save();
   if(s.shake>0&&!reduced){const amount=Math.min(4,s.shake*12);ctx.translate(Math.sin(clock*93)*amount,Math.cos(clock*77)*amount*.65);}
-  if(s.planetChoice==='seasons'){
-    ctx.fillStyle='#102425';ctx.fillRect(0,0,W,H);seasonPlanet.drawGround(ctx);
-  }else{
   const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#111328');bg.addColorStop(.6,'#090f21');bg.addColorStop(1,'#102b34');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
   const terrain=images[expedition.planet];
   if(terrain.complete&&terrain.naturalWidth){const tileHeight=W*terrain.naturalHeight/terrain.naturalWidth,offset=s.travel%tileHeight;ctx.globalAlpha=.72;for(let y=offset-tileHeight;y<H;y+=tileHeight)ctx.drawImage(terrain,0,y,W,tileHeight);ctx.globalAlpha=1;ctx.fillStyle='#08102128';ctx.fillRect(0,0,W,H);}
@@ -849,7 +854,6 @@ function draw(){
   // Navigational grid and scrolling rail marks, not a decorative scene asset.
   ctx.strokeStyle='#7695bd0d';ctx.lineWidth=1;for(let x=0;x<=W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
   for(let y=s.travel%70;y<H;y+=70){ctx.fillStyle='#a6c5d52b';ctx.fillRect(12,y,4,1);ctx.fillRect(W-16,y,4,1);}
-  }
   iceEvent.drawGround(ctx);
   const activeEnemy=s.enemy&&s.mode!=='resolving'&&!expedition.safeNoteFlight&&!s.enemy.suspended;
   if(activeEnemy||s.hydraBlast||s.mode==='start'){
@@ -887,7 +891,6 @@ function draw(){
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
   for(const part of s.debris){ctx.save();ctx.translate(part.x,part.y);ctx.rotate(part.angle);ctx.globalAlpha=Math.min(1,part.life);ctx.fillStyle='#b77b43';ctx.strokeStyle='#38281f';ctx.lineWidth=1;ctx.fillRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.strokeRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.restore();}
-  if(s.planetChoice==='seasons')seasonPlanet.drawAtmosphere(ctx);
   iceEvent.drawHud(ctx);
   if(expedition.showScene)expedition.drawPauseOverlay();
   if(s.flash>0&&!reduced){ctx.fillStyle=`rgba(255,93,134,${s.flash*.3})`;ctx.fillRect(0,0,W,H);}
@@ -942,5 +945,5 @@ $('replay').addEventListener('click',()=>{s.replays++;expedition.busy?expedition
 $('interval-reference').addEventListener('click',()=>playCapsule(true));
 $('help').addEventListener('click',()=>{if(s.mode==='start'){feedback('Включи звук и нажми «Вылететь»');}else pause(true);});
 // Read-only diagnostics for regression checks; deliberately no answer/skip hook.
-window.earGame=Object.freeze({snapshot:()=>JSON.parse(JSON.stringify({mode:s.mode,sector:s.sector,score:s.score,health:s.health,power:s.power,combo:s.combo,cleared:s.cleared,listening:s.listening,enemy:s.enemy,noteFlight:expedition.snapshot().special?.kind==='flightTones'?{required:expedition.snapshot().special.required,collected:expedition.snapshot().special.collected,cubes:expedition.snapshot().digits,result:expedition.snapshot().special.result}:null,ground:{travel:s.travel,delta:s.groundScrollDelta,combat:s.groundCombat,exploding:!!s.hydraBlast,safeNoteFlight:!!expedition.safeNoteFlight},planet:{choice:s.planetChoice,...(s.planetChoice==='seasons'?seasonPlanet.snapshot():{})},player:s.player,bullets:s.bullets,stats:s.stats,route:s.route,capsule:s.capsule,intervalStats:s.intervalStats,audio:{state:audio.context?.state,lastCue:audio.lastCue}}))});
+window.earGame=Object.freeze({snapshot:()=>JSON.parse(JSON.stringify({mode:s.mode,runLevel:s.runLevel,sector:s.sector,score:s.score,health:s.health,power:s.power,combo:s.combo,cleared:s.cleared,listening:s.listening,enemy:s.enemy,noteFlight:expedition.snapshot().special?.kind==='flightTones'?{required:expedition.snapshot().special.required,collected:expedition.snapshot().special.collected,cubes:expedition.snapshot().digits,result:expedition.snapshot().special.result}:null,ground:{travel:s.travel,delta:s.groundScrollDelta,combat:s.groundCombat,exploding:!!s.hydraBlast,safeNoteFlight:!!expedition.safeNoteFlight},planet:{choice:s.planetChoice},player:s.player,bullets:s.bullets,stats:s.stats,route:s.route,capsule:s.capsule,intervalStats:s.intervalStats,audio:{state:audio.context?.state,lastCue:audio.lastCue}}))});
 startScreen();installLanguage();requestAnimationFrame(frame);

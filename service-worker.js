@@ -1,12 +1,11 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.80";
+const CACHE_NAME = "reharm-ear-trainer-v0.81";
 const APP_FILES = [
   "./game/",
   "./game/game.bundle.js",
-  "./game/seasons.mjs",
   "./game/manifest.webmanifest",
   "./game/garden-flight.html",
-  "./game/garden-flight.css",
-  "./game/garden-flight.mjs",
+  "./game/garden-flight.css?v=0.81",
+  "./game/garden-flight.mjs?v=0.81",
   "./game/garden-flight-renderer.mjs",
   "./game/garden-harmony.mjs",
   "./game/garden-sequence-studio.mjs",

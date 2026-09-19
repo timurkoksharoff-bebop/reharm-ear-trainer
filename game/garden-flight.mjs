@@ -13,8 +13,9 @@ const clamp=(x,a,b)=>Math.min(b,Math.max(a,x)),mod=(x,n)=>(x%n+n)%n;
 const s={ready:false,from:0,to:0,transition:1,pending:null,ship:0,time:0,travel:0,scroll:0,pan:0,night:0,lightMode:'day',cycle:0,lantern:true,paused:reduced,speed:.6,altitude:.8,wander:false,visit:0,clean:false,angle:0,x:0,y:0,width:1,height:1,worldSize:1};
 let renderer,images,last=0,raf=0,dpr=1,dragId=null,tx=.5,ty=.56,keys=new Set(),loaded=0;
 const pad=new GardenPad();
-let mission,studio,lastMissionPosition='',answerSelection={offset:null,quality:null};
+let mission,studio,lastMissionPosition='';
 const DEGREE_NAMES=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
+const exerciseCode=(exercise,index)=>{const match=String(exercise.name||exercise.id).match(/(?:Fig\.?|fig-)[ -]?(?:1[.\-])?(\d+)/i);return `${String(index+1).padStart(2,'0')}F${String(match?.[1]??index+1).padStart(2,'0')}`;};
 // Particles are reused and time/scroll wrap; neither grows with flight duration.
 const motes=Array.from({length:56},(_,i)=>({x:mod(Math.sin(i*127.13+14)*43758.54,1),y:mod(Math.sin(i*71.72+8)*31341.4,1),r:.5+(i%5)*.23,phase:i*2.399}));
 function resize(){
@@ -35,29 +36,31 @@ function ui(){
   $('flight-status').textContent=s.paused?'Полёт на паузе':s.transition<1?'Переходим в новое состояние':s.night>.6?(s.lantern&&s.ship!==2?'Ночь · свет ведёт нас':'Ночь · естественное свечение'):'Свободный полёт';
 }
 function renderMission(model){
-  const position=`${model.round}:${model.cursor}`;if(position!==lastMissionPosition){answerSelection={offset:null,quality:null};lastMissionPosition=position;}
-  const solved=new Set(model.solved),count=solved.size,total=model.exercise.sequence.length,percent=Math.round(count/total*100);
-  $('mission-code').textContent=model.exercise.number?`МАРШРУТ ${model.exercise.number}`:`C01 · ${model.exercise.id.replace('fig-','F').replaceAll('-','·').toUpperCase()}`;$('mission-source').textContent=model.exercise.source;
-  $('route-progress').textContent=`${count} / ${total}`;$('completion-number').textContent=String(percent);$('round-number').textContent=String(model.round).padStart(2,'0');
-  const slots=[{chord:model.reference,index:-1},...model.exercise.sequence.map((chord,index)=>({chord,index}))];
-  $('chord-route').replaceChildren(...slots.map(({chord,index})=>{
-    const li=document.createElement('li'),base=index<0,known=base||solved.has(index);
-    li.className=`chord-slot ${base?'base ':''}${known?'solved':'unresolved'} ${model.running&&index===model.cursor?'current':''}`;
-    li.innerHTML=`<span class="slot-index">${base?'B':String(index+1).padStart(2,'0')}</span><strong>${known?chord.degree:'?'}</strong><small>${base?'БАЗА':known?'НАЙДЕН':'СИГНАЛ'}</small>`;return li;
+  lastMissionPosition=`${model.round}:${model.cursor}`;
+  const progress=model.progress??model.parts??model.exercise.sequence.map((_,index)=>({degree:model.solved.includes(index),quality:model.solved.includes(index)}));
+  const solved=new Set(model.solved),total=model.exercise.sequence.length,solvedParts=model.solvedParts??progress.reduce((sum,part)=>sum+Number(part.degree)+Number(part.quality),0),percent=Math.round(solvedParts/(total*2)*100);
+  const exerciseIndex=Math.max(0,gardenExercisesForChapter(1).findIndex(item=>item.id===model.exercise.id));
+  $('mission-code').textContent=exerciseCode(model.exercise,exerciseIndex);$('mission-source').textContent=model.exercise.source;
+  $('route-progress').textContent=`${solvedParts} / ${total*2}`;$('completion-number').textContent=String(percent);$('round-number').textContent=String(model.round).padStart(2,'0');
+  $('chord-route').replaceChildren(...progress.map((part,index)=>{
+    const li=document.createElement('li'),current=model.running&&index===model.cursor;
+    li.className=`chord-slot${part.degree&&part.quality?' solved':''}${current?' current':''}`;
+    li.setAttribute('aria-label',`Позиция ${index+1}: ступень ${part.degree?'найдена':'не найдена'}, тип ${part.quality?'найден':'не найден'}`);
+    li.innerHTML=`<span class="route-node" aria-hidden="true"><i class="node-degree${part.degree?' found':''}"></i><i class="node-quality${part.quality?' found':''}"></i></span>`;return li;
   }));
+  const currentParts=model.currentParts??(model.cursor>=0?progress[model.cursor]:{degree:true,quality:true});
   const mayAnswer=model.running&&model.cursor>=0&&!solved.has(model.cursor),qualities=[...new Set(model.choices.map(chord=>chord.quality))];
-  const choose=(kind,value)=>{answerSelection={...answerSelection,[kind]:value};renderMission(mission.snapshot());if(answerSelection.offset!==null&&answerSelection.quality!==null){mission.answer({offset:answerSelection.offset,quality:answerSelection.quality});answerSelection={offset:null,quality:null};renderMission(mission.snapshot());}};
-  $('degree-options').replaceChildren(...DEGREE_NAMES.map((name,offset)=>{const button=document.createElement('button');button.className=`degree-option${answerSelection.offset===offset?' selected':''}`;button.textContent=name;button.dataset.degree=String(offset);button.disabled=!mayAnswer;button.addEventListener('click',()=>choose('offset',offset));return button;}));
-  $('quality-options').replaceChildren(...qualities.map(quality=>{const button=document.createElement('button');button.className=`quality-option${answerSelection.quality===quality?' selected':''}`;button.textContent=quality==='maj'?'maj':quality;button.dataset.quality=quality;button.disabled=!mayAnswer;button.addEventListener('click',()=>choose('quality',quality));return button;}));
-  $('answer-feedback').textContent=model.complete?'Маршрут собран. Последовательность распознана.':model.feedback||(mayAnswer?'Выбери ступень снизу и тип справа':model.running&&model.cursor<0?'Слушаем базу':model.running?'Эта позиция уже найдена':'Запусти последовательность');
-  $('mission-prompt').textContent=model.complete?`Все ${total} сигналов встроены в маршрут.`:model.running?(model.cursor<0?'База I6. Запомни точку отсчёта.':solved.has(model.cursor)?'Позиция уже заполнена — слушаем контекст.':'Определи текущий аккорд до следующего такта.'):'База известна. Запусти последовательность.';
+  $('degree-options').replaceChildren(...DEGREE_NAMES.map((name,offset)=>{const button=document.createElement('button');const locked=mayAnswer&&currentParts.degree&&Number(model.current.offset)===offset;button.className=`degree-option${locked?' selected locked':''}`;button.textContent=name;button.dataset.degree=String(offset);button.disabled=!mayAnswer||currentParts.degree;button.addEventListener('click',()=>mission.answerPart('degree',offset));return button;}));
+  $('quality-options').replaceChildren(...qualities.map(quality=>{const button=document.createElement('button');const locked=mayAnswer&&currentParts.quality&&model.current.quality===quality;button.className=`quality-option${locked?' selected locked':''}`;button.textContent=quality==='maj'?'maj':quality;button.dataset.quality=quality;button.disabled=!mayAnswer||currentParts.quality;button.addEventListener('click',()=>mission.answerPart('quality',quality));return button;}));
+  $('answer-feedback').textContent=model.complete?'Маршрут собран. Последовательность распознана.':model.feedback||(mayAnswer?'Ступень и тип фиксируются независимо':model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':'Запусти последовательность');
+  $('mission-prompt').textContent=model.complete?`Все ${total} сигналов встроены в маршрут.`:model.running?(model.cursor<0?'База I6. Клавиши остаются доступны для размышления.':solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':currentParts.degree?'Ступень есть. Найди тип аккорда.':currentParts.quality?'Тип есть. Найди ступень.':'Определи две части текущего аккорда.'):'База известна. Запусти последовательность.';
   $('mission-toggle').textContent=model.running?'Ⅱ Остановить':'▶ Запустить полёт';$('mission-restart').hidden=!model.complete;
   if(model.complete){s.paused=true;pad.stop();ui();}
 }
-function bindMission(exercise){mission?.pause();pad.stop();lastMissionPosition='';answerSelection={offset:null,quality:null};mission=createGardenMission({exercise,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
+function bindMission(exercise){mission?.pause();pad.stop();lastMissionPosition='';mission=createGardenMission({exercise,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
 bindMission();
 studio=new GardenSequenceStudio({onUse:route=>{bindMission(route);$('answer-feedback').textContent=`Маршрут «${route.name}» загружен`;}});
-const chapterOne=gardenExercisesForChapter(1);$('exercise-select').replaceChildren(...chapterOne.map((exercise,index)=>{const option=document.createElement('option');option.value=exercise.id;option.textContent=`${String(index+1).padStart(2,'0')} · ${exercise.name.replace(/^Fig\. 1\./,'Fig. ')}`;return option;}));
+const chapterOne=gardenExercisesForChapter(1);$('exercise-select').replaceChildren(...chapterOne.map((exercise,index)=>{const option=document.createElement('option');option.value=exercise.id;option.textContent=exerciseCode(exercise,index);return option;}));
 $('exercise-select').addEventListener('change',event=>bindMission(chapterOne.find(exercise=>exercise.id===event.target.value)));
 function chooseState(index){
   index=clamp(Math.trunc(index),0,3);s.visit=0;
@@ -78,7 +81,6 @@ $('world-controls').addEventListener('click',()=>{const open=document.body.class
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){mission.pause();pad.stop();return;}try{await pad.unlock();if(s.paused)s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
 $('mission-restart').addEventListener('click',()=>{mission.restart();s.paused=false;ui();});
-for(const button of document.querySelectorAll('[data-hud]'))button.addEventListener('click',()=>{const variant=button.dataset.hud;$('harmony-hud').dataset.variant=variant;for(const item of document.querySelectorAll('[data-hud]'))item.setAttribute('aria-pressed',String(item===button));});
 for(const button of document.querySelectorAll('[data-pad]'))button.addEventListener('click',()=>{pad.applyPreset(button.dataset.pad);for(const item of document.querySelectorAll('[data-pad]'))item.setAttribute('aria-pressed',String(item===button));});
 $('settings').addEventListener('click',()=>{const open=$('settings-panel').hidden;$('settings-panel').hidden=!open;$('settings').setAttribute('aria-expanded',String(open));});
 $('speed').addEventListener('input',e=>{s.speed=Number(e.target.value);$('speed-value').value=s.speed.toFixed(1)+'×';});

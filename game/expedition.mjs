@@ -205,7 +205,7 @@ export function createExpedition(api){
     }
     const stamp=JSON.stringify([planet,s.planetChoice,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,special?.artifactType,special?.opening,special?.rollKind,special?.celebrating,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
     if(stamp===lastRender)return;lastRender=stamp;
-    $('planet-name').textContent=`${s.planetChoice==='seasons'?'САД ЭХА':planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
+    $('planet-name').textContent=`${planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
     $('effects').textContent=[rapid>0?`AUTO ${Math.ceil(rapid)}s`:'',cloak>0?`GHOST ${Math.ceil(cloak)}s`:'',shield>0?`SHIELD ${Math.ceil(shield)}s`:'',fuzz>0?`FUZZ ${Math.ceil(fuzz)}s`:'',rhythmFocus?`RHYTHM FOCUS ×${rhythmFocus}`:''].filter(Boolean).join(' · ');
     $('hint').textContent=`Подсказка · ${hints}`;$('hint').disabled=!hints||s.listening||!['active','resolving'].includes(s.mode);
     $('special-panel').hidden=!special;

@@ -5,7 +5,7 @@ import './bundle.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output=path.join(root,'dist');fs.rmSync(output,{recursive:true,force:true});fs.mkdirSync(output,{recursive:true});
 // Explicit public allowlist: never package book PDFs, credentials or parent app.
-const files=['index.html','manifest.webmanifest','game.css','industrial.css','console.css','game.bundle.js','seasons.mjs','garden-flight.html','garden-flight.css','garden-flight.mjs','garden-flight-renderer.mjs','garden-harmony.mjs','garden-sequence-studio.mjs','book-catalog.mjs'];
+const files=['index.html','manifest.webmanifest','game.css','industrial.css','console.css','game.bundle.js','garden-flight.html','garden-flight.css','garden-flight.mjs','garden-flight-renderer.mjs','garden-harmony.mjs','garden-sequence-studio.mjs','book-catalog.mjs'];
 for(const name of files)fs.copyFileSync(path.join(root,name),path.join(output,name));
 fs.mkdirSync(path.join(output,'assets'),{recursive:true});
 fs.mkdirSync(path.join(output,'assets/echo-garden'),{recursive:true});

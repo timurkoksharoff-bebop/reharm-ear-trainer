@@ -31,8 +31,8 @@ const plist=`<?xml version="1.0" encoding="UTF-8"?>
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundleName</key><string>Space Music College</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.85</string>
-  <key>CFBundleVersion</key><string>85</string>
+  <key>CFBundleShortVersionString</key><string>0.86</string>
+  <key>CFBundleVersion</key><string>86</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>
 </dict>

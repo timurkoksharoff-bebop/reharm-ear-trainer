@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import './bundle.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const projectRoot=path.join(root,'..');
-const release='0.85';
+const release='0.86';
 const output=path.join(root,'dist');fs.rmSync(output,{recursive:true,force:true});fs.mkdirSync(output,{recursive:true});
 // Explicit public allowlist: never package book PDFs, credentials or parent app.
 const files=['index.html','manifest.webmanifest','game.css','industrial.css','console.css','samsara.css','game.bundle.js','garden-flight.html','garden-flight.css','garden-flight.mjs','garden-flight-renderer.mjs','garden-harmony.mjs','garden-life.mjs','garden-sequence-studio.mjs','garden-tour-routes.mjs','book-catalog.mjs'];

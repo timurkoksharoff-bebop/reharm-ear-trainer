@@ -18,7 +18,7 @@ const frequency=midi=>440*2**((midi-69)/12);
 
 export class GardenPad{
   constructor(){
-    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.delay=null;this.feedback=null;this.voices=[];this.preset='felt';this.sampleBuffers=[];this.generation=0;
+    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBuffers=[];this.generation=0;
     this.sampleData=Promise.all([
       ['assets/echo-garden/samples/felt-c3.wav',48],
       ['assets/echo-garden/samples/felt-e3.wav',52],
@@ -33,10 +33,10 @@ export class GardenPad{
       this.output=c.createGain();this.output.gain.value=.46;
       this.cleanOutput=c.createGain();this.cleanOutput.gain.value=.82;this.cleanOutput.connect(c.destination);
       this.filter=c.createBiquadFilter();this.filter.type='lowpass';this.filter.Q.value=.72;
-      this.delay=c.createDelay(1.4);this.feedback=c.createGain();
+      this.delay=c.createDelay(1.4);this.delayFeedback=c.createGain();
       const wet=c.createGain();wet.gain.value=.24;
       this.output.connect(this.filter);this.filter.connect(c.destination);
-      this.filter.connect(this.delay);this.delay.connect(this.feedback);this.feedback.connect(this.delay);this.delay.connect(wet);wet.connect(c.destination);
+      this.filter.connect(this.delay);this.delay.connect(this.delayFeedback);this.delayFeedback.connect(this.delay);this.delay.connect(wet);wet.connect(c.destination);
       this.applyPreset(this.preset);
     }
     if(this.context.state!=='running')await this.context.resume();
@@ -46,7 +46,7 @@ export class GardenPad{
     this.preset=PRESETS[name]?name:'felt';
     if(!this.context)return;
     const p=PRESETS[this.preset],t=this.context.currentTime;
-    this.filter.frequency.setTargetAtTime(p.cutoff,t,.18);this.delay.delayTime.setTargetAtTime(p.delay,t,.18);this.feedback.gain.setTargetAtTime(p.feedback,t,.18);
+    this.filter.frequency.setTargetAtTime(p.cutoff,t,.18);this.delay.delayTime.setTargetAtTime(p.delay,t,.18);this.delayFeedback.gain.setTargetAtTime(p.feedback,t,.18);
   }
   async play(chord,tonicPitchClass=5,{arpeggio=false}={}){
     const generation=++this.generation;
@@ -97,25 +97,34 @@ export class GardenPad{
     const voice={gain:group,stop:()=>{for(const oscillator of oscillators){try{oscillator.stop();}catch{}}try{group.disconnect();}catch{}}};
     this.voices=[voice];
   }
-  async feedback(correct,{complete=false}={}){
+  async feedback(correct,{complete=false,kind='degree',value=0}={}){
     await this.unlock();
-    const c=this.context,at=c.currentTime+.006,group=c.createGain();
+    const c=this.context,at=c.currentTime+.006,group=c.createGain(),degree=Number(value),isDegree=kind==='degree';
+    const voices=correct
+      ?isDegree
+        ?[{pitch:523.25*2**((Number.isFinite(degree)?degree:0)/12),type:'sine',level:1,delay:0,glide:1.045}]
+        :[{pitch:392,type:'triangle',level:1,delay:0,glide:1.015},{pitch:783.99,type:'sine',level:.32,delay:.032,glide:1.025}]
+      :isDegree
+        ?[{pitch:196,type:'triangle',level:1,delay:0,glide:.82}]
+        :[{pitch:174.61,type:'square',level:.5,delay:0,glide:.9},{pitch:146.83,type:'triangle',level:.72,delay:.038,glide:.86}];
+    if(correct&&complete)voices.push({pitch:1174.66,type:'sine',level:.28,delay:.075,glide:1.04});
+    const duration=correct?(complete?.3:isDegree?.17:.22):.14;
     group.gain.setValueAtTime(.0001,at);
-    group.gain.exponentialRampToValueAtTime(correct?(complete?.12:.075):.055,at+.008);
-    group.gain.exponentialRampToValueAtTime(.0001,at+(correct?(complete?.24:.14):.12));
+    group.gain.exponentialRampToValueAtTime(correct?(complete?.11:.072):.052,at+.008);
+    group.gain.exponentialRampToValueAtTime(.0001,at+duration);
     group.connect(this.cleanOutput);
-    const pitches=correct?(complete?[880,1320]:[740]):[196,174];
-    const oscillators=pitches.map((pitch,index)=>{
+    this.lastFeedback={correct,complete,kind,character:correct?(isDegree?'degree-glass':'quality-petal'):(isDegree?'degree-low':'quality-knock'),pitches:voices.map(voice=>voice.pitch)};
+    const oscillators=voices.map(voice=>{
       const oscillator=c.createOscillator(),partial=c.createGain();
-      oscillator.type=index?'sine':'triangle';
-      oscillator.frequency.setValueAtTime(pitch,at+index*.018);
-      oscillator.frequency.exponentialRampToValueAtTime(pitch*(correct?1.06:.82),at+(correct?.09:.1));
-      partial.gain.value=index?.34:1;oscillator.connect(partial);partial.connect(group);
-      oscillator.start(at+index*.018);oscillator.stop(at+(correct?(complete?.25:.15):.13));
+      oscillator.type=voice.type;
+      oscillator.frequency.setValueAtTime(voice.pitch,at+voice.delay);
+      oscillator.frequency.exponentialRampToValueAtTime(voice.pitch*voice.glide,at+Math.min(duration-.015,voice.delay+.11));
+      partial.gain.value=voice.level;oscillator.connect(partial);partial.connect(group);
+      oscillator.start(at+voice.delay);oscillator.stop(at+duration+.015);
       oscillator.onended=()=>{try{oscillator.disconnect();partial.disconnect();}catch{}};
       return oscillator;
     });
-    setTimeout(()=>{try{group.disconnect();}catch{}},complete?320:220);
+    setTimeout(()=>{try{group.disconnect();}catch{}},Math.ceil((duration+.08)*1000));
     return oscillators.length;
   }
   stop(immediate=false){

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createGardenMission,gardenExercisesForChapter,PRESETS} from '../garden-harmony.mjs';
+import {createGardenMission,GardenPad,gardenExercisesForChapter,PRESETS} from '../garden-harmony.mjs';
 import {stepFromMidi} from '../garden-sequence-studio.mjs';
 
 const exercise={
@@ -41,6 +41,28 @@ mission.restart();
 assert.deepEqual(mission.snapshot().progress,[{degree:false,quality:false},{degree:false,quality:false},{degree:false,quality:false}]);
 assert.equal(mission.snapshot().complete,false);
 assert.deepEqual(Object.values(PRESETS).map(preset=>preset.engine),['sample','deep','air']);
+
+const originalFetch=globalThis.fetch;
+globalThis.fetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(0)});
+const feedbackPad=new GardenPad();
+globalThis.fetch=originalFetch;
+feedbackPad.unlock=async()=>{};
+feedbackPad.cleanOutput={};
+feedbackPad.context={
+  currentTime:1,
+  createGain:()=>({gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}}),
+  createOscillator:()=>({frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){},start(){},stop(){},type:'sine',onended:null})
+};
+await feedbackPad.feedback(true,{kind:'degree',value:0});
+const tonicFeedback={...feedbackPad.lastFeedback};
+await feedbackPad.feedback(true,{kind:'degree',value:7});
+assert.equal(feedbackPad.lastFeedback.character,'degree-glass');
+assert(feedbackPad.lastFeedback.pitches[0]>tonicFeedback.pitches[0],'degree confirmation follows the selected pitch class');
+await feedbackPad.feedback(true,{kind:'quality',value:'maj7'});
+assert.equal(feedbackPad.lastFeedback.character,'quality-petal');
+assert.equal(feedbackPad.lastFeedback.pitches.length,2,'quality confirmation has its own two-part timbre');
+await feedbackPad.feedback(true,{kind:'quality',value:'maj7',complete:true});
+assert.equal(feedbackPad.lastFeedback.pitches.length,3,'completed positions add a soft completion shimmer');
 
 const firstBookMission=createGardenMission({barSeconds:999,onChord:()=>{}});
 firstBookMission.start();

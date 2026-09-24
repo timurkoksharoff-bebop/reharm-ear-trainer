@@ -6,15 +6,16 @@
   <meta name="theme-color" content="#0d2326">
   <title>Сад Эха · первый полёт</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="garden-flight.css?v=0.81">
+  <link rel="stylesheet" href="garden-flight.css?v=0.85">
 </head>
 <body class="training">
   <canvas id="world" aria-label="Полёт над Садом Эха. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
   <canvas id="life" aria-hidden="true"></canvas>
+  <canvas id="ship-layer" aria-hidden="true"></canvas>
   <div class="vignette" aria-hidden="true"></div>
   <header class="hud site-header">
     <div class="brand"><span class="mark" aria-hidden="true">✳</span><div><span class="overline">SPACE MUSIC COLLEGE / 02</span><h1>Сад Эха</h1></div></div>
-    <div class="header-actions"><a class="quiet back-to-planets" href="./">← Планеты</a><button id="world-controls" class="quiet" aria-expanded="false">Мир</button><button id="clean" class="quiet" aria-label="Скрыть управление">Чистый вид ↗</button></div>
+    <div class="header-actions"><button id="garden-home" class="quiet garden-home" aria-label="Главное меню Сада">Главное меню</button><a class="quiet back-to-planets" href="./">← Планеты</a><button id="world-controls" class="quiet mandala-trigger" aria-label="Открыть выбор маршрута" title="Выбор маршрута" aria-expanded="false"><span aria-hidden="true">✺</span></button></div>
   </header>
   <main class="caption hud" aria-live="polite">
     <span class="overline" id="state-number">01 / 04 · СОСТОЯНИЕ ПЛАНЕТЫ</span>
@@ -23,6 +24,48 @@
     <div class="flight-status"><i></i><span id="flight-status">Свободный полёт</span></div>
   </main>
   <p id="gesture" class="gesture hud">Веди корабль пальцем или стрелками</p>
+
+  <section id="garden-vitals" class="garden-vitals hud" aria-label="Запасы экспедиции">
+    <article class="vital" data-resource="fuel" style="--vital:#e8b85d;--level:.86">
+      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>FUEL</strong><small id="vital-fuel">86</small>
+    </article>
+    <article class="vital" data-resource="water" style="--vital:#75e9ed;--level:.78">
+      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>H₂O</strong><small id="vital-water">78</small>
+    </article>
+    <article class="vital" data-resource="crew" style="--vital:#9ee08a;--level:.92">
+      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>CREW</strong><small id="vital-crew">92</small>
+    </article>
+    <article class="vital" data-resource="hull" style="--vital:#d8c4f5;--level:.84">
+      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>HULL</strong><small id="vital-hull">84</small>
+    </article>
+    <p id="vital-event" class="vital-event" aria-live="polite"></p>
+  </section>
+  <section id="game-over" class="game-over hud" hidden role="alertdialog" aria-label="Миссия провалена"><span>КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ</span><strong>MISSION FAILED</strong><p>Экспедиция потеряла устойчивость. Маршрут остаётся прежним.</p><button id="retry-mission">Повторить миссию</button></section>
+
+  <section id="garden-start" class="garden-start" hidden aria-label="Главное меню Сада Эха">
+    <div class="garden-start-shell">
+      <div class="start-mandala" aria-hidden="true"><i></i><i></i><i></i><b>✦</b></div>
+      <div class="start-copy">
+        <span class="overline">САД ЭХА · ЭКСПЕДИЦИЯ</span>
+        <h2 id="start-title">Выбери путь</h2>
+        <p id="start-note">Сад усложняет маршруты постепенно и запоминает пройденные уровни.</p>
+        <div class="garden-progress"><span>УРОВЕНЬ <b id="garden-level">01</b></span><i><b id="garden-level-progress"></b></i><small id="garden-completed">0 маршрутов пройдено</small></div>
+        <div class="start-actions">
+          <button id="start-random" class="start-choice random-choice"><span>✦</span><strong>Случайный маршрут</strong><small>Уровень подберётся по текущему развитию</small></button>
+          <button id="start-choose" class="start-choice"><span>◎</span><strong>Выбрать маршрут</strong><small>Тур, глава и последовательность вручную</small></button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="artifact-belt" class="artifact-belt hud" aria-label="Накопленные артефакты">
+    <button data-use-artifact="arpeggio" aria-label="Арпеджио на один круг"><img src="assets/echo-garden/collectibles/arpeggio-flower.webp" alt=""><b>0</b></button>
+    <button data-use-artifact="restart" aria-label="Начать с тоники"><img src="assets/echo-garden/collectibles/root-flower.webp" alt=""><b>0</b></button>
+    <button data-use-artifact="hold" aria-label="Удержать текущий аккорд"><img src="assets/echo-garden/collectibles/hold-flower.webp" alt=""><b>0</b></button>
+    <button data-use-artifact="holdArpeggio" aria-label="Удержать арпеджио"><img src="assets/echo-garden/collectibles/hold-arpeggio-flower.webp" alt=""><b>0</b></button>
+    <button data-use-artifact="midpoint" aria-label="Запустить с середины"><img src="assets/echo-garden/collectibles/midpoint-seed.webp" alt=""><b>0</b></button>
+    <button id="artifact-repeat" class="artifact-continue" hidden aria-label="Ещё раз услышать удержанный аккорд">↻ Ещё раз</button>
+    <button id="artifact-continue" class="artifact-continue" hidden>▶</button>
+  </section>
 
   <section id="harmony-hud" class="harmony-hud hud" data-variant="minimal" aria-label="Навигационная гармоническая панель">
     <aside class="route-panel glass-panel">
@@ -57,9 +100,16 @@
       <header class="studio-header"><div><span class="overline">БОРТОВОЙ АРХИВ</span><h2>Библиотека маршрутов</h2></div><button id="studio-close" aria-label="Закрыть">×</button></header>
       <div class="studio-columns">
         <section class="studio-editor">
-          <div class="studio-fields"><label>Номер<input id="studio-number" inputmode="numeric" placeholder="01"></label><label>Название<input id="studio-name" placeholder="Например: Тихая орбита"></label></div>
+          <div class="studio-fields">
+            <label>Папка тура<select id="studio-tour" aria-label="Папка тура"><option value="reharm">Reharm</option><option value="anime">Anime</option><option value="chill">Chill</option><option value="ambient">Ambient</option><option value="cinematic">Cinematic</option><option value="deep-house">Deep House</option><option value="funk">Funk</option><option value="gospel">Gospel</option><option value="drum-bass">Drum &amp; Bass</option></select></label>
+            <label>Номер<input id="studio-number" inputmode="numeric" placeholder="01"></label>
+            <label>Название<input id="studio-name" placeholder="Например: Тихая орбита"></label>
+          </div>
           <div class="capture-card"><span id="studio-state" class="panel-kicker">ГОТОВ К ПЕРВОМУ ШАГУ</span><strong id="studio-detected">Один аккорд — одна фиксация</strong><small id="studio-capture-time">0.0 с</small><button id="studio-capture">● Записать первый аккорд</button><p id="studio-error" aria-live="polite"></p></div>
-          <div class="studio-step-head"><h3>Цепочка</h3><span id="studio-count">0 аккордов</span></div><ol id="studio-steps" class="studio-steps"></ol>
+          <div class="studio-step-head"><h3>Цепочка</h3><span id="studio-count">0 аккордов</span></div>
+          <div class="studio-add-row"><button id="studio-add-step" type="button">＋ Добавить аккорд</button><label class="studio-import">＋ Звуки по шагам<input id="studio-import-audio" type="file" accept="audio/*" multiple></label><label class="studio-import studio-import-route">◎ Один файл / MIDI / XML<input id="studio-import-route" type="file" accept="audio/*,.mid,.midi,.xml,.musicxml,audio/midi,audio/x-midi,application/vnd.recordare.musicxml+xml"></label></div>
+          <p class="studio-help">Добавляй шаги по одному. Для каждого укажи аккорд и при желании прикрепи отдельный звуковой файл.</p>
+          <ol id="studio-steps" class="studio-steps"></ol>
           <button id="studio-save" class="studio-save" disabled>Сохранить последовательность</button>
         </section>
         <aside class="studio-library-column"><span class="panel-kicker">СОХРАНЁННЫЕ ПОСЛЕДОВАТЕЛЬНОСТИ</span><p id="studio-empty">Здесь появятся твои маршруты.</p><div id="studio-library" class="studio-library"></div></aside>
@@ -67,34 +117,39 @@
     </div>
   </section>
 
-  <section class="deck hud" aria-label="Управление полётом">
-    <div class="landscapes" role="group" aria-label="Состояние планеты">
-      <button class="landscape selected" data-state="0" aria-pressed="true"><img src="assets/echo-garden/blue-gardens.webp" alt=""><span><small>01</small>Синие сады</span></button>
-      <button class="landscape" data-state="1" aria-pressed="false"><img src="assets/echo-garden/night-bloom.webp" alt=""><span><small>02</small>Ночное цветение</span></button>
-      <button class="landscape" data-state="2" aria-pressed="false"><img src="assets/echo-garden/white-thaw.webp" alt=""><span><small>03</small>Белая оттепель</span></button>
-      <button class="landscape" data-state="3" aria-pressed="false"><img src="assets/echo-garden/amber-fjords.webp" alt=""><span><small>04</small>Янтарные фьорды</span></button>
+  <section id="garden-menu" class="deck mandala-menu hud" aria-label="Выбор маршрута Сада Эха">
+    <header class="garden-menu-header"><div><span class="overline">КАРТА САДА</span><h2>Выбор маршрута</h2><p>Сначала выбери мандалу тура, затем конкретную последовательность.</p></div><button id="menu-close" class="mandala-close" aria-label="Закрыть меню">×</button></header>
+    <div class="garden-route-layout">
+      <section class="tour-picker"><span class="panel-kicker">МАНДАЛА ТУРА</span><div class="tour-orbit" role="group" aria-label="Выбор тура">
+        <button data-tour="reharm" style="--i:0" class="selected" aria-label="Reharm" aria-pressed="true"><img src="assets/echo-garden/tours/reharm.webp" alt=""></button>
+        <button data-tour="anime" style="--i:1" aria-label="Anime" aria-pressed="false"><img src="assets/echo-garden/tours/anime.webp" alt=""></button>
+        <button data-tour="chill" style="--i:2" aria-label="Chill" aria-pressed="false"><img src="assets/echo-garden/tours/chill.webp" alt=""></button>
+        <button data-tour="ambient" style="--i:3" aria-label="Ambient" aria-pressed="false"><img src="assets/echo-garden/tours/ambient.webp" alt=""></button>
+        <button data-tour="cinematic" style="--i:4" aria-label="Cinematic" aria-pressed="false"><img src="assets/echo-garden/tours/cinematic.webp" alt=""></button>
+        <button data-tour="deep-house" style="--i:5" aria-label="Deep House" aria-pressed="false"><img src="assets/echo-garden/tours/deep-house.webp" alt=""></button>
+        <button data-tour="funk" style="--i:6" aria-label="Funk" aria-pressed="false"><img src="assets/echo-garden/tours/funk.webp" alt=""></button>
+        <button data-tour="gospel" style="--i:7" aria-label="Gospel" aria-pressed="false"><img src="assets/echo-garden/tours/gospel.webp" alt=""></button>
+        <button data-tour="drum-bass" style="--i:8" aria-label="Drum and Bass" aria-pressed="false"><img src="assets/echo-garden/tours/drum-bass.webp" alt=""></button>
+      </div></section>
+      <section class="route-picker"><div class="route-picker-heading"><div><span class="panel-kicker">ПОСЛЕДОВАТЕЛЬНОСТИ</span><strong id="mandala-tour-name">Reharm</strong></div><div class="mode-switch" role="group" aria-label="Режим прохождения"><button data-mode="quest" class="selected" aria-pressed="true">Квест</button><button data-mode="free" aria-pressed="false">Свободный</button></div></div><div id="reharm-chapters" class="reharm-chapters"><span>ГЛАВА <b id="mandala-chapter">01</b></span><div id="chapter-orbit" class="chapter-orbit" role="group" aria-label="16 уровней Reharmonization+"></div></div><div id="garden-route-list" class="garden-route-list"></div></section>
     </div>
-    <div class="toolbar">
-      <div class="group ships" role="group" aria-label="Корабль"><button data-ship="0" aria-pressed="true" class="selected">Манта</button><button data-ship="1" aria-pressed="false">Лотос</button><button data-ship="2" aria-pressed="false" aria-label="Только пейзаж, без корабля">Без корабля</button></div>
-      <div class="group daylight" role="group" aria-label="Освещение"><button data-light="day" aria-pressed="true" class="selected">День</button><button data-light="dusk" aria-pressed="false">Сумерки</button><button data-light="night" aria-pressed="false">Ночь</button><button data-light="cycle" aria-pressed="false">Цикл</button></div>
-      <button id="lantern" aria-pressed="true" title="Артефакт подсвечивает путь ночью">◈ <span>Свет</span></button>
-      <button id="pause" aria-pressed="false">Ⅱ <span>Пауза</span></button>
-      <button id="settings" aria-expanded="false" aria-controls="settings-panel">Настроить</button>
-    </div>
-    <div id="settings-panel" hidden>
+    <div id="settings-panel" class="mandala-controls">
+      <div class="world-cycle" aria-label="Непрерывный живой цикл планеты"><span><small>ЕДИНЫЙ МИР</small><strong id="world-cycle-name">Синие сады</strong></span><i aria-hidden="true"><b id="world-cycle-progress"></b></i><em>единая карта · живой цикл</em></div>
       <div class="music-settings">
-        <label class="exercise-picker"><span>Маршрут</span><select id="exercise-select" aria-label="Маршрут первой главы"></select></label>
-        <fieldset class="sound-switch"><legend>Тембр синтезатора</legend><div role="group" aria-label="Тембр синтезатора"><button data-pad="felt" aria-pressed="true">Фетровое пиано</button><button data-pad="deep" aria-pressed="false">Глубокий хор</button><button data-pad="air" aria-pressed="false">Воздушное стекло</button></div></fieldset>
-        <button id="library-open" class="library-open">＋ Мои маршруты</button>
+        <label class="exercise-picker"><span>Фигура</span><select id="exercise-select" aria-label="Фигура выбранной главы"></select></label>
+        <fieldset class="sound-switch"><legend>Тембр</legend><div role="group" aria-label="Тембр синтезатора"><button data-pad="felt" aria-pressed="true">Фетровое пиано</button><button data-pad="deep" aria-pressed="false">Глубокий хор</button><button data-pad="air" aria-pressed="false">Воздушное стекло</button></div></fieldset>
+        <button id="library-open" class="library-open">＋ Sound &amp; Route Lab</button>
       </div>
-      <label>Скорость <input id="speed" type="range" min="0" max="2" step="0.1" value="0.6"><output id="speed-value">0.6×</output></label>
-      <label>Высота <input id="altitude" type="range" min="0.55" max="1.25" step="0.05" value="0.8"><output id="altitude-value">0.80</output></label>
-      <label class="check"><input id="wander" type="checkbox"> Путешествовать между состояниями</label>
-      <p>Для музыкального маршрута состояние мира закреплено. Между полётами пейзаж можно сменить вручную.</p>
+      <div class="toolbar">
+        <div class="group ships" role="group" aria-label="Корабль"><button data-ship="0" aria-pressed="false">Манта</button><button data-ship="1" aria-pressed="true" class="selected">Лотос</button><button data-ship="2" aria-pressed="false">Без корабля</button></div>
+        <div class="group daylight" role="group" aria-label="Освещение"><button data-light="day" aria-pressed="false">День</button><button data-light="dusk" aria-pressed="false">Сумерки</button><button data-light="night" aria-pressed="false">Ночь</button><button data-light="cycle" aria-pressed="true" class="selected">Цикл</button></div>
+        <button id="lantern" aria-pressed="true">◈ Свет</button><button id="pause" aria-pressed="false">Ⅱ Пауза</button><button id="clean" aria-label="Скрыть управление">Чистый вид ↗</button>
+      </div>
+      <div class="flight-sliders"><label>Скорость <input id="speed" type="range" min="0" max="2" step="0.1" value="2"><output id="speed-value">2.0×</output></label><label>Высота <input id="altitude" type="range" min="0.55" max="1.25" step="0.05" value="1.25"><output id="altitude-value">1.25</output></label></div>
     </div>
   </section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p>Приближаемся к Саду Эха…</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden>Попробовать снова</button></div>
-  <script type="module" src="garden-flight.mjs?v=0.81"></script>
+  <script type="module" src="garden-flight.mjs?v=0.85"></script>
 </body>
 </html>

@@ -24,12 +24,12 @@ class Element {
 const elements=new Map();
 const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};
 get('space').getContext=()=>({});get('enemy-label').append(new Element());
-class TestAudio {announce(text,onEnd){this.pending=onEnd;}trumpetChord(root,notes,onEnd){this.pending=onEnd;}hydraExplosion({final}){this.explosions=(this.explosions||0)+1;if(final)this.finalExplosions=(this.finalExplosions||0)+1;}rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
+class TestAudio {announce(text,onEnd){this.pending=onEnd;}answerFeedback(options){this.feedback=options;}trumpetChord(root,notes,onEnd){this.pending=onEnd;}hydraExplosion({final}){this.explosions=(this.explosions||0)+1;if(final)this.finalExplosions=(this.finalExplosions||0)+1;}rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
 const context=vm.createContext({MELODY_BANK,GENRE_COUNTS,createIntelligence,createRaiders,createIceEvent,createSeasonPlanet,...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
   createDebrief:()=>({record(){},open(){}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
   installLanguage(){},loadFlightImage:async()=>{},createDebrief:()=>({record(){},open(){},log:{pendingCount:0}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
-  document:{documentElement:new Element(),getElementById:get,createElement:()=>new Element(),querySelector:selector=>selector==='.cabinet'?get('cabinet'):null,querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
+  document:{documentElement:new Element(),body:new Element(),getElementById:get,createElement:()=>new Element(),querySelector:selector=>get(selector),querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},
   window:{addEventListener(){},matchMedia:()=>({matches:false}),innerHeight:700},location:{search:''},URLSearchParams,localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},
   Image:class{},ResizeObserver:class{observe(){}},matchMedia:()=>({matches:true}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},HTMLButtonElement:Element,
 });
@@ -141,18 +141,8 @@ assert.equal(state().enemy.groundPhase,'approach');assert(state().enemy.y<0,'Sus
 // Ordinary sustained fire also wins, without crediting a correct ear answer.
 run('expedition.reset(2);spawnEnemy();s.listening=false;s.enemy.y=180;s.enemy.groundPhase="combat";s.enemy.hull=1;s.enemy.guns.forEach(g=>{g.hp=0;g.destroyed=true;});s.shots=[{x:s.enemy.x,y:s.enemy.y+45,vx:0}];');
 const hearingBefore=state().correct;run('update(.01);');assert.equal(state().mode,'resolving');assert(state().hydraBlast);assert.equal(state().correct,hearingBefore);
-// The seasonal planet is an independent, persistent choice. Its year follows
-// flight time, including listening, but never advances while a menu is paused.
-run('selectPlanet("seasons");');assert.equal(storage.get('ear-reharm-game.planet.v1'),'seasons');
-await run('startRun(3,2);');run('spawnEnemy();s.shotTimer=99;s.listening=true;');
-const seasonTime=()=>run('seasonPlanet.snapshot().time');
-assert.equal(seasonTime(),0,'A new flight starts a new seasonal cycle');
-run('update(.25);');assert(seasonTime()>0,'Seasons continue while music is playing');
-run('s.enemy.groundPhase="combat";s.enemy.y=s.enemy.holdY;update(.25);');
-assert.equal(state().groundScrollDelta,0);assert(seasonTime()>.25,'A parked combat encounter does not stop the seasons');
-const beforePause=seasonTime();run('pause();update(1);');assert.equal(seasonTime(),beforePause);
-await run('resume();');run('update(.25);');assert(seasonTime()>beforePause);
-const beforeReveal=seasonTime();run('expedition.artifact(7);update(1);');assert.equal(seasonTime(),beforeReveal,'An artifact lesson panel pauses the scenery');
-run('expedition.reset(2);update(.25);');assert(seasonTime()>beforeReveal,'The same year resumes after the lesson');
-run('selectPlanet("original");');const beforeOriginal=seasonTime();run('update(.25);');assert.equal(seasonTime(),beforeOriginal,'Original planet does not run the seasonal simulation');
-console.log('Lifecycle checks passed: campaign completion, pause/replay, shields, drones, ground approach/terrain stop, local hull collision, destructible guns, finite chain explosion and safe trumpet flight.');
+// Removed prototype worlds cannot be restored through stale local state.
+run('selectPlanet("seasons");');assert.equal(state().planetChoice,'original');
+run('selectPlanet("samsara");');assert.equal(storage.get('ear-reharm-game.planet.v1'),'samsara');
+run('selectPlanet("original");');assert.equal(storage.get('ear-reharm-game.planet.v1'),'original');
+console.log('Lifecycle checks passed: campaign completion, pause/replay, shields, drones, ground approach/terrain stop, local hull collision, destructible guns, finite chain explosion, safe trumpet flight and active planet selection.');

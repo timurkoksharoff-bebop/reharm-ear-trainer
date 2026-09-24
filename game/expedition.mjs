@@ -10,17 +10,10 @@ export const PILOTS=[
   {name:'Магистр музыки',sector:3,speed:1,grace:5,obstacleGap:170,description:'12 корней · 22 типа · все интервалы'},
   {name:'Херби Хэнкок',sector:3,speed:1.25,grace:3,obstacleGap:145,description:'Вся гармония · быстрые враги · узкие проходы'},
 ];
-export const TEACHERS=[
-  {name:'КЛЕПАНАЯ ПАСТЬ',reward:'hint',text:'Из обломков извлечена подсказка'},
-  {name:'СЧЁТНЫЙ КЛЕЩ',reward:'rapid',text:'Автомат: 12 секунд'},
-  {name:'КИСЛОТНЫЙ КОТЁЛ',reward:'cloak',text:'Невидимость: 10 секунд'},
-  {name:'ТАРАННЫЙ ЖУК',reward:'shield',text:'Неприкосновенность: 10 секунд'},
-  {name:'ВОЕННЫЙ УТИЛИЗАТОР',reward:'combo',text:'Автомат + невидимость'},
-];
 export const ARTIFACTS=[
   {name:'Telecaster',elixir:'Modal Drive',text:'Вызывает гитариста · распознай лад'},
   {name:'Keytar',elixir:'Melody Memory',text:'Вызывает клавишника · распознай тему'},
-  {name:'Jazz Bass',elixir:'Guide Tone',text:'Услышь 3 или 7, поймай цифру — механические хищники нейтрализуются'},
+  {name:'Jazz Bass',elixir:'Guide Tone',text:'Услышь 3 или 7, поймай цифру — восстанови HP и получи щит'},
   {name:'Overdrive',elixir:'Iron Fuzz',text:'Двойной урон и щит · 10 секунд'},
   {name:'Rock Tongue',elixir:'Full Recovery',text:'Узнай тип случайного аккорда → HP 100%'},
   {name:'Zildjian',elixir:'Rhythm Focus',text:'Запаси подсказку: убрать половину неверных ритмов'},
@@ -165,7 +158,7 @@ export function turretThreat(pilot,totalCleared,chapter=0){
 
 export function createExpedition(api){
   const {s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH,images,document}=api;
-  let pilot=0,planet='moon',teachers=[],turrets=[],walls=[],drops=[],digits=[],special=null,queue=[],timer=5,wallTimer=3,artifactTimer=9,turretTimer=8,index=0,dropIndex=0,wallIndex=0,turretIndex=0;
+  let pilot=0,planet='moon',turrets=[],walls=[],drops=[],digits=[],special=null,queue=[],wallTimer=3,artifactTimer=9,turretTimer=8,dropIndex=0,wallIndex=0,turretIndex=0;
   let cloak=0,shield=0,rapid=0,fuzz=0,hints=0,melodyFocus=0,rhythmFocus=0,collectCooldown=0,lastRender='',captures=[],renderedChallenge=null;
   const $=id=>document.getElementById(id);
   const random=items=>items[Math.floor(Math.random()*items.length)];
@@ -188,7 +181,7 @@ export function createExpedition(api){
     }
     lastMelody=melodyDeck.pop();return lastMelody;
   }
-  function reset(level=0){pilot=level;planet=level%2?'mars':'moon';teachers=[];turrets=[];walls=[];drops=[];digits=[];special=null;queue=[];timer=5;wallTimer=level===0?99:level===1?8:level===2?7:6.5;artifactTimer=9;turretTimer=8;index=dropIndex=wallIndex=turretIndex=0;cloak=shield=rapid=fuzz=hints=melodyFocus=rhythmFocus=collectCooldown=0;render();}
+  function reset(level=0){pilot=level;planet=level%2?'mars':'moon';turrets=[];walls=[];drops=[];digits=[];special=null;queue=[];wallTimer=level===0?99:level===1?8:level===2?7:6.5;artifactTimer=9;turretTimer=8;dropIndex=wallIndex=turretIndex=0;cloak=shield=rapid=fuzz=hints=melodyFocus=rhythmFocus=collectCooldown=0;render();}
   function render(){
     if(special?.result){
       const c=special,r=c.result;
@@ -205,7 +198,7 @@ export function createExpedition(api){
     }
     const stamp=JSON.stringify([planet,s.planetChoice,pilot,Math.ceil(rapid),Math.ceil(cloak),Math.ceil(shield),Math.ceil(fuzz),hints,rhythmFocus,s.listening,s.mode,special?.kind,special?.artifactType,special?.opening,special?.rollKind,special?.celebrating,Math.ceil(special?.time||0),special?.collected.length,special?.target,special?.options]);
     if(stamp===lastRender)return;lastRender=stamp;
-    $('planet-name').textContent=`${planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
+    $('planet-name').textContent=`${s.planetChoice==='samsara'?'САМСАРА':planet==='moon'?'ЛУНА':'МАРС'} · ${PILOTS[pilot].name}`;
     $('effects').textContent=[rapid>0?`AUTO ${Math.ceil(rapid)}s`:'',cloak>0?`GHOST ${Math.ceil(cloak)}s`:'',shield>0?`SHIELD ${Math.ceil(shield)}s`:'',fuzz>0?`FUZZ ${Math.ceil(fuzz)}s`:'',rhythmFocus?`RHYTHM FOCUS ×${rhythmFocus}`:''].filter(Boolean).join(' · ');
     $('hint').textContent=`Подсказка · ${hints}`;$('hint').disabled=!hints||s.listening||!['active','resolving'].includes(s.mode);
     $('special-panel').hidden=!special;
@@ -231,26 +224,10 @@ export function createExpedition(api){
       for(const b of $('special-options').children)b.disabled=!['active','resolving'].includes(s.mode)||!!special.opening;
     }
   }
-  function spawnTeacher(){
-    const edge=index%4,type=index++%5,H=getH(),speed=(115+pilot*12)*PILOTS[pilot].speed;
-    const x=edge===0?-40:edge===1?W+40:70+Math.random()*(W-140),y=edge===2?-45:edge===3?H+45:120+Math.random()*(H-200);
-    const angle=Math.atan2(H*.62-y,W/2-x);
-    teachers.push({type,x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,hp:7+pilot*2,age:0,fire:3,edge});
-    feedback(`${TEACHERS[type].name} · механический хищник атакует!`);
-  }
   function spawnTurret(){
     const side=turretIndex++%2?1:-1,x=side<0?35:W-35;
     turrets.push({x,y:-38,side,hp:3+pilot,age:0,fire:2.8,muzzle:0,aim:Math.PI/2});
   }
-  function reward(type){
-    const r=TEACHERS[type].reward;
-    if(r==='hint')hints++;
-    if(r==='rapid'||r==='combo')rapid=12;
-    if(r==='cloak'||r==='combo')cloak=10;
-    if(r==='shield')shield=10;
-    feedback(TEACHERS[type].text);render();
-  }
-  function killTeacher(t){if(t.hp<=0)return;t.hp=0;burst(t.x,t.y,'#ffc878',35);s.score+=120;reward(t.type);renderHud();}
   function makeNumbers(c){
     const target=c.kind==='guide'?c.target:random(NUMBER_LABELS.filter(label=>NUMBER_OFFSETS[label]===c.interval));
     const distractors=NUMBER_LABELS.filter(label=>c.kind==='guide'?label!==target:NUMBER_OFFSETS[label]!==c.interval);
@@ -310,7 +287,7 @@ export function createExpedition(api){
       const intervals=[...INTERVALS[quality]];
       const required=flightNotes(ROOT_NAMES[rootPc],intervals,toneMode,quality);
       special={...special,artifactType:7,quality,toneMode,rootPc,root:48+rootPc,chordName:`${ROOT_NAMES[rootPc]}${QUALITIES[quality].glyph}`,required,collected:[],intervals,time:45+required.length*12};
-      walls=[];turrets=[];teachers=[];s.bullets=[];s.shots=[];s.drones=[];
+      walls=[];turrets=[];s.bullets=[];s.shots=[];s.drones=[];
       makeFlightToneCubes(special);
     }
     if(kind==='tones'){
@@ -364,6 +341,7 @@ export function createExpedition(api){
     audio.stop();s.listening=false;special=null;digits=[];
     if(['flightTones','tones'].includes(c.kind)){
       const fraction=credit??(won?1:c.kind==='flightTones'?c.collected.length/c.required.length:0);
+      if(s.planetChoice==='samsara')api.onSamsaraChallenge?.(fraction);
       const hp=repair(fraction),energy=Math.round((c.kind==='tones'?45:40)*fraction);
       s.energy=Math.min(99,s.energy+energy);s.score+=Math.round(250*fraction);
       if(fraction>0){rapid=Math.max(rapid,14*fraction);shield=Math.max(shield,(c.kind==='tones'?12:8)*fraction);}
@@ -375,11 +353,12 @@ export function createExpedition(api){
       special={...c,result:{fraction,heading,hp:hpLabel,energy},pause:true,selected:c.selected||[]};
       captures=[];renderedChallenge=null;lastRender='';render();syncPads();return;
     }
+    if(s.planetChoice==='samsara')api.onSamsaraChallenge?.(won?1:0);
     if(won){s.score+=250;
       if(c.kind==='chord'){s.health=s.maxHealth||5;feedback(`${QUALITIES[c.target].glyph} · HP 100%`);}
       else if(c.kind==='rhythm'){shield=12;rapid=10;const hp=repair();feedback(`${RHYTHMS[c.target].name} · Rhythm Shield${hp?' · +1 HP':''}`);}
       else if(c.kind==='poly'){shield=10;rapid=12;const hp=repair();feedback(`${RUDIMENTS[c.target].name} · Phase Lock${hp?' · +1 HP':''}`);}
-      else if(c.kind==='guide'){teachers.filter(t=>t.hp>0).forEach(killTeacher);shield=8;const hp=repair();feedback(`Guide tone ${c.target} · +${hp||0} HP · хищники нейтрализованы`);}
+      else if(c.kind==='guide'){shield=8;const hp=repair();feedback(`Guide tone ${c.target} · +${hp||0} HP · щит 8 секунд`);}
       else if(c.kind==='flightTones'){rapid=14;shield=8;s.energy=Math.min(99,s.energy+40);const hp=repair();feedback(`${c.toneMode.toUpperCase()} TONES · ${c.chordName}${hp?' · +1 HP':''}`);}
       else if(c.kind==='tones'){rapid=14;shield=12;s.energy=Math.min(99,s.energy+45);const hp=repair();feedback(`${c.toneMode.toUpperCase()} TONES · ${c.chordName}${hp?' · +1 HP':''}`);}
       else if(c.kind==='melody'){cloak=12;rapid=12;s.energy=Math.min(99,s.energy+35);const hp=repair(),room=c.themeRoom?themeRoomById(c.themeRoom):null;feedback(`${MELODIES[c.target].name} · ${room?'SONG ROOM':'MELODY MEMORY'}${hp?' · +1 HP':''}`);}
@@ -471,7 +450,6 @@ export function createExpedition(api){
   }
   function applyArtifact(type){
     const kind=artifactKind(type);
-    if(type===2&&!teachers.some(t=>t.hp>0))spawnTeacher();
     if(type===3){fuzz=shield=10;feedback('Overdrive · щит и двойной урон на 10 секунд');}
     if(type===5){rhythmFocus++;feedback(`Zildjian · Rhythm Focus ×${rhythmFocus}`);renderedChallenge=null;lastRender='';render();renderHud();syncPads();return;}
     if(type===4){beginRoulette();return;}
@@ -522,7 +500,7 @@ export function createExpedition(api){
     collectCooldown=Math.max(0,collectCooldown-dt);
     captures=captures.filter(c=>(c.life-=dt)>0);
     if(special?.kind==='flightTones'){
-      walls=[];turrets=[];teachers=[];
+      walls=[];turrets=[];
       if(!s.listening){
         special.time-=dt;
         if(special.time<=0){endChallenge(false);return;}
@@ -534,16 +512,15 @@ export function createExpedition(api){
       }
       render();return;
     }
-    for(const d of drops){d.age+=dt;d.y+=dt*38;if(Math.hypot(d.x-s.player.x,d.y-s.player.y)<33){d.age=99;artifact(d.type);break;}}
+    for(const d of drops){d.age+=dt;d.y+=dt*38;if(Math.hypot(d.x-s.player.x,d.y-s.player.y)<33){d.age=99;if(s.planetChoice==='samsara')api.onSamsaraArtifact?.(d.type);else artifact(d.type);break;}}
     drops=drops.filter(d=>d.age<22&&d.y<getH()+35);
     if(!s.listening&&!(special?.truceUntil>Date.now())){
       cloak=Math.max(0,cloak-dt);shield=Math.max(0,shield-dt);rapid=Math.max(0,rapid-dt);fuzz=Math.max(0,fuzz-dt);
-      timer-=dt;wallTimer-=dt;artifactTimer-=dt;
-      if(timer<=0){if(teachers.length<3)spawnTeacher();timer=18-pilot*2;}
-      if(wallTimer<=0){if(pilot>=1)walls.push(...obstacleRow(wallIndex++,W,PILOTS[pilot].obstacleGap));wallTimer=pilot===1?11:pilot===2?9.5:8.5;}
+      wallTimer-=dt;artifactTimer-=dt;
+      if(wallTimer<=0){if(s.planetChoice!=='samsara'&&pilot>=1)walls.push(...obstacleRow(wallIndex++,W,PILOTS[pilot].obstacleGap));wallTimer=pilot===1?11:pilot===2?9.5:8.5;}
       if(!s.bookMission&&artifactTimer<=0){dropArtifact();artifactTimer=pilot===0?16:pilot===1?21:16;}
       const threat=turretThreat(pilot,s.totalCleared,s.bookMission?.chapter||0);turretTimer-=dt;
-      if(threat.enabled&&turretTimer<=0&&turrets.length<threat.max){spawnTurret();turretTimer=threat.interval;}
+      if(s.planetChoice!=='samsara'&&threat.enabled&&turretTimer<=0&&turrets.length<threat.max){spawnTurret();turretTimer=threat.interval;}
       for(const wall of walls){wall.y+=s.groundScrollDelta??dt*42*PILOTS[pilot].speed;if(touchesWall(s.player,wall)){shipHit();s.player.tx=s.player.x=wall.x===0?wall.w+16:wall.x-16;}}
       walls=walls.filter(w=>w.y<getH()+80);
       for(const t of turrets){
@@ -558,13 +535,6 @@ export function createExpedition(api){
         }
       }
       turrets=turrets.filter(t=>t.y<getH()+55);
-      for(const t of teachers){if(t.hp<=0)continue;t.age+=dt;t.x+=t.vx*dt;t.y+=t.vy*dt;
-        if(t.x<30&&t.vx<0||t.x>W-30&&t.vx>0)t.vx*=-1;
-        if(t.y<110&&t.vy<0||t.y>getH()-30&&t.vy>0)t.vy*=-1;
-        if(Math.hypot(t.x-s.player.x,t.y-s.player.y)<34)shipHit();
-        t.fire-=dt;if(t.fire<=0&&!cloak){const a=Math.atan2(s.player.y-t.y,s.player.x-t.x);s.bullets.push({x:t.x,y:t.y,vx:Math.cos(a)*100,vy:Math.sin(a)*100,r:5});t.fire=5;}
-      }
-      teachers=teachers.filter(t=>t.hp>0&&t.age<45);
       if(special){special.time-=dt;if(special.time<=0){endChallenge(false);return;}
         for(const d of digits){d.age+=dt;if(!d.cube){d.x+=(d.vx+Math.sin(d.age*2)*15)*dt;d.y+=d.vy*dt;if(d.x<30||d.x>W-30)d.vx*=-1;if(d.y<120||d.y>getH()-35)d.vy*=-1;d.x=Math.max(29,Math.min(W-29,d.x));d.y=Math.max(119,Math.min(getH()-34,d.y));}if(d.rotating){const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;}else if(d.faces)d.label=d.faces[Math.floor(d.age/1.7+d.phase)%d.faces.length];
           if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<36){if(special.kind==='flightTones')collectFlightTone(d.label);else if(special.kind==='tones')collectTone(d.label);else collectNumber(d.label);break;}}
@@ -588,7 +558,10 @@ export function createExpedition(api){
     }
   }
 
+  const samsaraRelics=['guitar','keytar','bass','overdrive','tongue','cymbal','drum-machine','trumpet','keytar','guitar','drums','vibraphone','submarine'];
+  const samsaraCast=name=>images[`samsara-cast-${name}`];
   function physicalRelic(type){
+    if(s.planetChoice==='samsara')return images[`samsara-art-${samsaraRelics[type]}`];
     if(type===0||type===9)return images['artifact-guitar'];
     if(type===1||type===8)return images['artifact-keytar'];
     if(type===2)return images['crate-bass'];
@@ -620,17 +593,11 @@ export function createExpedition(api){
         if(t.muzzle>0){ctx.fillStyle='#fff0a8';ctx.beginPath();ctx.arc(0,-size*.52,5,0,Math.PI*2);ctx.fill();}}
       ctx.restore();
     }
-    for(const t of teachers){
-      ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.sin(t.age*1.7)*.08);
-      const signal=['#b66c4c','#799b98','#68998f','#a45c4a','#8a8172'][t.type];
-      ctx.shadowColor=signal;ctx.shadowBlur=12;drawSprite(images.teachers,t.type,5,1,0,0,108+t.type*3);ctx.shadowBlur=0;
-      ctx.strokeStyle=signal;ctx.lineWidth=2;ctx.globalAlpha=.55;ctx.beginPath();ctx.arc(0,2,31+Math.sin(t.age*4)*2,0,Math.PI*2);ctx.stroke();ctx.restore();
-    }
     for(const d of drops){drawRelic(d);ctx.strokeStyle=d.type>=7?`hsl(${(d.age*90+d.type*70)%360} 95% 72%)`:'#eec56a';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=d.type>=7?18:0;ctx.beginPath();ctx.arc(d.x,d.y,29+Math.sin(d.age*5)*2,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}
     if(special?.kind==='flightTones'){
       const lit=special.collected.length,H=getH(),x=W*.82,y=H*.18;
       ctx.save();ctx.globalAlpha=.82;for(let i=0;i<4;i++){ctx.strokeStyle=`hsla(${(i*85+special.time*25)%360} 95% 68% / ${Math.min(.65,.22+lit*.08)})`;ctx.lineWidth=2+i;ctx.beginPath();ctx.arc(x,y,35+i*7+Math.sin(special.time*3+i)*2,0,Math.PI*2);ctx.stroke();}
-      drawSprite(images.trumpeter,0,1,1,x,y,115);ctx.restore();
+      drawSprite(s.planetChoice==='samsara'?samsaraCast('trumpeter'):images.trumpeter,0,1,1,x,y,115);ctx.restore();
     }
     for(const d of [...digits,...captures]){
       ctx.save();ctx.translate(d.x,d.y);
@@ -652,12 +619,20 @@ export function createExpedition(api){
     ctx.save();
     if(special.kind==='poly'){
       concertBackdrop('drummergirl',true);
+      if(s.planetChoice==='samsara')drawSprite(samsaraCast('beatmaker'),0,1,1,arrival(W*.5,1),H*.53,Math.min(H*.76,W*.88));
       concertTitle('DRUM MACHINE · RUDIMENTS');ctx.restore();return;
     }
-    ctx.restore();concertPerformer('concert-drums-v65',images.drummer,'RHYTHM TRIAL');
+    ctx.restore();concertPerformer('concert-drums-v65',s.planetChoice==='samsara'?samsaraCast('drummer'):images.drummer,'RHYTHM TRIAL');
   }
   function concertBackdrop(name,showWholeImage=false){
     const ctx=api.ctx,H=getH(),img=images[name];
+    if(s.planetChoice==='samsara'){
+      const garden=images['samsara-tex-night-bloom'];
+      ctx.fillStyle='#09221f';ctx.fillRect(0,0,W,H);
+      if(garden?.complete&&garden.naturalWidth){const k=Math.max(W/garden.naturalWidth,H/garden.naturalHeight);ctx.globalAlpha=.7;ctx.drawImage(garden,(W-garden.naturalWidth*k)/2,(H-garden.naturalHeight*k)/2,garden.naturalWidth*k,garden.naturalHeight*k);ctx.globalAlpha=1;}
+      const shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#071a1acb');shade.addColorStop(.46,'#061a1a4d');shade.addColorStop(1,'#061a1ad9');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+      return;
+    }
     ctx.fillStyle='#080d14';ctx.fillRect(0,0,W,H);
     if(img?.complete&&img.naturalWidth){
       const cover=Math.max(W/img.naturalWidth,H/img.naturalHeight);
@@ -680,28 +655,33 @@ export function createExpedition(api){
     }
   }
   function concertTitle(title){
-    const ctx=api.ctx;ctx.save();ctx.fillStyle='#f2e3c9';ctx.strokeStyle='#080a0dcc';ctx.lineWidth=5;ctx.textAlign='center';ctx.font='bold 17px monospace';ctx.shadowColor='#000';ctx.shadowBlur=9;ctx.strokeText(title,W/2,34);ctx.fillText(title,W/2,34);ctx.restore();
+    const ctx=api.ctx;ctx.save();ctx.fillStyle='#f2e3c9';ctx.strokeStyle='#080a0dcc';ctx.lineWidth=5;ctx.textAlign='center';ctx.font=s.planetChoice==='samsara'?'20px Georgia':'bold 17px monospace';ctx.shadowColor='#000';ctx.shadowBlur=9;ctx.strokeText(title,W/2,34);ctx.fillText(title,W/2,34);ctx.restore();
   }
   function concertPerformer(background,portrait,title){
     const ctx=api.ctx,H=getH();ctx.save();concertBackdrop(background);
-    if(background==='concert-drums-v65'){ctx.fillStyle='#050b16a6';ctx.fillRect(0,0,W,H);}
+    if(background==='concert-drums-v65'&&s.planetChoice!=='samsara'){ctx.fillStyle='#050b16a6';ctx.fillRect(0,0,W,H);}
     drawSprite(portrait,0,1,1,arrival(W*.5,1),H*.53,Math.min(H*.76,W*.88));
     concertTitle(title);ctx.restore();
   }
   function drawThemeRoomOverlay(){
-    const ctx=api.ctx,H=getH(),img=images['artifact-yellow-submarine'],time=(Date.now()%100000)/1000;ctx.save();
-    const sea=ctx.createLinearGradient(0,0,0,H);sea.addColorStop(0,'#061427');sea.addColorStop(.48,'#073b54');sea.addColorStop(1,'#02070e');ctx.fillStyle=sea;ctx.fillRect(0,0,W,H);
+    const ctx=api.ctx,H=getH(),img=physicalRelic(12),time=(Date.now()%100000)/1000;ctx.save();
+    if(s.planetChoice==='samsara')concertBackdrop('concert-keys-v65');
+    else{const sea=ctx.createLinearGradient(0,0,0,H);sea.addColorStop(0,'#061427');sea.addColorStop(.48,'#073b54');sea.addColorStop(1,'#02070e');ctx.fillStyle=sea;ctx.fillRect(0,0,W,H);}
     ctx.globalAlpha=.3;for(let i=0;i<9;i++){const x=(i*79+time*(8+i%3)*5)% (W+70)-35,y=H-((i*113+time*(24+i%4)*4)%(H+100));ctx.strokeStyle=i%2?'#7be8e3':'#f5ca55';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,4+i%4,0,Math.PI*2);ctx.stroke();}
     ctx.globalAlpha=1;if(img?.complete&&img.naturalWidth){const target=Math.min(W*.82,H*.62),k=target/Math.max(img.naturalWidth,img.naturalHeight);ctx.shadowColor='#55e4df';ctx.shadowBlur=24;ctx.drawImage(img,W/2-img.naturalWidth*k/2,H*.51-img.naturalHeight*k/2,img.naturalWidth*k,img.naturalHeight*k);ctx.shadowBlur=0;}
     const vignette=ctx.createRadialGradient(W/2,H*.48,60,W/2,H*.48,Math.max(W,H)*.68);vignette.addColorStop(.5,'#0000');vignette.addColorStop(1,'#000c');ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);concertTitle(themeRoomById(special.themeRoom)?.title||'SONG ROOM');ctx.restore();
   }
-  function drawMelodyOverlay(){if(special?.themeRoom){drawThemeRoomOverlay();return;}concertPerformer('concert-keys-v65',images.keytarist,'MELODY MEMORY');}
-  function drawModeOverlay(){concertPerformer('concert-guitar-v65',images.guitarist,'MODAL DRIVE');}
+  function drawMelodyOverlay(){if(special?.themeRoom){drawThemeRoomOverlay();return;}concertPerformer('concert-keys-v65',s.planetChoice==='samsara'?samsaraCast('keyboardist'):images.keytarist,'MELODY MEMORY');}
+  function drawModeOverlay(){concertPerformer('concert-guitar-v65',s.planetChoice==='samsara'?samsaraCast('guitarist'):images.guitarist,'MODAL DRIVE');}
   function revealBackdrop(type){
     const kind=artifactKind(type);
     if(type===11)concertBackdrop('vibraphonist',true);
     else if(kind==='poly')concertBackdrop('drummergirl',true);
     else concertBackdrop(kind==='rhythm'?'concert-drums-v65':kind==='melody'||kind==='guide'?'concert-keys-v65':(kind==='tones'||kind==='flightTones')?'concert-trumpet-v65':'concert-guitar-v65');
+    if(s.planetChoice==='samsara'){
+      const role=type===11?'vibraphonist':kind==='poly'?'beatmaker':kind==='rhythm'?'drummer':kind==='melody'||kind==='guide'?'keyboardist':kind==='tones'||kind==='flightTones'?'trumpeter':'guitarist';
+      drawSprite(samsaraCast(role),0,1,1,W*.5,getH()*.53,Math.min(getH()*.76,W*.88));
+    }
   }
   function revealCrate(type){return type===2?images['crate-bass']:type===4?images['crate-roulette']:type===7?images['crate-trumpet']:type===11?images['crate-vibraphone']:null;}
   function drawArtifactReveal(){
@@ -717,23 +697,22 @@ export function createExpedition(api){
     concertTitle(opening?'ARTIFACT ONLINE':`TOUCH TO ACTIVATE · ${ARTIFACTS[type].name.toUpperCase()}`);ctx.restore();
   }
   function drawRouletteOverlay(){
-    const ctx=api.ctx,H=getH(),elapsed=(Date.now()-special.createdAt)/1000,pulse=.5+.5*Math.sin(elapsed*13),crate=images['crate-roulette'];ctx.save();concertBackdrop('concert-guitar-v65');
+    const ctx=api.ctx,H=getH(),elapsed=(Date.now()-special.createdAt)/1000,pulse=.5+.5*Math.sin(elapsed*13),crate=physicalRelic(4);ctx.save();concertBackdrop('concert-guitar-v65');
     ctx.fillStyle='#05080bc7';ctx.fillRect(0,0,W,H);const x=W/2,y=H*.51;
     if(crate?.complete&&crate.naturalWidth){const target=Math.min(W*.72,H*.55),k=target/Math.max(crate.naturalWidth,crate.naturalHeight),dx=x-crate.naturalWidth*k/2,dy=y-crate.naturalHeight*k*.52,dw=crate.naturalWidth*k,dh=crate.naturalHeight*k;ctx.shadowColor='#ffbd66';ctx.shadowBlur=14+pulse*22;ctx.drawImage(crate,dx,dy,dw,dh);ctx.shadowBlur=0;}
     ctx.fillStyle='#101516e8';ctx.strokeStyle='#f0c57d';ctx.lineWidth=2;ctx.fillRect(W*.18,H*.76,W*.64,39);ctx.strokeRect(W*.18,H*.76,W*.64,39);ctx.fillStyle='#ffe4b1';ctx.textAlign='center';ctx.font='bold 15px ui-monospace,monospace';ctx.fillText(rouletteLabel(special.rollKind),x,H*.76+25);concertTitle('ROCK TONGUE · RANDOM MODE');ctx.restore();
   }
-  function drawPauseOverlay(){if(special?.kind==='flightTones')return;if(special?.kind==='reveal')drawArtifactReveal();else if(special?.kind==='roulette')drawRouletteOverlay();else if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else if(special?.kind==='tones'&&special.artifactType===11){concertBackdrop('vibraphonist',true);concertTitle('VIBRAPHONE · COLOR HEARING');}else if(special?.kind==='tones')concertPerformer('concert-trumpet-v65',images.trumpeter,'HARMONIC FLIGHT');else drawRhythmOverlay();}
+  function drawPauseOverlay(){if(special?.kind==='flightTones')return;if(special?.kind==='reveal')drawArtifactReveal();else if(special?.kind==='roulette')drawRouletteOverlay();else if(special?.kind==='melody')drawMelodyOverlay();else if(special?.kind==='mode')drawModeOverlay();else if(special?.kind==='tones'&&special.artifactType===11){concertBackdrop('vibraphonist',true);if(s.planetChoice==='samsara')drawSprite(samsaraCast('vibraphonist'),0,1,1,W*.5,getH()*.53,Math.min(getH()*.76,W*.88));concertTitle('VIBRAPHONE · COLOR HEARING');}else if(special?.kind==='tones')concertPerformer('concert-trumpet-v65',s.planetChoice==='samsara'?samsaraCast('trumpeter'):images.trumpeter,'HARMONIC FLIGHT');else drawRhythmOverlay();}
   function hitShot(b){
     for(const t of turrets){if(t.hp>0&&Math.hypot(b.x-t.x,b.y-t.y)<24){t.hp-=fuzz?2:1;if(t.hp<=0){burst(t.x,t.y,'#ffbd73',24);s.score+=60;}return true;}}
-    for(const t of teachers){if(t.hp>0&&Math.hypot(b.x-t.x,b.y-t.y)<31){if(t.hp<=(fuzz?2:1))killTeacher(t);else t.hp-=fuzz?2:1;return true;}}
     return false;
   }
-  return {continueToneResult,reset,render,tick,draw,drawPauseOverlay,hitShot,replay,resumeChallenge,hint,useRhythmFocus,useMelodyFocus,grantMelodyFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,collectFlightTone,toggleToneChoice,answerToneSet,artifact,activateArtifact,spawnTeacher,
+  return {continueToneResult,reset,render,tick,draw,drawPauseOverlay,hitShot,replay,resumeChallenge,hint,useRhythmFocus,useMelodyFocus,grantMelodyFocus,afterHydra,startChallenge,answerSpecial,answerSpoken,collectNumber,collectTone,collectFlightTone,toggleToneChoice,answerToneSet,artifact,activateArtifact,
     get scenePaused(){return !!special?.pause;},
     get safeNoteFlight(){return special?.kind==='flightTones';},
     get pausedCombat(){return !!special?.pause||!!special?.truceUntil&&Date.now()<special.truceUntil;},
     get showScene(){return !!special?.pause;},
     get pauseKind(){return special?.pause?special.kind:null;},
     get busy(){return !!special;},get invincible(){return shield>0||cloak>0||special?.kind==='tones';},get cloaked(){return cloak>0;},get boosted(){return rapid>0;},get planet(){return planet;},get pilot(){return PILOTS[pilot];},get level(){return pilot;},
-    snapshot:()=>({pilot,planet,teachers,turrets,walls,drops,digits,special,queue,cloak,shield,rapid,fuzz,hints,melodyFocus,rhythmFocus})};
+    snapshot:()=>({pilot,planet,teachers:[],turrets,walls,drops,digits,special,queue,cloak,shield,rapid,fuzz,hints,melodyFocus,rhythmFocus})};
 }

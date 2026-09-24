@@ -32,5 +32,5 @@
 .overlay button:hover,.pad:hover,#special-options button:hover{filter:brightness(1.13);border-color:#ffcc88!important}}
 .overlay button:active,.pad:active,#special-options button:active{transform:translateY(3px);box-shadow:inset 0 2px 7px #0005,0 2px 0 #171310!important}
 .pad .glyph{color:#272725!important;text-shadow:none}.topbar,.cockpit,footer,.special-panel{background:repeating-linear-gradient(171deg,transparent 0 37px,#b9986220 38px 39px),linear-gradient(100deg,#332920,#191a1d 65%,#493827)!important;border-color:#8b7050!important}
-.hangar-hero{background:#191a1c url('assets/concert-guitar-v65.png') center/cover!important;border-color:#8b7050!important}.hangar-balance{background:#171718!important;color:#ffd39a!important;border-color:#8b7050!important}
+.hangar-hero{background:#191a1c url('assets/concert-guitar-v65.webp') center/cover!important;border-color:#8b7050!important}.hangar-balance{background:#171718!important;color:#ffd39a!important;border-color:#8b7050!important}
 @media(max-width:600px){.overlay:not(.art-overlay){padding:12px 8px}.overlay-card{border-width:4px!important}}

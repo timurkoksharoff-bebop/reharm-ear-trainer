@@ -7,6 +7,11 @@ const audio=new FlightAudio();audio.context={currentTime:10};
 let notes=[],scheduled=[];
 audio.note=(midi,at,duration,timbre)=>notes.push({midi,at,duration,timbre});
 audio.schedule=(callback,seconds)=>scheduled.push({callback,seconds});
+let feedbackDrums=[];audio.drum=(voice,at,velocity)=>feedbackDrums.push({voice,at,velocity});
+notes=[];audio.answerFeedback({world:'samsara',correct:true,complete:true});
+assert.equal(feedbackDrums[0].voice,'clave');assert.deepEqual(notes.map(item=>item.midi),[79,86,91]);assert.equal(audio.lastFeedback.character,'mandala-chime');
+notes=[];feedbackDrums=[];audio.answerFeedback({world:'samsara',correct:false});
+assert.equal(feedbackDrums[0].voice,'rim');assert.deepEqual(notes.map(item=>item.midi),[47,42]);assert.equal(audio.lastFeedback.character,'muted-stone');
 for(const [quality,intervals] of Object.entries(INTERVALS))for(let root=48;root<60;root++){
   notes=[];scheduled=[];let ended=false;
   audio.chordOnly(root,intervals,()=>ended=true);

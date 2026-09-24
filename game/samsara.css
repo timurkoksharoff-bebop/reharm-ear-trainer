@@ -1,0 +1,103 @@
+/* SAMSARA keeps the combat layout while borrowing the quiet, botanical
+   surface language of Echo Garden. All selectors stay inside this world. */
+body.samsara-world{--bg:#092426;--panel:#0b2424;--line:#80b2a47a;--muted:#d0dbcc;--white:#f4f0dc;--mint:#b7e3bc;--yellow:#efcf94;background:radial-gradient(ellipse at 50% 35%,#224d49,#07191c 72%);font-family:Georgia,'Times New Roman',serif}
+.samsara-world .cabinet{max-width:700px;border:0;background:#0a2425;box-shadow:0 0 0 1px #aac8a23c,0 0 95px #0c575845}
+.samsara-world .topbar{height:58px;padding:0 22px;background:linear-gradient(100deg,#092727eb,#153b36d9);border-bottom:1px solid #b8d5b064}
+.samsara-world .wordmark{font:25px/1 Georgia,serif;letter-spacing:0;color:#f3f1dc}
+.samsara-world .wordmark .brand-mark{font:40px/1 Georgia,serif;color:#dbdec0}
+.samsara-world .wordmark>span:last-child{font-size:0}
+.samsara-world .wordmark>span:last-child::after{content:'Самсара';font-size:25px}
+.samsara-world .prototype{font:10px system-ui,sans-serif;color:#ccddcb9c;letter-spacing:.16em}
+.samsara-world .topbar button{border:1px solid #b3c9b476;border-radius:999px;background:#1238338c;color:#ecf1d9;box-shadow:none}
+.samsara-world .flight{background:#0a2528}
+.samsara-world .machine-rail{opacity:.07;filter:hue-rotate(80deg)}
+.samsara-world .hud,.samsara-world .planet-name,.samsara-world .effects,.samsara-world .flight-bottom{font-family:system-ui,sans-serif;text-shadow:0 2px 8px #061e1d}
+.samsara-world .micro{color:#d9e8d3;font-size:10px}
+.samsara-world .route-track i{background:#bfd8bb46;border-radius:3px}
+.samsara-world .route-track i.done{background:#dbe3b9}
+.samsara-world .route-track i.current{background:#fff1c3}
+.samsara-world .enemy-label{color:#e0e8d4}
+.samsara-world .shield-tag{border-color:#cee4b29c;border-radius:999px;background:#103e39a6;color:#faf1d1}
+.samsara-world .signal{color:#f0efdc;font:13px system-ui,sans-serif}
+.samsara-world .signal-dot{background:#f2d8a1;box-shadow:0 0 13px #e9d6ac}
+.samsara-world .feedback{color:#e5e9b8;font-family:Georgia,serif}
+.samsara-world .floating-deck .cockpit,.samsara-world.floating-deck .cockpit{max-height:40dvh!important;padding:11px 60px 11px 15px;background:linear-gradient(#092c2cbe,#0a302ce9)!important;border-top:1px solid #bed7b999!important;border-radius:18px 18px 0 0;box-shadow:0 -15px 45px #081e268c;backdrop-filter:blur(12px)}
+.samsara-world.floating-deck .cockpit::before{display:none}
+.samsara-world.floating-deck .dock-top{top:12px;right:10px}
+.samsara-world.floating-deck .dock-top .hint,.samsara-world.floating-deck .dock-top .replay{border:1px solid #bcd3b17e!important;border-radius:50%;background:#17463fbd!important;color:#f7f0d8!important;box-shadow:none!important}
+.samsara-world.floating-deck .pads{gap:5px}
+.samsara-world.floating-deck .pad,.samsara-world.floating-deck .quality-pads .pad{min-height:38px!important;padding:3px 2px!important;border:1px solid #bbd6bd7d!important;border-radius:999px;background:#21554b9e!important;color:#fff2d4!important;box-shadow:inset 0 1px #f1f6d333!important}
+.samsara-world.floating-deck .pad .glyph{color:#fbf0d3!important;font:17px Georgia,serif!important}
+.samsara-world.floating-deck .pad.selected{background:#a6ba8c99!important;border-color:#f4ecc5!important}
+.samsara-world.floating-deck .pad:disabled:not(.selected){opacity:.42}
+.samsara-world .quality-label{display:block;margin:8px 0 5px;color:#e0dfc5;font:10px system-ui,sans-serif;letter-spacing:.14em}
+.samsara-world #bass-pads::before{content:'СТУПЕНЬ';display:block;width:100%;flex:0 0 100%;color:#e0dfc5;font:10px system-ui,sans-serif;letter-spacing:.14em;text-align:left;margin-bottom:1px}
+.samsara-world #bass-pads{flex-wrap:wrap}
+.samsara-world #bass-pads.chromatic-pads{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
+.samsara-world #bass-pads.chromatic-pads::before{grid-column:1/-1}
+.samsara-world .quality-tabs button{border:1px solid #bcd3b17e;border-radius:999px;background:#17463fbd;color:#eae9d3}
+.samsara-world .quality-tabs button[aria-pressed=true]{background:#a8b78378;border-color:#f6e6bb;color:#fff5d2}
+.samsara-world #health .hp-shell{border-radius:999px;border-color:#a8cdac;background:#15312c}
+.samsara-world #health .hp-shell::after{display:none}
+.samsara-world #health .hp-shell i{border-radius:999px;background:linear-gradient(90deg,#729f8b,#daf0b0)}
+.samsara-world .overlay{background:radial-gradient(circle at 50% 35%,#154947ec,#07191bed 78%)}
+.samsara-world .overlay-card{max-width:520px;color:#f2edd9}
+.samsara-world .overlay h1,.samsara-world .overlay h2{font-family:Georgia,serif;font-weight:400;letter-spacing:.01em}
+.samsara-world .overlay h1{font-size:clamp(43px,6vw,67px)}
+.samsara-world .overlay p{font-family:Georgia,serif;color:#dae4d4}
+.samsara-world .eyebrow{color:#e2cf9e;font:10px system-ui,sans-serif;letter-spacing:.18em}
+.samsara-world .overlay .primary,.samsara-world .overlay .secondary,.samsara-world .samsara-difficulty{border:1px solid #c5d5b489;border-radius:999px;background:#1b4e47c7;color:#f8efd5;box-shadow:none;text-decoration:none;font-family:Georgia,serif}
+.samsara-world .overlay .primary:hover,.samsara-world .overlay .secondary:hover{background:#2b695b}
+.samsara-world .samsara-difficulty{display:block;width:100%;min-height:51px;margin:7px 0;padding:9px 16px;text-align:left;font-size:16px}
+.samsara-world .samsara-difficulty small{display:block;font:10px system-ui,sans-serif;color:#ccdbcb;margin-top:3px}
+.samsara-home-flower{width:150px;height:150px;margin:8px auto 14px;border-radius:50%;background:radial-gradient(circle,#c7e1c722,#57978710 65%,transparent 72%);display:grid;place-items:center}
+.samsara-home-flower img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 0 19px #bde9af55)}
+.samsara-world .planet-card.samsara{background:#0b2929 url('assets/echo-garden/blue-gardens.webp') center/cover;border-color:#bdd8ac}
+.samsara-world .planet-card.samsara::before{background:linear-gradient(#0b393113,#06231edb)}
+.samsara-world .topbar{background:linear-gradient(100deg,#092727ed,#153b36e8)!important;border-color:#b8d5b064!important}
+.samsara-world .wordmark b{display:none}
+.samsara-world .topbar button,.samsara-world .language,.samsara-world .icon-button{border:1px solid #b3c9b476!important;border-radius:999px!important;background:#123833b8!important;color:#ecf1d9!important;box-shadow:none!important}
+.samsara-world .overlay:not(.art-overlay){background:radial-gradient(circle at 50% 35%,#17524ee9,#07191bf2 78%)!important;padding:18px!important}
+.samsara-world .overlay-card{border:1px solid #c7d8b789!important;border-radius:24px!important;padding:26px!important;background:linear-gradient(145deg,#17453edb,#0c292bdf)!important;box-shadow:0 20px 65px #03191dc9,inset 0 1px #e7efce45!important}
+.samsara-world .overlay-card::before,.samsara-world .overlay-card::after{display:none!important}
+.samsara-world .overlay h1,.samsara-world .overlay h2,.samsara-world .overlay h3{color:#f3efd9!important;text-shadow:none!important}
+.samsara-world .overlay .eyebrow{color:#d9cfac!important}
+.samsara-world .overlay button{border:1px solid #c5d5b489!important;border-radius:999px!important;background:#1b4e47c7!important;color:#f8efd5!important;box-shadow:none!important;text-shadow:none!important}
+.samsara-world .overlay button:hover{filter:none!important;background:#2b695b!important}
+.samsara-world.floating-deck .cockpit{background:linear-gradient(#092c2cbe,#0a302ce9)!important;border-color:#bed7b999!important}
+.samsara-world.floating-deck .pad,.samsara-world.floating-deck .quality-pads .pad{background:#21554b9e!important;border:1px solid #bbd6bd7d!important;border-radius:999px!important;color:#fff2d4!important;box-shadow:inset 0 1px #f1f6d333!important}
+.samsara-world.floating-deck .pad .glyph{color:#fbf0d3!important;text-shadow:none!important;font-family:Georgia,serif!important}
+.samsara-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:16px 0}
+.samsara-world .samsara-gallery button{min-width:0;padding:8px!important;border-radius:15px!important;text-align:center!important;display:flex;flex-direction:column;align-items:center;gap:3px}
+.samsara-world .special-panel{padding:9px!important;border:1px solid #bed7b999!important;border-radius:16px!important;background:#103c36d9!important;box-shadow:inset 0 1px #e7edcf32!important}
+.samsara-world .special-panel>b{color:#f6e7b9;font:13px Georgia,serif;letter-spacing:.03em}
+.samsara-world .special-panel>span{color:#d8e4d0;font:11px Georgia,serif}
+.samsara-world #special-options{gap:5px}
+.samsara-world #special-options button{min-height:34px;border:1px solid #d0dfb88a!important;border-radius:999px!important;background:#24584dc9!important;color:#f7f1db!important;box-shadow:none!important;font:11px Georgia,serif}
+.samsara-world #special-options button.selected{background:#9cb994bb!important;border-color:#f3edc6!important}
+.samsara-world #special-options .artifact-activate{background:#5b7655c9!important;box-shadow:0 0 18px #e5e8ac33!important}
+.samsara-gallery img{display:block;width:100%;height:106px;object-fit:contain;filter:drop-shadow(0 4px 7px #001b1b)}
+.samsara-gallery b{font:13px Georgia,serif}.samsara-gallery small{font:9px system-ui,sans-serif;color:#d5e0cc}
+.samsara-gallery.relics img{height:78px}
+@media(max-width:550px){.samsara-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-height:750px){.samsara-home-flower{width:86px;height:86px;margin:2px auto}.samsara-home-flower img{width:84px;height:84px}.samsara-world .samsara-difficulty{min-height:42px;padding:5px 13px}.samsara-world.floating-deck .pad,.samsara-world.floating-deck .quality-pads .pad{min-height:32px!important}}
+/* Echo Garden's glass answer buttons, kept in two independent rows. */
+.samsara-world .floating-deck .pad,.samsara-world .floating-deck .quality-pads .pad{border:1px solid #a0f7e875!important;border-radius:19px!important;background:#03252b4f!important;box-shadow:inset 0 0 10px #82ffec0a,0 0 8px #001b1b55!important;backdrop-filter:blur(10px);color:#effff9!important;text-shadow:0 1px 5px #001816}
+.samsara-world .floating-deck .pad.selected,.samsara-world .floating-deck .quality-pads .pad.selected{border-color:#dcfff7!important;background:#1a756f8c!important;box-shadow:0 0 16px #59ffe36b,inset 0 0 11px #a8fff036!important}
+.samsara-world .samsara-artifacts{display:flex;align-items:center;gap:5px;min-height:43px;max-width:100%;overflow-x:auto;padding:2px 0 5px;scrollbar-width:thin;scrollbar-color:#9acdc763 transparent}
+.samsara-world .samsara-artifacts[hidden],.samsara-world .samsara-vitals[hidden]{display:none}
+.samsara-world .samsara-artifacts::before{content:'ЗАПАС';flex:none;color:#d9e8d3;font:9px system-ui,sans-serif;letter-spacing:.1em;margin-right:2px}
+.samsara-world .samsara-artifacts button{position:relative;flex:none;width:39px;height:37px;padding:2px;border:1px solid #a0f7e875;border-radius:12px;background:#03252b7a;box-shadow:inset 0 1px #b9fff032;cursor:pointer}
+.samsara-world .samsara-artifacts button:disabled{opacity:.3;cursor:default}
+.samsara-world .samsara-artifacts button img{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 0 4px #9bf7db9c)}
+.samsara-world .samsara-artifacts button b{position:absolute;right:1px;bottom:0;min-width:13px;border-radius:8px;background:#052d2b;color:#f0f7d8;font:10px system-ui,sans-serif}
+.samsara-world .samsara-artifacts>span{color:#d4e7d9;font:11px system-ui,sans-serif}
+.samsara-world .samsara-vitals{position:absolute;z-index:1;right:16px;top:121px;display:grid;gap:5px;width:116px;padding:8px;border:1px solid #a0f7e866;border-radius:13px;background:#08282a78;backdrop-filter:blur(9px);pointer-events:none}
+.samsara-world .samsara-vitals label{display:grid;grid-template-columns:37px 1fr 22px;gap:4px;align-items:center;color:#e7f7e6;font:9px system-ui,sans-serif}
+.samsara-world .samsara-vitals i{height:5px;border:1px solid #b5fff052;border-radius:9px;overflow:hidden;background:#0d2626}
+.samsara-world .samsara-vitals i::before{content:'';display:block;width:var(--fill);height:100%;background:var(--color);border-radius:9px}
+.samsara-world .samsara-vitals em{font-style:normal;text-align:right}
+.samsara-world .floating-deck .samsara-artifacts{min-height:35px;padding:0 0 2px}
+.samsara-world .floating-deck .cockpit{padding-top:7px!important;padding-bottom:5px!important}
+.samsara-world .floating-deck .quality-label{margin:4px 0 3px}
+.samsara-world .floating-deck #dock-tip{display:none}

@@ -47,8 +47,8 @@ world.startChallenge('rhythm');assert([...dom.get('special-options').children].e
 world.reset(0);world.startChallenge('mode');assert.equal(world.snapshot().special.direction,'up','Novice modal challenge must ascend');audio.pending();
 world.reset(1);world.startChallenge('mode');assert.equal(world.snapshot().special.direction,'up','Student modal challenge must ascend');audio.pending();
 assert.equal(turretThreat(0,0).enabled,false);assert.equal(turretThreat(1,3).enabled,true);assert(turretThreat(3,12).max>turretThreat(1,3).max);assert(turretThreat(3,12).interval<turretThreat(1,3).interval);
-world.reset(0);world.spawnTeacher();assert.equal(world.snapshot().teachers.length,1);
-s.health=1;s.maxHealth=5;world.startChallenge('guide');const guide=world.snapshot().special.target;audio.pending();world.collectNumber(guide);assert(world.snapshot().teachers.every(t=>t.hp===0));assert(world.invincible);assert.equal(s.health,2,'Guide-tone success repairs one HP');
+world.reset(0);world.tick(18);assert.equal(world.snapshot().teachers.length,0,'Teachers no longer spawn in the first or third world');
+s.health=1;s.maxHealth=5;world.startChallenge('guide');const guide=world.snapshot().special.target;audio.pending();world.collectNumber(guide);assert(world.invincible);assert.equal(s.health,2,'Guide-tone success repairs one HP');
 world.reset(2);world.startChallenge('numbers');assert(world.pausedCombat&&!world.scenePaused,'Short truce protects the pilot without freezing the scene');const numeric=world.snapshot().special;audio.pending();
 assert(world.pausedCombat,'Opening listening truce freezes incoming fire');assert.equal(world.showScene,false,'Listening truce must not draw an unrelated musician scene');
 for(const expected of orderedTargets(numeric.interval,numeric.direction)){world.collectNumber(Object.keys(NUMBER_OFFSETS).find(k=>NUMBER_OFFSETS[k]===expected));}
@@ -72,7 +72,7 @@ audio.rhythm=rhythmBefore;
 world.reset(0);openArtifact(1);assert.equal(world.snapshot().special.kind,'melody');audio.pending();world.answerSpecial(world.snapshot().special.target);assert(world.scenePaused);audio.pending();assert(world.cloaked);world.continueToneResult();world.artifact(3);assert.equal(world.snapshot().special,null,'Overdrive applies without opening an unrelated character scene');assert(world.invincible);
 const frozen=JSON.stringify(world.snapshot());s.mode='paused';world.tick(10);assert.equal(JSON.stringify(world.snapshot()),frozen);
 s.mode='active';world.reset(0);world.startChallenge('rhythm');audio.pending();const roomBefore=JSON.stringify(world.snapshot());world.tick(40);assert.equal(JSON.stringify(world.snapshot()),roomBefore,'Rhythm field pause freezes flight and has no countdown');world.answerSpecial(world.snapshot().special.target);assert(!world.pausedCombat);
-world.reset(0);for(let i=0;i<5;i++)world.spawnTeacher();assert.deepEqual(world.snapshot().teachers.map(t=>t.type),[0,1,2,3,4]);assert.deepEqual(world.snapshot().teachers.slice(0,4).map(t=>t.edge),[0,1,2,3]);
+world.reset(0);assert.equal(world.snapshot().teachers.length,0);
 world.reset(1);s.bookMission={chapter:4};s.totalCleared=1;world.afterHydra();assert.equal(world.snapshot().drops.length,1,'Book Flight must receive the same authored artifacts');assert.equal(world.snapshot().queue.length,0,'Book Flight does not insert the unrelated interval detour');s.bookMission=null;
 world.reset(0);s.listening=false;world.tick(4);assert.equal(world.snapshot().walls.length,0,'Novice flight has no obstacles');
 world.reset(2);world.startChallenge('numbers');assert(world.pausedCombat&&!world.scenePaused,'Short truce protects the pilot without freezing the scene');

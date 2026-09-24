@@ -86,6 +86,19 @@ export class FlightAudio {
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
   }
+  gardenSequence(route,{from=0,arpeggio=false}={},onPart=()=>{},onEnd=()=>{}){
+    this.stop();const token=this.token,tonic=(route.register??48)+route.key,start=this.context.currentTime+.08;
+    let at=.12;
+    if(from===0){this.note(tonic,start+at,.7,route.timbre,.34);at+=.9;}
+    for(let index=from;index<route.sequence.length;index++){
+      const notes=chordNotes(route.sequence[index],tonic),offset=at;
+      notes.forEach((midi,i)=>this.note(midi,start+offset+(arpeggio?i*.15:0),1.2,route.timbre,.54/Math.sqrt(notes.length)));
+      this.schedule(()=>{if(token===this.token)onPart(index);},offset);
+      at+=1.5+(arpeggio?Math.max(0,notes.length-3)*.1:0);
+    }
+    this.lastCue={kind:'garden-sequence',from,arpeggio,notes:route.sequence.length-from,sound:arpeggio?'one arpeggiated harmonic cycle':'harmonic sequence from selected chord'};
+    this.schedule(()=>{if(token===this.token)onEnd();},at+.12);
+  }
   bookReference(route,targetIndex,onPart,onEnd){
     this.stop();const token=this.token,cue=bookReferenceEvents(route,targetIndex),start=this.context.currentTime;
     this.lastCue={...cue,kind:'book-reference',targetIndex,code:route.code,sound:'home note plus vertical target'};
@@ -245,6 +258,18 @@ export class FlightAudio {
     if(!this.context)return;
     const at=this.context.currentTime+.01;
     for(const [i,midi] of (correct?[72,79]:[48,43]).entries())this.note(midi,at+i*.12,.18,'soft',.2);
+  }
+  answerFeedback({world='original',correct=true,complete=false}={}){
+    if(!this.context||this.context.state==='closed')return;
+    const at=this.context.currentTime+.008;
+    if(world==='samsara'){
+      this.drum(correct?'clave':'rim',at,correct?(complete?.72:.45):.32);
+      const notes=correct?(complete?[79,86,91]:[79,86]):[47,42];
+      notes.forEach((midi,index)=>this.note(midi,at+index*(correct?.045:.07),correct?(complete?.28:.16):.13,'soft',correct?(complete?.15:.09):.075));
+      this.lastFeedback={world,correct,complete,character:correct?'mandala-chime':'muted-stone'};
+      return;
+    }
+    this.reviewFeedback(correct);
   }
   rouletteTick(final=false){
     const ctx=this.context;if(!ctx)return;const at=ctx.currentTime+.01;

@@ -6,10 +6,17 @@ const PIANO_SAMPLES=[
   [54,'Fs3'],[57,'A3'],[60,'C4'],[63,'Ds4'],[66,'Fs4'],[69,'A4'],
   [72,'C5'],[75,'Ds5'],[78,'Fs5'],[84,'C6'],[87,'Ds6'],[90,'Fs6'],
 ].map(([midi,name])=>({midi,url:`../samples/piano/${name}.mp3`}));
+const FELT_SAMPLES=[
+  [48,'felt-c3.wav'],[52,'felt-e3.wav'],[55,'felt-g3.wav'],
+].map(([midi,name])=>({midi,url:`assets/echo-garden/samples/${name}`}));
 // A sustained, pitch-stable two-oscillator arcade synth. No sample/network
 // dependency and no detuning/vibrato that could blur interval recognition.
 export class FlightAudio {
-  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;this.pianoBuffers=new Map();this.pianoPromise=null;this.commandBuffers=new Map();this.commandPromise=null;}
+  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;this.world='original';this.pianoBuffers=new Map();this.pianoPromise=null;this.feltBuffers=new Map();this.feltPromise=null;this.commandBuffers=new Map();this.commandPromise=null;}
+  setWorld(world='original'){
+    this.world=world==='samsara'?'samsara':'original';
+    if(this.world==='samsara'&&this.context)this.prepareFelt().catch(()=>{});
+  }
   async unlock(){
     const Engine=window.AudioContext||window.webkitAudioContext;
     if(!Engine)throw new Error('Браузер не поддерживает Web Audio. Открой игру в Safari или Chrome.');
@@ -23,6 +30,7 @@ export class FlightAudio {
     if(this.context.state!=='running')throw new Error('Звук приостановлен. Нажми «Продолжить» ещё раз.');
     this.note(57,this.context.currentTime,.07,'soft',.00003);
     this.prepareCommands();
+    if(this.world==='samsara')this.prepareFelt().catch(()=>{});
   }
   note(midi,at,duration,timbre='synth',level=.38){
     const ctx=this.context;if(!ctx)return;
@@ -57,6 +65,19 @@ export class FlightAudio {
     }).catch(error=>{this.pianoPromise=null;throw error;});
     return this.pianoPromise;
   }
+  async prepareFelt(){
+    if(this.feltBuffers.size===FELT_SAMPLES.length)return true;
+    if(this.feltPromise)return this.feltPromise;
+    if(!this.context)return false;
+    this.feltPromise=Promise.allSettled(FELT_SAMPLES.map(async sample=>{
+      const response=await fetch(sample.url);if(!response.ok)throw new Error(`Felt sample: HTTP ${response.status}`);
+      const buffer=await this.context.decodeAudioData(await response.arrayBuffer());return [sample.midi,buffer];
+    })).then(results=>{
+      for(const result of results)if(result.status==='fulfilled')this.feltBuffers.set(...result.value);
+      if(!this.feltBuffers.size)throw new Error('Felt-piano samples did not load.');return true;
+    }).catch(error=>{this.feltPromise=null;throw error;});
+    return this.feltPromise;
+  }
   pianoNote(midi,at,duration,level=.38){
     const available=PIANO_SAMPLES.filter(sample=>this.pianoBuffers.has(sample.midi));
     if(!available.length){this.note(midi,at,duration,'soft',level);return;}
@@ -67,21 +88,36 @@ export class FlightAudio {
     source.connect(gain);gain.connect(this.master);source.start(at);source.stop(stopAt+.01);this.voices.add(source);
     source.onended=()=>{this.voices.delete(source);source.disconnect();gain.disconnect();};
   }
+  feltNote(midi,at,duration,level=.38){
+    const available=FELT_SAMPLES.filter(sample=>this.feltBuffers.has(sample.midi));
+    if(!available.length){this.note(midi,at,duration,'soft',level*.9);return;}
+    const nearest=available.reduce((best,sample)=>Math.abs(sample.midi-midi)<Math.abs(best.midi-midi)?sample:best),source=this.context.createBufferSource(),gain=this.context.createGain(),filter=this.context.createBiquadFilter();
+    source.buffer=this.feltBuffers.get(nearest.midi);source.playbackRate.setValueAtTime(2**((midi-nearest.midi)/12),at);
+    const natural=source.buffer.duration/source.playbackRate.value,stopAt=at+Math.min(natural,duration+.8);
+    filter.type='lowpass';filter.frequency.setValueAtTime(Math.min(5200,1700+Math.max(0,midi-36)*105),at);filter.Q.value=.25;
+    gain.gain.setValueAtTime(.00001,at);gain.gain.exponentialRampToValueAtTime(level*.82,at+.018);gain.gain.setValueAtTime(level*.64,Math.min(stopAt-.09,at+.2));gain.gain.exponentialRampToValueAtTime(.00001,stopAt);
+    source.connect(filter);filter.connect(gain);gain.connect(this.master);source.start(at);source.stop(stopAt+.01);this.voices.add(source);
+    source.onended=()=>{this.voices.delete(source);source.disconnect();filter.disconnect();gain.disconnect();};
+  }
+  worldNote(midi,at,duration,timbre='synth',level=.38){
+    if(this.world==='samsara'){this.feltNote(midi,at,duration,level);return;}
+    this.note(midi,at,duration,timbre,level);
+  }
   schedule(callback,seconds){const id=setTimeout(()=>{this.timers.delete(id);callback();},seconds*1000);this.timers.add(id);}
   play(route,chord,sector,onPart,onEnd){
     this.stop();const token=this.token,cue=cueEvents(route,chord,sector),start=this.context.currentTime;
-    this.lastCue={...cue,key:route.key,register:route.register,contextState:this.context.state,sound:'sustained synth'};
+    this.lastCue={...cue,key:route.key,register:route.register,contextState:this.context.state,sound:this.world==='samsara'?'felt piano':'sustained synth'};
     for(const event of cue.events){
-      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.58/Math.sqrt(event.notes.length));
+      for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,route.timbre,.58/Math.sqrt(event.notes.length));
       if(event.part!=='tone')this.schedule(()=>{if(token===this.token)onPart(event.part);},event.at);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
   }
   progression(route,targetIndex,onPart,onEnd,finale=false){
     this.stop();const token=this.token,cue=progressionEvents(route,targetIndex,finale),start=this.context.currentTime;
-    this.lastCue={...cue,kind:finale?'route-finale':'harmonic-context',targetIndex,code:route.code,sound:'vertical sustained synth'};
+    this.lastCue={...cue,kind:finale?'route-finale':'harmonic-context',targetIndex,code:route.code,sound:this.world==='samsara'?'felt piano':'vertical sustained synth'};
     for(const event of cue.events){
-      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.54/Math.sqrt(event.notes.length));
+      for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,route.timbre,.54/Math.sqrt(event.notes.length));
       this.schedule(()=>{if(token===this.token)onPart(event);},event.at);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
@@ -89,10 +125,10 @@ export class FlightAudio {
   gardenSequence(route,{from=0,arpeggio=false}={},onPart=()=>{},onEnd=()=>{}){
     this.stop();const token=this.token,tonic=(route.register??48)+route.key,start=this.context.currentTime+.08;
     let at=.12;
-    if(from===0){this.note(tonic,start+at,.7,route.timbre,.34);at+=.9;}
+    if(from===0){this.worldNote(tonic,start+at,.7,route.timbre,.34);at+=.9;}
     for(let index=from;index<route.sequence.length;index++){
       const notes=chordNotes(route.sequence[index],tonic),offset=at;
-      notes.forEach((midi,i)=>this.note(midi,start+offset+(arpeggio?i*.15:0),1.2,route.timbre,.54/Math.sqrt(notes.length)));
+      notes.forEach((midi,i)=>this.worldNote(midi,start+offset+(arpeggio?i*.15:0),1.2,route.timbre,.54/Math.sqrt(notes.length)));
       this.schedule(()=>{if(token===this.token)onPart(index);},offset);
       at+=1.5+(arpeggio?Math.max(0,notes.length-3)*.1:0);
     }
@@ -101,9 +137,9 @@ export class FlightAudio {
   }
   bookReference(route,targetIndex,onPart,onEnd){
     this.stop();const token=this.token,cue=bookReferenceEvents(route,targetIndex),start=this.context.currentTime;
-    this.lastCue={...cue,kind:'book-reference',targetIndex,code:route.code,sound:'home note plus vertical target'};
+    this.lastCue={...cue,kind:'book-reference',targetIndex,code:route.code,sound:this.world==='samsara'?'felt piano reference':'home note plus vertical target'};
     for(const event of cue.events){
-      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.56/Math.sqrt(event.notes.length));
+      for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,route.timbre,.56/Math.sqrt(event.notes.length));
       this.schedule(()=>{if(token===this.token)onPart(event);},event.at);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
@@ -112,7 +148,7 @@ export class FlightAudio {
   interval(base,semitones,mode,onEnd){
     this.stop();const token=this.token,cue=intervalCue(base,semitones,mode),start=this.context.currentTime;
     this.lastCue={...cue,kind:'interval',base,semitones,mode,sound:'sustained synth'};
-    for(const event of cue.events)for(const midi of event.notes)this.note(midi,start+event.at,event.duration,'synth',.5/Math.sqrt(event.notes.length));
+    for(const event of cue.events)for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,'synth',.5/Math.sqrt(event.notes.length));
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
   }
   chordOnly(root,intervals,onEnd,mode='together'){
@@ -120,7 +156,7 @@ export class FlightAudio {
     const notes=intervals.map(n=>root+n),order=mode==='down'?[...notes].reverse():notes;
     const step=mode==='together'?0:.24,duration=1.95+step*(notes.length-1);
     this.lastCue={kind:'chord-only',root,notes,mode,sound:'sustained synth'};
-    order.forEach((note,i)=>this.note(note,start+.12+i*step,1.65,'synth',.6/Math.sqrt(notes.length)));
+    order.forEach((note,i)=>this.worldNote(note,start+.12+i*step,1.65,'synth',.6/Math.sqrt(notes.length)));
     this.schedule(()=>{if(token===this.token)onEnd();},duration);
   }
   trainerChord(tonic,chord,onEnd,mode='together',timbre='synth'){
@@ -133,8 +169,8 @@ export class FlightAudio {
   }
   guide(root,target,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime;
-    [0,4,7,10].forEach(n=>this.note(root+n,start+.12,.85,'soft',.24));
-    this.note(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
+    [0,4,7,10].forEach(n=>this.worldNote(root+n,start+.12,.85,'soft',.24));
+    this.worldNote(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
     this.schedule(()=>{if(token===this.token)onEnd();},2.6);
   }
   prepareCommands(){
@@ -206,11 +242,12 @@ export class FlightAudio {
     this.lastCue={kind:'trumpeter-chord',root,notes,spoken:true,sound:'brass synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},2.9);
   }
-  melody(root,pattern,onEnd,{full=false}={}){
+  melody(root,pattern,onEnd,{full=false,from=0}={}){
     this.stop();const token=this.token,ctx=this.context;
     const source=Array.isArray(pattern?.events)?pattern.events:(pattern?.notes||[]).map((note,i)=>[note,pattern.beats?.[i]??.5]);
     const limit=Number.isInteger(pattern?.preview)&&pattern.preview>0?pattern.preview:source.length;
-    const events=source.slice(0,full?source.length:limit).filter(event=>Array.isArray(event)&&(event[0]===null||Number.isFinite(event[0]))&&Number.isFinite(event[1])&&event[1]>0);
+    const end=full?source.length:limit,startEvent=Math.max(0,Math.min(Number.isInteger(from)?from:0,end));
+    const events=source.slice(startEvent,end).filter(event=>Array.isArray(event)&&(event[0]===null||Number.isFinite(event[0]))&&Number.isFinite(event[1])&&event[1]>0);
     // The excerpt and its reward performance use the same quarter-note tempo.
     const tempo=Number.isFinite(pattern?.tempo)&&pattern.tempo>0?pattern.tempo:120,secondsPerBeat=60/tempo;
     const start=(ctx?.currentTime||0)+.12,timeline=[];let cursor=0;
@@ -218,7 +255,7 @@ export class FlightAudio {
       timeline.push({offset,at:start+cursor,duration:Math.max(.05,beats*secondsPerBeat*.92)});
       cursor+=beats*secondsPerBeat;
     }
-    this.lastCue={kind:'melody-memory',root,name:pattern?.name,events:events.length,full,tempo,duration:cursor+.35,sound:'keytar synth'};
+    this.lastCue={kind:'melody-memory',root,name:pattern?.name,events:events.length,from:startEvent,full,tempo,duration:cursor+.35,sound:this.world==='samsara'?'felt piano':'keytar synth'};
     if(!ctx){this.schedule(()=>{if(token===this.token)onEnd();},.05);return;}
     // Long heads must not allocate all their oscillators at once on a phone.
     // Audio time also prevents a suspended context from ending the cue early.
@@ -230,7 +267,7 @@ export class FlightAudio {
         const event=timeline[index++],at=Math.max(now,event.at),remaining=event.at+event.duration-at;
         // After a background-tab stall, resume at the current musical position
         // instead of playing every missed note together in a loud burst.
-        if(event.offset!==null&&remaining>=.05)this.note(root+event.offset,at,remaining,'soft',.44);
+        if(event.offset!==null&&remaining>=.05)this.worldNote(root+event.offset,at,remaining,'soft',.44);
       }
       if(now>=endAt){finished=true;onEnd();return;}
       this.schedule(pump,Math.min(.1,Math.max(.025,endAt-now)));
@@ -239,8 +276,8 @@ export class FlightAudio {
   }
   scale(root,mode,direction,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime+.12,notes=(direction==='down'?[...mode.notes].reverse():mode.notes).map(n=>root+n);
-    notes.forEach((note,i)=>this.note(note,start+i*.25,.58,'synth',.36));
-    this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:'guitar synth'};
+    notes.forEach((note,i)=>this.worldNote(note,start+i*.25,.58,'synth',.36));
+    this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:this.world==='samsara'?'felt piano':'guitar synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},notes.length*.25+.55);
   }
   artifactReveal(type,onEnd){
@@ -292,8 +329,8 @@ export class FlightAudio {
     const beats=pattern.beats||8;
     for(let loop=0;loop<loops;loop++){
       for(const event of pattern.events){const at=start+(loop*beats+event.beat)*beat;
-        if(event.voice==='bass')this.note(event.midi,at,.34,'synth',.42);
-        else if(event.voice==='keys')for(const midi of event.notes)this.note(midi,at,.26,'synth',.25);
+        if(event.voice==='bass')this.worldNote(event.midi,at,.34,'synth',.42);
+        else if(event.voice==='keys')for(const midi of event.notes)this.worldNote(midi,at,.26,'synth',.25);
         else this.drum(event.voice,at,event.velocity??1);
       }
       for(let i=0;i<beats;i++)this.schedule(()=>{if(token===this.token)onBeat(i,loop);},.15+(loop*beats+i)*beat);

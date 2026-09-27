@@ -147,19 +147,25 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     ??{degree:'I',offset:0,quality:'maj',bassOffset:null};
   const reference={...tonic,degree:`БАЗА ${tonic.degree}`,offset:0,bassOffset:null,reference:true};
   const exercise=sourceExercise;
-  const state={exercise,cursor:-1,round:1,basePlayed:false,progress:exercise.sequence.map(()=>({degree:false,quality:false})),running:false,complete:false,feedback:'',barSeconds,timer:0,deadline:0,held:false,arpeggio:false,arpeggioRounds:0};
+  const longRoute=exercise.sequence.length>5;
+  const state={exercise,cursor:-1,round:1,basePlayed:false,progress:exercise.sequence.map(()=>({degree:false,quality:false})),running:false,complete:false,feedback:'',barSeconds,timer:0,deadline:0,held:false,arpeggio:false,arpeggioRounds:0,navigation:{enabled:longRoute,revealedPosition:-1,teleportCharges:longRoute?1:0}};
   const choices=[...exercise.sequence,...(exercise.distractors??[])]
     .filter((chord,index,list)=>list.findIndex(item=>keyOf(item)===keyOf(chord))===index);
   const solvedIndexes=()=>state.progress.flatMap((part,index)=>part.degree&&part.quality?[index]:[]);
   const snapshot=()=>({
     exercise,cursor:state.cursor,round:state.round,progress:state.progress.map(part=>({...part})),parts:state.progress.map(part=>({...part})),solved:solvedIndexes(),
     solvedParts:state.progress.reduce((sum,part)=>sum+Number(part.degree)+Number(part.quality),0),totalParts:exercise.sequence.length*2,
-    running:state.running,complete:state.complete,basePlayed:state.basePlayed,feedback:state.feedback,barSeconds:state.barSeconds,deadline:state.deadline,choices,reference,held:state.held,arpeggio:state.arpeggio||state.arpeggioRounds>0,
+    running:state.running,complete:state.complete,basePlayed:state.basePlayed,feedback:state.feedback,barSeconds:state.barSeconds,deadline:state.deadline,choices,reference,held:state.held,arpeggio:state.arpeggio||state.arpeggioRounds>0,navigation:{...state.navigation},
     current:state.cursor<0?reference:exercise.sequence[state.cursor],currentParts:state.cursor<0?{degree:true,quality:true}:{...state.progress[state.cursor]}
   });
   const emit=()=>onChange?.(snapshot());
   const schedule=()=>{clearTimeout(state.timer);if(state.held){state.deadline=0;emit();return;}state.deadline=performance.now()+state.barSeconds*1000;state.timer=setTimeout(step,state.barSeconds*1000);emit();};
   const sound=()=>onChord?.(state.cursor<0?reference:exercise.sequence[state.cursor],snapshot());
+  const validPosition=position=>Number.isInteger(position)&&position>=0&&position<exercise.sequence.length;
+  const moveTo=(position,feedback)=>{
+    if(!state.navigation.enabled||!state.running||state.complete||!validPosition(position))return {ignored:true};
+    clearTimeout(state.timer);state.held=false;state.arpeggio=false;state.cursor=position;state.feedback=feedback;state.navigation.revealedPosition=-1;sound();schedule();return {position};
+  };
   function step(){
     if(!state.running)return;
     state.feedback='';state.cursor+=1;
@@ -174,7 +180,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
       state.basePlayed=true;sound();schedule();
     },
     pause(){state.running=false;state.held=false;clearTimeout(state.timer);state.timer=0;state.deadline=0;emit();},
-    restart(){clearTimeout(state.timer);state.cursor=-1;state.round=1;state.basePlayed=false;state.progress=exercise.sequence.map(()=>({degree:false,quality:false}));state.running=false;state.complete=false;state.feedback='';state.deadline=0;emit();},
+    restart(){clearTimeout(state.timer);state.cursor=-1;state.round=1;state.basePlayed=false;state.progress=exercise.sequence.map(()=>({degree:false,quality:false}));state.running=false;state.complete=false;state.feedback='';state.deadline=0;state.navigation.revealedPosition=-1;state.navigation.teleportCharges=longRoute?1:0;emit();},
     answerPart(kind,value){
       if(!state.running||state.cursor<0||state.complete||!['degree','quality'].includes(kind))return {ignored:true};
       const part=state.progress[state.cursor];
@@ -198,6 +204,24 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
       emit();return {correct,positionComplete:part.degree&&part.quality,complete:state.complete};
     },
     advance(){step();},
+    shift(delta){
+      if(!state.navigation.enabled||state.cursor<0||!Number.isInteger(delta)||delta===0)return {ignored:true};
+      const position=(state.cursor+delta%exercise.sequence.length+exercise.sequence.length)%exercise.sequence.length;
+      return moveTo(position,`Мандала сместила маршрут на ${delta>0?'+':''}${delta}: позиция ${position+1}`);
+    },
+    revealPosition(position){
+      if(!state.navigation.enabled||!validPosition(position))return {ignored:true};
+      state.navigation.revealedPosition=position;
+      const chord=exercise.sequence[position];state.feedback=`Открыта позиция ${position+1}: ${chord.degree}`;emit();
+      return {position,chord};
+    },
+    teleportTo(position){
+      if(!state.navigation.enabled||state.navigation.teleportCharges<1||!validPosition(position))return {ignored:true};
+      state.navigation.teleportCharges-=1;
+      const result=moveTo(position,`Супер-мандала перенесла полёт к позиции ${position+1}`);
+      if(result.ignored){state.navigation.teleportCharges+=1;return result;}
+      return {...result,charges:state.navigation.teleportCharges};
+    },
     arpeggioRound(){state.arpeggioRounds=exercise.sequence.length;state.feedback='Следующий гармонический круг звучит арпеджио';sound();emit();},
     restartFromRoot(){clearTimeout(state.timer);state.running=true;state.held=false;state.cursor=-1;state.basePlayed=true;state.feedback='Возврат к тонике';sound();schedule();},
     jumpToMiddle(){clearTimeout(state.timer);state.running=true;state.held=false;state.cursor=Math.max(-1,Math.floor(exercise.sequence.length/2)-1);state.feedback='Маршрут продолжен с середины';step();},

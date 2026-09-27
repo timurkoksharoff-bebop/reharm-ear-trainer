@@ -76,6 +76,24 @@ export const RHYTHM_HINTS=[
 ];
 export const RHYTHM_LEVELS=[0,0,0,1,1,1,2,1,0,1,2,2,2,2,2,2,2,2,1,1];
 export const rhythmIds=level=>RHYTHMS.map((_,i)=>i).filter(i=>RHYTHM_LEVELS[i]<=level);
+// Each world has its own authored listening path.  The nested arrays are
+// difficulty tiers, so even a novice always receives at least two viable
+// choices and later ranks add material without losing the earlier vocabulary.
+export const RHYTHM_WORLD_TIERS=Object.freeze({
+  original:Object.freeze([
+    Object.freeze([0,1,2,8]),                  // rock, shuffle, swing, disco
+    Object.freeze([9,18,19]),                  // jazz waltz, Charleston, R'n'R
+    Object.freeze([6]),                        // funk
+  ]),
+  samsara:Object.freeze([
+    Object.freeze([3,4]),                      // the two Son clave directions
+    Object.freeze([5,7,10,11]),                // bossa, reggae, mambo, calypso
+    Object.freeze([12,13,14,15,16,17]),        // Afro-Cuban and Latin parts
+  ]),
+});
+const expeditionWorld=world=>world==='samsara'?'samsara':'original';
+const tieredIds=(tiers,level)=>tiers.slice(0,Math.max(0,Math.min(tiers.length-1,level))+1).flat();
+export const rhythmIdsForWorld=(world,level=0)=>tieredIds(RHYTHM_WORLD_TIERS[expeditionWorld(world)],level);
 export const POLYRHYTHMS=[[2,3,1],[3,2,1],[3,4,1],[4,3,1],[5,4,2],[4,5,2],[5,3,2],[3,5,2],[7,4,3],[4,7,3]].map(([a,b,level])=>({a,b,level,name:`${a}:${b}`}));
 export function polyEvents(pattern,cycles=3,layer='both'){
   const events=[];
@@ -87,15 +105,24 @@ export function polyEvents(pattern,cycles=3,layer='both'){
 }
 // PAS paradiddle family. Accent studies are authored variations, not extra PAS rudiments.
 export const RUDIMENTS=[
-  {name:'Single Paradiddle',sticking:'RLRRLRLL',accents:[0,4],level:0},
-  {name:'Single · Back Accent',sticking:'RLRRLRLL',accents:[3,7],level:0},
-  {name:'Double Paradiddle',sticking:'RLRLRRLRLRLL',accents:[0,6],level:1},
-  {name:'Paradiddle-Diddle · Accent Study',sticking:'RLRRLLRLRRLL',accents:[0,2,6,8],level:1},
-  {name:'Triple Paradiddle',sticking:'RLRLRLRRLRLRLRLL',accents:[0,8],level:2},
-  {name:'Single · Offbeat Accent',sticking:'RLRRLRLL',accents:[1,5],level:2},
-  {name:'Double · Three Accents',sticking:'RLRLRRLRLRLL',accents:[0,2,4,6,8,10],level:3},
-  {name:'Triple · Displaced Accent',sticking:'RLRLRLRRLRLRLRLL',accents:[1,6,9,14],level:3},
+  {name:'Single Paradiddle',sticking:'RLRRLRLL',accents:[0,4],level:0,world:'original'},
+  {name:'Single · Back Accent',sticking:'RLRRLRLL',accents:[3,7],level:0,world:'original'},
+  {name:'Double Paradiddle',sticking:'RLRLRRLRLRLL',accents:[0,6],level:1,world:'original'},
+  {name:'Paradiddle-Diddle · Accent Study',sticking:'RLRRLLRLRRLL',accents:[0,2,6,8],level:1,world:'original'},
+  {name:'Triple Paradiddle',sticking:'RLRLRLRRLRLRLRLL',accents:[0,8],level:2,world:'original'},
+  {name:'Single · Offbeat Accent',sticking:'RLRRLRLL',accents:[1,5],level:2,world:'original'},
+  {name:'Double · Three Accents',sticking:'RLRLRRLRLRLL',accents:[0,2,4,6,8,10],level:3,world:'original'},
+  {name:'Triple · Displaced Accent',sticking:'RLRLRLRRLRLRLRLL',accents:[1,6,9,14],level:3,world:'original'},
+  {name:'Additive 3+3+2',sticking:'RLRLRLRL',accents:[0,3,6],level:0,world:'samsara'},
+  {name:'Son Clave 3–2 · Hand Study',sticking:'RLRLRLRLRLRLRLRL',accents:[0,3,6,10,12],level:0,world:'samsara'},
+  {name:'Son Clave 2–3 · Hand Study',sticking:'RLRLRLRLRLRLRLRL',accents:[2,4,8,11,14],level:1,world:'samsara'},
+  {name:'Rumba Clave · Hand Study',sticking:'RLRLRLRLRLRLRLRL',accents:[0,3,7,10,12],level:1,world:'samsara'},
+  {name:'Samba · Hand Study',sticking:'RLRRLRLLRLRRLRLL',accents:[0,3,6,8,11,13],level:2,world:'samsara'},
+  {name:'Afro 12/8 · Hand Study',sticking:'RLRLRLRLRLRL',accents:[0,2,4,7,9,11],level:2,world:'samsara'},
+  {name:'Tumbao · Cross Accent',sticking:'RLRLRLRLRLRLRLRL',accents:[3,6,11,14],level:3,world:'samsara'},
+  {name:'Montuno Cascara · Hand Study',sticking:'RLRLRRLRLRLLRLRL',accents:[0,3,5,8,11,14],level:3,world:'samsara'},
 ].map(p=>({...p,beats:p.sticking.length/4,events:[...p.sticking].map((hand,i)=>({voice:'snare',beat:i/4,velocity:p.accents.includes(i)?1:.28,hand}))}));
+export const rudimentIdsForWorld=(world,level=0)=>RUDIMENTS.map((pattern,index)=>({pattern,index})).filter(({pattern})=>pattern.world===expeditionWorld(world)&&pattern.level<=level).map(({index})=>index);
 export function rudimentScore(p){
   const n=p.sticking.length,w=n*24+24;
   let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 94"><rect width="100%" height="100%" rx="5" fill="#d8d5c8"/><path d="M8 53H${w-8}" stroke="#333"/>`;
@@ -118,7 +145,23 @@ export const MODES=[
   {name:'Ionian',level:0,notes:[0,2,4,5,7,9,11,12]},{name:'Dorian',level:0,notes:[0,2,3,5,7,9,10,12]},{name:'Phrygian',level:0,notes:[0,1,3,5,7,8,10,12]},{name:'Lydian',level:0,notes:[0,2,4,6,7,9,11,12]},{name:'Mixolydian',level:0,notes:[0,2,4,5,7,9,10,12]},{name:'Aeolian',level:0,notes:[0,2,3,5,7,8,10,12]},{name:'Locrian',level:0,notes:[0,1,3,5,6,8,10,12]},
   {name:'Harmonic Minor',level:1,notes:[0,2,3,5,7,8,11,12]},{name:'Phrygian Dominant',level:1,notes:[0,1,4,5,7,8,10,12]},{name:'Melodic Minor',level:1,notes:[0,2,3,5,7,9,11,12]},{name:'Lydian Dominant',level:1,notes:[0,2,4,6,7,9,10,12]},{name:'Altered',level:1,notes:[0,1,3,4,6,8,10,12]},{name:'Locrian Natural 2',level:1,notes:[0,2,3,5,6,8,10,12]},
   {name:'Whole Tone',level:2,notes:[0,2,4,6,8,10,12]},{name:'Diminished Half-Whole',level:2,notes:[0,1,3,4,6,7,9,10,12]},{name:'Diminished Whole-Half',level:2,notes:[0,2,3,5,6,8,9,11,12]},{name:'Bebop Dominant',level:2,notes:[0,2,4,5,7,9,10,11,12]},{name:'Double Harmonic',level:2,notes:[0,1,4,5,7,8,11,12]},{name:'Hungarian Minor',level:2,notes:[0,2,3,6,7,8,11,12]},
+  {name:'Dorian ♭2',level:1,notes:[0,1,3,5,7,9,10,12]},{name:'Lydian Augmented',level:1,notes:[0,2,4,6,8,9,11,12]},{name:'Mixolydian ♭6',level:1,notes:[0,2,4,5,7,8,10,12]},{name:'Locrian ♮6',level:1,notes:[0,1,3,5,6,9,10,12]},{name:'Ionian Augmented',level:1,notes:[0,2,4,5,8,9,11,12]},{name:'Dorian ♯4',level:1,notes:[0,2,3,6,7,9,10,12]},{name:'Lydian ♯2',level:1,notes:[0,3,4,6,7,9,11,12]},{name:'Ultra Locrian',level:2,notes:[0,1,3,4,6,8,9,12]},
+  {name:'Major Pentatonic',level:2,notes:[0,2,4,7,9,12]},{name:'Minor Pentatonic',level:2,notes:[0,3,5,7,10,12]},{name:'Blues',level:2,notes:[0,3,5,6,7,10,12]},{name:'Bebop Major',level:2,notes:[0,2,4,5,7,8,9,11,12]},
+  {name:'Kumoi Pentatonic',level:1,notes:[0,2,3,7,9,12]},{name:'Hirajoshi Pentatonic',level:1,notes:[0,2,3,7,8,12]},{name:'Harmonic Major Pentatonic',level:2,notes:[0,2,4,7,8,12]},
 ];
+export const MODE_WORLD_TIERS=Object.freeze({
+  original:Object.freeze([
+    Object.freeze([0,1,3,4]),                  // core jazz diatonic colours
+    Object.freeze([7,9,10,11,12,19,20,21,22,23,24,25]), // complete melodic/harmonic-minor families
+    Object.freeze([13,14,15,16,26,27,28,29,30]),         // symmetric, bebop and pentatonic systems
+  ]),
+  samsara:Object.freeze([
+    Object.freeze([0,1,2,3,4,5,6]),            // seven diatonic modes
+    Object.freeze([8,31,32]),                   // Phrygian Dominant and Asian pentatonics
+    Object.freeze([17,18,33]),                  // Double/Hungarian Minor and Harmonic Major pentatonic
+  ]),
+});
+export const modeIdsForWorld=(world,level=0)=>tieredIds(MODE_WORLD_TIERS[expeditionWorld(world)],level);
 export const NOTE_NAMES=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const ROOT_NAMES=NOTE_NAMES;
 const ROOT_SPEECH=['C','D flat','D','E flat','E','F','F sharp','G','A flat','A','B flat','B'];
@@ -170,10 +213,12 @@ export function createExpedition(api){
   // Keep the deck across retries so restarting a flight does not replay the
   // same small prefix of the repertoire. Only playable entries enter this pool.
   let melodyDeck=[],melodyDeckLevel=-1,lastMelody=-1;
+  const lastThemeMelody=new Map();
   const melodyPool=()=>melodyIndicesForLevel(pilot).filter(i=>(api.intelligence?.settings.genres||['jazz','classical','rock']).includes(MELODIES[i].genre||'jazz'));
   function nextMelody(){
     const pool=melodyPool();
-    if(api.intelligence){lastMelody=api.intelligence.pick('melody',pool,{id:i=>MELODIES[i].id,genre:i=>MELODIES[i].genre||'jazz',progressive:true});return lastMelody;}
+    const available=pool.length>1?pool.filter(index=>index!==lastMelody):pool;
+    if(api.intelligence){lastMelody=api.intelligence.pick('melody',available,{id:i=>MELODIES[i].id,genre:i=>MELODIES[i].genre||'jazz',progressive:true});return lastMelody;}
     if(!melodyDeck.length||melodyDeckLevel!==pilot){
       melodyDeck=[...pool];melodyDeckLevel=pilot;
       for(let i=melodyDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[melodyDeck[i],melodyDeck[j]]=[melodyDeck[j],melodyDeck[i]];}
@@ -182,17 +227,21 @@ export function createExpedition(api){
     lastMelody=melodyDeck.pop();return lastMelody;
   }
   function reset(level=0){pilot=level;planet=level%2?'mars':'moon';turrets=[];walls=[];drops=[];digits=[];special=null;queue=[];wallTimer=level===0?99:level===1?8:level===2?7:6.5;artifactTimer=9;turretTimer=8;dropIndex=wallIndex=turretIndex=0;cloak=shield=rapid=fuzz=hints=melodyFocus=rhythmFocus=collectCooldown=0;render();}
+  function resultDetail(c,r){
+    if(c.kind==='melody')return `Правильная мелодия: ${MELODIES[c.target].name}. Можно прослушать и продолжить, когда запомнишь.`;
+    if(['flightTones','tones'].includes(c.kind))return `${c.chordName} · нужны ${c.required.join(' → ')} · +${r.hp} HP · +${r.energy} энергии`;
+    return `Правильный ответ: ${specialName(c)}. Прослушай исходный сигнал ещё раз перед продолжением.`;
+  }
   function render(){
     if(special?.result){
       const c=special,r=c.result;
       if(renderedChallenge!==c){
         $('special-panel').hidden=false;
         $('special-title').textContent=`${r.heading} · ${Math.round(r.fraction*100)}%`;
-        $('special-detail').textContent=c.kind==='melody'?`Правильная мелодия: ${MELODIES[c.target].name}. Можно прослушать и продолжить, когда запомнишь.`:`${c.chordName} · нужны ${c.required.join(' → ')} · +${r.hp} HP · +${r.energy} энергии`;
+        $('special-detail').textContent=resultDetail(c,r);
         $('special-options').replaceChildren();
-        const button=document.createElement('button');button.textContent='Продолжить полёт →';
-        button.addEventListener('click',()=>{if(special===c)continueToneResult();});
-        $('special-options').append(button);if(c.kind==='melody'){const replay=document.createElement('button');replay.textContent='↻ Услышать правильную мелодию';replay.addEventListener('click',()=>{s.listening=true;audio.melody(c.root,MELODIES[c.target],()=>{if(special===c)s.listening=false;},{full:true});});$('special-options').append(replay);}renderedChallenge=c;
+        const replay=document.createElement('button');replay.textContent=c.kind==='melody'?'↻ Услышать правильную мелодию':'↻ Услышать правильный сигнал';replay.addEventListener('click',()=>replayResult(c));$('special-options').append(replay);
+        const button=document.createElement('button');button.textContent='Продолжить полёт →';button.addEventListener('click',()=>{if(special===c)continueToneResult();});$('special-options').append(button);renderedChallenge=c;
       }
       return;
     }
@@ -206,7 +255,7 @@ export function createExpedition(api){
     if(special){
       const themeRoom=special.themeRoom?themeRoomById(special.themeRoom):null;
       $('special-title').textContent=special.kind==='reveal'?`SALVAGE CHAMBER · ${ARTIFACTS[special.artifactType].name}`:special.kind==='roulette'?'ROCK TONGUE · RANDOM MODE':special.kind==='poly'?'DRUM MACHINE · RUDIMENTS':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?(themeRoom?.title||'MELODY MEMORY · KEY PILOT'):special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='flightTones'?`TRUMPETER · ${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:special.kind==='tones'?`COLOR HEARING · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
-      $('special-detail').textContent=special.kind==='reveal'?(special.opening?'Замки открыты · энергетический контур запущен':'Полёт удержан · коснись находки, чтобы активировать'):special.kind==='roulette'?`Барабан выбирает испытание · ${rouletteLabel(special.rollKind)}`:special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?(themeRoom?`Угадай мелодию · шесть названий, из них The Beatles: ${special.themeRelatedCount}`:'Полёт удержан · назови тему по-английски или выбери название'):special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.kind==='flightTones'?`По порядку · ${special.collected.join(' → ')||'Начни с первой ноты'} · ${special.collected.length}/${special.required.length} · ${Math.ceil(special.time)}s`:special.kind==='tones'?`Выбери весь набор · отмечено ${special.selected.length} · затем нажми ОТВЕТИТЬ`:special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
+      $('special-detail').textContent=special.kind==='reveal'?(special.opening?'Замки открыты · энергетический контур запущен':'Полёт удержан · коснись находки, чтобы активировать'):special.kind==='roulette'?`Барабан выбирает испытание · ${rouletteLabel(special.rollKind)}`:special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?(themeRoom?'Угадай мелодию · все шесть названий — The Beatles':'Полёт удержан · назови тему по-английски или выбери название'):special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.kind==='flightTones'?`По порядку · ${special.collected.join(' → ')||'Начни с первой ноты'} · ${special.collected.length}/${special.required.length} · ${Math.ceil(special.time)}s`:special.kind==='tones'?`Выбери весь набор · отмечено ${special.selected.length} · затем нажми ОТВЕТИТЬ`:special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
       const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:RUDIMENTS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):special.kind==='tones'?special.options.map(id=>({id,name:id,icon:''})):[];
       // Keep live buttons in place while the countdown changes: replacing them
       // between pointer-down and pointer-up used to discard some answers.
@@ -214,7 +263,7 @@ export function createExpedition(api){
       if(special.kind==='tones')for(const b of $('special-options').children){if(b.dataset.choice){const chosen=special.selected.includes(b.dataset.choice);b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));}}
       if(special.celebrating){
         const relation=themeRoom?.relations?.[MELODIES[special.target].id];
-        $('special-detail').textContent=`✓ ${MELODIES[special.target].name}${relation?` · ${relation}`:''} · слушаем тему до конца. Полёт подождёт.`;
+        $('special-detail').textContent=`✓ ${MELODIES[special.target].name}${relation?` · ${relation}`:''} · слушаем продолжение темы. Полёт подождёт.`;
         if(!$('special-options').children[0]?.dataset.continueFlight){
           const next=document.createElement('button');next.textContent='Продолжить полёт →';next.dataset.continueFlight='true';
           next.addEventListener('click',()=>{if(special?.celebrating&&['active','resolving'].includes(s.mode))endChallenge(true);});
@@ -250,21 +299,24 @@ export function createExpedition(api){
   function startChallenge(kind,artifactType=null){
     if(special||s.listening)return false;
     if(!['active','resolving'].includes(s.mode))return false;
+    audio.setWorld?.(s.planetChoice);
     if(kind==='tones'&&artifactType===null)artifactType=11;
     special={kind:kind,artifactType,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','poly','melody','mode'].includes(kind),truceUntil:Date.now()+3500,beat:0,createdAt:Date.now()};
     s.bullets=[];
     if(kind==='numbers'){special.interval=random(pilot<2?[3,4,6,7]:[1,2,3,4,5,6,7,8,9,10,11,12]);special.direction=random(['up','down']);makeNumbers(special);}
     if(kind==='guide'){special.target=teach('guide',['3','7']);makeNumbers(special);}
-    if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=teach('chord',special.options);special.root=48+Math.floor(Math.random()*12);}
-    if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=teach('rhythm',pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
-    if(kind==='poly'){special.options=RUDIMENTS.map((_,i)=>i).filter(i=>RUDIMENTS[i].level<=pilot);special.target=teach('poly',special.options);}
+    if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=teach('chord',special.options);special.root=(s.planetChoice==='samsara'?43:48)+Math.floor(Math.random()*12);}
+    if(kind==='rhythm'){const pool=rhythmIdsForWorld(s.planetChoice,pilot);special.target=teach('rhythm',pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
+    if(kind==='poly'){special.options=rudimentIdsForWorld(s.planetChoice,pilot);special.target=teach('poly',special.options);}
     if(kind==='melody'){
       const room=themeRoomForArtifact(artifactType);
       if(room){
         const {related}=themeMelodyIndices(room,MELODIES);
         special.themeRoom=room.id;
         special.themeRelatedCount=themeRelatedCount(room,pilot);
-        special.target=api.intelligence?.settings.enabled?api.intelligence.pick('themeTarget',related,{id:i=>`${room.id}:${MELODIES[i].id}`,evidence:i=>[['melody',MELODIES[i].id]]}):random(related);
+        const previous=lastThemeMelody.get(room.id),available=related.length>1?related.filter(index=>index!==previous):related;
+        special.target=api.intelligence?.settings.enabled?api.intelligence.pick('themeTarget',available,{id:i=>`${room.id}:${MELODIES[i].id}`,evidence:i=>[['melody',MELODIES[i].id]]}):random(available);
+        lastThemeMelody.set(room.id,special.target);
         special.options=themeChallengeOptions(room,MELODIES,special.target,special.themeRelatedCount,Math.random);
       }else{
         special.target=nextMelody();
@@ -273,9 +325,9 @@ export function createExpedition(api){
         special.options=[special.target,...others.slice(0,pilot<2?3:5)];
         for(let i=special.options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[special.options[i],special.options[j]]=[special.options[j],special.options[i]];}
       }
-      special.root=(MELODIES[special.target].firstMidi??60)+(pilot<2?0:Math.floor(Math.random()*5)-2);
+      special.root=(MELODIES[special.target].firstMidi??60)+(pilot<2?0:Math.floor(Math.random()*5)-2)-(s.planetChoice==='samsara'?12:0);
     }
-    if(kind==='mode'){const pool=MODES.map((mode,i)=>({mode,i})).filter(item=>item.mode.level<=Math.min(2,pilot)).map(item=>item.i);special.target=random(pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=55+Math.floor(Math.random()*7);special.direction=pilot<=1?'up':random(['up','down']);}
+    if(kind==='mode'){const pool=modeIdsForWorld(s.planetChoice,pilot);special.target=teach('mode',pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=(s.planetChoice==='samsara'?43:55)+Math.floor(Math.random()*7);special.direction=pilot<=1?'up':random(['up','down']);}
     if(kind==='flightTones'){
       const triads=['maj','min'];
       const sevenths=['7','maj7','m7','m7b5','7sus4'];
@@ -286,13 +338,13 @@ export function createExpedition(api){
       const toneMode=random(modes),rootPc=Math.floor(Math.random()*12);
       const intervals=[...INTERVALS[quality]];
       const required=flightNotes(ROOT_NAMES[rootPc],intervals,toneMode,quality);
-      special={...special,artifactType:7,quality,toneMode,rootPc,root:48+rootPc,chordName:`${ROOT_NAMES[rootPc]}${QUALITIES[quality].glyph}`,required,collected:[],intervals,time:45+required.length*12};
+      special={...special,artifactType:7,quality,toneMode,rootPc,root:(s.planetChoice==='samsara'?43:48)+rootPc,chordName:`${ROOT_NAMES[rootPc]}${QUALITIES[quality].glyph}`,required,collected:[],intervals,time:45+required.length*12};
       walls=[];turrets=[];s.bullets=[];s.shots=[];s.drones=[];
       makeFlightToneCubes(special);
     }
     if(kind==='tones'){
       const qualities=pilot<2?['7','maj7','m7','7sus4']:Object.keys(TONE_PROGRAMS),quality=random(qualities),toneMode=artifactType===11?'color':pilot>=2?'color':random(['guide','color']),mission=toneMission(quality,toneMode,Math.random,pilot);
-      special={...special,...mission,toneMode,rootPc:Math.floor(Math.random()*12)};special.root=48+special.rootPc;special.chordName=`${ROOT_NAMES[special.rootPc]}${QUALITIES[quality].glyph}`;special.pause=true;special.options=Object.keys(TONE_OFFSETS);special.selected=[];
+      special={...special,...mission,toneMode,rootPc:Math.floor(Math.random()*12)};special.root=(s.planetChoice==='samsara'?43:48)+special.rootPc;special.chordName=`${ROOT_NAMES[special.rootPc]}${QUALITIES[quality].glyph}`;special.pause=true;special.options=Object.keys(TONE_OFFSETS);special.selected=[];
       special.intervals=[...new Set([...INTERVALS[quality],...(toneMode==='color'?special.required.map(label=>TONE_OFFSETS[label]+12):[])])].sort((a,b)=>a-b);
     }
     replay();render();syncPads();return true;
@@ -303,10 +355,12 @@ export function createExpedition(api){
     if(!special||special.kind==='reveal'||special.kind==='roulette')return;
     if(special.result)return;
     if(special.celebrating){playMelodyCelebration();return;}
+    audio.setWorld?.(s.planetChoice);
     const current=special,cue= current.cue=(current.cue||0)+1;s.listening=true;signal('♫ Слушай артефакт',true);render();syncPads();
     const done=()=>{if(special!==current||current.cue!==cue||current.celebrating||s.mode==='paused')return;s.listening=false;const prompt=current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':current.kind==='flightTones'?`Лови ноты ${current.toneMode.toUpperCase()} TONES для ${current.chordName}`:current.kind==='tones'?`Собери COLOR TONES для ${current.chordName}`:'Выбери услышанное';signal(prompt);render();syncPads();};
-    if(special.kind==='numbers')audio.interval(60+s.route.key,special.interval,special.direction,done);
-    else if(special.kind==='guide')audio.guide(60+s.route.key,special.target,done);
+    const referenceRoot=(s.planetChoice==='samsara'?48:60)+s.route.key;
+    if(special.kind==='numbers')audio.interval(referenceRoot,special.interval,special.direction,done);
+    else if(special.kind==='guide')audio.guide(referenceRoot,special.target,done);
     else if(special.kind==='chord')audio.chordOnly(special.root,INTERVALS[special.target],done);
     else if(special.kind==='poly')audio.poly(RUDIMENTS[special.target],done);
     else if(['flightTones','tones'].includes(special.kind)){
@@ -317,6 +371,22 @@ export function createExpedition(api){
     else if(special.kind==='melody')audio.melody(special.root,MELODIES[special.target],done);
     else if(special.kind==='mode')audio.scale(special.root,MODES[special.target],special.direction,done);
     else if(special.kind==='rhythm')audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
+  }
+  function replayResult(current){
+    if(special!==current||!current.result||!['active','resolving'].includes(s.mode))return;
+    audio.setWorld?.(s.planetChoice);
+    audio.stop();s.listening=true;signal('♫ Ещё раз · закрепи правильный ответ',true);syncPads();
+    const done=()=>{if(special!==current)return;s.listening=false;signal('Сравни со своим ответом и продолжай полёт');syncPads();};
+    const referenceRoot=(s.planetChoice==='samsara'?48:60)+s.route.key;
+    if(current.kind==='numbers')audio.interval(referenceRoot,current.interval,current.direction,done);
+    else if(current.kind==='guide')audio.guide(referenceRoot,current.target,done);
+    else if(current.kind==='chord')audio.chordOnly(current.root,INTERVALS[current.target],done);
+    else if(current.kind==='poly')audio.poly(RUDIMENTS[current.target],done);
+    else if(['flightTones','tones'].includes(current.kind))audio.chordOnly(current.root,current.intervals,done);
+    else if(current.kind==='melody')audio.melody(current.root,MELODIES[current.target],done,{full:true});
+    else if(current.kind==='mode')audio.scale(current.root,MODES[current.target],current.direction,done);
+    else if(current.kind==='rhythm')audio.rhythm(RHYTHMS[current.target],done,{loops:2});
+    else done();
   }
   function specialName(c,value=c.target){return c.kind==='poly'?RUDIMENTS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?(QUALITIES[value]?.glyph??value):['tones','flightTones'].includes(c.kind)?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
   function repair(amount=1){
@@ -366,7 +436,8 @@ export function createExpedition(api){
       else{rapid=10;s.energy=Math.min(99,s.energy+30);feedback(`${orderedTargets(c.interval,c.direction).map(n=>n===6?'♭5 / ♯4':Object.keys(NUMBER_OFFSETS).find(k=>NUMBER_OFFSETS[k]===n)).join(' → ')} · +30 силы`);}
     }else{feedback(wrong?['tones','flightTones'].includes(c.kind)?`Гармония погасла · нужны ${c.required.join(' · ')}`:`Попытка потеряна · нужно ${c.label}`:['rhythm','chord','poly','melody','mode'].includes(c.kind)?`Это ${specialName(c)}`:'Время вышло · попробуем ещё',true);}
     s.fireTimer=Math.max(s.fireTimer,4);render();renderHud();syncPads();
-    if(c.kind==='melody'){special={...c,celebrating:false,result:{fraction:won?1:0,heading:won?'✓ Верно':'✕ Запомни мелодию'},pause:true};renderedChallenge=null;lastRender='';render();syncPads();return;}
+    if(!won){special={...c,celebrating:false,result:{fraction:credit??0,heading:c.kind==='melody'?'✕ Запомни мелодию':'✕ Неверный ответ'},pause:true};renderedChallenge=null;lastRender='';render();syncPads();return;}
+    if(c.kind==='melody'){special={...c,celebrating:false,result:{fraction:1,heading:'✓ Верно'},pause:true};renderedChallenge=null;lastRender='';render();syncPads();return;}
     if(c.deferredArtifacts?.length){
       const [type,...rest]=c.deferredArtifacts;artifact(type);if(special&&rest.length)special.deferredArtifacts=rest;
     }else if(s.mode==='active')api.playCue();
@@ -386,8 +457,9 @@ export function createExpedition(api){
   function playMelodyCelebration(){
     const current=special;if(current?.kind!=='melody'||!current.celebrating)return;
     const cue=current.cue=(current.cue||0)+1;
-    s.listening=true;signal(`✓ ${MELODIES[current.target].name} · звучит полная тема`,true);render();syncPads();
-    audio.melody(current.root,MELODIES[current.target],()=>{if(special===current&&current.cue===cue&&s.mode!=='paused')endChallenge(true);},{full:true});
+    audio.setWorld?.(s.planetChoice);
+    s.listening=true;signal(`✓ ${MELODIES[current.target].name} · тема продолжается`,true);render();syncPads();
+    audio.melody(current.root,MELODIES[current.target],()=>{if(special===current&&current.cue===cue&&s.mode!=='paused')endChallenge(true);},{full:true,from:MELODIES[current.target].preview||0});
   }
   function toggleToneChoice(label){
     if(!special||special.result||special.kind!=='tones'||!['active','resolving'].includes(s.mode)||!special.options.includes(label))return;
@@ -424,7 +496,7 @@ export function createExpedition(api){
     if(match===undefined){feedback(`Не расслышал название: “${text}”`,true);return false;}answerSpecial(match);return true;
   }
   function collectNumber(label){
-    if(!special||s.listening)return;const result=gradeNumber(special,label);
+    if(!special||special.result)return;const result=gradeNumber(special,label);
     collectCooldown=.6;
     const captured=digits.find(d=>d.label===label);
     if(captured){captures.push({...captured,life:.5,correct:result.correct});burst(captured.x,captured.y,result.correct?'#ffe0a2':'#ee8866',22);s.rings?.push({x:captured.x,y:captured.y,age:0});s.flash=.07;}
@@ -433,20 +505,20 @@ export function createExpedition(api){
     render();
   }
   function collectTone(label){
-    if(!special||special.kind!=='tones'||s.listening)return;const c=special,result=toneAnswer(c,label),captured=digits.find(d=>d.label===label);collectCooldown=.45;
+    if(!special||special.result||special.kind!=='tones')return;const c=special,result=toneAnswer(c,label),captured=digits.find(d=>d.label===label);collectCooldown=.45;
     if(captured){captures.push({...captured,life:.55,correct:result.correct});burst(captured.x,captured.y,result.correct?captured.color:'#ff596e',result.correct?34:45);s.rings?.push({x:captured.x,y:captured.y,age:0});}
     if(!result.correct){endChallenge(false,true);return;}
     c.collected.push(label);digits=digits.filter(d=>d.label!==label);s.score+=90;lastRender='';
     if(result.complete)endChallenge(true);else{feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
   }
   function collectFlightTone(label){
-    if(!special||special.result||special.kind!=='flightTones'||s.listening)return;
+    if(!special||special.result||special.kind!=='flightTones')return;
     const c=special,captured=digits.find(d=>d.label===label),correct=c.required[c.collected.length]===label;
     collectCooldown=.45;
     if(captured){captures.push({...captured,life:.55,correct});burst(captured.x,captured.y,correct?'#ffd27a':'#ff596e',correct?34:45);s.rings?.push({x:captured.x,y:captured.y,age:0});}
     if(!correct){endChallenge(false,true);return;}
     c.collected.push(label);digits=digits.filter(d=>d!==captured);s.score+=90;lastRender='';
-    if(c.collected.length===c.required.length)endChallenge(true);else{if(!digits.some(d=>!d.rotating&&d.label===c.required[c.collected.length]))makeFlightToneCubes(c);feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
+    if(c.collected.length===c.required.length)endChallenge(true);else{const next=c.required[c.collected.length];if(!digits.some(d=>d.label===next||d.faces?.includes(next)))makeFlightToneCubes(c);feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
   }
   function applyArtifact(type){
     const kind=artifactKind(type);
@@ -504,13 +576,25 @@ export function createExpedition(api){
       if(!s.listening){
         special.time-=dt;
         if(special.time<=0){endChallenge(false);return;}
-        for(const d of digits){
-          if(d.rotating&&Math.hypot(d.x-s.player.x,d.y-s.player.y)>85)d.age+=dt;
-          const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;
-          if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<29){collectFlightTone(d.label);break;}
-        }
+      }
+      for(const d of digits){
+        if(d.rotating&&Math.hypot(d.x-s.player.x,d.y-s.player.y)>85)d.age+=dt;
+        const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;
+        if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<29){collectFlightTone(d.label);break;}
       }
       render();return;
+    }
+    // Number/guide cubes remain interactive while their cue is sounding.  The
+    // hazards stay under the listening truce, but a player who already knows
+    // the answer no longer has to wait for the playback timer to end.
+    if(special&&digits.length){
+      for(const d of digits){
+        d.age+=dt;
+        if(!d.cube){d.x+=(d.vx+Math.sin(d.age*2)*15)*dt;d.y+=d.vy*dt;if(d.x<30||d.x>W-30)d.vx*=-1;if(d.y<120||d.y>getH()-35)d.vy*=-1;d.x=Math.max(29,Math.min(W-29,d.x));d.y=Math.max(119,Math.min(getH()-34,d.y));}
+        if(d.rotating){const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;}else if(d.faces)d.label=d.faces[Math.floor(d.age/1.7+d.phase)%d.faces.length];
+        if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<36){if(special.kind==='tones')collectTone(d.label);else collectNumber(d.label);break;}
+      }
+      if(special?.result){render();return;}
     }
     for(const d of drops){d.age+=dt;d.y+=dt*38;if(Math.hypot(d.x-s.player.x,d.y-s.player.y)<33){d.age=99;if(s.planetChoice==='samsara')api.onSamsaraArtifact?.(d.type);else artifact(d.type);break;}}
     drops=drops.filter(d=>d.age<22&&d.y<getH()+35);
@@ -535,10 +619,8 @@ export function createExpedition(api){
         }
       }
       turrets=turrets.filter(t=>t.y<getH()+55);
-      if(special){special.time-=dt;if(special.time<=0){endChallenge(false);return;}
-        for(const d of digits){d.age+=dt;if(!d.cube){d.x+=(d.vx+Math.sin(d.age*2)*15)*dt;d.y+=d.vy*dt;if(d.x<30||d.x>W-30)d.vx*=-1;if(d.y<120||d.y>getH()-35)d.vy*=-1;d.x=Math.max(29,Math.min(W-29,d.x));d.y=Math.max(119,Math.min(getH()-34,d.y));}if(d.rotating){const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;}else if(d.faces)d.label=d.faces[Math.floor(d.age/1.7+d.phase)%d.faces.length];
-          if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<36){if(special.kind==='flightTones')collectFlightTone(d.label);else if(special.kind==='tones')collectTone(d.label);else collectNumber(d.label);break;}}
-      }else if(queue.length&&!s.capsule&&s.capsuleTimer<=0)startChallenge(queue.shift());
+      if(special){special.time-=dt;if(special.time<=0){endChallenge(false);return;}}
+      else if(queue.length&&!s.capsule&&s.capsuleTimer<=0)startChallenge(queue.shift());
     }
     render();
   }

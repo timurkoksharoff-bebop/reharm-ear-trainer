@@ -106,4 +106,33 @@ assert.equal(octaveMission.answerPart('degree',octave.offset??0).correct,true);
 assert.equal(octaveMission.answerPart('quality','1').correct,true,'the octave/unison answer is accepted');
 octaveMission.pause();
 
-console.log('Garden harmony passed: one-shot reference, full Fig. 1.6 loop, Fig. 2.10 recovery, octave/unison grading, persistent parts, completion, restart, distinct timbres.');
+const navigationSteps=Array.from({length:6},(_,index)=>({degree:['I','II','III','IV','V','VI'][index],offset:[0,2,4,5,7,9][index],quality:index%2?'m7':'maj7',bassOffset:null}));
+const shortMission=createGardenMission({exercise:{id:'short-five',name:'Short five',source:'test',baseTonic:0,sequence:navigationSteps.slice(0,5)},barSeconds:999,onChord:()=>{}});
+assert.equal(shortMission.snapshot().navigation.enabled,false,'three-to-five chord routes do not show navigation mandalas');
+assert.equal(shortMission.shift(3).ignored,true,'short routes cannot invoke a hidden relative teleport');
+
+const navigationSounds=[];
+const navigationMission=createGardenMission({exercise:{id:'long-six',name:'Long six',source:'test',baseTonic:0,sequence:navigationSteps},barSeconds:999,onChord:chord=>navigationSounds.push(chord.degree)});
+assert.equal(navigationMission.snapshot().navigation.enabled,true,'navigation mandalas start at six chords');
+assert.equal(navigationMission.snapshot().navigation.teleportCharges,1,'a long route starts with one exact-teleport charge');
+navigationMission.start();
+assert.equal(navigationMission.shift(3).ignored,true,'relative navigation waits until the first route chord');
+navigationMission.advance();
+assert.equal(navigationMission.snapshot().cursor,0);
+assert.equal(navigationMission.shift(-3).position,3,'minus three wraps to the expected earlier route position');
+assert.equal(navigationMission.snapshot().cursor,3);
+assert.equal(navigationMission.shift(5).position,2,'plus five wraps around the long route');
+assert.equal(navigationMission.snapshot().cursor,2);
+const inspection=navigationMission.revealPosition(4);
+assert.equal(inspection.chord.degree,'V','the inspection mandala exposes the selected chord');
+assert.equal(navigationMission.snapshot().cursor,2,'inspection does not move the playing route');
+assert.equal(navigationMission.snapshot().navigation.revealedPosition,4);
+assert.equal(navigationMission.teleportTo(5).position,5,'the exact mandala jumps to the selected position');
+assert.equal(navigationMission.snapshot().navigation.teleportCharges,0,'the exact teleport has one charge per run');
+assert.equal(navigationMission.teleportTo(1).ignored,true,'a spent exact teleport cannot be reused');
+assert.equal(navigationSounds.at(-1),'VI','the destination chord sounds immediately after teleporting');
+navigationMission.restart();
+assert.equal(navigationMission.snapshot().navigation.teleportCharges,1,'restarting the mission restores its exact-teleport charge');
+assert.equal(navigationMission.snapshot().navigation.revealedPosition,-1,'restarting clears the inspected answer');
+
+console.log('Garden harmony passed: one-shot reference, full Fig. 1.6 loop, Fig. 2.10 recovery, octave/unison grading, persistent parts, navigation mandalas, completion, restart, distinct timbres.');

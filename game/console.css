@@ -2,6 +2,47 @@
 .art-overlay[hidden]{display:none!important}
 .art-overlay>.overlay-card{width:100%!important;max-width:none!important;border:0!important;padding:0!important;background:none!important;box-shadow:none!important;margin:0!important}
 .art-overlay>.overlay-card::before,.art-overlay>.overlay-card::after{display:none}
+
+/* Space Music College is the stable root. New worlds are catalog entries in
+   game.js, so the selector does not need a new layout when the catalog grows. */
+.world-selector-overlay{padding:0!important;overflow:hidden!important;background:#02060b!important}
+.world-selector-overlay>.overlay-card{width:100vw!important;height:100dvh!important;overflow:hidden}
+.world-selector-shell{position:relative;width:100%;height:100%;min-height:100dvh;overflow:hidden;isolation:isolate;color:#eadac0;background:#030912 url('design-concepts/world-menus-2026-09-25/carousel/cockpit.png') center/100% 100% no-repeat;touch-action:pan-y;user-select:none}
+.world-selector-shell.observatory{background-image:url('design-concepts/world-menus-2026-09-25/carousel/observatory.png')}
+.world-selector-shell::after{content:"";position:absolute;z-index:8;inset:0;pointer-events:none;background:linear-gradient(#01060a82 0 5%,transparent 18% 63%,#02070b99 83%,#02070b 100%)}
+.world-brand{position:absolute;z-index:12;top:2.1%;left:21%;width:58%;display:grid;text-align:center;color:#ecd9b7;text-shadow:0 3px 18px #000}
+.world-brand span{font:500 clamp(15px,5vw,25px)/1 Georgia,serif;letter-spacing:.26em;padding-left:.26em}
+.world-brand strong{font:400 clamp(31px,8.5vw,58px)/.94 Georgia,'Times New Roman',serif;letter-spacing:.055em}
+.world-brand i{display:block;width:72%;height:7px;margin:8px auto 0;background:linear-gradient(90deg,transparent,#c8a970 20% 80%,transparent);clip-path:polygon(0 45%,44% 45%,50% 0,56% 45%,100% 45%,100% 55%,56% 55%,50% 100%,44% 55%,0 55%);opacity:.78}
+.world-frame-toggle{position:absolute;z-index:14;top:2.2%;right:3%;display:flex;gap:3px;padding:3px;border:1px solid #c4aa7b44;border-radius:14px;background:#071019a8}
+.world-frame-toggle button{width:27px;height:21px;padding:0;border:0;border-radius:10px;background:transparent;color:#a5aca7;font:9px/1 ui-monospace,monospace}
+.world-frame-toggle button[aria-pressed=true]{background:#d3b77a;color:#182027;box-shadow:0 0 10px #dfbd7770}
+.world-orbit{position:absolute;z-index:3;inset:0;cursor:grab;touch-action:pan-y}.world-orbit.dragging{cursor:grabbing}
+.world-planet{position:absolute;left:0;top:0;width:68%;aspect-ratio:1;padding:0;border:0;background:none;transform-origin:center;will-change:transform;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
+.world-planet img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 0 13px #b9e4ef18)}
+.world-planet span{position:absolute;left:0;right:0;bottom:-10%;font:500 clamp(9px,2.6vw,14px)/1.2 Georgia,serif;letter-spacing:.08em;text-align:center;text-shadow:0 3px 10px #000;opacity:.75;white-space:nowrap;pointer-events:none}
+#world-debris{position:absolute;z-index:7;inset:0;width:100%;height:100%;pointer-events:none}
+.world-destination{position:absolute;z-index:10;top:67%;left:10%;width:80%;text-align:center;text-shadow:0 3px 14px #000;pointer-events:none}
+.world-destination p{margin:0 0 7px!important;color:#c4aa7e!important;font:600 clamp(8px,2vw,12px)/1.2 ui-monospace,monospace!important;letter-spacing:.2em}
+.world-destination h1{margin:0 0 8px!important;color:#f2dfc3;font:400 clamp(28px,7.4vw,46px)/1.05 Georgia,serif!important;letter-spacing:-.02em!important}
+.world-destination div{color:#b6c5c6;font-size:clamp(9px,2.45vw,13px);line-height:1.4;letter-spacing:.02em}
+.world-navigation{position:absolute;z-index:12;top:78%;left:20%;width:60%;display:flex;align-items:center;justify-content:space-between}
+.world-navigation>button{display:grid;place-items:center;width:44px;height:42px;padding:0 0 5px;border:1px solid #b8a17855;border-radius:50%;background:#071019b5;color:#ead8b7;font:35px/1 Georgia,serif}
+#world-markers{display:flex;gap:10px;align-items:center}.world-marker{display:grid;place-items:center;width:20px;height:26px;padding:0;border:0;background:transparent}.world-marker::after{content:"";width:6px;height:6px;border-radius:50%;background:#748182;box-shadow:0 0 0 1px #9badab33}.world-marker[aria-current=true]::after{background:#ffe4b3;box-shadow:0 0 11px #e9c27c;transform:scale(1.45)}
+.world-gesture{position:absolute;z-index:10;top:84%;width:100%;margin:0!important;text-align:center;color:#a7aaa2!important;font:8px/1 ui-monospace,monospace!important;letter-spacing:.24em}
+.world-enter{position:absolute;z-index:12;top:87%;left:24%;width:52%;height:5.7%;min-height:42px;border:1px solid #c5a67b77;border-radius:6px;background:linear-gradient(130deg,#b48b4940,#0a111cc7);color:#f0ddbd;font:600 clamp(10px,2.5vw,14px)/1 ui-monospace,monospace;letter-spacing:.11em;box-shadow:inset 0 1px #f4d6a326}.world-enter span{padding-left:8px}.world-enter:hover{border-color:#ead3a8;background:#7b5b344d}
+.world-status{position:absolute;z-index:10;bottom:2.2%;left:5%;width:90%;display:flex;justify-content:space-between;color:#888e8b;font:7px/1 ui-monospace,monospace;letter-spacing:.13em}
+/* The industrial room skin also styles every overlay button with !important.
+   Reset it inside the neutral College root so planet art stays frameless. */
+.world-selector-overlay .world-planet{border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;text-shadow:none!important}
+.world-selector-overlay .world-frame-toggle button{border:0!important;border-radius:10px!important;background:transparent!important;box-shadow:none!important;color:#a5aca7!important;text-shadow:none!important;transform:none!important}
+.world-selector-overlay .world-frame-toggle button[aria-pressed=true]{background:#d3b77a!important;color:#182027!important;box-shadow:0 0 10px #dfbd7770!important}
+.world-selector-overlay .world-navigation>button{border:1px solid #b8a17855!important;border-radius:50%!important;background:#071019b5!important;box-shadow:none!important;color:#ead8b7!important;text-shadow:none!important}
+.world-selector-overlay .world-marker{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important}
+.world-selector-overlay .world-enter{border:1px solid #c5a67b77!important;border-radius:6px!important;background:linear-gradient(130deg,#b48b4940,#0a111cc7)!important;box-shadow:inset 0 1px #f4d6a326!important;color:#f0ddbd!important;text-shadow:none!important}
+@media (hover:hover) and (pointer:fine){.world-selector-overlay .world-planet:hover,.world-selector-overlay .world-marker:hover{border:0!important;background:transparent!important;box-shadow:none!important;filter:none}.world-selector-overlay .world-enter:hover{border-color:#ead3a8!important;background:#7b5b344d!important}}
+@media(min-width:700px){.world-selector-shell{width:min(100vw,56.25dvh);margin:auto;min-height:100%;box-shadow:0 0 100px #000}.world-selector-overlay{display:grid!important;place-items:center!important;background:radial-gradient(ellipse at 50% 35%,#18232f,#04080d 67%)!important}}
+@media(max-height:650px){.world-brand{top:2%}.world-brand strong{font-size:8vh}.world-destination{top:64%}.world-navigation{top:76%}.world-gesture{display:none}.world-enter{top:84%}}
 .console-scene{position:relative;width:min(100vw,177.69dvh);aspect-ratio:1672/941;margin:auto;color:#f4dfbd}
 .console-scene>img{width:100%;height:100%;display:block;user-select:none}
 .art-overlay .console-hit{position:absolute;display:block;padding:0;border:2px solid transparent!important;border-radius:9px!important;background:transparent!important;box-shadow:none!important;filter:none!important;transform:none!important;transition:background .15s,box-shadow .15s}@media (hover:hover) and (pointer:fine){
@@ -118,3 +159,48 @@ html,body{width:100%;height:var(--app-height,100dvh);max-height:var(--app-height
 .cabinet input,.cabinet textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 .cabinet button,.cabinet canvas{touch-action:manipulation}
 .cabinet canvas{touch-action:none}
+
+/* Samsara survival data belongs to the glass answer deck, where it cannot
+   cover rotating note cubes or other flight objectives. */
+body.samsara-world .cabinet.floating-deck .cockpit{
+  max-height:31dvh!important;
+  padding:6px 56px calc(5px + env(safe-area-inset-bottom)) 10px!important;
+  background:linear-gradient(#082a2a73,#072a28b8)!important;
+  backdrop-filter:blur(7px) saturate(1.08)!important;
+}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals{
+  position:static!important;inset:auto!important;display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%!important;
+  margin:0 0 3px;padding:4px 5px;border:1px solid #a0f7e84a;border-radius:11px;
+  background:#031f2257;box-shadow:inset 0 1px #dfffe918;backdrop-filter:none;
+  pointer-events:none;
+}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals[hidden]{display:none!important}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals label{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+  gap:1px 3px!important;align-items:center;min-width:0;color:#e7f7e6;
+  font:7px/1.05 ui-monospace,monospace!important;letter-spacing:.035em;
+}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals label span{overflow:hidden;text-overflow:ellipsis}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals label i{
+  grid-column:1/-1;grid-row:2;height:4px!important;border:1px solid #b5fff04a;
+  border-radius:9px;overflow:hidden;background:#071b1c;
+}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals label i::before{
+  content:'';display:block;width:var(--fill);height:100%;border-radius:9px;
+  background:var(--color);box-shadow:0 0 6px var(--color);transition:width .22s linear;
+}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals label em{
+  grid-column:2;grid-row:1;font:7px/1 ui-monospace,monospace;font-style:normal;text-align:right;
+}
+body.samsara-world .cabinet.floating-deck .cockpit>.samsara-artifacts{min-height:31px;padding:0 0 2px}
+@media(max-width:380px){
+  body.samsara-world .cabinet.floating-deck .cockpit{padding-left:7px!important}
+  body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals{gap:2px;padding-inline:3px}
+  body.samsara-world .cabinet.floating-deck .cockpit>.samsara-vitals label{font-size:6px!important}
+}
+/* The original world uses the open flight view; the old animated cabinet
+   rails read as unrelated side frames and reduce the usable field. */
+body:not(.samsara-world) .machine-rail{
+  display:none;
+}

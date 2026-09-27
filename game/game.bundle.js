@@ -300,32 +300,38 @@ function partialToneCredit(required,selected){
 }
 function cubeFace(cube){
   if(!cube.rotating)return {label:cube.label,next:null,turn:0};
-  const cycle=4.8,phase=cube.age%cycle,index=Math.floor(cube.age/cycle)%cube.faces.length;
-  return {label:cube.faces[index],next:cube.faces[(index+1)%cube.faces.length],turn:Math.max(0,(phase-4.2)/.6)};
+  const cycle=2.4,phase=cube.age%cycle,index=Math.floor(cube.age/cycle)%cube.faces.length;
+  return {label:cube.faces[index],next:cube.faces[(index+1)%cube.faces.length],turn:Math.max(0,(phase-2)/.4)};
 }
 function cubeLayout(required,distractors,width,height,rng=Math.random,player={x:width/2,y:height-40}){
-  // Four fixed choices and one drum at most. Wide corridors stay open.
+  // Keep the current answer reachable, but use two faster drums when the
+  // chord is dense enough.  This creates a changing choice without filling
+  // the flight corridor with more than five objects.
   const slots=[{x:width*.2,y:height*.33},{x:width*.8,y:height*.33},{x:width*.2,y:height*.62},{x:width*.8,y:height*.62},{x:width*.5,y:height*.46}];
   const labels=[...required];for(let i=labels.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[labels[i],labels[j]]=[labels[j],labels[i]];}
-  const cubes=labels.map((label,i)=>({...slots[i],label,cube:true,rotating:false,color:'#f1bd67',age:0}));
-  const faces=[distractors[0],distractors[1],required.at(-1)].filter(Boolean);
-  cubes.push({...slots[4],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:0});
+  const fixed=labels.slice(0,3),changing=labels.slice(3);
+  const cubes=fixed.map((label,i)=>({...slots[i],label,cube:true,rotating:false,color:'#f1bd67',age:0}));
+  const faceSets=[
+    [distractors[0],distractors[1],changing[0]??distractors[2]],
+    [distractors[3],distractors[4],changing[1]??distractors[5]],
+  ].map(faces=>[...new Set(faces.filter(Boolean))]).filter(faces=>faces.length);
+  for(let i=0;i<faceSets.length;i++){const faces=faceSets[i];cubes.push({...slots[3+i],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:i*1.2});}
   // Never materialize a newly replenished target on the ship.
   for(const cube of cubes)if(Math.hypot(cube.x-player.x,cube.y-player.y)<85)cube.y=Math.max(155,cube.y-110);
   return cubes;
 }
 
 function numberCubeLayout(target,distractors,width,height,rng=Math.random,player={x:width/2,y:height-40}){
-  // Interval capture keeps one unambiguous answer. Four readable cubes stay
-  // still; the center drum slowly cycles through wrong labels as a moving risk.
+  // Interval capture keeps one unambiguous fixed answer. Two drums cycle only
+  // through wrong labels, changing out of phase about every two seconds.
   const slots=[{x:width*.2,y:height*.33},{x:width*.8,y:height*.33},{x:width*.2,y:height*.62},{x:width*.8,y:height*.62},{x:width*.5,y:height*.46}];
   const wrong=[...new Set(distractors.filter(label=>label!==target))];
   for(let i=wrong.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[wrong[i],wrong[j]]=[wrong[j],wrong[i]];}
-  const fixed=[target,...wrong.slice(0,3)];
+  const fixed=[target,...wrong.slice(0,2)];
   for(let i=fixed.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[fixed[i],fixed[j]]=[fixed[j],fixed[i]];}
   const cubes=fixed.map((label,i)=>({...slots[i],label,cube:true,rotating:false,color:'#f1bd67',age:0}));
-  const faces=wrong.slice(3,6);
-  if(faces.length)cubes.push({...slots[4],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:0});
+  const faceSets=[wrong.slice(2,5),wrong.slice(5,8)].filter(faces=>faces.length);
+  for(let i=0;i<faceSets.length;i++){const faces=faceSets[i];cubes.push({...slots[3+i],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:i*1.2});}
   for(const cube of cubes)if(Math.hypot(cube.x-player.x,cube.y-player.y)<85)cube.y=Math.max(155,cube.y-110);
   return cubes;
 }
@@ -343,7 +349,10 @@ const THEME_ROOMS=[
     artist:'The Beatles',
     album:'Yellow Submarine',
     title:'YELLOW SUBMARINE · THE BEATLES ROOM',
-    relatedByPilot:[2,3,4,6],
+    // The Yellow Submarine relic is a Beatles-only room at every rank.  Rank
+    // progression still changes the source excerpt and the wider expedition,
+    // but never introduces another artist as a multiple-choice distractor.
+    relatedByPilot:[6,6,6,6],
     targetMelodyIds:[
       'rock-hey-jude',
       'rock-yesterday',
@@ -360,22 +369,13 @@ const THEME_ROOMS=[
       'rock-yesterday':'исполнитель The Beatles',
       'rock-let-it-be':'исполнитель The Beatles',
       'rock-help':'исполнитель The Beatles',
-      'rock-eleanor-rigby':'альбом Yellow Submarine · The Beatles',
+      'rock-eleanor-rigby':'исполнитель The Beatles',
       'rock-a-hard-days-night':'исполнитель The Beatles',
       'rock-norwegian-wood':'исполнитель The Beatles',
       'rock-in-my-life':'исполнитель The Beatles',
       'rock-while-my-guitar-gently-weeps':'исполнитель The Beatles',
     },
-    distractorMelodyIds:[
-      'rock-hotel-california',
-      'rock-bohemian-rhapsody',
-      'rock-smells-like-teen-spirit',
-      'rock-satisfaction',
-      'rock-house-of-the-rising-sun',
-      'rock-light-my-fire',
-      'rock-paint-it-black',
-      'rock-sweet-child-o-mine',
-    ],
+    distractorMelodyIds:[],
     provenance:'Rock Corpus — de Clercq / Temperley · CC BY 4.0',
   },
 ];
@@ -483,6 +483,24 @@ const RHYTHM_HINTS=[
 ];
 const RHYTHM_LEVELS=[0,0,0,1,1,1,2,1,0,1,2,2,2,2,2,2,2,2,1,1];
 const rhythmIds=level=>RHYTHMS.map((_,i)=>i).filter(i=>RHYTHM_LEVELS[i]<=level);
+// Each world has its own authored listening path.  The nested arrays are
+// difficulty tiers, so even a novice always receives at least two viable
+// choices and later ranks add material without losing the earlier vocabulary.
+const RHYTHM_WORLD_TIERS=Object.freeze({
+  original:Object.freeze([
+    Object.freeze([0,1,2,8]),                  // rock, shuffle, swing, disco
+    Object.freeze([9,18,19]),                  // jazz waltz, Charleston, R'n'R
+    Object.freeze([6]),                        // funk
+  ]),
+  samsara:Object.freeze([
+    Object.freeze([3,4]),                      // the two Son clave directions
+    Object.freeze([5,7,10,11]),                // bossa, reggae, mambo, calypso
+    Object.freeze([12,13,14,15,16,17]),        // Afro-Cuban and Latin parts
+  ]),
+});
+const expeditionWorld=world=>world==='samsara'?'samsara':'original';
+const tieredIds=(tiers,level)=>tiers.slice(0,Math.max(0,Math.min(tiers.length-1,level))+1).flat();
+const rhythmIdsForWorld=(world,level=0)=>tieredIds(RHYTHM_WORLD_TIERS[expeditionWorld(world)],level);
 const POLYRHYTHMS=[[2,3,1],[3,2,1],[3,4,1],[4,3,1],[5,4,2],[4,5,2],[5,3,2],[3,5,2],[7,4,3],[4,7,3]].map(([a,b,level])=>({a,b,level,name:`${a}:${b}`}));
 function polyEvents(pattern,cycles=3,layer='both'){
   const events=[];
@@ -494,15 +512,24 @@ function polyEvents(pattern,cycles=3,layer='both'){
 }
 // PAS paradiddle family. Accent studies are authored variations, not extra PAS rudiments.
 const RUDIMENTS=[
-  {name:'Single Paradiddle',sticking:'RLRRLRLL',accents:[0,4],level:0},
-  {name:'Single · Back Accent',sticking:'RLRRLRLL',accents:[3,7],level:0},
-  {name:'Double Paradiddle',sticking:'RLRLRRLRLRLL',accents:[0,6],level:1},
-  {name:'Paradiddle-Diddle · Accent Study',sticking:'RLRRLLRLRRLL',accents:[0,2,6,8],level:1},
-  {name:'Triple Paradiddle',sticking:'RLRLRLRRLRLRLRLL',accents:[0,8],level:2},
-  {name:'Single · Offbeat Accent',sticking:'RLRRLRLL',accents:[1,5],level:2},
-  {name:'Double · Three Accents',sticking:'RLRLRRLRLRLL',accents:[0,2,4,6,8,10],level:3},
-  {name:'Triple · Displaced Accent',sticking:'RLRLRLRRLRLRLRLL',accents:[1,6,9,14],level:3},
+  {name:'Single Paradiddle',sticking:'RLRRLRLL',accents:[0,4],level:0,world:'original'},
+  {name:'Single · Back Accent',sticking:'RLRRLRLL',accents:[3,7],level:0,world:'original'},
+  {name:'Double Paradiddle',sticking:'RLRLRRLRLRLL',accents:[0,6],level:1,world:'original'},
+  {name:'Paradiddle-Diddle · Accent Study',sticking:'RLRRLLRLRRLL',accents:[0,2,6,8],level:1,world:'original'},
+  {name:'Triple Paradiddle',sticking:'RLRLRLRRLRLRLRLL',accents:[0,8],level:2,world:'original'},
+  {name:'Single · Offbeat Accent',sticking:'RLRRLRLL',accents:[1,5],level:2,world:'original'},
+  {name:'Double · Three Accents',sticking:'RLRLRRLRLRLL',accents:[0,2,4,6,8,10],level:3,world:'original'},
+  {name:'Triple · Displaced Accent',sticking:'RLRLRLRRLRLRLRLL',accents:[1,6,9,14],level:3,world:'original'},
+  {name:'Additive 3+3+2',sticking:'RLRLRLRL',accents:[0,3,6],level:0,world:'samsara'},
+  {name:'Son Clave 3–2 · Hand Study',sticking:'RLRLRLRLRLRLRLRL',accents:[0,3,6,10,12],level:0,world:'samsara'},
+  {name:'Son Clave 2–3 · Hand Study',sticking:'RLRLRLRLRLRLRLRL',accents:[2,4,8,11,14],level:1,world:'samsara'},
+  {name:'Rumba Clave · Hand Study',sticking:'RLRLRLRLRLRLRLRL',accents:[0,3,7,10,12],level:1,world:'samsara'},
+  {name:'Samba · Hand Study',sticking:'RLRRLRLLRLRRLRLL',accents:[0,3,6,8,11,13],level:2,world:'samsara'},
+  {name:'Afro 12/8 · Hand Study',sticking:'RLRLRLRLRLRL',accents:[0,2,4,7,9,11],level:2,world:'samsara'},
+  {name:'Tumbao · Cross Accent',sticking:'RLRLRLRLRLRLRLRL',accents:[3,6,11,14],level:3,world:'samsara'},
+  {name:'Montuno Cascara · Hand Study',sticking:'RLRLRRLRLRLLRLRL',accents:[0,3,5,8,11,14],level:3,world:'samsara'},
 ].map(p=>({...p,beats:p.sticking.length/4,events:[...p.sticking].map((hand,i)=>({voice:'snare',beat:i/4,velocity:p.accents.includes(i)?1:.28,hand}))}));
+const rudimentIdsForWorld=(world,level=0)=>RUDIMENTS.map((pattern,index)=>({pattern,index})).filter(({pattern})=>pattern.world===expeditionWorld(world)&&pattern.level<=level).map(({index})=>index);
 function rudimentScore(p){
   const n=p.sticking.length,w=n*24+24;
   let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} 94"><rect width="100%" height="100%" rx="5" fill="#d8d5c8"/><path d="M8 53H${w-8}" stroke="#333"/>`;
@@ -525,7 +552,23 @@ const MODES=[
   {name:'Ionian',level:0,notes:[0,2,4,5,7,9,11,12]},{name:'Dorian',level:0,notes:[0,2,3,5,7,9,10,12]},{name:'Phrygian',level:0,notes:[0,1,3,5,7,8,10,12]},{name:'Lydian',level:0,notes:[0,2,4,6,7,9,11,12]},{name:'Mixolydian',level:0,notes:[0,2,4,5,7,9,10,12]},{name:'Aeolian',level:0,notes:[0,2,3,5,7,8,10,12]},{name:'Locrian',level:0,notes:[0,1,3,5,6,8,10,12]},
   {name:'Harmonic Minor',level:1,notes:[0,2,3,5,7,8,11,12]},{name:'Phrygian Dominant',level:1,notes:[0,1,4,5,7,8,10,12]},{name:'Melodic Minor',level:1,notes:[0,2,3,5,7,9,11,12]},{name:'Lydian Dominant',level:1,notes:[0,2,4,6,7,9,10,12]},{name:'Altered',level:1,notes:[0,1,3,4,6,8,10,12]},{name:'Locrian Natural 2',level:1,notes:[0,2,3,5,6,8,10,12]},
   {name:'Whole Tone',level:2,notes:[0,2,4,6,8,10,12]},{name:'Diminished Half-Whole',level:2,notes:[0,1,3,4,6,7,9,10,12]},{name:'Diminished Whole-Half',level:2,notes:[0,2,3,5,6,8,9,11,12]},{name:'Bebop Dominant',level:2,notes:[0,2,4,5,7,9,10,11,12]},{name:'Double Harmonic',level:2,notes:[0,1,4,5,7,8,11,12]},{name:'Hungarian Minor',level:2,notes:[0,2,3,6,7,8,11,12]},
+  {name:'Dorian ♭2',level:1,notes:[0,1,3,5,7,9,10,12]},{name:'Lydian Augmented',level:1,notes:[0,2,4,6,8,9,11,12]},{name:'Mixolydian ♭6',level:1,notes:[0,2,4,5,7,8,10,12]},{name:'Locrian ♮6',level:1,notes:[0,1,3,5,6,9,10,12]},{name:'Ionian Augmented',level:1,notes:[0,2,4,5,8,9,11,12]},{name:'Dorian ♯4',level:1,notes:[0,2,3,6,7,9,10,12]},{name:'Lydian ♯2',level:1,notes:[0,3,4,6,7,9,11,12]},{name:'Ultra Locrian',level:2,notes:[0,1,3,4,6,8,9,12]},
+  {name:'Major Pentatonic',level:2,notes:[0,2,4,7,9,12]},{name:'Minor Pentatonic',level:2,notes:[0,3,5,7,10,12]},{name:'Blues',level:2,notes:[0,3,5,6,7,10,12]},{name:'Bebop Major',level:2,notes:[0,2,4,5,7,8,9,11,12]},
+  {name:'Kumoi Pentatonic',level:1,notes:[0,2,3,7,9,12]},{name:'Hirajoshi Pentatonic',level:1,notes:[0,2,3,7,8,12]},{name:'Harmonic Major Pentatonic',level:2,notes:[0,2,4,7,8,12]},
 ];
+const MODE_WORLD_TIERS=Object.freeze({
+  original:Object.freeze([
+    Object.freeze([0,1,3,4]),                  // core jazz diatonic colours
+    Object.freeze([7,9,10,11,12,19,20,21,22,23,24,25]), // complete melodic/harmonic-minor families
+    Object.freeze([13,14,15,16,26,27,28,29,30]),         // symmetric, bebop and pentatonic systems
+  ]),
+  samsara:Object.freeze([
+    Object.freeze([0,1,2,3,4,5,6]),            // seven diatonic modes
+    Object.freeze([8,31,32]),                   // Phrygian Dominant and Asian pentatonics
+    Object.freeze([17,18,33]),                  // Double/Hungarian Minor and Harmonic Major pentatonic
+  ]),
+});
+const modeIdsForWorld=(world,level=0)=>tieredIds(MODE_WORLD_TIERS[expeditionWorld(world)],level);
 const NOTE_NAMES=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const ROOT_NAMES=NOTE_NAMES;
 const ROOT_SPEECH=['C','D flat','D','E flat','E','F','F sharp','G','A flat','A','B flat','B'];
@@ -577,10 +620,12 @@ function createExpedition(api){
   // Keep the deck across retries so restarting a flight does not replay the
   // same small prefix of the repertoire. Only playable entries enter this pool.
   let melodyDeck=[],melodyDeckLevel=-1,lastMelody=-1;
+  const lastThemeMelody=new Map();
   const melodyPool=()=>melodyIndicesForLevel(pilot).filter(i=>(api.intelligence?.settings.genres||['jazz','classical','rock']).includes(MELODIES[i].genre||'jazz'));
   function nextMelody(){
     const pool=melodyPool();
-    if(api.intelligence){lastMelody=api.intelligence.pick('melody',pool,{id:i=>MELODIES[i].id,genre:i=>MELODIES[i].genre||'jazz',progressive:true});return lastMelody;}
+    const available=pool.length>1?pool.filter(index=>index!==lastMelody):pool;
+    if(api.intelligence){lastMelody=api.intelligence.pick('melody',available,{id:i=>MELODIES[i].id,genre:i=>MELODIES[i].genre||'jazz',progressive:true});return lastMelody;}
     if(!melodyDeck.length||melodyDeckLevel!==pilot){
       melodyDeck=[...pool];melodyDeckLevel=pilot;
       for(let i=melodyDeck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[melodyDeck[i],melodyDeck[j]]=[melodyDeck[j],melodyDeck[i]];}
@@ -589,17 +634,21 @@ function createExpedition(api){
     lastMelody=melodyDeck.pop();return lastMelody;
   }
   function reset(level=0){pilot=level;planet=level%2?'mars':'moon';turrets=[];walls=[];drops=[];digits=[];special=null;queue=[];wallTimer=level===0?99:level===1?8:level===2?7:6.5;artifactTimer=9;turretTimer=8;dropIndex=wallIndex=turretIndex=0;cloak=shield=rapid=fuzz=hints=melodyFocus=rhythmFocus=collectCooldown=0;render();}
+  function resultDetail(c,r){
+    if(c.kind==='melody')return `Правильная мелодия: ${MELODIES[c.target].name}. Можно прослушать и продолжить, когда запомнишь.`;
+    if(['flightTones','tones'].includes(c.kind))return `${c.chordName} · нужны ${c.required.join(' → ')} · +${r.hp} HP · +${r.energy} энергии`;
+    return `Правильный ответ: ${specialName(c)}. Прослушай исходный сигнал ещё раз перед продолжением.`;
+  }
   function render(){
     if(special?.result){
       const c=special,r=c.result;
       if(renderedChallenge!==c){
         $('special-panel').hidden=false;
         $('special-title').textContent=`${r.heading} · ${Math.round(r.fraction*100)}%`;
-        $('special-detail').textContent=c.kind==='melody'?`Правильная мелодия: ${MELODIES[c.target].name}. Можно прослушать и продолжить, когда запомнишь.`:`${c.chordName} · нужны ${c.required.join(' → ')} · +${r.hp} HP · +${r.energy} энергии`;
+        $('special-detail').textContent=resultDetail(c,r);
         $('special-options').replaceChildren();
-        const button=document.createElement('button');button.textContent='Продолжить полёт →';
-        button.addEventListener('click',()=>{if(special===c)continueToneResult();});
-        $('special-options').append(button);if(c.kind==='melody'){const replay=document.createElement('button');replay.textContent='↻ Услышать правильную мелодию';replay.addEventListener('click',()=>{s.listening=true;audio.melody(c.root,MELODIES[c.target],()=>{if(special===c)s.listening=false;},{full:true});});$('special-options').append(replay);}renderedChallenge=c;
+        const replay=document.createElement('button');replay.textContent=c.kind==='melody'?'↻ Услышать правильную мелодию':'↻ Услышать правильный сигнал';replay.addEventListener('click',()=>replayResult(c));$('special-options').append(replay);
+        const button=document.createElement('button');button.textContent='Продолжить полёт →';button.addEventListener('click',()=>{if(special===c)continueToneResult();});$('special-options').append(button);renderedChallenge=c;
       }
       return;
     }
@@ -613,7 +662,7 @@ function createExpedition(api){
     if(special){
       const themeRoom=special.themeRoom?themeRoomById(special.themeRoom):null;
       $('special-title').textContent=special.kind==='reveal'?`SALVAGE CHAMBER · ${ARTIFACTS[special.artifactType].name}`:special.kind==='roulette'?'ROCK TONGUE · RANDOM MODE':special.kind==='poly'?'DRUM MACHINE · RUDIMENTS':special.kind==='rhythm'?'RHYTHM TRIAL · THE DRUMMER':special.kind==='melody'?(themeRoom?.title||'MELODY MEMORY · KEY PILOT'):special.kind==='mode'?'MODAL DRIVE · GUITAR PILOT':special.kind==='chord'?'ROCK TONGUE · HP 100%':special.kind==='guide'?'JAZZ BASS · GUIDE TONE':special.kind==='flightTones'?`TRUMPETER · ${special.toneMode.toUpperCase()} TONES · ${special.chordName}`:special.kind==='tones'?`COLOR HEARING · ${special.chordName}`:'СОБЕРИ ИНТЕРВАЛ';
-      $('special-detail').textContent=special.kind==='reveal'?(special.opening?'Замки открыты · энергетический контур запущен':'Полёт удержан · коснись находки, чтобы активировать'):special.kind==='roulette'?`Барабан выбирает испытание · ${rouletteLabel(special.rollKind)}`:special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?(themeRoom?`Угадай мелодию · шесть названий, из них The Beatles: ${special.themeRelatedCount}`:'Полёт удержан · назови тему по-английски или выбери название'):special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.kind==='flightTones'?`По порядку · ${special.collected.join(' → ')||'Начни с первой ноты'} · ${special.collected.length}/${special.required.length} · ${Math.ceil(special.time)}s`:special.kind==='tones'?`Выбери весь набор · отмечено ${special.selected.length} · затем нажми ОТВЕТИТЬ`:special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
+      $('special-detail').textContent=special.kind==='reveal'?(special.opening?'Замки открыты · энергетический контур запущен':'Полёт удержан · коснись находки, чтобы активировать'):special.kind==='roulette'?`Барабан выбирает испытание · ${rouletteLabel(special.rollKind)}`:special.revealed?`Звучит ${specialName(special)} · ↻ повторить`:special.kind==='poly'?'Сравни акценты и нотный рисунок · две попытки':special.kind==='melody'?(themeRoom?'Угадай мелодию · все шесть названий — The Beatles':'Полёт удержан · назови тему по-английски или выбери название'):special.kind==='mode'?'Полёт удержан · узнай лад вверх или вниз':special.kind==='flightTones'?`По порядку · ${special.collected.join(' → ')||'Начни с первой ноты'} · ${special.collected.length}/${special.required.length} · ${Math.ceil(special.time)}s`:special.kind==='tones'?`Выбери весь набор · отмечено ${special.selected.length} · затем нажми ОТВЕТИТЬ`:special.pause?'Квартет вышел на поле · полёт удержан, выбери стиль или партию':special.kind==='numbers'?`Один интервал — одна цифра. Ошибка завершает попытку · ${Math.ceil(special.time)}s`:special.kind==='guide'?`Поймай услышанный тон: 3 или 7 · ${Math.ceil(special.time)}s`:`Узнай на слух · ${Math.ceil(special.time)}s`;
       const choices=special.kind==='poly'?special.options.map(i=>({id:i,name:RUDIMENTS[i].name,icon:''})):special.kind==='rhythm'?special.options.map(i=>({id:i,name:RHYTHMS[i].name,icon:RHYTHMS[i].icon})):special.kind==='melody'?special.options.map(i=>({id:i,name:MELODIES[i].name,icon:'♫'})):special.kind==='mode'?special.options.map(i=>({id:i,name:MODES[i].name,icon:'◌'})):special.kind==='chord'?special.options.map(id=>({id,name:QUALITIES[id].glyph,icon:''})):special.kind==='tones'?special.options.map(id=>({id,name:id,icon:''})):[];
       // Keep live buttons in place while the countdown changes: replacing them
       // between pointer-down and pointer-up used to discard some answers.
@@ -621,7 +670,7 @@ function createExpedition(api){
       if(special.kind==='tones')for(const b of $('special-options').children){if(b.dataset.choice){const chosen=special.selected.includes(b.dataset.choice);b.classList.toggle('selected',chosen);b.setAttribute('aria-pressed',String(chosen));}}
       if(special.celebrating){
         const relation=themeRoom?.relations?.[MELODIES[special.target].id];
-        $('special-detail').textContent=`✓ ${MELODIES[special.target].name}${relation?` · ${relation}`:''} · слушаем тему до конца. Полёт подождёт.`;
+        $('special-detail').textContent=`✓ ${MELODIES[special.target].name}${relation?` · ${relation}`:''} · слушаем продолжение темы. Полёт подождёт.`;
         if(!$('special-options').children[0]?.dataset.continueFlight){
           const next=document.createElement('button');next.textContent='Продолжить полёт →';next.dataset.continueFlight='true';
           next.addEventListener('click',()=>{if(special?.celebrating&&['active','resolving'].includes(s.mode))endChallenge(true);});
@@ -657,21 +706,24 @@ function createExpedition(api){
   function startChallenge(kind,artifactType=null){
     if(special||s.listening)return false;
     if(!['active','resolving'].includes(s.mode))return false;
+    audio.setWorld?.(s.planetChoice);
     if(kind==='tones'&&artifactType===null)artifactType=11;
     special={kind:kind,artifactType,time:pilot===0?30:pilot===1?20:16,collected:[],options:[],misses:0,pause:['rhythm','poly','melody','mode'].includes(kind),truceUntil:Date.now()+3500,beat:0,createdAt:Date.now()};
     s.bullets=[];
     if(kind==='numbers'){special.interval=random(pilot<2?[3,4,6,7]:[1,2,3,4,5,6,7,8,9,10,11,12]);special.direction=random(['up','down']);makeNumbers(special);}
     if(kind==='guide'){special.target=teach('guide',['3','7']);makeNumbers(special);}
-    if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=teach('chord',special.options);special.root=48+Math.floor(Math.random()*12);}
-    if(kind==='rhythm'){const pool=rhythmIds(pilot);special.target=teach('rhythm',pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
-    if(kind==='poly'){special.options=RUDIMENTS.map((_,i)=>i).filter(i=>RUDIMENTS[i].level<=pilot);special.target=teach('poly',special.options);}
+    if(kind==='chord'){special.options=pilot<2?['maj','min','7','maj7','m7','7sus4']:Object.keys(QUALITIES);special.target=teach('chord',special.options);special.root=(s.planetChoice==='samsara'?43:48)+Math.floor(Math.random()*12);}
+    if(kind==='rhythm'){const pool=rhythmIdsForWorld(s.planetChoice,pilot);special.target=teach('rhythm',pool);const compatible=pool.filter(i=>i!==special.target&&!!RHYTHMS[i].part===!!RHYTHMS[special.target].part);special.options=[special.target,...compatible.sort(()=>Math.random()-.5).slice(0,pilot===0?5:pilot===1?7:9)].sort(()=>Math.random()-.5);}
+    if(kind==='poly'){special.options=rudimentIdsForWorld(s.planetChoice,pilot);special.target=teach('poly',special.options);}
     if(kind==='melody'){
       const room=themeRoomForArtifact(artifactType);
       if(room){
         const {related}=themeMelodyIndices(room,MELODIES);
         special.themeRoom=room.id;
         special.themeRelatedCount=themeRelatedCount(room,pilot);
-        special.target=api.intelligence?.settings.enabled?api.intelligence.pick('themeTarget',related,{id:i=>`${room.id}:${MELODIES[i].id}`,evidence:i=>[['melody',MELODIES[i].id]]}):random(related);
+        const previous=lastThemeMelody.get(room.id),available=related.length>1?related.filter(index=>index!==previous):related;
+        special.target=api.intelligence?.settings.enabled?api.intelligence.pick('themeTarget',available,{id:i=>`${room.id}:${MELODIES[i].id}`,evidence:i=>[['melody',MELODIES[i].id]]}):random(available);
+        lastThemeMelody.set(room.id,special.target);
         special.options=themeChallengeOptions(room,MELODIES,special.target,special.themeRelatedCount,Math.random);
       }else{
         special.target=nextMelody();
@@ -680,9 +732,9 @@ function createExpedition(api){
         special.options=[special.target,...others.slice(0,pilot<2?3:5)];
         for(let i=special.options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[special.options[i],special.options[j]]=[special.options[j],special.options[i]];}
       }
-      special.root=(MELODIES[special.target].firstMidi??60)+(pilot<2?0:Math.floor(Math.random()*5)-2);
+      special.root=(MELODIES[special.target].firstMidi??60)+(pilot<2?0:Math.floor(Math.random()*5)-2)-(s.planetChoice==='samsara'?12:0);
     }
-    if(kind==='mode'){const pool=MODES.map((mode,i)=>({mode,i})).filter(item=>item.mode.level<=Math.min(2,pilot)).map(item=>item.i);special.target=random(pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=55+Math.floor(Math.random()*7);special.direction=pilot<=1?'up':random(['up','down']);}
+    if(kind==='mode'){const pool=modeIdsForWorld(s.planetChoice,pilot);special.target=teach('mode',pool);special.options=[special.target,...pool.filter(i=>i!==special.target).sort(()=>Math.random()-.5).slice(0,pilot===0?6:5)].sort(()=>Math.random()-.5);special.root=(s.planetChoice==='samsara'?43:55)+Math.floor(Math.random()*7);special.direction=pilot<=1?'up':random(['up','down']);}
     if(kind==='flightTones'){
       const triads=['maj','min'];
       const sevenths=['7','maj7','m7','m7b5','7sus4'];
@@ -693,13 +745,13 @@ function createExpedition(api){
       const toneMode=random(modes),rootPc=Math.floor(Math.random()*12);
       const intervals=[...INTERVALS[quality]];
       const required=flightNotes(ROOT_NAMES[rootPc],intervals,toneMode,quality);
-      special={...special,artifactType:7,quality,toneMode,rootPc,root:48+rootPc,chordName:`${ROOT_NAMES[rootPc]}${QUALITIES[quality].glyph}`,required,collected:[],intervals,time:45+required.length*12};
+      special={...special,artifactType:7,quality,toneMode,rootPc,root:(s.planetChoice==='samsara'?43:48)+rootPc,chordName:`${ROOT_NAMES[rootPc]}${QUALITIES[quality].glyph}`,required,collected:[],intervals,time:45+required.length*12};
       walls=[];turrets=[];s.bullets=[];s.shots=[];s.drones=[];
       makeFlightToneCubes(special);
     }
     if(kind==='tones'){
       const qualities=pilot<2?['7','maj7','m7','7sus4']:Object.keys(TONE_PROGRAMS),quality=random(qualities),toneMode=artifactType===11?'color':pilot>=2?'color':random(['guide','color']),mission=toneMission(quality,toneMode,Math.random,pilot);
-      special={...special,...mission,toneMode,rootPc:Math.floor(Math.random()*12)};special.root=48+special.rootPc;special.chordName=`${ROOT_NAMES[special.rootPc]}${QUALITIES[quality].glyph}`;special.pause=true;special.options=Object.keys(TONE_OFFSETS);special.selected=[];
+      special={...special,...mission,toneMode,rootPc:Math.floor(Math.random()*12)};special.root=(s.planetChoice==='samsara'?43:48)+special.rootPc;special.chordName=`${ROOT_NAMES[special.rootPc]}${QUALITIES[quality].glyph}`;special.pause=true;special.options=Object.keys(TONE_OFFSETS);special.selected=[];
       special.intervals=[...new Set([...INTERVALS[quality],...(toneMode==='color'?special.required.map(label=>TONE_OFFSETS[label]+12):[])])].sort((a,b)=>a-b);
     }
     replay();render();syncPads();return true;
@@ -710,10 +762,12 @@ function createExpedition(api){
     if(!special||special.kind==='reveal'||special.kind==='roulette')return;
     if(special.result)return;
     if(special.celebrating){playMelodyCelebration();return;}
+    audio.setWorld?.(s.planetChoice);
     const current=special,cue= current.cue=(current.cue||0)+1;s.listening=true;signal('♫ Слушай артефакт',true);render();syncPads();
     const done=()=>{if(special!==current||current.cue!==cue||current.celebrating||s.mode==='paused')return;s.listening=false;const prompt=current.kind==='numbers'?'Поймай цифру услышанного интервала':current.kind==='guide'?'3 или 7? Поймай гайд-тон':current.kind==='flightTones'?`Лови ноты ${current.toneMode.toUpperCase()} TONES для ${current.chordName}`:current.kind==='tones'?`Собери COLOR TONES для ${current.chordName}`:'Выбери услышанное';signal(prompt);render();syncPads();};
-    if(special.kind==='numbers')audio.interval(60+s.route.key,special.interval,special.direction,done);
-    else if(special.kind==='guide')audio.guide(60+s.route.key,special.target,done);
+    const referenceRoot=(s.planetChoice==='samsara'?48:60)+s.route.key;
+    if(special.kind==='numbers')audio.interval(referenceRoot,special.interval,special.direction,done);
+    else if(special.kind==='guide')audio.guide(referenceRoot,special.target,done);
     else if(special.kind==='chord')audio.chordOnly(special.root,INTERVALS[special.target],done);
     else if(special.kind==='poly')audio.poly(RUDIMENTS[special.target],done);
     else if(['flightTones','tones'].includes(special.kind)){
@@ -724,6 +778,22 @@ function createExpedition(api){
     else if(special.kind==='melody')audio.melody(special.root,MELODIES[special.target],done);
     else if(special.kind==='mode')audio.scale(special.root,MODES[special.target],special.direction,done);
     else if(special.kind==='rhythm')audio.rhythm(RHYTHMS[special.target],done,{loops:2,onBeat:beat=>{if(special===current)current.beat=beat;}});
+  }
+  function replayResult(current){
+    if(special!==current||!current.result||!['active','resolving'].includes(s.mode))return;
+    audio.setWorld?.(s.planetChoice);
+    audio.stop();s.listening=true;signal('♫ Ещё раз · закрепи правильный ответ',true);syncPads();
+    const done=()=>{if(special!==current)return;s.listening=false;signal('Сравни со своим ответом и продолжай полёт');syncPads();};
+    const referenceRoot=(s.planetChoice==='samsara'?48:60)+s.route.key;
+    if(current.kind==='numbers')audio.interval(referenceRoot,current.interval,current.direction,done);
+    else if(current.kind==='guide')audio.guide(referenceRoot,current.target,done);
+    else if(current.kind==='chord')audio.chordOnly(current.root,INTERVALS[current.target],done);
+    else if(current.kind==='poly')audio.poly(RUDIMENTS[current.target],done);
+    else if(['flightTones','tones'].includes(current.kind))audio.chordOnly(current.root,current.intervals,done);
+    else if(current.kind==='melody')audio.melody(current.root,MELODIES[current.target],done,{full:true});
+    else if(current.kind==='mode')audio.scale(current.root,MODES[current.target],current.direction,done);
+    else if(current.kind==='rhythm')audio.rhythm(RHYTHMS[current.target],done,{loops:2});
+    else done();
   }
   function specialName(c,value=c.target){return c.kind==='poly'?RUDIMENTS[value].name:c.kind==='rhythm'?RHYTHMS[value].name:c.kind==='melody'?MELODIES[value].name:c.kind==='mode'?MODES[value].name:c.kind==='chord'?(QUALITIES[value]?.glyph??value):['tones','flightTones'].includes(c.kind)?`${c.toneMode.toUpperCase()} TONES · ${c.chordName}`:c.kind==='guide'?c.target:c.label;}
   function repair(amount=1){
@@ -773,7 +843,8 @@ function createExpedition(api){
       else{rapid=10;s.energy=Math.min(99,s.energy+30);feedback(`${orderedTargets(c.interval,c.direction).map(n=>n===6?'♭5 / ♯4':Object.keys(NUMBER_OFFSETS).find(k=>NUMBER_OFFSETS[k]===n)).join(' → ')} · +30 силы`);}
     }else{feedback(wrong?['tones','flightTones'].includes(c.kind)?`Гармония погасла · нужны ${c.required.join(' · ')}`:`Попытка потеряна · нужно ${c.label}`:['rhythm','chord','poly','melody','mode'].includes(c.kind)?`Это ${specialName(c)}`:'Время вышло · попробуем ещё',true);}
     s.fireTimer=Math.max(s.fireTimer,4);render();renderHud();syncPads();
-    if(c.kind==='melody'){special={...c,celebrating:false,result:{fraction:won?1:0,heading:won?'✓ Верно':'✕ Запомни мелодию'},pause:true};renderedChallenge=null;lastRender='';render();syncPads();return;}
+    if(!won){special={...c,celebrating:false,result:{fraction:credit??0,heading:c.kind==='melody'?'✕ Запомни мелодию':'✕ Неверный ответ'},pause:true};renderedChallenge=null;lastRender='';render();syncPads();return;}
+    if(c.kind==='melody'){special={...c,celebrating:false,result:{fraction:1,heading:'✓ Верно'},pause:true};renderedChallenge=null;lastRender='';render();syncPads();return;}
     if(c.deferredArtifacts?.length){
       const [type,...rest]=c.deferredArtifacts;artifact(type);if(special&&rest.length)special.deferredArtifacts=rest;
     }else if(s.mode==='active')api.playCue();
@@ -793,8 +864,9 @@ function createExpedition(api){
   function playMelodyCelebration(){
     const current=special;if(current?.kind!=='melody'||!current.celebrating)return;
     const cue=current.cue=(current.cue||0)+1;
-    s.listening=true;signal(`✓ ${MELODIES[current.target].name} · звучит полная тема`,true);render();syncPads();
-    audio.melody(current.root,MELODIES[current.target],()=>{if(special===current&&current.cue===cue&&s.mode!=='paused')endChallenge(true);},{full:true});
+    audio.setWorld?.(s.planetChoice);
+    s.listening=true;signal(`✓ ${MELODIES[current.target].name} · тема продолжается`,true);render();syncPads();
+    audio.melody(current.root,MELODIES[current.target],()=>{if(special===current&&current.cue===cue&&s.mode!=='paused')endChallenge(true);},{full:true,from:MELODIES[current.target].preview||0});
   }
   function toggleToneChoice(label){
     if(!special||special.result||special.kind!=='tones'||!['active','resolving'].includes(s.mode)||!special.options.includes(label))return;
@@ -831,7 +903,7 @@ function createExpedition(api){
     if(match===undefined){feedback(`Не расслышал название: “${text}”`,true);return false;}answerSpecial(match);return true;
   }
   function collectNumber(label){
-    if(!special||s.listening)return;const result=gradeNumber(special,label);
+    if(!special||special.result)return;const result=gradeNumber(special,label);
     collectCooldown=.6;
     const captured=digits.find(d=>d.label===label);
     if(captured){captures.push({...captured,life:.5,correct:result.correct});burst(captured.x,captured.y,result.correct?'#ffe0a2':'#ee8866',22);s.rings?.push({x:captured.x,y:captured.y,age:0});s.flash=.07;}
@@ -840,20 +912,20 @@ function createExpedition(api){
     render();
   }
   function collectTone(label){
-    if(!special||special.kind!=='tones'||s.listening)return;const c=special,result=toneAnswer(c,label),captured=digits.find(d=>d.label===label);collectCooldown=.45;
+    if(!special||special.result||special.kind!=='tones')return;const c=special,result=toneAnswer(c,label),captured=digits.find(d=>d.label===label);collectCooldown=.45;
     if(captured){captures.push({...captured,life:.55,correct:result.correct});burst(captured.x,captured.y,result.correct?captured.color:'#ff596e',result.correct?34:45);s.rings?.push({x:captured.x,y:captured.y,age:0});}
     if(!result.correct){endChallenge(false,true);return;}
     c.collected.push(label);digits=digits.filter(d=>d.label!==label);s.score+=90;lastRender='';
     if(result.complete)endChallenge(true);else{feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
   }
   function collectFlightTone(label){
-    if(!special||special.result||special.kind!=='flightTones'||s.listening)return;
+    if(!special||special.result||special.kind!=='flightTones')return;
     const c=special,captured=digits.find(d=>d.label===label),correct=c.required[c.collected.length]===label;
     collectCooldown=.45;
     if(captured){captures.push({...captured,life:.55,correct});burst(captured.x,captured.y,correct?'#ffd27a':'#ff596e',correct?34:45);s.rings?.push({x:captured.x,y:captured.y,age:0});}
     if(!correct){endChallenge(false,true);return;}
     c.collected.push(label);digits=digits.filter(d=>d!==captured);s.score+=90;lastRender='';
-    if(c.collected.length===c.required.length)endChallenge(true);else{if(!digits.some(d=>!d.rotating&&d.label===c.required[c.collected.length]))makeFlightToneCubes(c);feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
+    if(c.collected.length===c.required.length)endChallenge(true);else{const next=c.required[c.collected.length];if(!digits.some(d=>d.label===next||d.faces?.includes(next)))makeFlightToneCubes(c);feedback(`${label} · ${c.collected.length}/${c.required.length}`);render();syncPads();}
   }
   function applyArtifact(type){
     const kind=artifactKind(type);
@@ -911,13 +983,25 @@ function createExpedition(api){
       if(!s.listening){
         special.time-=dt;
         if(special.time<=0){endChallenge(false);return;}
-        for(const d of digits){
-          if(d.rotating&&Math.hypot(d.x-s.player.x,d.y-s.player.y)>85)d.age+=dt;
-          const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;
-          if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<29){collectFlightTone(d.label);break;}
-        }
+      }
+      for(const d of digits){
+        if(d.rotating&&Math.hypot(d.x-s.player.x,d.y-s.player.y)>85)d.age+=dt;
+        const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;
+        if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<29){collectFlightTone(d.label);break;}
       }
       render();return;
+    }
+    // Number/guide cubes remain interactive while their cue is sounding.  The
+    // hazards stay under the listening truce, but a player who already knows
+    // the answer no longer has to wait for the playback timer to end.
+    if(special&&digits.length){
+      for(const d of digits){
+        d.age+=dt;
+        if(!d.cube){d.x+=(d.vx+Math.sin(d.age*2)*15)*dt;d.y+=d.vy*dt;if(d.x<30||d.x>W-30)d.vx*=-1;if(d.y<120||d.y>getH()-35)d.vy*=-1;d.x=Math.max(29,Math.min(W-29,d.x));d.y=Math.max(119,Math.min(getH()-34,d.y));}
+        if(d.rotating){const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;}else if(d.faces)d.label=d.faces[Math.floor(d.age/1.7+d.phase)%d.faces.length];
+        if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<36){if(special.kind==='tones')collectTone(d.label);else collectNumber(d.label);break;}
+      }
+      if(special?.result){render();return;}
     }
     for(const d of drops){d.age+=dt;d.y+=dt*38;if(Math.hypot(d.x-s.player.x,d.y-s.player.y)<33){d.age=99;if(s.planetChoice==='samsara')api.onSamsaraArtifact?.(d.type);else artifact(d.type);break;}}
     drops=drops.filter(d=>d.age<22&&d.y<getH()+35);
@@ -942,10 +1026,8 @@ function createExpedition(api){
         }
       }
       turrets=turrets.filter(t=>t.y<getH()+55);
-      if(special){special.time-=dt;if(special.time<=0){endChallenge(false);return;}
-        for(const d of digits){d.age+=dt;if(!d.cube){d.x+=(d.vx+Math.sin(d.age*2)*15)*dt;d.y+=d.vy*dt;if(d.x<30||d.x>W-30)d.vx*=-1;if(d.y<120||d.y>getH()-35)d.vy*=-1;d.x=Math.max(29,Math.min(W-29,d.x));d.y=Math.max(119,Math.min(getH()-34,d.y));}if(d.rotating){const face=cubeFace(d);d.label=face.label;d.nextLabel=face.next;d.turn=face.turn;}else if(d.faces)d.label=d.faces[Math.floor(d.age/1.7+d.phase)%d.faces.length];
-          if(!collectCooldown&&Math.hypot(d.x-s.player.x,d.y-s.player.y)<36){if(special.kind==='flightTones')collectFlightTone(d.label);else if(special.kind==='tones')collectTone(d.label);else collectNumber(d.label);break;}}
-      }else if(queue.length&&!s.capsule&&s.capsuleTimer<=0)startChallenge(queue.shift());
+      if(special){special.time-=dt;if(special.time<=0){endChallenge(false);return;}}
+      else if(queue.length&&!s.capsule&&s.capsuleTimer<=0)startChallenge(queue.shift());
     }
     render();
   }
@@ -1124,7 +1206,7 @@ function createExpedition(api){
     snapshot:()=>({pilot,planet,teachers:[],turrets,walls,drops,digits,special,queue,cloak,shield,rapid,fuzz,hints,melodyFocus,rhythmFocus})};
 }
 
-return {PILOTS,ARTIFACTS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,rhythmIds,POLYRHYTHMS,polyEvents,RUDIMENTS,rudimentScore,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,TONE_PROGRAMS,TONE_MODES,MELODIES,MODES,NOTE_NAMES,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,turretThreat,createExpedition};
+return {PILOTS,ARTIFACTS,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,rhythmIds,RHYTHM_WORLD_TIERS,rhythmIdsForWorld,POLYRHYTHMS,polyEvents,RUDIMENTS,rudimentIdsForWorld,rudimentScore,NUMBER_LABELS,NUMBER_OFFSETS,TONE_OFFSETS,TONE_PROGRAMS,TONE_MODES,MELODIES,MODES,MODE_WORLD_TIERS,modeIdsForWorld,NOTE_NAMES,toneMission,toneAnswer,orderedTargets,gradeNumber,obstacleRow,touchesWall,turretThreat,createExpedition};
 })();
 const module_audio=(()=>{
 const {bookReferenceEvents,chordNotes,cueEvents,progressionEvents}=module_music;
@@ -1135,10 +1217,17 @@ const PIANO_SAMPLES=[
   [54,'Fs3'],[57,'A3'],[60,'C4'],[63,'Ds4'],[66,'Fs4'],[69,'A4'],
   [72,'C5'],[75,'Ds5'],[78,'Fs5'],[84,'C6'],[87,'Ds6'],[90,'Fs6'],
 ].map(([midi,name])=>({midi,url:`../samples/piano/${name}.mp3`}));
+const FELT_SAMPLES=[
+  [48,'felt-c3.wav'],[52,'felt-e3.wav'],[55,'felt-g3.wav'],
+].map(([midi,name])=>({midi,url:`assets/echo-garden/samples/${name}`}));
 // A sustained, pitch-stable two-oscillator arcade synth. No sample/network
 // dependency and no detuning/vibrato that could blur interval recognition.
 class FlightAudio {
-  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;this.pianoBuffers=new Map();this.pianoPromise=null;this.commandBuffers=new Map();this.commandPromise=null;}
+  constructor(){this.context=null;this.voices=new Set();this.timers=new Set();this.token=0;this.lastCue=null;this.world='original';this.pianoBuffers=new Map();this.pianoPromise=null;this.feltBuffers=new Map();this.feltPromise=null;this.commandBuffers=new Map();this.commandPromise=null;}
+  setWorld(world='original'){
+    this.world=world==='samsara'?'samsara':'original';
+    if(this.world==='samsara'&&this.context)this.prepareFelt().catch(()=>{});
+  }
   async unlock(){
     const Engine=window.AudioContext||window.webkitAudioContext;
     if(!Engine)throw new Error('Браузер не поддерживает Web Audio. Открой игру в Safari или Chrome.');
@@ -1152,6 +1241,7 @@ class FlightAudio {
     if(this.context.state!=='running')throw new Error('Звук приостановлен. Нажми «Продолжить» ещё раз.');
     this.note(57,this.context.currentTime,.07,'soft',.00003);
     this.prepareCommands();
+    if(this.world==='samsara')this.prepareFelt().catch(()=>{});
   }
   note(midi,at,duration,timbre='synth',level=.38){
     const ctx=this.context;if(!ctx)return;
@@ -1186,6 +1276,19 @@ class FlightAudio {
     }).catch(error=>{this.pianoPromise=null;throw error;});
     return this.pianoPromise;
   }
+  async prepareFelt(){
+    if(this.feltBuffers.size===FELT_SAMPLES.length)return true;
+    if(this.feltPromise)return this.feltPromise;
+    if(!this.context)return false;
+    this.feltPromise=Promise.allSettled(FELT_SAMPLES.map(async sample=>{
+      const response=await fetch(sample.url);if(!response.ok)throw new Error(`Felt sample: HTTP ${response.status}`);
+      const buffer=await this.context.decodeAudioData(await response.arrayBuffer());return [sample.midi,buffer];
+    })).then(results=>{
+      for(const result of results)if(result.status==='fulfilled')this.feltBuffers.set(...result.value);
+      if(!this.feltBuffers.size)throw new Error('Felt-piano samples did not load.');return true;
+    }).catch(error=>{this.feltPromise=null;throw error;});
+    return this.feltPromise;
+  }
   pianoNote(midi,at,duration,level=.38){
     const available=PIANO_SAMPLES.filter(sample=>this.pianoBuffers.has(sample.midi));
     if(!available.length){this.note(midi,at,duration,'soft',level);return;}
@@ -1196,21 +1299,36 @@ class FlightAudio {
     source.connect(gain);gain.connect(this.master);source.start(at);source.stop(stopAt+.01);this.voices.add(source);
     source.onended=()=>{this.voices.delete(source);source.disconnect();gain.disconnect();};
   }
+  feltNote(midi,at,duration,level=.38){
+    const available=FELT_SAMPLES.filter(sample=>this.feltBuffers.has(sample.midi));
+    if(!available.length){this.note(midi,at,duration,'soft',level*.9);return;}
+    const nearest=available.reduce((best,sample)=>Math.abs(sample.midi-midi)<Math.abs(best.midi-midi)?sample:best),source=this.context.createBufferSource(),gain=this.context.createGain(),filter=this.context.createBiquadFilter();
+    source.buffer=this.feltBuffers.get(nearest.midi);source.playbackRate.setValueAtTime(2**((midi-nearest.midi)/12),at);
+    const natural=source.buffer.duration/source.playbackRate.value,stopAt=at+Math.min(natural,duration+.8);
+    filter.type='lowpass';filter.frequency.setValueAtTime(Math.min(5200,1700+Math.max(0,midi-36)*105),at);filter.Q.value=.25;
+    gain.gain.setValueAtTime(.00001,at);gain.gain.exponentialRampToValueAtTime(level*.82,at+.018);gain.gain.setValueAtTime(level*.64,Math.min(stopAt-.09,at+.2));gain.gain.exponentialRampToValueAtTime(.00001,stopAt);
+    source.connect(filter);filter.connect(gain);gain.connect(this.master);source.start(at);source.stop(stopAt+.01);this.voices.add(source);
+    source.onended=()=>{this.voices.delete(source);source.disconnect();filter.disconnect();gain.disconnect();};
+  }
+  worldNote(midi,at,duration,timbre='synth',level=.38){
+    if(this.world==='samsara'){this.feltNote(midi,at,duration,level);return;}
+    this.note(midi,at,duration,timbre,level);
+  }
   schedule(callback,seconds){const id=setTimeout(()=>{this.timers.delete(id);callback();},seconds*1000);this.timers.add(id);}
   play(route,chord,sector,onPart,onEnd){
     this.stop();const token=this.token,cue=cueEvents(route,chord,sector),start=this.context.currentTime;
-    this.lastCue={...cue,key:route.key,register:route.register,contextState:this.context.state,sound:'sustained synth'};
+    this.lastCue={...cue,key:route.key,register:route.register,contextState:this.context.state,sound:this.world==='samsara'?'felt piano':'sustained synth'};
     for(const event of cue.events){
-      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.58/Math.sqrt(event.notes.length));
+      for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,route.timbre,.58/Math.sqrt(event.notes.length));
       if(event.part!=='tone')this.schedule(()=>{if(token===this.token)onPart(event.part);},event.at);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
   }
   progression(route,targetIndex,onPart,onEnd,finale=false){
     this.stop();const token=this.token,cue=progressionEvents(route,targetIndex,finale),start=this.context.currentTime;
-    this.lastCue={...cue,kind:finale?'route-finale':'harmonic-context',targetIndex,code:route.code,sound:'vertical sustained synth'};
+    this.lastCue={...cue,kind:finale?'route-finale':'harmonic-context',targetIndex,code:route.code,sound:this.world==='samsara'?'felt piano':'vertical sustained synth'};
     for(const event of cue.events){
-      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.54/Math.sqrt(event.notes.length));
+      for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,route.timbre,.54/Math.sqrt(event.notes.length));
       this.schedule(()=>{if(token===this.token)onPart(event);},event.at);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
@@ -1218,10 +1336,10 @@ class FlightAudio {
   gardenSequence(route,{from=0,arpeggio=false}={},onPart=()=>{},onEnd=()=>{}){
     this.stop();const token=this.token,tonic=(route.register??48)+route.key,start=this.context.currentTime+.08;
     let at=.12;
-    if(from===0){this.note(tonic,start+at,.7,route.timbre,.34);at+=.9;}
+    if(from===0){this.worldNote(tonic,start+at,.7,route.timbre,.34);at+=.9;}
     for(let index=from;index<route.sequence.length;index++){
       const notes=chordNotes(route.sequence[index],tonic),offset=at;
-      notes.forEach((midi,i)=>this.note(midi,start+offset+(arpeggio?i*.15:0),1.2,route.timbre,.54/Math.sqrt(notes.length)));
+      notes.forEach((midi,i)=>this.worldNote(midi,start+offset+(arpeggio?i*.15:0),1.2,route.timbre,.54/Math.sqrt(notes.length)));
       this.schedule(()=>{if(token===this.token)onPart(index);},offset);
       at+=1.5+(arpeggio?Math.max(0,notes.length-3)*.1:0);
     }
@@ -1230,9 +1348,9 @@ class FlightAudio {
   }
   bookReference(route,targetIndex,onPart,onEnd){
     this.stop();const token=this.token,cue=bookReferenceEvents(route,targetIndex),start=this.context.currentTime;
-    this.lastCue={...cue,kind:'book-reference',targetIndex,code:route.code,sound:'home note plus vertical target'};
+    this.lastCue={...cue,kind:'book-reference',targetIndex,code:route.code,sound:this.world==='samsara'?'felt piano reference':'home note plus vertical target'};
     for(const event of cue.events){
-      for(const midi of event.notes)this.note(midi,start+event.at,event.duration,route.timbre,.56/Math.sqrt(event.notes.length));
+      for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,route.timbre,.56/Math.sqrt(event.notes.length));
       this.schedule(()=>{if(token===this.token)onPart(event);},event.at);
     }
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
@@ -1241,7 +1359,7 @@ class FlightAudio {
   interval(base,semitones,mode,onEnd){
     this.stop();const token=this.token,cue=intervalCue(base,semitones,mode),start=this.context.currentTime;
     this.lastCue={...cue,kind:'interval',base,semitones,mode,sound:'sustained synth'};
-    for(const event of cue.events)for(const midi of event.notes)this.note(midi,start+event.at,event.duration,'synth',.5/Math.sqrt(event.notes.length));
+    for(const event of cue.events)for(const midi of event.notes)this.worldNote(midi,start+event.at,event.duration,'synth',.5/Math.sqrt(event.notes.length));
     this.schedule(()=>{if(token===this.token)onEnd();},cue.duration);
   }
   chordOnly(root,intervals,onEnd,mode='together'){
@@ -1249,7 +1367,7 @@ class FlightAudio {
     const notes=intervals.map(n=>root+n),order=mode==='down'?[...notes].reverse():notes;
     const step=mode==='together'?0:.24,duration=1.95+step*(notes.length-1);
     this.lastCue={kind:'chord-only',root,notes,mode,sound:'sustained synth'};
-    order.forEach((note,i)=>this.note(note,start+.12+i*step,1.65,'synth',.6/Math.sqrt(notes.length)));
+    order.forEach((note,i)=>this.worldNote(note,start+.12+i*step,1.65,'synth',.6/Math.sqrt(notes.length)));
     this.schedule(()=>{if(token===this.token)onEnd();},duration);
   }
   trainerChord(tonic,chord,onEnd,mode='together',timbre='synth'){
@@ -1262,8 +1380,8 @@ class FlightAudio {
   }
   guide(root,target,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime;
-    [0,4,7,10].forEach(n=>this.note(root+n,start+.12,.85,'soft',.24));
-    this.note(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
+    [0,4,7,10].forEach(n=>this.worldNote(root+n,start+.12,.85,'soft',.24));
+    this.worldNote(root+(target==='3'?4:10),start+1.25,1.15,'synth',.45);
     this.schedule(()=>{if(token===this.token)onEnd();},2.6);
   }
   prepareCommands(){
@@ -1335,11 +1453,12 @@ class FlightAudio {
     this.lastCue={kind:'trumpeter-chord',root,notes,spoken:true,sound:'brass synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},2.9);
   }
-  melody(root,pattern,onEnd,{full=false}={}){
+  melody(root,pattern,onEnd,{full=false,from=0}={}){
     this.stop();const token=this.token,ctx=this.context;
     const source=Array.isArray(pattern?.events)?pattern.events:(pattern?.notes||[]).map((note,i)=>[note,pattern.beats?.[i]??.5]);
     const limit=Number.isInteger(pattern?.preview)&&pattern.preview>0?pattern.preview:source.length;
-    const events=source.slice(0,full?source.length:limit).filter(event=>Array.isArray(event)&&(event[0]===null||Number.isFinite(event[0]))&&Number.isFinite(event[1])&&event[1]>0);
+    const end=full?source.length:limit,startEvent=Math.max(0,Math.min(Number.isInteger(from)?from:0,end));
+    const events=source.slice(startEvent,end).filter(event=>Array.isArray(event)&&(event[0]===null||Number.isFinite(event[0]))&&Number.isFinite(event[1])&&event[1]>0);
     // The excerpt and its reward performance use the same quarter-note tempo.
     const tempo=Number.isFinite(pattern?.tempo)&&pattern.tempo>0?pattern.tempo:120,secondsPerBeat=60/tempo;
     const start=(ctx?.currentTime||0)+.12,timeline=[];let cursor=0;
@@ -1347,7 +1466,7 @@ class FlightAudio {
       timeline.push({offset,at:start+cursor,duration:Math.max(.05,beats*secondsPerBeat*.92)});
       cursor+=beats*secondsPerBeat;
     }
-    this.lastCue={kind:'melody-memory',root,name:pattern?.name,events:events.length,full,tempo,duration:cursor+.35,sound:'keytar synth'};
+    this.lastCue={kind:'melody-memory',root,name:pattern?.name,events:events.length,from:startEvent,full,tempo,duration:cursor+.35,sound:this.world==='samsara'?'felt piano':'keytar synth'};
     if(!ctx){this.schedule(()=>{if(token===this.token)onEnd();},.05);return;}
     // Long heads must not allocate all their oscillators at once on a phone.
     // Audio time also prevents a suspended context from ending the cue early.
@@ -1359,7 +1478,7 @@ class FlightAudio {
         const event=timeline[index++],at=Math.max(now,event.at),remaining=event.at+event.duration-at;
         // After a background-tab stall, resume at the current musical position
         // instead of playing every missed note together in a loud burst.
-        if(event.offset!==null&&remaining>=.05)this.note(root+event.offset,at,remaining,'soft',.44);
+        if(event.offset!==null&&remaining>=.05)this.worldNote(root+event.offset,at,remaining,'soft',.44);
       }
       if(now>=endAt){finished=true;onEnd();return;}
       this.schedule(pump,Math.min(.1,Math.max(.025,endAt-now)));
@@ -1368,8 +1487,8 @@ class FlightAudio {
   }
   scale(root,mode,direction,onEnd){
     this.stop();const token=this.token,start=this.context.currentTime+.12,notes=(direction==='down'?[...mode.notes].reverse():mode.notes).map(n=>root+n);
-    notes.forEach((note,i)=>this.note(note,start+i*.25,.58,'synth',.36));
-    this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:'guitar synth'};
+    notes.forEach((note,i)=>this.worldNote(note,start+i*.25,.58,'synth',.36));
+    this.lastCue={kind:'mode-scale',root,name:mode.name,direction,notes,sound:this.world==='samsara'?'felt piano':'guitar synth'};
     this.schedule(()=>{if(token===this.token)onEnd();},notes.length*.25+.55);
   }
   artifactReveal(type,onEnd){
@@ -1421,8 +1540,8 @@ class FlightAudio {
     const beats=pattern.beats||8;
     for(let loop=0;loop<loops;loop++){
       for(const event of pattern.events){const at=start+(loop*beats+event.beat)*beat;
-        if(event.voice==='bass')this.note(event.midi,at,.34,'synth',.42);
-        else if(event.voice==='keys')for(const midi of event.notes)this.note(midi,at,.26,'synth',.25);
+        if(event.voice==='bass')this.worldNote(event.midi,at,.34,'synth',.42);
+        else if(event.voice==='keys')for(const midi of event.notes)this.worldNote(midi,at,.26,'synth',.25);
         else this.drum(event.voice,at,event.velocity??1);
       }
       for(let i=0;i<beats;i++)this.schedule(()=>{if(token===this.token)onBeat(i,loop);},.15+(loop*beats+i)*beat);
@@ -2229,6 +2348,40 @@ function createGardenRenderer(groundCanvas,shipCanvas,images) {
 
 return {createGardenRenderer};
 })();
+const module_samsara_survival=(()=>{
+const LEVELS=[
+  {start:{fuel:74,energy:70,crew:88},drain:{fuel:.42,energy:.31,crew:.22},pickup:[7.0,10.0]},
+  {start:{fuel:71,energy:67,crew:86},drain:{fuel:.52,energy:.39,crew:.28},pickup:[7.5,10.5]},
+  {start:{fuel:68,energy:64,crew:84},drain:{fuel:.62,energy:.48,crew:.35},pickup:[8.0,11.0]},
+  {start:{fuel:65,energy:61,crew:82},drain:{fuel:.72,energy:.57,crew:.43},pickup:[8.5,12.0]},
+];
+const clamp=value=>Math.max(0,Math.min(100,value));
+const SAMSARA_RESOURCE_LABELS={fuel:'Топливо исчерпано',energy:'Энергия исчерпана',crew:'Экипаж потерял силы',hull:'Корпус лотоса разрушен'};
+function samsaraBalance(level=0){return LEVELS[Math.max(0,Math.min(LEVELS.length-1,Math.round(level)))]}
+function samsaraStartingVitals(level=0){return {...samsaraBalance(level).start}}
+function stepSamsaraVitals(vitals,dt,{level=0,forces=0}={}){
+  const config=samsaraBalance(level),pressure=1+Math.max(0,forces)*.055;
+  const next={
+    fuel:clamp(vitals.fuel-dt*config.drain.fuel*pressure),
+    energy:clamp(vitals.energy-dt*config.drain.energy*pressure),
+    crew:clamp(vitals.crew),
+  };
+  if(next.fuel<18||next.energy<18)next.crew=clamp(next.crew-dt*config.drain.crew);
+  const depleted=['fuel','energy','crew'].find(key=>next[key]<=0)||null;
+  return {vitals:next,depleted,pressure};
+}
+function samsaraPickupDelay(level=0,rng=Math.random){const [low,high]=samsaraBalance(level).pickup;return low+(high-low)*rng()}
+function samsaraPickupAmount(kind,level=0){
+  const reduction=Math.min(2,Math.floor(Math.max(0,level)/2));
+  return [11-reduction,10-reduction,9-reduction,2][kind]??0;
+}
+function samsaraNeedsPickup(vitals,hullPercent=100){
+  const needs=[100-vitals.fuel,100-vitals.energy,100-vitals.crew,100-hullPercent];
+  return {needs,urgent:Math.max(...needs)>=22};
+}
+
+return {SAMSARA_RESOURCE_LABELS,samsaraBalance,samsaraStartingVitals,stepSamsaraVitals,samsaraPickupDelay,samsaraPickupAmount,samsaraNeedsPickup};
+})();
 const module_game=(()=>{
 const {MELODY_BANK,GENRE_COUNTS}=module_melody_bank;
 const {createIntelligence}=module_intelligence;
@@ -2243,6 +2396,7 @@ const {pressure,formation,stepDrone,hitCircle}=module_combat;
 const {INTERVAL_TARGETS,INTERVAL_MODES,targetForSector,createCapsule,capsuleOutcome}=module_intervals;
 const {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,NOTE_NAMES,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,RUDIMENTS,rudimentScore,createExpedition}=module_expedition;
 const {createGardenRenderer}=module_garden_flight_renderer;
+const {SAMSARA_RESOURCE_LABELS,samsaraNeedsPickup,samsaraPickupAmount,samsaraPickupDelay,samsaraStartingVitals,stepSamsaraVitals}=module_samsara_survival;
 
 const intelligence=createIntelligence(localStorage);
 const $=id=>document.getElementById(id);
@@ -2300,9 +2454,9 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const BASE_SHIELD=12,MAX_SHIELD=20;
 const PLANET_CHOICE_KEY='ear-reharm-game.planet.v1';
 const PLANETS=[
-  {id:'original',number:'01',title:'Выжженная орбита',description:'Луна и Марс · каменные равнины и боевой маршрут.',available:true,tone:'rust'},
-  {id:'garden',number:'02',title:'Сад Эха',description:'Ambient chill · живая река, биолюминесценция и гармонические маршруты.',available:true,tone:'garden',ambient:'garden-flight.html'},
-  {id:'samsara',number:'03',title:'Самсара',description:'Музыканты, цветочные мандалы и боевой полёт сквозь живой сад.',available:true,tone:'samsara'},
+  {id:'original',number:'01',title:'Выжженная планета',kicker:'ИСПЫТАНИЕ ОГНЁМ',description:'Джаз · импульс · выживание',available:true,tone:'rust',art:'design-concepts/world-menus-2026-09-25/carousel/scorched.png'},
+  {id:'garden',number:'02',title:'Сад Эха',kicker:'ЖИВАЯ ГАРМОНИЯ',description:'Речные долины · цветение · ambient',available:true,tone:'garden',ambient:'garden-flight.html',art:'design-concepts/world-menus-2026-09-25/carousel/garden.png'},
+  {id:'samsara',number:'03',title:'Самсара',kicker:'КРУГ ЗВУКА',description:'World music · стихии · пробуждение',available:true,tone:'samsara',art:'design-concepts/world-menus-2026-09-25/carousel/samsara.png'},
   {id:'ocean',number:'04',title:'Океан Линз',description:'Водный мир · отражения, течения и длинные гармонии.',available:false,tone:'ocean'},
   {id:'ice',number:'05',title:'Ледяной архив',description:'Белая тишина · замёрзшие сигналы и хрупкие интервалы.',available:false,tone:'ice'},
   {id:'desert',number:'06',title:'Янтарная пустыня',description:'Слоистые каньоны · редкие источники света и воздуха.',available:false,tone:'desert'},
@@ -2310,11 +2464,8 @@ const PLANETS=[
 ];
 function savedPlanetChoice(){
   try{
-    // BUILD 080 accidentally stored the standalone Echo Garden as a skin for
-    // the combat flight. Migrate that sticky value back to the original world.
     const value=localStorage.getItem(PLANET_CHOICE_KEY);
-    if(value==='seasons'||value==='garden')localStorage.setItem(PLANET_CHOICE_KEY,'original');
-    if(value==='samsara')return 'samsara';
+    if(PLANETS.some(planet=>planet.available&&planet.id===value))return value;
   }catch{}
   return 'original';
 }
@@ -2342,9 +2493,13 @@ const SAMSARA_HARMONY=[
   {kind:'midpoint',name:'Начать с середины',sprite:'midpoint-seed'}
 ];
 const emptySamsaraInventory=()=>Object.fromEntries(SAMSARA_HARMONY.map(item=>[item.kind,0]));
-s.samsaraVitals={fuel:86,energy:78,crew:90};s.samsaraInventory=emptySamsaraInventory();s.samsaraHeld=null;
+s.samsaraVitals=samsaraStartingVitals(0);s.samsaraInventory=emptySamsaraInventory();s.samsaraHeld=null;s.samsaraFailure=null;
 s.samsaraForces=[];s.samsaraForceTimer=5;s.samsaraForceIndex=0;s.samsaraPickups=[];s.samsaraPickupTimer=2.5;s.samsaraArtifactTimer=6;s.samsaraArtifactIndex=0;s.samsaraHudTimer=0;
 document.body.classList.toggle('samsara-world',s.planetChoice==='samsara');
+// Keep the survival gauges inside the translucent answer deck. A fixed panel
+// over the flight surface used to hide note cubes and moving objectives.
+const samsaraVitalsPanel=$('samsara-vitals'),samsaraArtifactsPanel=$('samsara-artifacts');
+samsaraArtifactsPanel?.parentElement?.insertBefore?.(samsaraVitalsPanel,samsaraArtifactsPanel);
 function changeSamsaraResource(name,delta){if(s.planetChoice!=='samsara')return;s.samsaraVitals[name]=clamp(s.samsaraVitals[name]+delta,0,100);renderSamsaraResources();}
 function renderSamsaraResources(){
   const active=s.planetChoice==='samsara',panel=$('samsara-vitals');panel.hidden=!active;$('samsara-artifacts').hidden=!active;
@@ -2363,7 +2518,7 @@ function collectSamsaraArtifact(type){
   const target=SAMSARA_COUNTER[type];let removed=0;
   s.samsaraForces=s.samsaraForces.filter(force=>{if(target!==-1&&force.type!==target)return true;removed++;burst(force.x,force.y,SAMSARA_FORCES[force.type].color,20);return false;});
   s.bullets=s.bullets.filter(b=>target>=0&&b.forceType!==target);
-  changeSamsaraResource('fuel',5);changeSamsaraResource('energy',7+Math.min(6,removed*2));
+  changeSamsaraResource('fuel',3);changeSamsaraResource('energy',4+Math.min(5,removed*2));
   feedback(`${ARTIFACTS[type].name} · ${target<0?'силы рассеяны':SAMSARA_FORCES[target].name+' рассеяны'}`);
   expedition.artifact(type);
 }
@@ -2401,13 +2556,14 @@ function stepSamsaraForces(dt){
     }
     if(force.age>.4){force.trail.push({x:force.x,y:force.y,age:0});if(force.trail.length>7)force.trail.shift();}for(const mark of force.trail)mark.age+=dt;force.trail=force.trail.filter(mark=>mark.age<.72);
     if(Math.abs(p.x-force.x)>15)force.facing=p.x>=force.x?1:-1;
-    if(Math.hypot(force.x-p.x,force.y-p.y)<spec.radius+19){shipHit();force.y+=38;}
+    if(Math.hypot(force.x-p.x,force.y-p.y)<spec.radius+19){shipHit(force.type);force.y+=38;}
     force.fire-=dt;
     if(force.fire<=0&&force.y>30&&force.y<playableHeight()*.66){
       const facing=force.facing,angle=Math.atan2(p.y-force.y,p.x-force.x);
-      if(force.type===0){s.bullets.push({x:force.x+facing*29,y:force.y-7,vx:facing*132,vy:8,r:4,forceType:0,age:0,turn:.8});}
-      else if(force.type===1){s.bullets.push({x:force.x+facing*19,y:force.y-21,vx:Math.cos(angle)*108,vy:Math.sin(angle)*108,r:5,forceType:1,age:0});}
-      else if(force.type===2){for(let i=-1;i<=1;i++){const a=(facing===1?.42:Math.PI-.42)+i*.17;s.bullets.push({x:force.x+facing*28,y:force.y+15,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:6,forceType:2,age:0,ttl:1.05});}}
+      force.aim=angle;
+      if(force.type===0){s.bullets.push({x:force.x+Math.cos(angle)*29,y:force.y+Math.sin(angle)*29,vx:Math.cos(angle)*132,vy:Math.sin(angle)*132,r:4,forceType:0,age:0,turn:.8});}
+      else if(force.type===1){s.bullets.push({x:force.x+Math.cos(angle)*25,y:force.y+Math.sin(angle)*25,vx:Math.cos(angle)*108,vy:Math.sin(angle)*108,r:5,forceType:1,age:0});}
+      else if(force.type===2){for(let i=-1;i<=1;i++){const a=angle+i*.17;s.bullets.push({x:force.x+Math.cos(a)*28,y:force.y+Math.sin(a)*28,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:6,forceType:2,age:0,ttl:1.05});}}
       else{s.bullets.push({x:force.x+facing*27,y:force.y-10,vx:Math.cos(angle)*74,vy:Math.sin(angle)*74,r:5,forceType:3,age:0});}
       force.muzzle=force.type===2?.8:.5;force.fire=spec.fire;
     }
@@ -2426,13 +2582,26 @@ function drawSamsaraForces(){
     if(force.type===1&&force.muzzle>0){ctx.strokeStyle=`rgba(226,211,154,${force.muzzle*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,size*.34,23+force.muzzle*15,5+force.muzzle*5,0,0,Math.PI*2);ctx.stroke();}
     if(force.type===2&&force.muzzle>0){ctx.fillStyle=`rgba(255,170,80,${force.muzzle*.32})`;ctx.beginPath();ctx.ellipse(25,17,11+force.muzzle*14,5+force.muzzle*6,.3,0,Math.PI*2);ctx.fill();}
     if(force.type===3){ctx.strokeStyle=`rgba(190,155,255,${.17+force.muzzle*.34})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(15,-9,9+Math.sin(force.age*3)*2,0,Math.PI*2);ctx.stroke();}
-    ctx.restore();}
+    ctx.restore();
+    if(force.muzzle>0){
+      const aim=force.aim??Math.atan2(s.player.y-force.y,s.player.x-force.x);ctx.save();ctx.translate(force.x,force.y);ctx.rotate(aim);
+      if(force.type===0){ctx.strokeStyle=`rgba(198,255,235,${force.muzzle})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(38,0);ctx.stroke();ctx.fillStyle='#efffe9';ctx.beginPath();ctx.arc(24,0,2.5,0,Math.PI*2);ctx.fill();}
+      else if(force.type===1){ctx.strokeStyle=`rgba(242,218,169,${force.muzzle})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(8,0);ctx.lineTo(37,0);ctx.stroke();ctx.fillStyle='#fff2cc';ctx.beginPath();ctx.moveTo(43,0);ctx.lineTo(33,-5);ctx.lineTo(33,5);ctx.closePath();ctx.fill();}
+      else if(force.type===2){const cone=ctx.createLinearGradient(14,0,54,0);cone.addColorStop(0,`rgba(255,237,166,${force.muzzle*.72})`);cone.addColorStop(1,'rgba(255,91,32,0)');ctx.fillStyle=cone;ctx.beginPath();ctx.moveTo(12,-5);ctx.quadraticCurveTo(34,-18,58,0);ctx.quadraticCurveTo(34,18,12,5);ctx.closePath();ctx.fill();}
+      else{ctx.strokeStyle=`rgba(222,195,255,${force.muzzle*.8})`;ctx.lineWidth=2;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(11,0);ctx.quadraticCurveTo(27,-11,43,0);ctx.stroke();}
+      ctx.restore();
+    }
+  }
 }
 function stepSamsaraPickups(dt){
   s.samsaraPickupTimer-=dt;
-  if(s.samsaraPickupTimer<=0&&s.samsaraPickups.length<3){const needs=[100-s.samsaraVitals.fuel,100-s.samsaraVitals.energy,100-s.samsaraVitals.crew,100-s.health/Math.max(1,s.maxHealth)*100];let kind=needs.map((need,index)=>({index,score:need+Math.random()*21})).sort((a,b)=>b.score-a.score)[0].index;s.samsaraPickups.push({kind,x:65+Math.random()*(W-130),y:-35,age:0,phase:Math.random()*6.28});s.samsaraPickupTimer=6+Math.random()*3;}
+  if(s.samsaraPickupTimer<=0&&s.samsaraPickups.length<3){
+    const hull=s.health/Math.max(1,s.maxHealth)*100,{needs,urgent}=samsaraNeedsPickup(s.samsaraVitals,hull);
+    if(urgent){const kind=needs.map((need,index)=>({index,score:need+Math.random()*12})).sort((a,b)=>b.score-a.score)[0].index;s.samsaraPickups.push({kind,x:65+Math.random()*(W-130),y:-35,age:0,phase:Math.random()*6.28});}
+    s.samsaraPickupTimer=urgent?samsaraPickupDelay(s.runLevel):2.5;
+  }
   for(const item of s.samsaraPickups){item.age+=dt;item.y+=dt*46;item.x+=Math.sin(item.age*1.25+item.phase)*dt*9;
-    if(Math.hypot(item.x-s.player.x,item.y-s.player.y)<39){item.collected=true;const labels=['Топливо','Энергия','Силы команды','Корпус'];if(item.kind===0)changeSamsaraResource('fuel',14);else if(item.kind===1)changeSamsaraResource('energy',13);else if(item.kind===2)changeSamsaraResource('crew',10);else{s.health=Math.min(s.maxHealth,s.health+2);renderHud();}burst(item.x,item.y,['#e8b85d','#75e9ed','#9ee08a','#d8c4f5'][item.kind],17);feedback(`${labels[item.kind]} восстановлены`);}
+    if(Math.hypot(item.x-s.player.x,item.y-s.player.y)<39){item.collected=true;const labels=['Топливо','Энергия','Силы команды','Корпус'],amount=samsaraPickupAmount(item.kind,s.runLevel);if(item.kind===0)changeSamsaraResource('fuel',amount);else if(item.kind===1)changeSamsaraResource('energy',amount);else if(item.kind===2)changeSamsaraResource('crew',amount);else{s.health=Math.min(s.maxHealth,s.health+amount);renderHud();}burst(item.x,item.y,['#e8b85d','#75e9ed','#9ee08a','#d8c4f5'][item.kind],17);feedback(`${labels[item.kind]} · +${amount}`);}
   }
   s.samsaraPickups=s.samsaraPickups.filter(item=>!item.collected&&item.y<playableHeight()+35);
 }
@@ -2452,7 +2621,7 @@ function listenTitle(){
 }
 const debrief=createDebrief({storage:localStorage,audio,overlay,action,enter:enterMenu,back:menuBack,setMode:()=>{s.mode='debrief';s.listening=false;s.keys.clear();},isActive:()=>s.mode==='debrief'});
 function recordHydraMistake(){if(s.enemy?.chord){debrief.record({kind:'hydra',chord:s.enemy.chord,level:expedition.level,tonic:(s.route.register??48)+s.route.key});s.enemy.reviewRecorded=true;}}
-const expedition=createExpedition({intelligence,onMistake:item=>debrief.record(item),onSamsaraArtifact:collectSamsaraArtifact,onSamsaraChallenge:fraction=>{changeSamsaraResource('energy',fraction>0?Math.round(14*fraction):-5);if(fraction>0){changeSamsaraResource('fuel',Math.round(5*fraction));changeSamsaraResource('crew',Math.round(3*fraction));}},s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
+const expedition=createExpedition({intelligence,onMistake:item=>debrief.record(item),onSamsaraArtifact:collectSamsaraArtifact,onSamsaraChallenge:fraction=>{changeSamsaraResource('energy',fraction>0?Math.round(6*fraction):-5);if(fraction>0){changeSamsaraResource('fuel',Math.round(3*fraction));changeSamsaraResource('crew',Math.max(1,Math.round(fraction)));}},s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
 const stars=Array.from({length:85},()=>({x:Math.random()*480,y:Math.random()*1100,z:.25+Math.random(),r:Math.random()*1.3+.3}));
 const MACHINES=['РАЗВЕДЧИК','КОРВЕТ','КРЕЙСЕР','КРЕПОСТЬ'];
 const MACHINE_CROPS=[[135,20,380,490],[675,20,490,505],[60,530,520,640],[588,515,666,720]];
@@ -2560,7 +2729,7 @@ function menuBack(){
   requestAnimationFrame(()=>{if(currentMenu===target)$('overlay').scrollTop=target.scroll;});
 }
 function overlay(html){
-  document.querySelector('.cabinet').classList.add('menu-open');$('overlay').classList.remove('art-overlay');
+  document.querySelector('.cabinet').classList.add('menu-open');$('overlay').classList.remove('art-overlay','world-selector-overlay');
   $('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;
   if(currentMenu?.id!=='home'){
     const back=document.createElement('button');back.id='menu-back';back.className='menu-back';back.type='button';
@@ -2621,7 +2790,7 @@ function syncPads(){
   $('weapon-tabs').hidden=true;
   $('weapon-root').setAttribute('aria-pressed',String(weaponTab==='bass'));$('weapon-type').setAttribute('aria-pressed',String(weaponTab==='quality'));
   document.querySelectorAll('.pad').forEach(b=>{
-    const broken=s.enemy?.shields[b.dataset.kind];b.disabled=s.mode!=='active'||s.listening||!!broken||special;
+    const broken=s.enemy?.shields[b.dataset.kind];b.disabled=s.mode!=='active'||!!broken||special;
     b.disabled=b.disabled||b.dataset.locked==='1';b.classList.toggle('selected',!!broken&&(b.dataset.kind==='bass'?Number(b.dataset.value)===s.enemy.chord.offset:b.dataset.value===family(s.enemy.chord.quality)));
   });
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening||['reveal','roulette'].includes(expedition.pauseKind);
@@ -2635,7 +2804,7 @@ function syncPads(){
 function startScreen(){
   s.mode='start';
   renderHud();buildPads();
-  openFlightConsole();return;
+  openWorldCarousel();return;
   overlay('<span class="eyebrow">STEAM / SOUND / SPACE</span><h1>Signal<br><span class="accent">Expedition.</span></h1><p>Лови звуки. Обходи скалы.<br>Пробивай путь к своей музыке.</p>');
   $('overlay').firstElementChild.insertAdjacentHTML('afterbegin','<div class="console-hardware" aria-hidden="true"><i class="console-speaker"></i><i class="console-lamp"></i><i class="console-fader"></i><i class="console-fader" style="--pos:5px"></i><i class="console-fader" style="--pos:27px"></i><i class="console-fader" style="--pos:11px"></i><i class="console-lamp"></i><i class="console-speaker"></i></div>');
   PILOTS.forEach((pilot,i)=>{const b=action(pilot.name,()=>startRun(pilot.sector,i),true);b.className='pilot-choice';const info=document.createElement('small');info.textContent=pilot.description;b.append(info);});
@@ -2647,6 +2816,50 @@ function startScreen(){
   action('Ангар · магазин',openHangar,true);
   const note=document.createElement('p');note.className='quiet-note';note.textContent=`Включи звук · наушники помогут${record().best?' · рекорд '+record().best:''}`;$('overlay').firstChild.append(note);
 }
+
+function openWorldCarousel(){
+  enterMenu('home',openWorldCarousel,true);audio.stop();s.listening=false;s.mode='start';
+  // The college selector is a neutral root shared by every world. A saved
+  // Samsara choice must not leak its padded modal skin into this full-screen
+  // carousel; selectPlanet() restores the world skin when the player enters.
+  document.body.classList.remove('samsara-world');
+  document.querySelector('.cabinet')?.classList.remove('floating-deck','rhythm-room');
+  const worlds=PLANETS.filter(planet=>planet.available),initial=Math.max(0,worlds.findIndex(planet=>planet.id===s.planetChoice));
+  overlay(`<main class="world-selector-shell observatory" id="world-selector" tabindex="0" aria-label="Выбор планеты Space Music College">
+    <header class="world-brand" aria-label="Space Music College"><span>SPACE MUSIC</span><strong>COLLEGE</strong><i aria-hidden="true"></i></header>
+    <div class="world-frame-toggle" role="group" aria-label="Вариант обрамления"><button type="button" data-world-frame="cockpit" aria-pressed="false">01</button><button type="button" data-world-frame="observatory" aria-pressed="true">02</button></div>
+    <div class="world-orbit" id="world-orbit"></div><canvas id="world-debris" aria-hidden="true"></canvas>
+    <section class="world-destination" aria-live="polite"><p id="world-kicker"></p><h1 id="world-name"></h1><div id="world-description"></div></section>
+    <nav class="world-navigation" aria-label="Переключение планет"><button id="world-previous" type="button" aria-label="Предыдущая планета">‹</button><div id="world-markers"></div><button id="world-next" type="button" aria-label="Следующая планета">›</button></nav>
+    <p class="world-gesture">СВАЙПНИ · ВЫБЕРИ МИР</p><button id="world-enter" class="world-enter" type="button">ОТКРЫТЬ МИР <span>→</span></button>
+    <footer class="world-status"><span>НАВИГАЦИЯ ГОТОВА</span><span>BUILD 087</span></footer>
+  </main>`);
+  $('overlay').classList.add('art-overlay','world-selector-overlay');
+  const root=$('world-selector'),orbit=$('world-orbit'),markers=$('world-markers');let position=initial,target=initial,drag=null,suppressClickUntil=0;
+  const mod=(value,total)=>((value%total)+total)%total,shortest=(distance,total)=>mod(distance+total/2,total)-total/2;
+  const nodes=worlds.map((world,index)=>{
+    const button=document.createElement('button');button.className='world-planet';button.type='button';button.dataset.world=world.id;button.setAttribute('aria-label',world.title);
+    button.innerHTML=`<img src="${world.art}" alt=""><span>${world.title}</span>`;orbit.append(button);
+    const marker=document.createElement('button');marker.type='button';marker.className='world-marker';marker.setAttribute('aria-label',`Выбрать: ${world.title}`);marker.addEventListener('click',()=>choose(index));markers.append(marker);
+    button.addEventListener('click',()=>{if(performance.now()>=suppressClickUntil)choose(index);});return {button,marker};
+  });
+  function choose(index){target+=shortest(index-mod(target,worlds.length),worlds.length);target=Math.round(target);paint();}
+  function step(delta){target=Math.round(target)+delta;position=target;paint();}
+  function paint(){
+    const width=root.clientWidth||480,height=root.clientHeight||800;
+    nodes.forEach((node,index)=>{const distance=shortest(index-position,worlds.length),visible=Math.abs(distance)<1.6,angle=distance*2*Math.PI/3,depth=(1+Math.cos(angle))/2,scale=.34+.66*depth,x=width*(.5+Math.sin(angle)*.34),y=height*(.405+Math.cos(angle)*.105);node.button.hidden=!visible;node.button.style.transform=`translate(${x-width*.34}px,${y-width*.34}px) scale(${scale})`;node.button.style.zIndex=String(Math.round(depth*100)+1);node.button.style.filter=`brightness(${.68+.32*depth})`;});
+    const index=mod(Math.round(position),worlds.length),world=worlds[index];$('world-kicker').textContent=`${world.number} / ${world.kicker}`;$('world-name').textContent=world.title;$('world-description').textContent=world.description;nodes.forEach((node,i)=>{node.marker.setAttribute('aria-current',String(i===index));node.button.setAttribute('aria-pressed',String(i===index));});
+  }
+  $('world-previous').addEventListener('click',()=>step(-1));$('world-next').addEventListener('click',()=>step(1));
+  root.addEventListener('keydown',event=>{if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();step(event.key==='ArrowLeft'?-1:1);}if(event.key==='Enter')$('world-enter').click();});
+  orbit.addEventListener('pointerdown',event=>{if(event.button!==0)return;drag={id:event.pointerId,x:event.clientX,start:position,moved:false,planet:event.target.closest('.world-planet')?.dataset.world};target=position;orbit.setPointerCapture(event.pointerId);orbit.classList.add('dragging');});
+  orbit.addEventListener('pointermove',event=>{if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x;drag.moved ||= Math.abs(dx)>7;position=drag.start-dx/(Math.max(320,root.clientWidth)*.65);target=position;paint();});
+  function release(event){if(!drag||drag.id!==event.pointerId)return;const {moved,start,planet}=drag;drag=null;orbit.classList.remove('dragging');suppressClickUntil=performance.now()+250;if(moved){const delta=position-start;target=Math.round(Math.abs(delta)>.12?start+Math.sign(delta)*Math.max(1,Math.round(Math.abs(delta))):start);}else if(planet)target=worlds.findIndex(world=>world.id===planet);position=target;paint();}
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])orbit.addEventListener(type,release);
+  root.querySelectorAll?.('[data-world-frame]').forEach(button=>button.addEventListener('click',()=>{const observatory=button.dataset.worldFrame==='observatory';root.classList.toggle('observatory',observatory);root.querySelectorAll('[data-world-frame]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));}));
+  $('world-enter').addEventListener('click',()=>{const world=worlds[mod(Math.round(position),worlds.length)];selectPlanet(world.id);if(world.ambient){location.href=world.ambient;return;}world.id==='samsara'?openSamsaraHome():openFlightConsole();});
+  position=target;paint();requestAnimationFrame(paint);root.focus?.({preventScroll:true});
+}
 function consoleButton(label,box,callback,selected=false){
   const b=document.createElement('button');b.className='console-hit';
   b.dataset.label=label;b.setAttribute('aria-label',label);b.title=label;b.setAttribute('aria-pressed',String(selected));
@@ -2655,7 +2868,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 086</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 087</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -2700,21 +2913,19 @@ function openSamsaraGallery(){
   action('Вернуться',openSamsaraHome,true);
 }
 function selectPlanet(choice){
-  if(!['original','samsara'].includes(choice))return;
+  if(!PLANETS.some(planet=>planet.available&&planet.id===choice))return;
   s.planetChoice=choice;
+  audio.setWorld?.(choice);
   document.body.classList.toggle('samsara-world',choice==='samsara');
+  // The root carousel temporarily removes the in-flight deck so its artwork
+  // can fill the screen. Restore the translucent full-field layout as soon as
+  // a playable world is selected; otherwise Samsara falls back to the old
+  // separate lower panel after every trip through the planet menu.
+  document.querySelector('.cabinet')?.classList.toggle('floating-deck',floatingDeck);
   try{localStorage.setItem(PLANET_CHOICE_KEY,choice);}catch{}
 }
 function openPlanetSettings(){
-  enterMenu('planets',openPlanetSettings);
-  overlay('<span class="eyebrow">КАРТА ПЛАНЕТ</span><h2>Куда полетим?</h2><p class="compact">Три мира доступны: боевой маршрут, Сад Эха и Самсара.</p><div id="planet-grid" class="planet-grid"></div>');
-  $('overlay').firstElementChild.classList.add('planet-menu');
-  for(const planet of PLANETS){
-    const card=document.createElement('button');card.className=`planet-card ${planet.tone}${planet.id===s.planetChoice?' selected':''}`;card.disabled=!planet.available;
-    card.innerHTML=`<span>${planet.number}</span><b>${planet.title}</b><small>${planet.description}</small><i>${planet.available?'ЛЕТЕТЬ':'СКОРО'}</i>`;
-    if(planet.available)card.addEventListener('click',()=>{if(planet.ambient){location.href=planet.ambient;return;}selectPlanet(planet.id);startRun(PILOTS[consolePilot].sector,consolePilot);});$('planet-grid').append(card);
-  }
-  action('← В ангар',openFlightConsole,true);
+  openWorldCarousel();
 }
 function openLearningSettings(){
   enterMenu('learning',openLearningSettings);
@@ -2763,7 +2974,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 086 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 087 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и all tones · ловля нот</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -2805,7 +3016,7 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
     await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Основная графика · ${ready}/${total}</h2><p>Корабль и поверхность планеты</p>`);});if(token!==runToken)return;
     if(s.planetChoice==='samsara')await prepareSamsara();if(token!==runToken)return;
     const build=shipBuild();Object.assign(s,{sector,bookMission,runLevel:level,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
-    s.samsaraVitals={fuel:86,energy:78,crew:90};s.samsaraInventory=Array(ARTIFACTS.length).fill(0);s.samsaraForces=[];s.samsaraForceTimer=5;s.samsaraForceIndex=0;s.samsaraPickups=[];s.samsaraPickupTimer=2.5;s.samsaraHudTimer=0;
+    s.samsaraVitals=samsaraStartingVitals(level);s.samsaraInventory=emptySamsaraInventory();s.samsaraForces=[];s.samsaraForceTimer=5;s.samsaraForceIndex=0;s.samsaraPickups=[];s.samsaraPickupTimer=2.5;s.samsaraHudTimer=0;s.samsaraFailure=null;
     const safeY=Math.max(145,playableHeight()-66);s.player={x:W/2,y:safeY,tx:W/2,ty:safeY};
     document.body.classList.toggle('samsara-world',s.planetChoice==='samsara');
     expedition.reset(level);beginSector(sector);renderSamsaraInventory();document.querySelector('footer span').textContent=s.planetChoice==='samsara'?'Веди лотос · собирай цветы · уклоняйся':'Тяни корабль · стрельба автоматическая';document.querySelector('.hud-right .micro').textContent=s.planetChoice==='samsara'?'КОРПУС ЛОТОСА':'ЩИТ КОРАБЛЯ';warmOptionalImages();
@@ -2817,7 +3028,7 @@ function beginSector(sector){
   weaponTab='bass';
   s.sector=sector;s.cleared=0;s.position=0;s.routeNumber=0;s.health=s.maxHealth||shipBuild().maxHealth;s.bullets=[];s.shots=[];s.enemy=null;s.drones=[];s.overdrive=0;s.waveTimer=s.planetChoice==='samsara'&&s.runLevel===0?9:1;s.capsule=null;s.capsuleTimer=0;s.hydraBlast=null;s.groundCombat=false;
   if(s.planetChoice==='samsara'){const safeY=Math.max(145,playableHeight()-66);s.player={x:W/2,y:safeY,tx:W/2,ty:safeY};}
-  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?.route?s.bookMission.route:s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
+  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?.route?s.bookMission.route:s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);if(s.planetChoice==='samsara')s.route.register=Math.min(s.route.register??48,45);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
   const c=SECTORS[sector];
   const map=s.bookMission?`<div class="battle-map"><i class="home">HOME</i>${s.route.sequence.map((_,i)=>`<i><b>${i+1}</b><span>HYDRA</span></i>`).join('')}</div>`:'';
   overlay(`<span class="eyebrow">${s.bookMission?s.route.code:`СЕКТОР 0${sector+1} / ${c.name.toUpperCase()}`}</span><h2>${s.bookMission?`${s.route.sequence.length} целей · гармонический маршрут`:c.title}</h2><p>${s.bookMission?'Home звучит перед стартом. Затем каждая гидра продолжает одну настоящую последовательность.':s.planetChoice==='samsara'?'Ступень и тип аккорда — два независимых ответа. Каждый верный сигнал ослабляет хранителя и возвращает силы.':c.description}</p>${map}<p class="compact">${s.planetChoice==='samsara'?'Перемещай лотос, уклоняйся и собирай цветы. Накопленные артефакты над ступенями нажимаются вручную и рассеивают силы противников. Верные ответы пополняют топливо и энергию.':s.bookMission?'Все аккорды звучат вертикально. Перед целью услышишь до трёх предыдущих аккордов маршрута.':sector===0?'Во время сигнала гидра не атакует. Тяни корабль пальцем; правильная кнопка заряжает выстрел.':sector===1?'I, IV и V — ступени относительно тоники. Цифровка написана прямо на оружии.':'Бас даёт усиление сразу. Два пробитых щита уничтожают гидру. Ошибка не восстанавливает уже пробитый щит.'}</p>`);
@@ -2993,7 +3204,7 @@ function buildBookPads(){
 }
 function answerBookChord(choice,button){
   const {offset,quality}=choice;
-  if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
+  if(s.mode!=='active'||!s.enemy||expedition.busy)return;
   const chord=s.enemy.chord,correct=chordAnswerKey(choice)===chordAnswerKey(chord);
   if(correct){const attempts=s.attempts,recognized=s.correct;answer('bass',chord.offset,button);answer('quality',chord.quality,button);s.attempts=attempts+1;s.correct=recognized+1;return;}
   recordHydraMistake();
@@ -3011,13 +3222,13 @@ function playCue(referenceOnly=false){
   });
 }
 function answer(kind,value,button){
-  if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
+  if(s.mode!=='active'||!s.enemy||expedition.busy)return;
   const outcome=answerResult(s.enemy.chord,s.enemy.shields,kind,value);if(outcome.ignored)return;
   intelligence.record('hydra-'+kind,kind==='bass'?s.enemy.chord.offset:s.enemy.chord.quality,outcome.correct?1:0);
   s.attempts++;s.stats[kind][outcome.correct?'hit':'miss']++;
   if(outcome.correct){
     s.correct++;s.enemy.shields=outcome.shields;s.beam=.3;s.enemy.hit=.25;s.score+=kind==='bass'?100:150;awardScrap(kind==='bass'?7:10);
-    if(s.planetChoice==='samsara'){changeSamsaraResource(kind==='bass'?'fuel':'energy',kind==='bass'?6:8);changeSamsaraResource('crew',2);audio.answerFeedback({world:'samsara',correct:true,complete:outcome.destroyed});}
+    if(s.planetChoice==='samsara'){changeSamsaraResource(kind==='bass'?'fuel':'energy',kind==='bass'?2:3);if(outcome.destroyed)changeSamsaraResource('crew',1);audio.answerFeedback({world:'samsara',correct:true,complete:outcome.destroyed});}
       if(kind==='bass'){s.power=Math.min(3,s.power+1);s.overdrive=7;feedback(s.planetChoice==='samsara'?'Ступень узнана · запас топлива пополнен':'Щит пробит · ВЕЕРНЫЙ ОГОНЬ');}
     else feedback(`${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.glyph??s.enemy.chord.quality} · тип распознан`);
     if(!outcome.destroyed)weaponTab=kind==='bass'?'quality':'bass';
@@ -3041,7 +3252,7 @@ function defeatHydra(recognized){
       s.score+=(recognized?200:60)+Math.min(s.combo,10)*25;awardScrap(24+Math.min(s.combo,8)*2);s.resolveTimer=s.bookMission?1.4:6;s.mode='resolving';s.bullets=[];s.overdrive=Math.max(s.overdrive,6);s.waveTimer=.3;
       const label=DEGREES[s.enemy.chord.offset];
       const repaired=recognized&&s.health<s.maxHealth?(s.health=Math.min(s.maxHealth,s.health+1),1):0;
-      if(recognized&&s.planetChoice==='samsara'){changeSamsaraResource('fuel',4);changeSamsaraResource('energy',5);changeSamsaraResource('crew',3);}
+      if(recognized&&s.planetChoice==='samsara'){changeSamsaraResource('fuel',2);changeSamsaraResource('energy',2);changeSamsaraResource('crew',1);}
       feedback(`${s.sector>=2?chordSymbol(s.enemy.chord):label.glyph} · ${recognized?'щиты пробиты':'корпус уничтожен огнём'}${repaired?' · +1 ЩИТ':''}`);
       $('recognized-chord').textContent=s.sector>=2?chordSymbol(s.enemy.chord):label.glyph;
       beginHydraDestruction(s.enemy);
@@ -3073,9 +3284,10 @@ function finish(won,revisit=false){
   s.mode=won?'finished':'gameover';audio.stop();s.listening=false;const returnScrap=Math.max(12,Math.floor(s.score/90));if(!revisit)awardScrap(returnScrap);save();syncPads();
   const accuracy=s.attempts?Math.round(s.correct/s.attempts*100):0;
   const failedChord=!won&&s.enemy?.chord?`<p class="failed-chord">${s.planetChoice==='samsara'?'ПОСЛЕДНИЙ ХРАНИТЕЛЬ':'ПОСЛЕДНЯЯ ГИДРА'} · <strong>${chordSymbol(s.enemy.chord)}</strong><br><small>${DEGREES[s.enemy.chord.offset].label} · ${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.label??s.enemy.chord.quality}</small></p>`:'';
-  overlay(`<span class="eyebrow">${s.bookMission?s.route.code:won?'МАРШРУТ ЗАВЕРШЁН':'КОРАБЛЬ ВЕРНУЛСЯ НА БАЗУ'}</span><h2>${won?'Маршрут взят.':'Ещё один вылет?'}</h2><p>${won&&s.bookMission?'Все гидры уничтожены. Сейчас маршрут прозвучит целиком вертикальными аккордами.':won?'Ступени и цифровки аккордов становятся частью твоего оружия.':'Сигналы становятся знакомее с каждым полётом. Попробуем этот сектор ещё раз.'}</p>${failedChord}<div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>◉ ${returnScrap}</strong><span>CREDITS</span></div><div><strong>${accuracy}%</strong><span>${s.planetChoice==='samsara'?'ТОЧНОСТЬ':'ПОПАДАНИЙ'}</span></div></div><p class="compact">Бас: ${s.stats.bass.hit}/${s.stats.bass.hit+s.stats.bass.miss} · Тип: ${s.stats.quality.hit}/${s.stats.quality.hit+s.stats.quality.miss}<br>Капсулы: ${s.intervalStats.caught} верных · ${s.intervalStats.wrong} чужих</p>`);
+  const failureReason=!won&&s.planetChoice==='samsara'&&s.samsaraFailure?`<p class="samsara-failure-reason">${SAMSARA_RESOURCE_LABELS[s.samsaraFailure]}</p>`:'';
+  overlay(`<span class="eyebrow">${s.bookMission?s.route.code:won?'МАРШРУТ ЗАВЕРШЁН':'КОРАБЛЬ ВЕРНУЛСЯ НА БАЗУ'}</span><h2>${won?'Маршрут взят.':'Ещё один вылет?'}</h2><p>${won&&s.bookMission?'Все гидры уничтожены. Сейчас маршрут прозвучит целиком вертикальными аккордами.':won?'Ступени и цифровки аккордов становятся частью твоего оружия.':s.planetChoice==='samsara'?'Круг прерван. Следи за четырьмя шкалами, собирай нужные цветы и не прекращай движение.':'Сигналы становятся знакомее с каждым полётом. Попробуем этот сектор ещё раз.'}</p>${failureReason}${failedChord}<div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>◉ ${returnScrap}</strong><span>CREDITS</span></div><div><strong>${accuracy}%</strong><span>${s.planetChoice==='samsara'?'ТОЧНОСТЬ':'ПОПАДАНИЙ'}</span></div></div><p class="compact">Бас: ${s.stats.bass.hit}/${s.stats.bass.hit+s.stats.bass.miss} · Тип: ${s.stats.quality.hit}/${s.stats.quality.hit+s.stats.quality.miss}<br>Капсулы: ${s.intervalStats.caught} верных · ${s.intervalStats.wrong} чужих</p>`);
   if(won&&s.bookMission){audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true);action('↻ Прослушать весь маршрут',()=>audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true),true);}
-  action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другая тональность'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(s.sector===3?3:0):s.sector,s.runLevel));
+  action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другая тональность'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(PILOTS[s.runLevel]?.sector??s.sector):s.sector,s.runLevel));
   action(`Разбор полёта · ${debrief.log.pendingCount} ошибок`,debrief.open);
   action('Выбрать уровень',()=>{s.mode='start';expedition.reset();startScreen();},true);
   action('Ангар · потратить детали',openHangar,true);
@@ -3102,9 +3314,10 @@ async function resume(){
   }catch(e){feedback(e.message,true);}
 }
 function burst(x,y,color,count){for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=30+Math.random()*150;s.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:.5+Math.random()*.7,color});}if(s.particles.length>350)s.particles.splice(0,s.particles.length-350);}
-function shipHit(){
+function shipHit(sourceType=null){
   if(s.invulnerable>0||expedition.invincible||expedition.safeNoteFlight||expedition.pausedCombat||!['active','resolving'].includes(s.mode))return;
-  s.health--;s.invulnerable=s.planetChoice==='samsara'?(s.runLevel===0?3.2:2.1):1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);if(s.planetChoice==='samsara'){changeSamsaraResource('crew',-6);changeSamsaraResource('energy',-4);}feedback(`ПОПАДАНИЕ · −1 ЩИТ · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0||s.planetChoice==='samsara'&&s.samsaraVitals.crew<=0)finish(false);
+  const samsaraImpact=s.planetChoice==='samsara'&&Number.isInteger(sourceType),impactColor=samsaraImpact?SAMSARA_FORCES[sourceType].color:'#ff7ea7';
+  s.health--;s.invulnerable=s.planetChoice==='samsara'?(s.runLevel===0?3.2:2.1):1.4;s.combo=0;s.flash=.22;s.shake=Math.max(s.shake,.68);burst(s.player.x,s.player.y,impactColor,28);s.rings.push({x:s.player.x,y:s.player.y,age:0,impact:true,color:impactColor});if(s.planetChoice==='samsara'){changeSamsaraResource('crew',-7);changeSamsaraResource('energy',-5);audio.answerFeedback({world:'samsara',correct:false,impact:true});}feedback(`${samsaraImpact?SAMSARA_FORCES[sourceType].name.toUpperCase()+' · УДАР':'ПОПАДАНИЕ'} · −1 ЩИТ · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0||s.planetChoice==='samsara'&&s.samsaraVitals.crew<=0){s.samsaraFailure=s.health<=0?'hull':'crew';finish(false);}
 }
 function launchCapsule(){
   const capsule=createCapsule(s.sector);s.capsule={...capsule,x:70+Math.random()*(W-140),y:Math.max(130,H*.28),age:0,speed:Math.max(45,H*.115)};
@@ -3132,7 +3345,6 @@ function resolveCapsule(caught){
 }
 function update(dt){
   if(['paused','study','trainer','debrief'].includes(s.mode))return;
-  if(!['active','resolving'].includes(s.mode))
   clock+=dt;
   if(s.feedbackTimer>0){s.feedbackTimer-=dt;if(s.feedbackTimer<=0)$('feedback').classList.remove('visible');}
   s.flash=Math.max(0,s.flash-dt);s.beam=Math.max(0,s.beam-dt);s.invulnerable=Math.max(0,s.invulnerable-dt);
@@ -3141,7 +3353,7 @@ function update(dt){
   const playing=['active','resolving'].includes(s.mode);
   stepGround(dt,playing);
   if(playing){
-    if(s.planetChoice==='samsara'&&!s.listening){s.samsaraVitals.fuel=clamp(s.samsaraVitals.fuel-dt*.21,0,100);s.samsaraVitals.energy=clamp(s.samsaraVitals.energy-dt*.10,0,100);if(s.samsaraVitals.fuel<12||s.samsaraVitals.energy<12)s.samsaraVitals.crew=clamp(s.samsaraVitals.crew-dt*.12,0,100);s.samsaraHudTimer-=dt;if(s.samsaraHudTimer<=0){renderSamsaraResources();s.samsaraHudTimer=.25;}if(s.samsaraVitals.fuel<=0||s.samsaraVitals.energy<=0||s.samsaraVitals.crew<=0){finish(false);return;}}
+    if(s.planetChoice==='samsara'){const survival=stepSamsaraVitals(s.samsaraVitals,dt,{level:s.runLevel,forces:s.samsaraForces.length});s.samsaraVitals=survival.vitals;s.samsaraHudTimer-=dt;if(s.samsaraHudTimer<=0){renderSamsaraResources();s.samsaraHudTimer=.25;}if(survival.depleted){s.samsaraFailure=survival.depleted;finish(false);return;}}
     const p=s.player,speed=shipBuild().speed*dt;
     if(s.keys.has('arrowleft')||s.keys.has('a'))p.tx-=speed;
     if(s.keys.has('arrowright')||s.keys.has('d'))p.tx+=speed;
@@ -3169,7 +3381,7 @@ function update(dt){
         if(s.planetChoice==='samsara'&&b.forceType===3){const a=Math.atan2(p.y-b.y,p.x-b.x),speed=Math.hypot(b.vx,b.vy);b.vx+=Math.cos(a)*dt*11;b.vy+=Math.sin(a)*dt*11;const magnitude=Math.hypot(b.vx,b.vy)||1;b.vx=b.vx/magnitude*speed;b.vy=b.vy/magnitude*speed;}
         b.x+=b.vx*dt;b.y+=b.vy*dt;
         if(Math.hypot(b.x-p.x,b.y-(p.y-6))<b.r+11&&s.invulnerable===0){
-          b.y=H+100;shipHit();
+          b.y=H+100;shipHit(b.forceType);
         }
       });
     }
@@ -3232,20 +3444,32 @@ function drawHydraGun(port,e){
   ctx.restore();
 }
 function drawSamsaraHydra(e,size){
-  const time=clock*.32;
-  ctx.save();
-  ctx.fillStyle='#041b1c9c';ctx.beginPath();ctx.ellipse(3,10,size*.59,size*.51,0,0,Math.PI*2);ctx.fill();
-  for(let layer=0;layer<2;layer++)for(let i=0;i<12;i++){
-    const a=i*Math.PI/6+time*(layer?.36:-.22),r=size*(layer?.37:.25);
-    ctx.save();ctx.rotate(a);ctx.translate(0,-r);
-    const petal=ctx.createLinearGradient(0,-size*.25,0,size*.15);
-    petal.addColorStop(0,layer?'#d8bd8d':'#a7d2b1');petal.addColorStop(.42,layer?'#467f78':'#24635f');petal.addColorStop(1,'#0b3738');
-    ctx.fillStyle=petal;ctx.strokeStyle=layer?'#e2cba59c':'#9fcdb694';ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(0,-size*.30);ctx.bezierCurveTo(size*.20,-size*.14,size*.15,size*.09,0,size*.19);ctx.bezierCurveTo(-size*.15,size*.09,-size*.20,-size*.14,0,-size*.30);ctx.fill();ctx.stroke();
-    ctx.strokeStyle='#e2d5af6b';ctx.beginPath();ctx.moveTo(0,-size*.23);ctx.lineTo(0,size*.13);ctx.stroke();ctx.restore();
+  const time=clock*.22,variant=e.model??0,hull=e.maxHull?clamp(e.hull/e.maxHull,0,1):1,breath=1+Math.sin(clock*1.15)*.012;
+  const petal=(length,width,inner,outer,stroke)=>{
+    const fill=ctx.createLinearGradient(0,-length,0,length*.52);fill.addColorStop(0,outer);fill.addColorStop(.46,inner);fill.addColorStop(1,'#092f31');ctx.fillStyle=fill;ctx.strokeStyle=stroke;ctx.lineWidth=1.25;
+    ctx.beginPath();ctx.moveTo(0,-length);ctx.bezierCurveTo(width,-length*.62,width*.82,length*.20,0,length*.52);ctx.bezierCurveTo(-width*.82,length*.20,-width,-length*.62,0,-length);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#f2dfb852';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(0,-length*.82);ctx.quadraticCurveTo(width*.08,-length*.08,0,length*.38);ctx.stroke();
+  };
+  ctx.save();ctx.scale(breath,breath);
+  ctx.fillStyle='#020f1199';ctx.beginPath();ctx.ellipse(5,size*.17,size*.72,size*.52,0,0,Math.PI*2);ctx.fill();
+  // Four root-like braces make the mandala read as a grounded base.
+  ctx.lineCap='round';for(const side of [-1,1])for(const level of [0,1]){ctx.strokeStyle=level?'#b99b6370':'#315f596e';ctx.lineWidth=level?2.2:5;ctx.beginPath();ctx.moveTo(side*size*.13,size*.25);ctx.bezierCurveTo(side*size*.29,size*.38,side*size*(.43+level*.08),size*.48,side*size*(.66-level*.04),size*.43);ctx.stroke();}
+  const bed=ctx.createRadialGradient(-size*.08,-size*.13,size*.04,0,0,size*.60);bed.addColorStop(0,'#326f67');bed.addColorStop(.42,'#153f3d');bed.addColorStop(.76,'#0a2629');bed.addColorStop(1,'#06191b');ctx.fillStyle=bed;ctx.strokeStyle='#cdb27b8a';ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(0,0,size*.57,0,Math.PI*2);ctx.fill();ctx.stroke();
+  // Outer botanical crown: broad leaves, slightly irregular so it stays alive.
+  const outerCount=14+variant*2;for(let i=0;i<outerCount;i++){
+    const a=i*Math.PI*2/outerCount+time*.18,r=size*(.44+Math.sin(i*2.17)*.012);ctx.save();ctx.rotate(a);ctx.translate(0,-r);ctx.rotate(Math.sin(clock*.7+i*1.7)*.018);petal(size*.25,size*.105,'#27665f',i%2?'#dbc28e':'#92c6a8','#e6d0a38c');ctx.restore();
   }
-  const core=images['samsara-art-overdrive'];
-  if(core?.complete&&core.naturalWidth){const k=size*.75/Math.max(core.naturalWidth,core.naturalHeight);ctx.shadowColor='#cbe9be';ctx.shadowBlur=17;ctx.drawImage(core,-core.naturalWidth*k/2,-core.naturalHeight*k/2,core.naturalWidth*k,core.naturalHeight*k);ctx.shadowBlur=0;}
+  // Dark inner leaves rotate the other way and give the base visible depth.
+  const innerCount=10+variant;for(let i=0;i<innerCount;i++){
+    const a=i*Math.PI*2/innerCount-time*.27,r=size*.285;ctx.save();ctx.rotate(a);ctx.translate(0,-r);petal(size*.205,size*.082,'#174e4d',i%2?'#6fa78f':'#d2b678','#b8d4ae7d');ctx.restore();
+  }
+  // Fine brass rings and seed beads replace the old generic symbol.
+  for(const [radius,color,dash,speed] of [[.45,'#d9bd818f',[2,5],.25],[.355,'#92cfb983',[9,4],-.31],[.235,'#ead69cb3',[1,4],.42]]){ctx.save();ctx.rotate(time*speed);ctx.strokeStyle=color;ctx.lineWidth=1.4;ctx.setLineDash(dash);ctx.beginPath();ctx.arc(0,0,size*radius,0,Math.PI*2);ctx.stroke();ctx.restore();}
+  const spokes=8;ctx.strokeStyle='#c9b47b48';ctx.lineWidth=1;for(let i=0;i<spokes;i++){const a=i*Math.PI*2/spokes+time*.08;ctx.beginPath();ctx.moveTo(Math.cos(a)*size*.12,Math.sin(a)*size*.12);ctx.lineTo(Math.cos(a)*size*.36,Math.sin(a)*size*.36);ctx.stroke();}
+  for(let i=0;i<8;i++){ctx.save();ctx.rotate(i*Math.PI/4-time*.34);ctx.translate(0,-size*.145);petal(size*.13,size*.057,'#6fa18a','#ead49e','#fff0bdad');ctx.restore();}
+  const core=ctx.createRadialGradient(-size*.035,-size*.045,0,0,0,size*.15);core.addColorStop(0,e.hit>0?'#fffbe8':'#eff8c9');core.addColorStop(.27,'#e9c47c');core.addColorStop(.58,'#24756a');core.addColorStop(1,'#071c22');ctx.fillStyle=core;ctx.shadowColor=e.hit>0?'#fff1ad':'#86e0c1';ctx.shadowBlur=13+Math.sin(clock*2.2)*3;ctx.beginPath();ctx.arc(0,0,size*.15,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  ctx.save();ctx.rotate(-time*.72);ctx.strokeStyle='#fff0bdcf';ctx.lineWidth=1.3;ctx.beginPath();for(let i=0;i<16;i++){const a=-Math.PI/2+i*Math.PI/8,r=size*(i%2?.065:.12);const x=Math.cos(a)*r,y=Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.closePath();ctx.stroke();ctx.restore();
+  if(hull<.55){ctx.strokeStyle=`rgba(255,132,91,${.62-hull*.45})`;ctx.lineWidth=1.4;for(let i=0;i<4;i++){const a=i*1.7+1;ctx.beginPath();ctx.moveTo(Math.cos(a)*size*.08,Math.sin(a)*size*.08);ctx.lineTo(Math.cos(a+.2)*size*.23,Math.sin(a+.2)*size*.23);ctx.stroke();}}
   for(const port of e.guns||enemyGuns(e.model??0)){
     const ruined=port.hp<=0||port.destroyed;
     ctx.save();ctx.translate(port.x,port.y);
@@ -3278,7 +3502,7 @@ function draw(){
   const activeEnemy=s.enemy&&s.mode!=='resolving'&&!expedition.safeNoteFlight&&!s.enemy.suspended;
   if(activeEnemy||s.hydraBlast||s.mode==='start'){
     const e=s.hydraBlast?.enemy||(activeEnemy?s.enemy:{x:W/2,y:H*.37,age:clock,shields:{bass:false,quality:false},hit:0});
-    const model=e.model??0,size=machineSize(model),radius=size*.57;
+    const model=e.model??0,size=machineSize(model),radius=size*(s.planetChoice==='samsara'?.72:.57);
     const halo=ctx.createRadialGradient(e.x,e.y,15,e.x,e.y,radius*1.3);halo.addColorStop(0,'#b44e892b');halo.addColorStop(1,'#b44e8900');ctx.fillStyle=halo;ctx.fillRect(e.x-radius*1.3,e.y-radius*1.3,radius*2.6,radius*2.6);
     ctx.save();ctx.translate(e.x,e.y);
     if(s.hydraBlast)ctx.globalAlpha=Math.max(0,1-s.hydraBlast.age/.85);
@@ -3300,10 +3524,10 @@ function draw(){
   for(const d of s.drones){if(d.y<0)continue;ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.age+d.phase)*.2);if(images.drone.complete&&images.drone.naturalWidth)ctx.drawImage(images.drone,-20,-20,40,40);if(d.hit>0){ctx.fillStyle='#fff8';ctx.fillRect(-13,-9,26,18);}ctx.restore();}
   if(s.planetChoice==='samsara'){drawSamsaraPickups();drawSamsaraForces();}
   for(const b of s.bullets){const color=s.planetChoice==='samsara'&&b.forceType!==undefined?SAMSARA_FORCES[b.forceType].color:'#ffbdc8';ctx.save();ctx.translate(b.x,b.y);
-    if(s.planetChoice==='samsara'&&b.forceType===0){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-13,0);ctx.lineTo(7,0);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(2,-4);ctx.lineTo(2,4);ctx.closePath();ctx.fill();}
-    else if(s.planetChoice==='samsara'&&b.forceType===1){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.strokeStyle='#eadab3';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-15,0);ctx.lineTo(12,0);ctx.stroke();ctx.fillStyle='#d9c99d';ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(6,-5);ctx.lineTo(6,5);ctx.closePath();ctx.fill();}
-    else if(s.planetChoice==='samsara'&&b.forceType===2){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.fillStyle='#ff9a534a';ctx.beginPath();ctx.ellipse(-8,0,17,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffdd90';ctx.beginPath();ctx.ellipse(2,0,8,4,0,0,Math.PI*2);ctx.fill();}
-    else if(s.planetChoice==='samsara'&&b.forceType===3){ctx.rotate((b.age||0)*2);ctx.fillStyle='#be9bff45';ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.5;for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.ellipse(0,6,2.5,6,0,0,Math.PI*2);ctx.stroke();}ctx.fillStyle='#f1dcff';ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill();}
+    if(s.planetChoice==='samsara'&&b.forceType===0){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.strokeStyle='#dfffe9';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-16,0);ctx.lineTo(7,0);ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-13,0);ctx.lineTo(-18,-4);ctx.moveTo(-13,0);ctx.lineTo(-18,4);ctx.stroke();ctx.fillStyle='#d3fff1';ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(3,-4.5);ctx.lineTo(4,0);ctx.lineTo(3,4.5);ctx.closePath();ctx.fill();}
+    else if(s.planetChoice==='samsara'&&b.forceType===1){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.shadowColor='#f0d79d';ctx.shadowBlur=5;ctx.strokeStyle='#5d3822';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-19,0);ctx.lineTo(11,0);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#eadab3';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-19,-.5);ctx.lineTo(12,-.5);ctx.stroke();ctx.fillStyle='#d9c99d';ctx.beginPath();ctx.moveTo(19,0);ctx.lineTo(7,-6);ctx.lineTo(10,0);ctx.lineTo(7,6);ctx.closePath();ctx.fill();ctx.fillStyle='#6f3c25';ctx.fillRect(-18,-4,3,8);}
+    else if(s.planetChoice==='samsara'&&b.forceType===2){ctx.rotate(Math.atan2(b.vy,b.vx));const flame=ctx.createLinearGradient(-27,0,10,0);flame.addColorStop(0,'#e6441b00');flame.addColorStop(.42,'#ff6a2e78');flame.addColorStop(1,'#fff0a9');ctx.fillStyle=flame;ctx.beginPath();ctx.moveTo(-29,0);ctx.quadraticCurveTo(-10,-12,10,-3);ctx.quadraticCurveTo(14,0,10,3);ctx.quadraticCurveTo(-10,12,-29,0);ctx.fill();ctx.fillStyle='#fff8c9';ctx.beginPath();ctx.ellipse(5,0,5.5,2.5,0,0,Math.PI*2);ctx.fill();}
+    else if(s.planetChoice==='samsara'&&b.forceType===3){const travel=Math.atan2(b.vy,b.vx);ctx.rotate(travel);const tail=ctx.createLinearGradient(-25,0,0,0);tail.addColorStop(0,'#764cff00');tail.addColorStop(1,'#d9b4ff8f');ctx.fillStyle=tail;ctx.beginPath();ctx.moveTo(-25,0);ctx.quadraticCurveTo(-8,-8,3,0);ctx.quadraticCurveTo(-8,8,-25,0);ctx.fill();ctx.rotate((b.age||0)*3-travel);ctx.fillStyle='#be9bff45';ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.5;for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.ellipse(0,6,2.5,6,0,0,Math.PI*2);ctx.stroke();}ctx.fillStyle='#f1dcff';ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill();}
     else{ctx.fillStyle=color+'2b';ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();}ctx.restore();}
   expedition.draw();
   const p=s.player;
@@ -3319,7 +3543,7 @@ function draw(){
     drawPlayerFrame(shipBuild().frame.frame);
     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,-6,2,0,Math.PI*2);ctx.fill();ctx.restore();}
   if(s.beam>0&&s.enemy&&!expedition.safeNoteFlight){ctx.save();ctx.strokeStyle='#bdffe7';ctx.globalAlpha=s.beam/.3;if(s.planetChoice==='samsara'){ctx.lineWidth=2+s.beam*10;ctx.beginPath();ctx.arc(s.enemy.x,s.enemy.y,32+(1-s.beam/.3)*62,0,Math.PI*2);ctx.stroke();}else{ctx.lineWidth=4+s.beam*20;ctx.beginPath();ctx.moveTo(p.x,p.y-26);ctx.lineTo(s.enemy.x,s.enemy.y+30);ctx.stroke();}ctx.restore();}
-  for(const r of s.rings){ctx.strokeStyle=r.explosion?`rgba(255,191,102,${1-r.age/.8})`:`rgba(121,245,208,${1-r.age/.8})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*260,0,Math.PI*2);ctx.stroke();}
+  for(const r of s.rings){ctx.save();ctx.globalAlpha=1-r.age/.8;ctx.strokeStyle=r.impact?r.color:r.explosion?'#ffbf66':'#79f5d0';ctx.lineWidth=r.impact?5-r.age*3:3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*(r.impact?120:260),0,Math.PI*2);ctx.stroke();if(r.impact){ctx.globalAlpha*=.32;ctx.fillStyle=r.color;ctx.beginPath();ctx.arc(r.x,r.y,23+r.age*38,0,Math.PI*2);ctx.fill();}ctx.restore();}
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
   for(const part of s.debris){ctx.save();ctx.translate(part.x,part.y);ctx.rotate(part.angle);ctx.globalAlpha=Math.min(1,part.life);ctx.fillStyle='#b77b43';ctx.strokeStyle='#38281f';ctx.lineWidth=1;ctx.fillRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.strokeRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.restore();}

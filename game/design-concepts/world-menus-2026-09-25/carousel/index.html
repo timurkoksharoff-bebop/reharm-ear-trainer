@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Space Music College · Обзорная кабина</title>
+<link rel="stylesheet" href="preview.css?v=4">
+<body>
+<main id="cockpit" class="observatory" aria-label="Выбор планеты" tabindex="0">
+<nav class="variants" aria-label="Оформление просмотра"><button data-theme="observatory" aria-label="Медная обсерватория" title="Медная обсерватория" aria-pressed="true">01</button><button data-theme="cockpit" aria-label="Кабина корабля" title="Кабина корабля" aria-pressed="false">02</button></nav>
+<fieldset class="fonts" aria-label="Шрифт заголовков"><input id="font-a" type="radio" name="display-font" checked><label for="font-a" title="Академический · Baskerville">A</label><input id="font-b" type="radio" name="display-font"><label for="font-b" title="Редакционный · Didot">B</label><input id="font-c" type="radio" name="display-font"><label for="font-c" title="Книжный · Palatino">C</label><input id="font-d" type="radio" name="display-font"><label for="font-d" title="Космический · Optima">D</label></fieldset>
+  <header class="brand" aria-label="Space Music College"><svg viewBox="0 0 400 126" role="img" aria-label="Space Music College"><text x="6" y="29" textLength="388" lengthAdjust="spacingAndGlyphs" class="brand-small">SPACE MUSIC</text><text x="0" y="104" textLength="400" lengthAdjust="spacingAndGlyphs" class="brand-big">COLLEGE</text><path d="M72 122H174 M226 122H328"/><path d="M194 122L200 117L206 122L200 127Z"/></svg></header>
+  <div class="orbit" id="orbit" aria-label="Планеты — перетащите влево или вправо"></div>
+  <canvas id="debris" aria-hidden="true"></canvas>
+  <section class="destination" aria-live="polite"><p class="eyebrow" id="category"></p><h1 id="name"></h1><p id="description"></p></section>
+  <nav class="navigation" aria-label="Смена планеты"><button id="previous" aria-label="Предыдущая планета">‹</button><div id="markers"></div><button id="next" aria-label="Следующая планета">›</button></nav>
+  <p class="gesture">ПОТЯНИТЕ, ЧТОБЫ СМЕНИТЬ ОРБИТУ</p>
+  <button class="enter" id="enter">Открыть мир <span>↗</span></button>
+  <span class="status"><i></i> НАВИГАЦИЯ АКТИВНА</span>
+</main>
+<aside class="desktop-hint"><span>SPACE MUSIC COLLEGE</span><h2>Обзорная кабина</h2><p>Перетаскивайте планеты мышью.<br>Или используйте клавиши ← →.</p><p>Нажмите на соседнюю планету,<br>чтобы вывести её вперёд.</p><small>Локальный просмотр меню<br>Открытие мира показывает его обложку.</small></aside>
+<dialog id="cover"><img id="cover-image" alt="Обложка мира"><button id="close-cover" aria-label="Вернуться к планетам">← Планеты</button></dialog>
+<script src="preview.js?v=4"></script>
+</body>
+</html>

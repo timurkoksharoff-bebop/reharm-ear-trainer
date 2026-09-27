@@ -8,7 +8,10 @@ export const THEME_ROOMS=[
     artist:'The Beatles',
     album:'Yellow Submarine',
     title:'YELLOW SUBMARINE · THE BEATLES ROOM',
-    relatedByPilot:[2,3,4,6],
+    // The Yellow Submarine relic is a Beatles-only room at every rank.  Rank
+    // progression still changes the source excerpt and the wider expedition,
+    // but never introduces another artist as a multiple-choice distractor.
+    relatedByPilot:[6,6,6,6],
     targetMelodyIds:[
       'rock-hey-jude',
       'rock-yesterday',
@@ -25,22 +28,13 @@ export const THEME_ROOMS=[
       'rock-yesterday':'исполнитель The Beatles',
       'rock-let-it-be':'исполнитель The Beatles',
       'rock-help':'исполнитель The Beatles',
-      'rock-eleanor-rigby':'альбом Yellow Submarine · The Beatles',
+      'rock-eleanor-rigby':'исполнитель The Beatles',
       'rock-a-hard-days-night':'исполнитель The Beatles',
       'rock-norwegian-wood':'исполнитель The Beatles',
       'rock-in-my-life':'исполнитель The Beatles',
       'rock-while-my-guitar-gently-weeps':'исполнитель The Beatles',
     },
-    distractorMelodyIds:[
-      'rock-hotel-california',
-      'rock-bohemian-rhapsody',
-      'rock-smells-like-teen-spirit',
-      'rock-satisfaction',
-      'rock-house-of-the-rising-sun',
-      'rock-light-my-fire',
-      'rock-paint-it-black',
-      'rock-sweet-child-o-mine',
-    ],
+    distractorMelodyIds:[],
     provenance:'Rock Corpus — de Clercq / Temperley · CC BY 4.0',
   },
 ];

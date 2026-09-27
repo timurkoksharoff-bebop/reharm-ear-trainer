@@ -25,6 +25,11 @@ for(const mode of ['up','down']){
   assert.deepEqual(notes.map(n=>n.midi),mode==='up'?[48,52,55,59]:[59,55,52,48]);
   assert(notes.every((n,i)=>!i||n.at>notes[i-1].at));
 }
+let felt=[];audio.feltNote=(midi,at,duration,level)=>felt.push({midi,at,duration,level});
+audio.setWorld('samsara');scheduled=[];felt=[];
+audio.chordOnly(43,INTERVALS.m7,()=>{});
+assert.deepEqual(felt.map(item=>item.midi),INTERVALS.m7.map(interval=>43+interval),'Samsara chords route through felt-piano samples');
+audio.setWorld('original');
 for(const mode of ['together','up','down']){
   notes=[];scheduled=[];const chord={offset:7,quality:'7'},target=chordNotes(chord,48);audio.trainerChord(48,chord,()=>{},mode);
   assert.deepEqual(notes.slice(0,3).map(n=>n.midi),[48,52,55],'Trainer starts with the tonic reference chord');
@@ -57,6 +62,11 @@ assert.deepEqual(full.notes.slice(0,2),preview.notes,'Excerpt and full performan
 assert.deepEqual(full.notes.map(n=>n.midi),[60,67,72]);assert.equal(full.initial,1,'Future notes are not allocated at once');
 assert(Math.abs(full.notes[1].at-full.notes[0].at-.75)<1e-9);
 assert(full.cue.duration>preview.cue.duration);
+notes=[];scheduled=[];audio.context.currentTime=10;let continued=0;
+audio.melody(60,phrase,()=>continued++,{full:true,from:phrase.preview});
+for(let i=0;i<50&&scheduled.length;i++){audio.context.currentTime+=.1;const tasks=scheduled;scheduled=[];tasks.forEach(t=>t.callback());}
+assert.deepEqual(notes.map(n=>n.midi),[72],'Continuation starts at the first event after the preview');
+assert.equal(audio.lastCue.from,phrase.preview);assert.equal(continued,1);
 scheduled=[];audio.context.currentTime=10;audio.melody(60,phrase,()=>assert.fail('Cancelled melody completed'),{full:true});
 const stalePumps=scheduled;audio.stop();notes=[];audio.context.currentTime=100;stalePumps.forEach(t=>t.callback());assert.equal(notes.length,0,'Cancelled full performance cannot start future notes');
 console.log('Audio audit passed: chord pitches, arpeggios, rhythm pools and melody rests, timing, full playback, bounded scheduling and cancellation.');

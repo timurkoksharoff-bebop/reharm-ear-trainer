@@ -19,32 +19,38 @@ export function partialToneCredit(required,selected){
 }
 export function cubeFace(cube){
   if(!cube.rotating)return {label:cube.label,next:null,turn:0};
-  const cycle=4.8,phase=cube.age%cycle,index=Math.floor(cube.age/cycle)%cube.faces.length;
-  return {label:cube.faces[index],next:cube.faces[(index+1)%cube.faces.length],turn:Math.max(0,(phase-4.2)/.6)};
+  const cycle=2.4,phase=cube.age%cycle,index=Math.floor(cube.age/cycle)%cube.faces.length;
+  return {label:cube.faces[index],next:cube.faces[(index+1)%cube.faces.length],turn:Math.max(0,(phase-2)/.4)};
 }
 export function cubeLayout(required,distractors,width,height,rng=Math.random,player={x:width/2,y:height-40}){
-  // Four fixed choices and one drum at most. Wide corridors stay open.
+  // Keep the current answer reachable, but use two faster drums when the
+  // chord is dense enough.  This creates a changing choice without filling
+  // the flight corridor with more than five objects.
   const slots=[{x:width*.2,y:height*.33},{x:width*.8,y:height*.33},{x:width*.2,y:height*.62},{x:width*.8,y:height*.62},{x:width*.5,y:height*.46}];
   const labels=[...required];for(let i=labels.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[labels[i],labels[j]]=[labels[j],labels[i]];}
-  const cubes=labels.map((label,i)=>({...slots[i],label,cube:true,rotating:false,color:'#f1bd67',age:0}));
-  const faces=[distractors[0],distractors[1],required.at(-1)].filter(Boolean);
-  cubes.push({...slots[4],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:0});
+  const fixed=labels.slice(0,3),changing=labels.slice(3);
+  const cubes=fixed.map((label,i)=>({...slots[i],label,cube:true,rotating:false,color:'#f1bd67',age:0}));
+  const faceSets=[
+    [distractors[0],distractors[1],changing[0]??distractors[2]],
+    [distractors[3],distractors[4],changing[1]??distractors[5]],
+  ].map(faces=>[...new Set(faces.filter(Boolean))]).filter(faces=>faces.length);
+  for(let i=0;i<faceSets.length;i++){const faces=faceSets[i];cubes.push({...slots[3+i],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:i*1.2});}
   // Never materialize a newly replenished target on the ship.
   for(const cube of cubes)if(Math.hypot(cube.x-player.x,cube.y-player.y)<85)cube.y=Math.max(155,cube.y-110);
   return cubes;
 }
 
 export function numberCubeLayout(target,distractors,width,height,rng=Math.random,player={x:width/2,y:height-40}){
-  // Interval capture keeps one unambiguous answer. Four readable cubes stay
-  // still; the center drum slowly cycles through wrong labels as a moving risk.
+  // Interval capture keeps one unambiguous fixed answer. Two drums cycle only
+  // through wrong labels, changing out of phase about every two seconds.
   const slots=[{x:width*.2,y:height*.33},{x:width*.8,y:height*.33},{x:width*.2,y:height*.62},{x:width*.8,y:height*.62},{x:width*.5,y:height*.46}];
   const wrong=[...new Set(distractors.filter(label=>label!==target))];
   for(let i=wrong.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[wrong[i],wrong[j]]=[wrong[j],wrong[i]];}
-  const fixed=[target,...wrong.slice(0,3)];
+  const fixed=[target,...wrong.slice(0,2)];
   for(let i=fixed.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[fixed[i],fixed[j]]=[fixed[j],fixed[i]];}
   const cubes=fixed.map((label,i)=>({...slots[i],label,cube:true,rotating:false,color:'#f1bd67',age:0}));
-  const faces=wrong.slice(3,6);
-  if(faces.length)cubes.push({...slots[4],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:0});
+  const faceSets=[wrong.slice(2,5),wrong.slice(5,8)].filter(faces=>faces.length);
+  for(let i=0;i<faceSets.length;i++){const faces=faceSets[i];cubes.push({...slots[3+i],label:faces[0],faces,cube:true,rotating:true,color:'#f1bd67',age:i*1.2});}
   for(const cube of cubes)if(Math.hypot(cube.x-player.x,cube.y-player.y)<85)cube.y=Math.max(155,cube.y-110);
   return cubes;
 }

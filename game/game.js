@@ -11,6 +11,7 @@ import {pressure,formation,stepDrone,hitCircle} from './combat.mjs';
 import {INTERVAL_TARGETS,INTERVAL_MODES,targetForSector,createCapsule,capsuleOutcome} from './intervals.mjs';
 import {PILOTS,ARTIFACTS,NUMBER_LABELS,NUMBER_OFFSETS,NOTE_NAMES,RHYTHMS,RHYTHM_HINTS,RHYTHM_LEVELS,RUDIMENTS,rudimentScore,createExpedition} from './expedition.mjs';
 import {createGardenRenderer} from './garden-flight-renderer.mjs';
+import {SAMSARA_RESOURCE_LABELS,samsaraNeedsPickup,samsaraPickupAmount,samsaraPickupDelay,samsaraStartingVitals,stepSamsaraVitals} from './samsara-survival.mjs';
 
 const intelligence=createIntelligence(localStorage);
 const $=id=>document.getElementById(id);
@@ -68,9 +69,9 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const BASE_SHIELD=12,MAX_SHIELD=20;
 const PLANET_CHOICE_KEY='ear-reharm-game.planet.v1';
 const PLANETS=[
-  {id:'original',number:'01',title:'Выжженная орбита',description:'Луна и Марс · каменные равнины и боевой маршрут.',available:true,tone:'rust'},
-  {id:'garden',number:'02',title:'Сад Эха',description:'Ambient chill · живая река, биолюминесценция и гармонические маршруты.',available:true,tone:'garden',ambient:'garden-flight.html'},
-  {id:'samsara',number:'03',title:'Самсара',description:'Музыканты, цветочные мандалы и боевой полёт сквозь живой сад.',available:true,tone:'samsara'},
+  {id:'original',number:'01',title:'Выжженная планета',kicker:'ИСПЫТАНИЕ ОГНЁМ',description:'Джаз · импульс · выживание',available:true,tone:'rust',art:'design-concepts/world-menus-2026-09-25/carousel/scorched.png'},
+  {id:'garden',number:'02',title:'Сад Эха',kicker:'ЖИВАЯ ГАРМОНИЯ',description:'Речные долины · цветение · ambient',available:true,tone:'garden',ambient:'garden-flight.html',art:'design-concepts/world-menus-2026-09-25/carousel/garden.png'},
+  {id:'samsara',number:'03',title:'Самсара',kicker:'КРУГ ЗВУКА',description:'World music · стихии · пробуждение',available:true,tone:'samsara',art:'design-concepts/world-menus-2026-09-25/carousel/samsara.png'},
   {id:'ocean',number:'04',title:'Океан Линз',description:'Водный мир · отражения, течения и длинные гармонии.',available:false,tone:'ocean'},
   {id:'ice',number:'05',title:'Ледяной архив',description:'Белая тишина · замёрзшие сигналы и хрупкие интервалы.',available:false,tone:'ice'},
   {id:'desert',number:'06',title:'Янтарная пустыня',description:'Слоистые каньоны · редкие источники света и воздуха.',available:false,tone:'desert'},
@@ -78,11 +79,8 @@ const PLANETS=[
 ];
 function savedPlanetChoice(){
   try{
-    // BUILD 080 accidentally stored the standalone Echo Garden as a skin for
-    // the combat flight. Migrate that sticky value back to the original world.
     const value=localStorage.getItem(PLANET_CHOICE_KEY);
-    if(value==='seasons'||value==='garden')localStorage.setItem(PLANET_CHOICE_KEY,'original');
-    if(value==='samsara')return 'samsara';
+    if(PLANETS.some(planet=>planet.available&&planet.id===value))return value;
   }catch{}
   return 'original';
 }
@@ -110,9 +108,13 @@ const SAMSARA_HARMONY=[
   {kind:'midpoint',name:'Начать с середины',sprite:'midpoint-seed'}
 ];
 const emptySamsaraInventory=()=>Object.fromEntries(SAMSARA_HARMONY.map(item=>[item.kind,0]));
-s.samsaraVitals={fuel:86,energy:78,crew:90};s.samsaraInventory=emptySamsaraInventory();s.samsaraHeld=null;
+s.samsaraVitals=samsaraStartingVitals(0);s.samsaraInventory=emptySamsaraInventory();s.samsaraHeld=null;s.samsaraFailure=null;
 s.samsaraForces=[];s.samsaraForceTimer=5;s.samsaraForceIndex=0;s.samsaraPickups=[];s.samsaraPickupTimer=2.5;s.samsaraArtifactTimer=6;s.samsaraArtifactIndex=0;s.samsaraHudTimer=0;
 document.body.classList.toggle('samsara-world',s.planetChoice==='samsara');
+// Keep the survival gauges inside the translucent answer deck. A fixed panel
+// over the flight surface used to hide note cubes and moving objectives.
+const samsaraVitalsPanel=$('samsara-vitals'),samsaraArtifactsPanel=$('samsara-artifacts');
+samsaraArtifactsPanel?.parentElement?.insertBefore?.(samsaraVitalsPanel,samsaraArtifactsPanel);
 function changeSamsaraResource(name,delta){if(s.planetChoice!=='samsara')return;s.samsaraVitals[name]=clamp(s.samsaraVitals[name]+delta,0,100);renderSamsaraResources();}
 function renderSamsaraResources(){
   const active=s.planetChoice==='samsara',panel=$('samsara-vitals');panel.hidden=!active;$('samsara-artifacts').hidden=!active;
@@ -131,7 +133,7 @@ function collectSamsaraArtifact(type){
   const target=SAMSARA_COUNTER[type];let removed=0;
   s.samsaraForces=s.samsaraForces.filter(force=>{if(target!==-1&&force.type!==target)return true;removed++;burst(force.x,force.y,SAMSARA_FORCES[force.type].color,20);return false;});
   s.bullets=s.bullets.filter(b=>target>=0&&b.forceType!==target);
-  changeSamsaraResource('fuel',5);changeSamsaraResource('energy',7+Math.min(6,removed*2));
+  changeSamsaraResource('fuel',3);changeSamsaraResource('energy',4+Math.min(5,removed*2));
   feedback(`${ARTIFACTS[type].name} · ${target<0?'силы рассеяны':SAMSARA_FORCES[target].name+' рассеяны'}`);
   expedition.artifact(type);
 }
@@ -169,13 +171,14 @@ function stepSamsaraForces(dt){
     }
     if(force.age>.4){force.trail.push({x:force.x,y:force.y,age:0});if(force.trail.length>7)force.trail.shift();}for(const mark of force.trail)mark.age+=dt;force.trail=force.trail.filter(mark=>mark.age<.72);
     if(Math.abs(p.x-force.x)>15)force.facing=p.x>=force.x?1:-1;
-    if(Math.hypot(force.x-p.x,force.y-p.y)<spec.radius+19){shipHit();force.y+=38;}
+    if(Math.hypot(force.x-p.x,force.y-p.y)<spec.radius+19){shipHit(force.type);force.y+=38;}
     force.fire-=dt;
     if(force.fire<=0&&force.y>30&&force.y<playableHeight()*.66){
       const facing=force.facing,angle=Math.atan2(p.y-force.y,p.x-force.x);
-      if(force.type===0){s.bullets.push({x:force.x+facing*29,y:force.y-7,vx:facing*132,vy:8,r:4,forceType:0,age:0,turn:.8});}
-      else if(force.type===1){s.bullets.push({x:force.x+facing*19,y:force.y-21,vx:Math.cos(angle)*108,vy:Math.sin(angle)*108,r:5,forceType:1,age:0});}
-      else if(force.type===2){for(let i=-1;i<=1;i++){const a=(facing===1?.42:Math.PI-.42)+i*.17;s.bullets.push({x:force.x+facing*28,y:force.y+15,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:6,forceType:2,age:0,ttl:1.05});}}
+      force.aim=angle;
+      if(force.type===0){s.bullets.push({x:force.x+Math.cos(angle)*29,y:force.y+Math.sin(angle)*29,vx:Math.cos(angle)*132,vy:Math.sin(angle)*132,r:4,forceType:0,age:0,turn:.8});}
+      else if(force.type===1){s.bullets.push({x:force.x+Math.cos(angle)*25,y:force.y+Math.sin(angle)*25,vx:Math.cos(angle)*108,vy:Math.sin(angle)*108,r:5,forceType:1,age:0});}
+      else if(force.type===2){for(let i=-1;i<=1;i++){const a=angle+i*.17;s.bullets.push({x:force.x+Math.cos(a)*28,y:force.y+Math.sin(a)*28,vx:Math.cos(a)*105,vy:Math.sin(a)*105,r:6,forceType:2,age:0,ttl:1.05});}}
       else{s.bullets.push({x:force.x+facing*27,y:force.y-10,vx:Math.cos(angle)*74,vy:Math.sin(angle)*74,r:5,forceType:3,age:0});}
       force.muzzle=force.type===2?.8:.5;force.fire=spec.fire;
     }
@@ -194,13 +197,26 @@ function drawSamsaraForces(){
     if(force.type===1&&force.muzzle>0){ctx.strokeStyle=`rgba(226,211,154,${force.muzzle*.6})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,size*.34,23+force.muzzle*15,5+force.muzzle*5,0,0,Math.PI*2);ctx.stroke();}
     if(force.type===2&&force.muzzle>0){ctx.fillStyle=`rgba(255,170,80,${force.muzzle*.32})`;ctx.beginPath();ctx.ellipse(25,17,11+force.muzzle*14,5+force.muzzle*6,.3,0,Math.PI*2);ctx.fill();}
     if(force.type===3){ctx.strokeStyle=`rgba(190,155,255,${.17+force.muzzle*.34})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(15,-9,9+Math.sin(force.age*3)*2,0,Math.PI*2);ctx.stroke();}
-    ctx.restore();}
+    ctx.restore();
+    if(force.muzzle>0){
+      const aim=force.aim??Math.atan2(s.player.y-force.y,s.player.x-force.x);ctx.save();ctx.translate(force.x,force.y);ctx.rotate(aim);
+      if(force.type===0){ctx.strokeStyle=`rgba(198,255,235,${force.muzzle})`;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(38,0);ctx.stroke();ctx.fillStyle='#efffe9';ctx.beginPath();ctx.arc(24,0,2.5,0,Math.PI*2);ctx.fill();}
+      else if(force.type===1){ctx.strokeStyle=`rgba(242,218,169,${force.muzzle})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(8,0);ctx.lineTo(37,0);ctx.stroke();ctx.fillStyle='#fff2cc';ctx.beginPath();ctx.moveTo(43,0);ctx.lineTo(33,-5);ctx.lineTo(33,5);ctx.closePath();ctx.fill();}
+      else if(force.type===2){const cone=ctx.createLinearGradient(14,0,54,0);cone.addColorStop(0,`rgba(255,237,166,${force.muzzle*.72})`);cone.addColorStop(1,'rgba(255,91,32,0)');ctx.fillStyle=cone;ctx.beginPath();ctx.moveTo(12,-5);ctx.quadraticCurveTo(34,-18,58,0);ctx.quadraticCurveTo(34,18,12,5);ctx.closePath();ctx.fill();}
+      else{ctx.strokeStyle=`rgba(222,195,255,${force.muzzle*.8})`;ctx.lineWidth=2;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(11,0);ctx.quadraticCurveTo(27,-11,43,0);ctx.stroke();}
+      ctx.restore();
+    }
+  }
 }
 function stepSamsaraPickups(dt){
   s.samsaraPickupTimer-=dt;
-  if(s.samsaraPickupTimer<=0&&s.samsaraPickups.length<3){const needs=[100-s.samsaraVitals.fuel,100-s.samsaraVitals.energy,100-s.samsaraVitals.crew,100-s.health/Math.max(1,s.maxHealth)*100];let kind=needs.map((need,index)=>({index,score:need+Math.random()*21})).sort((a,b)=>b.score-a.score)[0].index;s.samsaraPickups.push({kind,x:65+Math.random()*(W-130),y:-35,age:0,phase:Math.random()*6.28});s.samsaraPickupTimer=6+Math.random()*3;}
+  if(s.samsaraPickupTimer<=0&&s.samsaraPickups.length<3){
+    const hull=s.health/Math.max(1,s.maxHealth)*100,{needs,urgent}=samsaraNeedsPickup(s.samsaraVitals,hull);
+    if(urgent){const kind=needs.map((need,index)=>({index,score:need+Math.random()*12})).sort((a,b)=>b.score-a.score)[0].index;s.samsaraPickups.push({kind,x:65+Math.random()*(W-130),y:-35,age:0,phase:Math.random()*6.28});}
+    s.samsaraPickupTimer=urgent?samsaraPickupDelay(s.runLevel):2.5;
+  }
   for(const item of s.samsaraPickups){item.age+=dt;item.y+=dt*46;item.x+=Math.sin(item.age*1.25+item.phase)*dt*9;
-    if(Math.hypot(item.x-s.player.x,item.y-s.player.y)<39){item.collected=true;const labels=['Топливо','Энергия','Силы команды','Корпус'];if(item.kind===0)changeSamsaraResource('fuel',14);else if(item.kind===1)changeSamsaraResource('energy',13);else if(item.kind===2)changeSamsaraResource('crew',10);else{s.health=Math.min(s.maxHealth,s.health+2);renderHud();}burst(item.x,item.y,['#e8b85d','#75e9ed','#9ee08a','#d8c4f5'][item.kind],17);feedback(`${labels[item.kind]} восстановлены`);}
+    if(Math.hypot(item.x-s.player.x,item.y-s.player.y)<39){item.collected=true;const labels=['Топливо','Энергия','Силы команды','Корпус'],amount=samsaraPickupAmount(item.kind,s.runLevel);if(item.kind===0)changeSamsaraResource('fuel',amount);else if(item.kind===1)changeSamsaraResource('energy',amount);else if(item.kind===2)changeSamsaraResource('crew',amount);else{s.health=Math.min(s.maxHealth,s.health+amount);renderHud();}burst(item.x,item.y,['#e8b85d','#75e9ed','#9ee08a','#d8c4f5'][item.kind],17);feedback(`${labels[item.kind]} · +${amount}`);}
   }
   s.samsaraPickups=s.samsaraPickups.filter(item=>!item.collected&&item.y<playableHeight()+35);
 }
@@ -220,7 +236,7 @@ function listenTitle(){
 }
 const debrief=createDebrief({storage:localStorage,audio,overlay,action,enter:enterMenu,back:menuBack,setMode:()=>{s.mode='debrief';s.listening=false;s.keys.clear();},isActive:()=>s.mode==='debrief'});
 function recordHydraMistake(){if(s.enemy?.chord){debrief.record({kind:'hydra',chord:s.enemy.chord,level:expedition.level,tonic:(s.route.register??48)+s.route.key});s.enemy.reviewRecorded=true;}}
-const expedition=createExpedition({intelligence,onMistake:item=>debrief.record(item),onSamsaraArtifact:collectSamsaraArtifact,onSamsaraChallenge:fraction=>{changeSamsaraResource('energy',fraction>0?Math.round(14*fraction):-5);if(fraction>0){changeSamsaraResource('fuel',Math.round(5*fraction));changeSamsaraResource('crew',Math.round(3*fraction));}},s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
+const expedition=createExpedition({intelligence,onMistake:item=>debrief.record(item),onSamsaraArtifact:collectSamsaraArtifact,onSamsaraChallenge:fraction=>{changeSamsaraResource('energy',fraction>0?Math.round(6*fraction):-5);if(fraction>0){changeSamsaraResource('fuel',Math.round(3*fraction));changeSamsaraResource('crew',Math.max(1,Math.round(fraction)));}},s,audio,feedback,signal,burst,renderHud,syncPads,shipHit,listenTitle,W,getH:()=>playableHeight(),images,ctx,document,playCue,degree:n=>DEGREES[n].glyph});
 const stars=Array.from({length:85},()=>({x:Math.random()*480,y:Math.random()*1100,z:.25+Math.random(),r:Math.random()*1.3+.3}));
 const MACHINES=['РАЗВЕДЧИК','КОРВЕТ','КРЕЙСЕР','КРЕПОСТЬ'];
 const MACHINE_CROPS=[[135,20,380,490],[675,20,490,505],[60,530,520,640],[588,515,666,720]];
@@ -328,7 +344,7 @@ function menuBack(){
   requestAnimationFrame(()=>{if(currentMenu===target)$('overlay').scrollTop=target.scroll;});
 }
 function overlay(html){
-  document.querySelector('.cabinet').classList.add('menu-open');$('overlay').classList.remove('art-overlay');
+  document.querySelector('.cabinet').classList.add('menu-open');$('overlay').classList.remove('art-overlay','world-selector-overlay');
   $('overlay').innerHTML=`<div class="overlay-card">${html}</div>`;$('overlay').scrollTop=0;$('overlay').hidden=false;
   if(currentMenu?.id!=='home'){
     const back=document.createElement('button');back.id='menu-back';back.className='menu-back';back.type='button';
@@ -389,7 +405,7 @@ function syncPads(){
   $('weapon-tabs').hidden=true;
   $('weapon-root').setAttribute('aria-pressed',String(weaponTab==='bass'));$('weapon-type').setAttribute('aria-pressed',String(weaponTab==='quality'));
   document.querySelectorAll('.pad').forEach(b=>{
-    const broken=s.enemy?.shields[b.dataset.kind];b.disabled=s.mode!=='active'||s.listening||!!broken||special;
+    const broken=s.enemy?.shields[b.dataset.kind];b.disabled=s.mode!=='active'||!!broken||special;
     b.disabled=b.disabled||b.dataset.locked==='1';b.classList.toggle('selected',!!broken&&(b.dataset.kind==='bass'?Number(b.dataset.value)===s.enemy.chord.offset:b.dataset.value===family(s.enemy.chord.quality)));
   });
   $('replay').disabled=!(s.mode==='active'||(s.mode==='resolving'&&(s.capsule||special)))||s.listening||['reveal','roulette'].includes(expedition.pauseKind);
@@ -403,7 +419,7 @@ function syncPads(){
 function startScreen(){
   s.mode='start';
   renderHud();buildPads();
-  openFlightConsole();return;
+  openWorldCarousel();return;
   overlay('<span class="eyebrow">STEAM / SOUND / SPACE</span><h1>Signal<br><span class="accent">Expedition.</span></h1><p>Лови звуки. Обходи скалы.<br>Пробивай путь к своей музыке.</p>');
   $('overlay').firstElementChild.insertAdjacentHTML('afterbegin','<div class="console-hardware" aria-hidden="true"><i class="console-speaker"></i><i class="console-lamp"></i><i class="console-fader"></i><i class="console-fader" style="--pos:5px"></i><i class="console-fader" style="--pos:27px"></i><i class="console-fader" style="--pos:11px"></i><i class="console-lamp"></i><i class="console-speaker"></i></div>');
   PILOTS.forEach((pilot,i)=>{const b=action(pilot.name,()=>startRun(pilot.sector,i),true);b.className='pilot-choice';const info=document.createElement('small');info.textContent=pilot.description;b.append(info);});
@@ -415,6 +431,50 @@ function startScreen(){
   action('Ангар · магазин',openHangar,true);
   const note=document.createElement('p');note.className='quiet-note';note.textContent=`Включи звук · наушники помогут${record().best?' · рекорд '+record().best:''}`;$('overlay').firstChild.append(note);
 }
+
+function openWorldCarousel(){
+  enterMenu('home',openWorldCarousel,true);audio.stop();s.listening=false;s.mode='start';
+  // The college selector is a neutral root shared by every world. A saved
+  // Samsara choice must not leak its padded modal skin into this full-screen
+  // carousel; selectPlanet() restores the world skin when the player enters.
+  document.body.classList.remove('samsara-world');
+  document.querySelector('.cabinet')?.classList.remove('floating-deck','rhythm-room');
+  const worlds=PLANETS.filter(planet=>planet.available),initial=Math.max(0,worlds.findIndex(planet=>planet.id===s.planetChoice));
+  overlay(`<main class="world-selector-shell observatory" id="world-selector" tabindex="0" aria-label="Выбор планеты Space Music College">
+    <header class="world-brand" aria-label="Space Music College"><span>SPACE MUSIC</span><strong>COLLEGE</strong><i aria-hidden="true"></i></header>
+    <div class="world-frame-toggle" role="group" aria-label="Вариант обрамления"><button type="button" data-world-frame="cockpit" aria-pressed="false">01</button><button type="button" data-world-frame="observatory" aria-pressed="true">02</button></div>
+    <div class="world-orbit" id="world-orbit"></div><canvas id="world-debris" aria-hidden="true"></canvas>
+    <section class="world-destination" aria-live="polite"><p id="world-kicker"></p><h1 id="world-name"></h1><div id="world-description"></div></section>
+    <nav class="world-navigation" aria-label="Переключение планет"><button id="world-previous" type="button" aria-label="Предыдущая планета">‹</button><div id="world-markers"></div><button id="world-next" type="button" aria-label="Следующая планета">›</button></nav>
+    <p class="world-gesture">СВАЙПНИ · ВЫБЕРИ МИР</p><button id="world-enter" class="world-enter" type="button">ОТКРЫТЬ МИР <span>→</span></button>
+    <footer class="world-status"><span>НАВИГАЦИЯ ГОТОВА</span><span>BUILD 087</span></footer>
+  </main>`);
+  $('overlay').classList.add('art-overlay','world-selector-overlay');
+  const root=$('world-selector'),orbit=$('world-orbit'),markers=$('world-markers');let position=initial,target=initial,drag=null,suppressClickUntil=0;
+  const mod=(value,total)=>((value%total)+total)%total,shortest=(distance,total)=>mod(distance+total/2,total)-total/2;
+  const nodes=worlds.map((world,index)=>{
+    const button=document.createElement('button');button.className='world-planet';button.type='button';button.dataset.world=world.id;button.setAttribute('aria-label',world.title);
+    button.innerHTML=`<img src="${world.art}" alt=""><span>${world.title}</span>`;orbit.append(button);
+    const marker=document.createElement('button');marker.type='button';marker.className='world-marker';marker.setAttribute('aria-label',`Выбрать: ${world.title}`);marker.addEventListener('click',()=>choose(index));markers.append(marker);
+    button.addEventListener('click',()=>{if(performance.now()>=suppressClickUntil)choose(index);});return {button,marker};
+  });
+  function choose(index){target+=shortest(index-mod(target,worlds.length),worlds.length);target=Math.round(target);paint();}
+  function step(delta){target=Math.round(target)+delta;position=target;paint();}
+  function paint(){
+    const width=root.clientWidth||480,height=root.clientHeight||800;
+    nodes.forEach((node,index)=>{const distance=shortest(index-position,worlds.length),visible=Math.abs(distance)<1.6,angle=distance*2*Math.PI/3,depth=(1+Math.cos(angle))/2,scale=.34+.66*depth,x=width*(.5+Math.sin(angle)*.34),y=height*(.405+Math.cos(angle)*.105);node.button.hidden=!visible;node.button.style.transform=`translate(${x-width*.34}px,${y-width*.34}px) scale(${scale})`;node.button.style.zIndex=String(Math.round(depth*100)+1);node.button.style.filter=`brightness(${.68+.32*depth})`;});
+    const index=mod(Math.round(position),worlds.length),world=worlds[index];$('world-kicker').textContent=`${world.number} / ${world.kicker}`;$('world-name').textContent=world.title;$('world-description').textContent=world.description;nodes.forEach((node,i)=>{node.marker.setAttribute('aria-current',String(i===index));node.button.setAttribute('aria-pressed',String(i===index));});
+  }
+  $('world-previous').addEventListener('click',()=>step(-1));$('world-next').addEventListener('click',()=>step(1));
+  root.addEventListener('keydown',event=>{if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();step(event.key==='ArrowLeft'?-1:1);}if(event.key==='Enter')$('world-enter').click();});
+  orbit.addEventListener('pointerdown',event=>{if(event.button!==0)return;drag={id:event.pointerId,x:event.clientX,start:position,moved:false,planet:event.target.closest('.world-planet')?.dataset.world};target=position;orbit.setPointerCapture(event.pointerId);orbit.classList.add('dragging');});
+  orbit.addEventListener('pointermove',event=>{if(!drag||drag.id!==event.pointerId)return;const dx=event.clientX-drag.x;drag.moved ||= Math.abs(dx)>7;position=drag.start-dx/(Math.max(320,root.clientWidth)*.65);target=position;paint();});
+  function release(event){if(!drag||drag.id!==event.pointerId)return;const {moved,start,planet}=drag;drag=null;orbit.classList.remove('dragging');suppressClickUntil=performance.now()+250;if(moved){const delta=position-start;target=Math.round(Math.abs(delta)>.12?start+Math.sign(delta)*Math.max(1,Math.round(Math.abs(delta))):start);}else if(planet)target=worlds.findIndex(world=>world.id===planet);position=target;paint();}
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])orbit.addEventListener(type,release);
+  root.querySelectorAll?.('[data-world-frame]').forEach(button=>button.addEventListener('click',()=>{const observatory=button.dataset.worldFrame==='observatory';root.classList.toggle('observatory',observatory);root.querySelectorAll('[data-world-frame]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));}));
+  $('world-enter').addEventListener('click',()=>{const world=worlds[mod(Math.round(position),worlds.length)];selectPlanet(world.id);if(world.ambient){location.href=world.ambient;return;}world.id==='samsara'?openSamsaraHome():openFlightConsole();});
+  position=target;paint();requestAnimationFrame(paint);root.focus?.({preventScroll:true});
+}
 function consoleButton(label,box,callback,selected=false){
   const b=document.createElement('button');b.className='console-hit';
   b.dataset.label=label;b.setAttribute('aria-label',label);b.title=label;b.setAttribute('aria-pressed',String(selected));
@@ -423,7 +483,7 @@ function consoleButton(label,box,callback,selected=false){
 }
 function consoleScene(image,description){
   audio.stop();s.listening=false;s.mode='start';
-  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 086</span></div>`);
+  overlay(`<div id="console-scene" class="console-scene"><img src="assets/${image}" alt="${description}" draggable="false"><p class="console-status" id="console-status"></p><span class="console-build">BUILD 087</span></div>`);
   $('overlay').classList.add('art-overlay');
 }
 let consolePilot=0;
@@ -468,21 +528,19 @@ function openSamsaraGallery(){
   action('Вернуться',openSamsaraHome,true);
 }
 function selectPlanet(choice){
-  if(!['original','samsara'].includes(choice))return;
+  if(!PLANETS.some(planet=>planet.available&&planet.id===choice))return;
   s.planetChoice=choice;
+  audio.setWorld?.(choice);
   document.body.classList.toggle('samsara-world',choice==='samsara');
+  // The root carousel temporarily removes the in-flight deck so its artwork
+  // can fill the screen. Restore the translucent full-field layout as soon as
+  // a playable world is selected; otherwise Samsara falls back to the old
+  // separate lower panel after every trip through the planet menu.
+  document.querySelector('.cabinet')?.classList.toggle('floating-deck',floatingDeck);
   try{localStorage.setItem(PLANET_CHOICE_KEY,choice);}catch{}
 }
 function openPlanetSettings(){
-  enterMenu('planets',openPlanetSettings);
-  overlay('<span class="eyebrow">КАРТА ПЛАНЕТ</span><h2>Куда полетим?</h2><p class="compact">Три мира доступны: боевой маршрут, Сад Эха и Самсара.</p><div id="planet-grid" class="planet-grid"></div>');
-  $('overlay').firstElementChild.classList.add('planet-menu');
-  for(const planet of PLANETS){
-    const card=document.createElement('button');card.className=`planet-card ${planet.tone}${planet.id===s.planetChoice?' selected':''}`;card.disabled=!planet.available;
-    card.innerHTML=`<span>${planet.number}</span><b>${planet.title}</b><small>${planet.description}</small><i>${planet.available?'ЛЕТЕТЬ':'СКОРО'}</i>`;
-    if(planet.available)card.addEventListener('click',()=>{if(planet.ambient){location.href=planet.ambient;return;}selectPlanet(planet.id);startRun(PILOTS[consolePilot].sector,consolePilot);});$('planet-grid').append(card);
-  }
-  action('← В ангар',openFlightConsole,true);
+  openWorldCarousel();
 }
 function openLearningSettings(){
   enterMenu('learning',openLearningSettings);
@@ -531,7 +589,7 @@ async function launchEncounter(type){
 }
 function openCrewGallery(){
   enterMenu('crew',openCrewGallery);s.mode='start';
-  overlay(`<span class="eyebrow">BUILD 086 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
+  overlay(`<span class="eyebrow">BUILD 087 · ЭКИПАЖ</span><h2>Музыканты дальнего космоса</h2><p class="compact">Персонажи открыты здесь сразу, чтобы новую графику можно было проверить без ожидания случайного артефакта.</p><div class="crew-gallery">
     <article><img src="assets/trumpeter.webp" alt="Стимпанковский трубач"><b>ТРУБАЧ</b><span>Basic, guide и all tones · ловля нот</span></article>
     <article><img src="assets/keytarist.webp" alt="Клавишник с кейтаром"><b>КЛАВИШНИК</b><span>Узнавание джазовых мелодий</span></article>
     <article><img src="assets/guitarist.webp" alt="Космический гитарист"><b>ГИТАРИСТ</b><span>Лады, гаммы и modal drive</span></article>
@@ -573,7 +631,7 @@ async function startRun(sector,level=sector===0?0:sector===2?1:2,bookMission=nul
     await prepareFlightImages((ready,total)=>{if(token===runToken)overlay(`<span class="eyebrow">ПОДГОТОВКА К ВЫЛЕТУ</span><h2>Основная графика · ${ready}/${total}</h2><p>Корабль и поверхность планеты</p>`);});if(token!==runToken)return;
     if(s.planetChoice==='samsara')await prepareSamsara();if(token!==runToken)return;
     const build=shipBuild();Object.assign(s,{sector,bookMission,runLevel:level,routeNumber:0,position:0,cleared:0,totalCleared:0,score:0,combo:0,health:build.maxHealth,maxHealth:build.maxHealth,power:1,attempts:0,correct:0,firstTry:0,replays:0,stats:{bass:{hit:0,miss:0},quality:{hit:0,miss:0}},bullets:[],shots:[],particles:[],enemy:null,invulnerable:0,drones:[],waveTimer:0,waveIndex:0,overdrive:0,energy:0,rings:[],travel:0,groundScrollDelta:0,groundCombat:false,hydraBlast:null,shake:0,debris:[],droneKills:0,capsule:null,capsuleTimer:0,intervalStats:{caught:0,wrong:0,missed:0,avoided:0}});
-    s.samsaraVitals={fuel:86,energy:78,crew:90};s.samsaraInventory=Array(ARTIFACTS.length).fill(0);s.samsaraForces=[];s.samsaraForceTimer=5;s.samsaraForceIndex=0;s.samsaraPickups=[];s.samsaraPickupTimer=2.5;s.samsaraHudTimer=0;
+    s.samsaraVitals=samsaraStartingVitals(level);s.samsaraInventory=emptySamsaraInventory();s.samsaraForces=[];s.samsaraForceTimer=5;s.samsaraForceIndex=0;s.samsaraPickups=[];s.samsaraPickupTimer=2.5;s.samsaraHudTimer=0;s.samsaraFailure=null;
     const safeY=Math.max(145,playableHeight()-66);s.player={x:W/2,y:safeY,tx:W/2,ty:safeY};
     document.body.classList.toggle('samsara-world',s.planetChoice==='samsara');
     expedition.reset(level);beginSector(sector);renderSamsaraInventory();document.querySelector('footer span').textContent=s.planetChoice==='samsara'?'Веди лотос · собирай цветы · уклоняйся':'Тяни корабль · стрельба автоматическая';document.querySelector('.hud-right .micro').textContent=s.planetChoice==='samsara'?'КОРПУС ЛОТОСА':'ЩИТ КОРАБЛЯ';warmOptionalImages();
@@ -585,7 +643,7 @@ function beginSector(sector){
   weaponTab='bass';
   s.sector=sector;s.cleared=0;s.position=0;s.routeNumber=0;s.health=s.maxHealth||shipBuild().maxHealth;s.bullets=[];s.shots=[];s.enemy=null;s.drones=[];s.overdrive=0;s.waveTimer=s.planetChoice==='samsara'&&s.runLevel===0?9:1;s.capsule=null;s.capsuleTimer=0;s.hydraBlast=null;s.groundCombat=false;
   if(s.planetChoice==='samsara'){const safeY=Math.max(145,playableHeight()-66);s.player={x:W/2,y:safeY,tx:W/2,ty:safeY};}
-  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?.route?s.bookMission.route:s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
+  $('recognized-chord').textContent='';$('feedback').textContent='';s.feedbackTimer=0;$('feedback').classList.remove('visible');signal('Готовимся к полёту');qualityBank=0;s.route=s.bookMission?.route?s.bookMission.route:s.bookMission?createBookRoute(s.bookMission.chapter,s.bookMission.index,s.route?.key):createRoute(sector,s.route?.key,Math.random,0,expedition.level);if(s.planetChoice==='samsara')s.route.register=Math.min(s.route.register??48,45);s.listening=false;s.mode='briefing';save();buildPads();renderHud();$('enemy-label').hidden=true;
   const c=SECTORS[sector];
   const map=s.bookMission?`<div class="battle-map"><i class="home">HOME</i>${s.route.sequence.map((_,i)=>`<i><b>${i+1}</b><span>HYDRA</span></i>`).join('')}</div>`:'';
   overlay(`<span class="eyebrow">${s.bookMission?s.route.code:`СЕКТОР 0${sector+1} / ${c.name.toUpperCase()}`}</span><h2>${s.bookMission?`${s.route.sequence.length} целей · гармонический маршрут`:c.title}</h2><p>${s.bookMission?'Home звучит перед стартом. Затем каждая гидра продолжает одну настоящую последовательность.':s.planetChoice==='samsara'?'Ступень и тип аккорда — два независимых ответа. Каждый верный сигнал ослабляет хранителя и возвращает силы.':c.description}</p>${map}<p class="compact">${s.planetChoice==='samsara'?'Перемещай лотос, уклоняйся и собирай цветы. Накопленные артефакты над ступенями нажимаются вручную и рассеивают силы противников. Верные ответы пополняют топливо и энергию.':s.bookMission?'Все аккорды звучат вертикально. Перед целью услышишь до трёх предыдущих аккордов маршрута.':sector===0?'Во время сигнала гидра не атакует. Тяни корабль пальцем; правильная кнопка заряжает выстрел.':sector===1?'I, IV и V — ступени относительно тоники. Цифровка написана прямо на оружии.':'Бас даёт усиление сразу. Два пробитых щита уничтожают гидру. Ошибка не восстанавливает уже пробитый щит.'}</p>`);
@@ -761,7 +819,7 @@ function buildBookPads(){
 }
 function answerBookChord(choice,button){
   const {offset,quality}=choice;
-  if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
+  if(s.mode!=='active'||!s.enemy||expedition.busy)return;
   const chord=s.enemy.chord,correct=chordAnswerKey(choice)===chordAnswerKey(chord);
   if(correct){const attempts=s.attempts,recognized=s.correct;answer('bass',chord.offset,button);answer('quality',chord.quality,button);s.attempts=attempts+1;s.correct=recognized+1;return;}
   recordHydraMistake();
@@ -779,13 +837,13 @@ function playCue(referenceOnly=false){
   });
 }
 function answer(kind,value,button){
-  if(s.mode!=='active'||s.listening||!s.enemy||expedition.busy)return;
+  if(s.mode!=='active'||!s.enemy||expedition.busy)return;
   const outcome=answerResult(s.enemy.chord,s.enemy.shields,kind,value);if(outcome.ignored)return;
   intelligence.record('hydra-'+kind,kind==='bass'?s.enemy.chord.offset:s.enemy.chord.quality,outcome.correct?1:0);
   s.attempts++;s.stats[kind][outcome.correct?'hit':'miss']++;
   if(outcome.correct){
     s.correct++;s.enemy.shields=outcome.shields;s.beam=.3;s.enemy.hit=.25;s.score+=kind==='bass'?100:150;awardScrap(kind==='bass'?7:10);
-    if(s.planetChoice==='samsara'){changeSamsaraResource(kind==='bass'?'fuel':'energy',kind==='bass'?6:8);changeSamsaraResource('crew',2);audio.answerFeedback({world:'samsara',correct:true,complete:outcome.destroyed});}
+    if(s.planetChoice==='samsara'){changeSamsaraResource(kind==='bass'?'fuel':'energy',kind==='bass'?2:3);if(outcome.destroyed)changeSamsaraResource('crew',1);audio.answerFeedback({world:'samsara',correct:true,complete:outcome.destroyed});}
       if(kind==='bass'){s.power=Math.min(3,s.power+1);s.overdrive=7;feedback(s.planetChoice==='samsara'?'Ступень узнана · запас топлива пополнен':'Щит пробит · ВЕЕРНЫЙ ОГОНЬ');}
     else feedback(`${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.glyph??s.enemy.chord.quality} · тип распознан`);
     if(!outcome.destroyed)weaponTab=kind==='bass'?'quality':'bass';
@@ -809,7 +867,7 @@ function defeatHydra(recognized){
       s.score+=(recognized?200:60)+Math.min(s.combo,10)*25;awardScrap(24+Math.min(s.combo,8)*2);s.resolveTimer=s.bookMission?1.4:6;s.mode='resolving';s.bullets=[];s.overdrive=Math.max(s.overdrive,6);s.waveTimer=.3;
       const label=DEGREES[s.enemy.chord.offset];
       const repaired=recognized&&s.health<s.maxHealth?(s.health=Math.min(s.maxHealth,s.health+1),1):0;
-      if(recognized&&s.planetChoice==='samsara'){changeSamsaraResource('fuel',4);changeSamsaraResource('energy',5);changeSamsaraResource('crew',3);}
+      if(recognized&&s.planetChoice==='samsara'){changeSamsaraResource('fuel',2);changeSamsaraResource('energy',2);changeSamsaraResource('crew',1);}
       feedback(`${s.sector>=2?chordSymbol(s.enemy.chord):label.glyph} · ${recognized?'щиты пробиты':'корпус уничтожен огнём'}${repaired?' · +1 ЩИТ':''}`);
       $('recognized-chord').textContent=s.sector>=2?chordSymbol(s.enemy.chord):label.glyph;
       beginHydraDestruction(s.enemy);
@@ -841,9 +899,10 @@ function finish(won,revisit=false){
   s.mode=won?'finished':'gameover';audio.stop();s.listening=false;const returnScrap=Math.max(12,Math.floor(s.score/90));if(!revisit)awardScrap(returnScrap);save();syncPads();
   const accuracy=s.attempts?Math.round(s.correct/s.attempts*100):0;
   const failedChord=!won&&s.enemy?.chord?`<p class="failed-chord">${s.planetChoice==='samsara'?'ПОСЛЕДНИЙ ХРАНИТЕЛЬ':'ПОСЛЕДНЯЯ ГИДРА'} · <strong>${chordSymbol(s.enemy.chord)}</strong><br><small>${DEGREES[s.enemy.chord.offset].label} · ${s.enemy.chord.qualityGlyph??QUALITIES[s.enemy.chord.quality]?.label??s.enemy.chord.quality}</small></p>`:'';
-  overlay(`<span class="eyebrow">${s.bookMission?s.route.code:won?'МАРШРУТ ЗАВЕРШЁН':'КОРАБЛЬ ВЕРНУЛСЯ НА БАЗУ'}</span><h2>${won?'Маршрут взят.':'Ещё один вылет?'}</h2><p>${won&&s.bookMission?'Все гидры уничтожены. Сейчас маршрут прозвучит целиком вертикальными аккордами.':won?'Ступени и цифровки аккордов становятся частью твоего оружия.':'Сигналы становятся знакомее с каждым полётом. Попробуем этот сектор ещё раз.'}</p>${failedChord}<div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>◉ ${returnScrap}</strong><span>CREDITS</span></div><div><strong>${accuracy}%</strong><span>${s.planetChoice==='samsara'?'ТОЧНОСТЬ':'ПОПАДАНИЙ'}</span></div></div><p class="compact">Бас: ${s.stats.bass.hit}/${s.stats.bass.hit+s.stats.bass.miss} · Тип: ${s.stats.quality.hit}/${s.stats.quality.hit+s.stats.quality.miss}<br>Капсулы: ${s.intervalStats.caught} верных · ${s.intervalStats.wrong} чужих</p>`);
+  const failureReason=!won&&s.planetChoice==='samsara'&&s.samsaraFailure?`<p class="samsara-failure-reason">${SAMSARA_RESOURCE_LABELS[s.samsaraFailure]}</p>`:'';
+  overlay(`<span class="eyebrow">${s.bookMission?s.route.code:won?'МАРШРУТ ЗАВЕРШЁН':'КОРАБЛЬ ВЕРНУЛСЯ НА БАЗУ'}</span><h2>${won?'Маршрут взят.':'Ещё один вылет?'}</h2><p>${won&&s.bookMission?'Все гидры уничтожены. Сейчас маршрут прозвучит целиком вертикальными аккордами.':won?'Ступени и цифровки аккордов становятся частью твоего оружия.':s.planetChoice==='samsara'?'Круг прерван. Следи за четырьмя шкалами, собирай нужные цветы и не прекращай движение.':'Сигналы становятся знакомее с каждым полётом. Попробуем этот сектор ещё раз.'}</p>${failureReason}${failedChord}<div class="results"><div><strong>${s.score}</strong><span>ОЧКОВ</span></div><div><strong>◉ ${returnScrap}</strong><span>CREDITS</span></div><div><strong>${accuracy}%</strong><span>${s.planetChoice==='samsara'?'ТОЧНОСТЬ':'ПОПАДАНИЙ'}</span></div></div><p class="compact">Бас: ${s.stats.bass.hit}/${s.stats.bass.hit+s.stats.bass.miss} · Тип: ${s.stats.quality.hit}/${s.stats.quality.hit+s.stats.quality.miss}<br>Капсулы: ${s.intervalStats.caught} верных · ${s.intervalStats.wrong} чужих</p>`);
   if(won&&s.bookMission){audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true);action('↻ Прослушать весь маршрут',()=>audio.progression(s.route,s.route.sequence.length-1,event=>signal(`${event.index+1} · ${chordSymbol(s.route.sequence[event.index])}`,true),()=>signal(`${s.route.code} · COMPLETE`),true),true);}
-  action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другая тональность'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(s.sector===3?3:0):s.sector,s.runLevel));
+  action(won?(s.bookMission?.route?'Повторить стандарт':'Новый вылет · другая тональность'):'Повторить сектор',()=>s.bookMission?missionReplay():startRun(won?(PILOTS[s.runLevel]?.sector??s.sector):s.sector,s.runLevel));
   action(`Разбор полёта · ${debrief.log.pendingCount} ошибок`,debrief.open);
   action('Выбрать уровень',()=>{s.mode='start';expedition.reset();startScreen();},true);
   action('Ангар · потратить детали',openHangar,true);
@@ -870,9 +929,10 @@ async function resume(){
   }catch(e){feedback(e.message,true);}
 }
 function burst(x,y,color,count){for(let i=0;i<count;i++){const angle=Math.random()*Math.PI*2,speed=30+Math.random()*150;s.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:.5+Math.random()*.7,color});}if(s.particles.length>350)s.particles.splice(0,s.particles.length-350);}
-function shipHit(){
+function shipHit(sourceType=null){
   if(s.invulnerable>0||expedition.invincible||expedition.safeNoteFlight||expedition.pausedCombat||!['active','resolving'].includes(s.mode))return;
-  s.health--;s.invulnerable=s.planetChoice==='samsara'?(s.runLevel===0?3.2:2.1):1.4;s.combo=0;s.flash=.18;burst(s.player.x,s.player.y,'#ff7ea7',15);if(s.planetChoice==='samsara'){changeSamsaraResource('crew',-6);changeSamsaraResource('energy',-4);}feedback(`ПОПАДАНИЕ · −1 ЩИТ · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0||s.planetChoice==='samsara'&&s.samsaraVitals.crew<=0)finish(false);
+  const samsaraImpact=s.planetChoice==='samsara'&&Number.isInteger(sourceType),impactColor=samsaraImpact?SAMSARA_FORCES[sourceType].color:'#ff7ea7';
+  s.health--;s.invulnerable=s.planetChoice==='samsara'?(s.runLevel===0?3.2:2.1):1.4;s.combo=0;s.flash=.22;s.shake=Math.max(s.shake,.68);burst(s.player.x,s.player.y,impactColor,28);s.rings.push({x:s.player.x,y:s.player.y,age:0,impact:true,color:impactColor});if(s.planetChoice==='samsara'){changeSamsaraResource('crew',-7);changeSamsaraResource('energy',-5);audio.answerFeedback({world:'samsara',correct:false,impact:true});}feedback(`${samsaraImpact?SAMSARA_FORCES[sourceType].name.toUpperCase()+' · УДАР':'ПОПАДАНИЕ'} · −1 ЩИТ · осталось ${Math.max(0,s.health)}`,true);renderHud();if(s.health<=0||s.planetChoice==='samsara'&&s.samsaraVitals.crew<=0){s.samsaraFailure=s.health<=0?'hull':'crew';finish(false);}
 }
 function launchCapsule(){
   const capsule=createCapsule(s.sector);s.capsule={...capsule,x:70+Math.random()*(W-140),y:Math.max(130,H*.28),age:0,speed:Math.max(45,H*.115)};
@@ -900,7 +960,6 @@ function resolveCapsule(caught){
 }
 function update(dt){
   if(['paused','study','trainer','debrief'].includes(s.mode))return;
-  if(!['active','resolving'].includes(s.mode))
   clock+=dt;
   if(s.feedbackTimer>0){s.feedbackTimer-=dt;if(s.feedbackTimer<=0)$('feedback').classList.remove('visible');}
   s.flash=Math.max(0,s.flash-dt);s.beam=Math.max(0,s.beam-dt);s.invulnerable=Math.max(0,s.invulnerable-dt);
@@ -909,7 +968,7 @@ function update(dt){
   const playing=['active','resolving'].includes(s.mode);
   stepGround(dt,playing);
   if(playing){
-    if(s.planetChoice==='samsara'&&!s.listening){s.samsaraVitals.fuel=clamp(s.samsaraVitals.fuel-dt*.21,0,100);s.samsaraVitals.energy=clamp(s.samsaraVitals.energy-dt*.10,0,100);if(s.samsaraVitals.fuel<12||s.samsaraVitals.energy<12)s.samsaraVitals.crew=clamp(s.samsaraVitals.crew-dt*.12,0,100);s.samsaraHudTimer-=dt;if(s.samsaraHudTimer<=0){renderSamsaraResources();s.samsaraHudTimer=.25;}if(s.samsaraVitals.fuel<=0||s.samsaraVitals.energy<=0||s.samsaraVitals.crew<=0){finish(false);return;}}
+    if(s.planetChoice==='samsara'){const survival=stepSamsaraVitals(s.samsaraVitals,dt,{level:s.runLevel,forces:s.samsaraForces.length});s.samsaraVitals=survival.vitals;s.samsaraHudTimer-=dt;if(s.samsaraHudTimer<=0){renderSamsaraResources();s.samsaraHudTimer=.25;}if(survival.depleted){s.samsaraFailure=survival.depleted;finish(false);return;}}
     const p=s.player,speed=shipBuild().speed*dt;
     if(s.keys.has('arrowleft')||s.keys.has('a'))p.tx-=speed;
     if(s.keys.has('arrowright')||s.keys.has('d'))p.tx+=speed;
@@ -937,7 +996,7 @@ function update(dt){
         if(s.planetChoice==='samsara'&&b.forceType===3){const a=Math.atan2(p.y-b.y,p.x-b.x),speed=Math.hypot(b.vx,b.vy);b.vx+=Math.cos(a)*dt*11;b.vy+=Math.sin(a)*dt*11;const magnitude=Math.hypot(b.vx,b.vy)||1;b.vx=b.vx/magnitude*speed;b.vy=b.vy/magnitude*speed;}
         b.x+=b.vx*dt;b.y+=b.vy*dt;
         if(Math.hypot(b.x-p.x,b.y-(p.y-6))<b.r+11&&s.invulnerable===0){
-          b.y=H+100;shipHit();
+          b.y=H+100;shipHit(b.forceType);
         }
       });
     }
@@ -1000,20 +1059,32 @@ function drawHydraGun(port,e){
   ctx.restore();
 }
 function drawSamsaraHydra(e,size){
-  const time=clock*.32;
-  ctx.save();
-  ctx.fillStyle='#041b1c9c';ctx.beginPath();ctx.ellipse(3,10,size*.59,size*.51,0,0,Math.PI*2);ctx.fill();
-  for(let layer=0;layer<2;layer++)for(let i=0;i<12;i++){
-    const a=i*Math.PI/6+time*(layer?.36:-.22),r=size*(layer?.37:.25);
-    ctx.save();ctx.rotate(a);ctx.translate(0,-r);
-    const petal=ctx.createLinearGradient(0,-size*.25,0,size*.15);
-    petal.addColorStop(0,layer?'#d8bd8d':'#a7d2b1');petal.addColorStop(.42,layer?'#467f78':'#24635f');petal.addColorStop(1,'#0b3738');
-    ctx.fillStyle=petal;ctx.strokeStyle=layer?'#e2cba59c':'#9fcdb694';ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(0,-size*.30);ctx.bezierCurveTo(size*.20,-size*.14,size*.15,size*.09,0,size*.19);ctx.bezierCurveTo(-size*.15,size*.09,-size*.20,-size*.14,0,-size*.30);ctx.fill();ctx.stroke();
-    ctx.strokeStyle='#e2d5af6b';ctx.beginPath();ctx.moveTo(0,-size*.23);ctx.lineTo(0,size*.13);ctx.stroke();ctx.restore();
+  const time=clock*.22,variant=e.model??0,hull=e.maxHull?clamp(e.hull/e.maxHull,0,1):1,breath=1+Math.sin(clock*1.15)*.012;
+  const petal=(length,width,inner,outer,stroke)=>{
+    const fill=ctx.createLinearGradient(0,-length,0,length*.52);fill.addColorStop(0,outer);fill.addColorStop(.46,inner);fill.addColorStop(1,'#092f31');ctx.fillStyle=fill;ctx.strokeStyle=stroke;ctx.lineWidth=1.25;
+    ctx.beginPath();ctx.moveTo(0,-length);ctx.bezierCurveTo(width,-length*.62,width*.82,length*.20,0,length*.52);ctx.bezierCurveTo(-width*.82,length*.20,-width,-length*.62,0,-length);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#f2dfb852';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(0,-length*.82);ctx.quadraticCurveTo(width*.08,-length*.08,0,length*.38);ctx.stroke();
+  };
+  ctx.save();ctx.scale(breath,breath);
+  ctx.fillStyle='#020f1199';ctx.beginPath();ctx.ellipse(5,size*.17,size*.72,size*.52,0,0,Math.PI*2);ctx.fill();
+  // Four root-like braces make the mandala read as a grounded base.
+  ctx.lineCap='round';for(const side of [-1,1])for(const level of [0,1]){ctx.strokeStyle=level?'#b99b6370':'#315f596e';ctx.lineWidth=level?2.2:5;ctx.beginPath();ctx.moveTo(side*size*.13,size*.25);ctx.bezierCurveTo(side*size*.29,size*.38,side*size*(.43+level*.08),size*.48,side*size*(.66-level*.04),size*.43);ctx.stroke();}
+  const bed=ctx.createRadialGradient(-size*.08,-size*.13,size*.04,0,0,size*.60);bed.addColorStop(0,'#326f67');bed.addColorStop(.42,'#153f3d');bed.addColorStop(.76,'#0a2629');bed.addColorStop(1,'#06191b');ctx.fillStyle=bed;ctx.strokeStyle='#cdb27b8a';ctx.lineWidth=2.2;ctx.beginPath();ctx.arc(0,0,size*.57,0,Math.PI*2);ctx.fill();ctx.stroke();
+  // Outer botanical crown: broad leaves, slightly irregular so it stays alive.
+  const outerCount=14+variant*2;for(let i=0;i<outerCount;i++){
+    const a=i*Math.PI*2/outerCount+time*.18,r=size*(.44+Math.sin(i*2.17)*.012);ctx.save();ctx.rotate(a);ctx.translate(0,-r);ctx.rotate(Math.sin(clock*.7+i*1.7)*.018);petal(size*.25,size*.105,'#27665f',i%2?'#dbc28e':'#92c6a8','#e6d0a38c');ctx.restore();
   }
-  const core=images['samsara-art-overdrive'];
-  if(core?.complete&&core.naturalWidth){const k=size*.75/Math.max(core.naturalWidth,core.naturalHeight);ctx.shadowColor='#cbe9be';ctx.shadowBlur=17;ctx.drawImage(core,-core.naturalWidth*k/2,-core.naturalHeight*k/2,core.naturalWidth*k,core.naturalHeight*k);ctx.shadowBlur=0;}
+  // Dark inner leaves rotate the other way and give the base visible depth.
+  const innerCount=10+variant;for(let i=0;i<innerCount;i++){
+    const a=i*Math.PI*2/innerCount-time*.27,r=size*.285;ctx.save();ctx.rotate(a);ctx.translate(0,-r);petal(size*.205,size*.082,'#174e4d',i%2?'#6fa78f':'#d2b678','#b8d4ae7d');ctx.restore();
+  }
+  // Fine brass rings and seed beads replace the old generic symbol.
+  for(const [radius,color,dash,speed] of [[.45,'#d9bd818f',[2,5],.25],[.355,'#92cfb983',[9,4],-.31],[.235,'#ead69cb3',[1,4],.42]]){ctx.save();ctx.rotate(time*speed);ctx.strokeStyle=color;ctx.lineWidth=1.4;ctx.setLineDash(dash);ctx.beginPath();ctx.arc(0,0,size*radius,0,Math.PI*2);ctx.stroke();ctx.restore();}
+  const spokes=8;ctx.strokeStyle='#c9b47b48';ctx.lineWidth=1;for(let i=0;i<spokes;i++){const a=i*Math.PI*2/spokes+time*.08;ctx.beginPath();ctx.moveTo(Math.cos(a)*size*.12,Math.sin(a)*size*.12);ctx.lineTo(Math.cos(a)*size*.36,Math.sin(a)*size*.36);ctx.stroke();}
+  for(let i=0;i<8;i++){ctx.save();ctx.rotate(i*Math.PI/4-time*.34);ctx.translate(0,-size*.145);petal(size*.13,size*.057,'#6fa18a','#ead49e','#fff0bdad');ctx.restore();}
+  const core=ctx.createRadialGradient(-size*.035,-size*.045,0,0,0,size*.15);core.addColorStop(0,e.hit>0?'#fffbe8':'#eff8c9');core.addColorStop(.27,'#e9c47c');core.addColorStop(.58,'#24756a');core.addColorStop(1,'#071c22');ctx.fillStyle=core;ctx.shadowColor=e.hit>0?'#fff1ad':'#86e0c1';ctx.shadowBlur=13+Math.sin(clock*2.2)*3;ctx.beginPath();ctx.arc(0,0,size*.15,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+  ctx.save();ctx.rotate(-time*.72);ctx.strokeStyle='#fff0bdcf';ctx.lineWidth=1.3;ctx.beginPath();for(let i=0;i<16;i++){const a=-Math.PI/2+i*Math.PI/8,r=size*(i%2?.065:.12);const x=Math.cos(a)*r,y=Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.closePath();ctx.stroke();ctx.restore();
+  if(hull<.55){ctx.strokeStyle=`rgba(255,132,91,${.62-hull*.45})`;ctx.lineWidth=1.4;for(let i=0;i<4;i++){const a=i*1.7+1;ctx.beginPath();ctx.moveTo(Math.cos(a)*size*.08,Math.sin(a)*size*.08);ctx.lineTo(Math.cos(a+.2)*size*.23,Math.sin(a+.2)*size*.23);ctx.stroke();}}
   for(const port of e.guns||enemyGuns(e.model??0)){
     const ruined=port.hp<=0||port.destroyed;
     ctx.save();ctx.translate(port.x,port.y);
@@ -1046,7 +1117,7 @@ function draw(){
   const activeEnemy=s.enemy&&s.mode!=='resolving'&&!expedition.safeNoteFlight&&!s.enemy.suspended;
   if(activeEnemy||s.hydraBlast||s.mode==='start'){
     const e=s.hydraBlast?.enemy||(activeEnemy?s.enemy:{x:W/2,y:H*.37,age:clock,shields:{bass:false,quality:false},hit:0});
-    const model=e.model??0,size=machineSize(model),radius=size*.57;
+    const model=e.model??0,size=machineSize(model),radius=size*(s.planetChoice==='samsara'?.72:.57);
     const halo=ctx.createRadialGradient(e.x,e.y,15,e.x,e.y,radius*1.3);halo.addColorStop(0,'#b44e892b');halo.addColorStop(1,'#b44e8900');ctx.fillStyle=halo;ctx.fillRect(e.x-radius*1.3,e.y-radius*1.3,radius*2.6,radius*2.6);
     ctx.save();ctx.translate(e.x,e.y);
     if(s.hydraBlast)ctx.globalAlpha=Math.max(0,1-s.hydraBlast.age/.85);
@@ -1068,10 +1139,10 @@ function draw(){
   for(const d of s.drones){if(d.y<0)continue;ctx.save();ctx.translate(d.x,d.y);ctx.rotate(Math.sin(d.age+d.phase)*.2);if(images.drone.complete&&images.drone.naturalWidth)ctx.drawImage(images.drone,-20,-20,40,40);if(d.hit>0){ctx.fillStyle='#fff8';ctx.fillRect(-13,-9,26,18);}ctx.restore();}
   if(s.planetChoice==='samsara'){drawSamsaraPickups();drawSamsaraForces();}
   for(const b of s.bullets){const color=s.planetChoice==='samsara'&&b.forceType!==undefined?SAMSARA_FORCES[b.forceType].color:'#ffbdc8';ctx.save();ctx.translate(b.x,b.y);
-    if(s.planetChoice==='samsara'&&b.forceType===0){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-13,0);ctx.lineTo(7,0);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(2,-4);ctx.lineTo(2,4);ctx.closePath();ctx.fill();}
-    else if(s.planetChoice==='samsara'&&b.forceType===1){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.strokeStyle='#eadab3';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-15,0);ctx.lineTo(12,0);ctx.stroke();ctx.fillStyle='#d9c99d';ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(6,-5);ctx.lineTo(6,5);ctx.closePath();ctx.fill();}
-    else if(s.planetChoice==='samsara'&&b.forceType===2){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.fillStyle='#ff9a534a';ctx.beginPath();ctx.ellipse(-8,0,17,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffdd90';ctx.beginPath();ctx.ellipse(2,0,8,4,0,0,Math.PI*2);ctx.fill();}
-    else if(s.planetChoice==='samsara'&&b.forceType===3){ctx.rotate((b.age||0)*2);ctx.fillStyle='#be9bff45';ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.5;for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.ellipse(0,6,2.5,6,0,0,Math.PI*2);ctx.stroke();}ctx.fillStyle='#f1dcff';ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill();}
+    if(s.planetChoice==='samsara'&&b.forceType===0){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.strokeStyle='#dfffe9';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-16,0);ctx.lineTo(7,0);ctx.stroke();ctx.strokeStyle=color;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-13,0);ctx.lineTo(-18,-4);ctx.moveTo(-13,0);ctx.lineTo(-18,4);ctx.stroke();ctx.fillStyle='#d3fff1';ctx.beginPath();ctx.moveTo(12,0);ctx.lineTo(3,-4.5);ctx.lineTo(4,0);ctx.lineTo(3,4.5);ctx.closePath();ctx.fill();}
+    else if(s.planetChoice==='samsara'&&b.forceType===1){ctx.rotate(Math.atan2(b.vy,b.vx));ctx.shadowColor='#f0d79d';ctx.shadowBlur=5;ctx.strokeStyle='#5d3822';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-19,0);ctx.lineTo(11,0);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#eadab3';ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-19,-.5);ctx.lineTo(12,-.5);ctx.stroke();ctx.fillStyle='#d9c99d';ctx.beginPath();ctx.moveTo(19,0);ctx.lineTo(7,-6);ctx.lineTo(10,0);ctx.lineTo(7,6);ctx.closePath();ctx.fill();ctx.fillStyle='#6f3c25';ctx.fillRect(-18,-4,3,8);}
+    else if(s.planetChoice==='samsara'&&b.forceType===2){ctx.rotate(Math.atan2(b.vy,b.vx));const flame=ctx.createLinearGradient(-27,0,10,0);flame.addColorStop(0,'#e6441b00');flame.addColorStop(.42,'#ff6a2e78');flame.addColorStop(1,'#fff0a9');ctx.fillStyle=flame;ctx.beginPath();ctx.moveTo(-29,0);ctx.quadraticCurveTo(-10,-12,10,-3);ctx.quadraticCurveTo(14,0,10,3);ctx.quadraticCurveTo(-10,12,-29,0);ctx.fill();ctx.fillStyle='#fff8c9';ctx.beginPath();ctx.ellipse(5,0,5.5,2.5,0,0,Math.PI*2);ctx.fill();}
+    else if(s.planetChoice==='samsara'&&b.forceType===3){const travel=Math.atan2(b.vy,b.vx);ctx.rotate(travel);const tail=ctx.createLinearGradient(-25,0,0,0);tail.addColorStop(0,'#764cff00');tail.addColorStop(1,'#d9b4ff8f');ctx.fillStyle=tail;ctx.beginPath();ctx.moveTo(-25,0);ctx.quadraticCurveTo(-8,-8,3,0);ctx.quadraticCurveTo(-8,8,-25,0);ctx.fill();ctx.rotate((b.age||0)*3-travel);ctx.fillStyle='#be9bff45';ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1.5;for(let i=0;i<4;i++){ctx.rotate(Math.PI/2);ctx.beginPath();ctx.ellipse(0,6,2.5,6,0,0,Math.PI*2);ctx.stroke();}ctx.fillStyle='#f1dcff';ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill();}
     else{ctx.fillStyle=color+'2b';ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();}ctx.restore();}
   expedition.draw();
   const p=s.player;
@@ -1087,7 +1158,7 @@ function draw(){
     drawPlayerFrame(shipBuild().frame.frame);
     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,-6,2,0,Math.PI*2);ctx.fill();ctx.restore();}
   if(s.beam>0&&s.enemy&&!expedition.safeNoteFlight){ctx.save();ctx.strokeStyle='#bdffe7';ctx.globalAlpha=s.beam/.3;if(s.planetChoice==='samsara'){ctx.lineWidth=2+s.beam*10;ctx.beginPath();ctx.arc(s.enemy.x,s.enemy.y,32+(1-s.beam/.3)*62,0,Math.PI*2);ctx.stroke();}else{ctx.lineWidth=4+s.beam*20;ctx.beginPath();ctx.moveTo(p.x,p.y-26);ctx.lineTo(s.enemy.x,s.enemy.y+30);ctx.stroke();}ctx.restore();}
-  for(const r of s.rings){ctx.strokeStyle=r.explosion?`rgba(255,191,102,${1-r.age/.8})`:`rgba(121,245,208,${1-r.age/.8})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*260,0,Math.PI*2);ctx.stroke();}
+  for(const r of s.rings){ctx.save();ctx.globalAlpha=1-r.age/.8;ctx.strokeStyle=r.impact?r.color:r.explosion?'#ffbf66':'#79f5d0';ctx.lineWidth=r.impact?5-r.age*3:3;ctx.beginPath();ctx.arc(r.x,r.y,r.age*(r.impact?120:260),0,Math.PI*2);ctx.stroke();if(r.impact){ctx.globalAlpha*=.32;ctx.fillStyle=r.color;ctx.beginPath();ctx.arc(r.x,r.y,23+r.age*38,0,Math.PI*2);ctx.fill();}ctx.restore();}
   if(s.capsule){const c=s.capsule;ctx.save();ctx.translate(c.x,c.y);ctx.shadowColor='#79f5d0';ctx.shadowBlur=18;ctx.strokeStyle='#a5ffe6';ctx.fillStyle='#153c4c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-27);ctx.lineTo(26,-14);ctx.lineTo(26,14);ctx.lineTo(0,27);ctx.lineTo(-26,14);ctx.lineTo(-26,-14);ctx.closePath();ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#e5fff5';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 24px system-ui';ctx.fillText(INTERVAL_TARGETS[c.wanted].glyph,0,0);ctx.strokeStyle='#79f5d070';ctx.beginPath();ctx.arc(0,0,34+Math.sin(clock*5)*3,0,Math.PI*2);ctx.stroke();ctx.restore();}
   for(const particle of s.particles){ctx.globalAlpha=Math.min(1,particle.life*2);ctx.fillStyle=particle.color;ctx.fillRect(particle.x,particle.y,3,3);}ctx.globalAlpha=1;
   for(const part of s.debris){ctx.save();ctx.translate(part.x,part.y);ctx.rotate(part.angle);ctx.globalAlpha=Math.min(1,part.life);ctx.fillStyle='#b77b43';ctx.strokeStyle='#38281f';ctx.lineWidth=1;ctx.fillRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.strokeRect(-part.size,-part.size*.45,part.size*2,part.size);ctx.restore();}

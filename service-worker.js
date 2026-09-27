@@ -1,4 +1,4 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.86";
+const CACHE_NAME = "reharm-ear-trainer-v0.87";
 const APP_FILES = [
   "./game/",
   "./game/game.bundle.js",
@@ -8,8 +8,8 @@ const APP_FILES = [
   "./game/samsara.css",
   "./game/manifest.webmanifest",
   "./game/garden-flight.html",
-  "./game/garden-flight.css?v=0.86",
-  "./game/garden-flight.mjs?v=0.86",
+  "./game/garden-flight.css?v=0.87",
+  "./game/garden-flight.mjs?v=0.87",
   "./game/garden-flight-renderer.mjs",
   "./game/garden-harmony.mjs",
   "./game/garden-life.mjs",

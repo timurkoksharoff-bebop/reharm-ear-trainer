@@ -15,11 +15,18 @@ const s={ready:false,from:0,to:0,transition:1,pending:null,growth:0,ship:1,time:
 let renderer,images,last=0,raf=0,dpr=1,dragId=null,tx=.5,ty=.56,keys=new Set(),loaded=0;
 const pad=new GardenPad();
 const gardenLife=createGardenLife();
-let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false;
+let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false,routeNavigationMode='';
 const PROGRESS_KEY='echo-garden-progress.v1';
+const FAVORITES_KEY='echo-garden-favorites.v1';
 const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],lastRouteId:saved.lastRouteId||''};}catch{return {level:1,completed:[],lastRouteId:''};}};
 const progress=loadProgress();
 const saveProgress=()=>{try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress));}catch{}}
+const loadFavorites=()=>{try{return new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]'));}catch{return new Set();}};
+const favorites=loadFavorites();
+const routeIdentity=route=>String(route?.id||`${route?.source||'route'}:${route?.name||''}`);
+const saveFavorites=()=>{try{localStorage.setItem(FAVORITES_KEY,JSON.stringify([...favorites]));navigator.storage?.persist?.();}catch{}};
+const TOUR_NAMES={reharm:'Reharmonization+',anime:'Anime',chill:'Chill',ambient:'Ambient',cinematic:'Cinematic','deep-house':'Deep House',funk:'Funk',gospel:'Gospel','drum-bass':'Drum & Bass',favorites:'Избранные полёты'};
+const routeTour=route=>route?.chapter?'reharm':route?.tour||'reharm';
 const DEGREE_NAMES=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
 const exerciseCode=(exercise,index)=>{
   const id=String(exercise.id||''),idMatch=id.match(/^fig-(\d+)-(\d+)/i);
@@ -74,24 +81,36 @@ function renderMission(model){
     ...(!part.quality?[{index,kind:'тип аккорда'}]:[])
   ]);
   const finalMissing=missing.length===1?missing[0]:null;
-  const exerciseIndex=Math.max(0,gardenExercisesForChapter(1).findIndex(item=>item.id===model.exercise.id));
-  $('mission-code').textContent=exerciseCode(model.exercise,exerciseIndex);$('mission-source').textContent=model.exercise.source;
+  const chapter=Number(model.exercise.chapter)||1,exerciseIndex=Math.max(0,gardenExercisesForChapter(chapter).findIndex(item=>item.id===model.exercise.id)),tour=routeTour(model.exercise),favorite=favorites.has(routeIdentity(model.exercise));
+  $('mission-code').textContent=exerciseCode(model.exercise,exerciseIndex);$('mission-title').textContent=routeTitle(model.exercise,exerciseIndex);$('mission-source').textContent=model.exercise.source||`${TOUR_NAMES[tour]||tour} · последовательность ${model.exercise.number||exerciseIndex+1}`;$('mission-mandala').src=`assets/echo-garden/tours/${tour==='favorites'?'reharm':tour}.webp`;$('mission-mandala').alt=`Мандала ${TOUR_NAMES[tour]||tour}`;
+  $('route-favorite').textContent=favorite?'♥':'♡';$('route-favorite').setAttribute('aria-pressed',String(favorite));$('route-favorite').setAttribute('aria-label',favorite?'Убрать маршрут из избранного':'Добавить маршрут в избранное');
   $('route-progress').textContent=`${solvedParts} / ${total*2}`;$('completion-number').textContent=String(percent);$('round-number').textContent=String(model.round).padStart(2,'0');
   const routeElement=$('chord-route');
-  routeElement.classList.toggle('route-long',total>=8);
+  routeElement.classList.toggle('route-long',total>5);
   routeElement.classList.toggle('route-very-long',total>=24);
-  routeElement.closest('.route-panel')?.classList.toggle('route-long-panel',total>=8);
-  $('harmony-hud').classList.toggle('has-long-route',total>=8);
+  routeElement.closest('.route-panel')?.classList.toggle('route-long-panel',total>5);
+  $('harmony-hud').classList.toggle('has-long-route',total>5);
   routeElement.dataset.length=String(total);
   routeElement.style.setProperty('--route-half',String(Math.ceil(total/2)));
   routeElement.replaceChildren(...progress.map((part,index)=>{
-    const li=document.createElement('li'),current=model.running&&index===model.cursor,target=model.exercise.sequence[index];
+    const li=document.createElement('li'),current=model.running&&index===model.cursor,target=model.exercise.sequence[index],revealed=model.navigation?.revealedPosition===index;
     li.className=`chord-slot${part.degree&&part.quality?' solved':''}${current?' current':''}`;
     li.setAttribute('aria-label',`Позиция ${index+1}: ступень ${part.degree?'найдена':'не найдена'}, тип ${part.quality?'найден':'не найден'}`);
     const degreeOnly=String(target.degree).match(/^[♭#♯]?(?:VII|VI|IV|III|II|V|I)/)?.[0]??'';
-    const label=part.degree&&part.quality?target.degree:part.degree?degreeOnly:part.quality?target.quality:'';
-    li.innerHTML=`<span class="route-node" aria-hidden="true"><i class="node-degree${part.degree?' found':''}"></i><i class="node-quality${part.quality?' found':''}"></i><em>${index+1}</em></span><span class="route-copy" aria-hidden="true"><small>${String(index+1).padStart(2,'0')}</small><b class="${label?'visible':''}">${label||'·'}</b></span>`;return li;
+    const label=revealed||part.degree&&part.quality?target.degree:part.degree?degreeOnly:part.quality?target.quality:'';
+    li.innerHTML=`<button type="button" class="route-node${revealed?' revealed':''}" aria-label="Позиция ${index+1}${routeNavigationMode?`, выбрать для ${routeNavigationMode==='reveal'?'открытия':'точного перехода'}`:''}" ${routeNavigationMode?'':'disabled'}><i class="node-degree${part.degree||revealed?' found':''}"></i><i class="node-quality${part.quality||revealed?' found':''}"></i><em>${index+1}</em></button><span class="route-copy" aria-hidden="true"><small>${String(index+1).padStart(2,'0')}</small><b class="${label?'visible':''}">${label||'·'}</b></span>`;
+    li.querySelector('.route-node').addEventListener('click',()=>{const mode=routeNavigationMode;routeNavigationMode='';if(mode==='reveal')mission.revealPosition(index);if(mode==='teleport')mission.teleportTo(index);});return li;
   }));
+  const navigation=model.navigation??{enabled:false,revealedPosition:-1,teleportCharges:0},navigationPanel=$('route-mandalas');
+  navigationPanel.hidden=!navigation.enabled;
+  if(navigation.enabled){
+    const canShift=model.running&&model.cursor>=0&&!model.complete;
+    for(const button of navigationPanel.querySelectorAll('[data-route-shift]'))button.disabled=!canShift;
+    $('route-reveal').classList.toggle('selected',routeNavigationMode==='reveal');$('route-reveal').setAttribute('aria-pressed',String(routeNavigationMode==='reveal'));
+    $('route-teleport').classList.toggle('selected',routeNavigationMode==='teleport');$('route-teleport').setAttribute('aria-pressed',String(routeNavigationMode==='teleport'));
+    $('route-teleport').disabled=!canShift||navigation.teleportCharges<1;$('route-teleport-count').textContent=String(navigation.teleportCharges);
+    $('route-navigation-hint').textContent=routeNavigationMode==='reveal'?'Нажми позицию: её аккорд откроется без смены маршрута.':routeNavigationMode==='teleport'?'Нажми позицию для точного перехода. Заряд используется один раз.':navigation.teleportCharges?'Сдвигай маршрут или выбери позицию для открытия.':'Точный переход использован; остальные мандалы активны.';
+  }
   const currentParts=model.currentParts??(model.cursor>=0?progress[model.cursor]:{degree:true,quality:true});
   const mayAnswer=model.running&&model.cursor>=0&&!solved.has(model.cursor),qualities=[...new Set(model.choices.map(chord=>chord.quality))];
   const answerPart=(kind,value)=>{const result=mission.answerPart(kind,value);if(!result.ignored)pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});};
@@ -104,14 +123,14 @@ function renderMission(model){
   $('mission-toggle').textContent=model.running?'Ⅱ Остановить':'▶ Запустить полёт';$('mission-restart').hidden=!model.complete;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
-function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
+function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);currentRoute=exercise;completionHandled=false;lastMissionPosition='';routeNavigationMode='';mission=createGardenMission({exercise,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
 let activeExercises=[];
 function routeTitle(route,index=0){return route.name&&route.name!==route.id?route.name:exerciseCode(route,index);}
 function renderGardenRouteList(){
   const list=$('garden-route-list');if(!list)return;
-  const routes=s.tour==='reharm'?activeExercises:(studio?.routes||[]).filter(route=>(route.tour||'reharm')===s.tour);
-  list.replaceChildren(...routes.map((route,index)=>{const button=document.createElement('button');button.className='garden-route-choice';button.innerHTML=`<span>${s.tour==='reharm'?exerciseCode(route,index):String(route.number||index+1).padStart(2,'0')}</span><strong>${routeTitle(route,index)}</strong><small>${route.sequence.length} аккордов</small>`;button.addEventListener('click',()=>launchRoute(route));return button;}));
-  if(!routes.length){const empty=document.createElement('p');empty.className='garden-route-empty';empty.textContent='В этом туре пока нет последовательностей. Их можно добавить в Sound & Route Lab.';list.append(empty);}
+  const routes=s.tour==='favorites'?[...allBookRoutes(),...(studio?.routes||[])].filter(route=>favorites.has(routeIdentity(route))):s.tour==='reharm'?activeExercises:(studio?.routes||[]).filter(route=>(route.tour||'reharm')===s.tour);
+  list.replaceChildren(...routes.map((route,index)=>{const button=document.createElement('button');button.className='garden-route-choice';button.innerHTML=`<span>${route.chapter?exerciseCode(route,index):String(route.number||index+1).padStart(2,'0')}</span><strong>${routeTitle(route,index)}</strong><small>${route.sequence.length} аккордов · ${TOUR_NAMES[routeTour(route)]||routeTour(route)}${favorites.has(routeIdentity(route))?' · ♥':''}</small>`;button.addEventListener('click',()=>launchRoute(route));return button;}));
+  if(!routes.length){const empty=document.createElement('p');empty.className='garden-route-empty';empty.textContent=s.tour==='favorites'?'Нажми ♡ возле текущего маршрута — он появится здесь для точного повторного полёта.':'В этом туре пока нет последовательностей. Их можно добавить в Sound & Route Lab.';list.append(empty);}
   $('reharm-chapters').hidden=s.tour!=='reharm';
 }
 function selectChapter(chapter=1,{bind=false}={}){s.chapter=clamp(Number(chapter)||1,1,16);activeExercises=gardenExercisesForChapter(s.chapter);$('mandala-chapter').textContent=String(s.chapter).padStart(2,'0');$('exercise-select').replaceChildren(...activeExercises.map((exercise,index)=>{const option=document.createElement('option');option.value=exercise.id;option.textContent=exerciseCode(exercise,index);return option;}));if(bind&&activeExercises[0])bindMission(activeExercises[0]);for(const button of document.querySelectorAll('[data-chapter]')){const selected=Number(button.dataset.chapter)===s.chapter;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));}renderGardenRouteList();}
@@ -124,6 +143,7 @@ studio=new GardenSequenceStudio({
 $('exercise-select').addEventListener('change',event=>bindMission(activeExercises.find(exercise=>exercise.id===event.target.value)));
 for(let chapter=1;chapter<=16;chapter++){const button=document.createElement('button');button.dataset.chapter=String(chapter);button.textContent=String(chapter).padStart(2,'0');button.setAttribute('aria-label',`Глава ${chapter}`);button.addEventListener('click',()=>selectChapter(chapter));$('chapter-orbit').append(button);}selectChapter(1);
 for(const button of document.querySelectorAll('[data-tour]'))button.addEventListener('click',async()=>{s.tour=button.dataset.tour;for(const item of document.querySelectorAll('[data-tour]')){const selected=item===button;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}$('mandala-tour-name').textContent=button.getAttribute('aria-label')||s.tour;await studio?.refresh();renderGardenRouteList();});
+$('route-favorite').addEventListener('click',()=>{if(!currentRoute)return;const id=routeIdentity(currentRoute);favorites.has(id)?favorites.delete(id):favorites.add(id);saveFavorites();renderMission(mission.snapshot());if(s.tour==='favorites')renderGardenRouteList();});
 for(const button of document.querySelectorAll('[data-mode]'))button.addEventListener('click',()=>{s.mode=button.dataset.mode;for(const item of document.querySelectorAll('[data-mode]')){const selected=item===button;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}});
 function updateProgressCard(){
   $('garden-level').textContent=String(progress.level).padStart(2,'0');
@@ -184,6 +204,9 @@ $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){mission.pause();pad.stop(true);return;}try{await pad.unlock();if(s.paused)s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
 $('mission-restart').addEventListener('click',()=>{mission.restart();s.paused=false;ui();});
+for(const button of document.querySelectorAll('[data-route-shift]'))button.addEventListener('click',()=>mission.shift(Number(button.dataset.routeShift)));
+$('route-reveal').addEventListener('click',()=>{routeNavigationMode=routeNavigationMode==='reveal'?'':'reveal';renderMission(mission.snapshot());});
+$('route-teleport').addEventListener('click',()=>{if(mission.snapshot().navigation?.teleportCharges<1)return;routeNavigationMode=routeNavigationMode==='teleport'?'':'teleport';renderMission(mission.snapshot());});
 for(const button of document.querySelectorAll('[data-use-artifact]'))button.addEventListener('click',()=>{const kind=button.dataset.useArtifact;if((kind==='hold'||kind==='holdArpeggio')&&mission.snapshot().cursor<0){$('answer-feedback').textContent='Сначала дождись первого аккорда последовательности';return;}if(!gardenLife.consumeArtifact(kind))return;if(kind==='arpeggio')mission.arpeggioRound();if(kind==='restart')mission.restartFromRoot();if(kind==='midpoint')mission.jumpToMiddle();if(kind==='hold'||kind==='holdArpeggio'){mission.hold(kind==='holdArpeggio');$('artifact-continue').hidden=false;$('artifact-repeat').hidden=false;}renderVitals();});
 $('artifact-repeat').addEventListener('click',()=>mission.replayCurrent());
 $('artifact-continue').addEventListener('click',()=>{mission.continue();$('artifact-continue').hidden=true;$('artifact-repeat').hidden=true;});

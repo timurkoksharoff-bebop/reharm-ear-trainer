@@ -6,12 +6,12 @@ import fs from 'node:fs';
 import {MELODY_BANK,GENRE_COUNTS} from '../melody-bank.mjs';
 import {createIntelligence} from '../intelligence.mjs';
 import {createRaiders} from '../raiders.mjs';
-import {createIceEvent} from '../ice-event.mjs';
 import {createSeasonPlanet} from '../seasons.mjs';
 import * as music from '../music.mjs';
 import * as intervals from '../intervals.mjs';
 import * as combat from '../combat.mjs';
 import * as expeditionModule from '../expedition.mjs';
+import * as samsaraSurvival from '../samsara-survival.mjs';
 class Element {
   constructor(){this.children=[];this.dataset={};this.style={setProperty(){}};this.events={};this.hidden=false;this.disabled=false;this.textContent='';this.classList={add(){},remove(){},toggle(){}};}
   set innerHTML(v){this.html=v;this.children=[];if(v.includes('overlay-card'))this.children.push(new Element());}
@@ -26,7 +26,7 @@ const get=id=>{if(!elements.has(id))elements.set(id,new Element());return elemen
 get('space').getContext=()=>({});get('enemy-label').append(new Element());
 class TestAudio {announce(text,onEnd){this.pending=onEnd;}answerFeedback(options){this.feedback=options;}trumpetChord(root,notes,onEnd){this.pending=onEnd;}hydraExplosion({final}){this.explosions=(this.explosions||0)+1;if(final)this.finalExplosions=(this.finalExplosions||0)+1;}rhythm(pattern,onEnd){this.pending=onEnd;}guide(root,target,onEnd){this.pending=onEnd;}chordOnly(root,notes,onEnd){this.pending=onEnd;}interval(base,n,mode,onEnd){this.pending=onEnd;}async unlock(){}stop(){this.pending=null;}play(route,chord,sector,onPart,onEnd){this.pending=onEnd;onPart('home');}progression(route,target,onPart,onEnd){this.pending=onEnd;onPart({part:'target',index:target});}bookReference(route,target,onPart,onEnd){this.pending=onEnd;this.referencePlayed=true;onPart({part:'home',index:-1});onPart({part:'target',index:target});}example(...args){this.play(args[0],{},0,args[4],args[5]);}}
 const storage=new Map();
-const context=vm.createContext({MELODY_BANK,GENRE_COUNTS,createIntelligence,createRaiders,createIceEvent,createSeasonPlanet,...music,...combat,...intervals,...expeditionModule,FlightAudio:TestAudio,console,
+const context=vm.createContext({MELODY_BANK,GENRE_COUNTS,createIntelligence,createRaiders,createSeasonPlanet,...music,...combat,...intervals,...expeditionModule,...samsaraSurvival,FlightAudio:TestAudio,console,
   createDebrief:()=>({record(){},open(){}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
   installLanguage(){},loadFlightImage:async()=>{},createDebrief:()=>({record(){},open(){},log:{pendingCount:0}}),createMelodyLibrary:()=>({open(){}}),createStandardsLibrary:()=>({open(){}}),
   document:{documentElement:new Element(),body:new Element(),getElementById:get,createElement:()=>new Element(),querySelector:selector=>get(selector),querySelectorAll:()=>[...get('bass-pads').children,...get('quality-pads').children],addEventListener(){}},

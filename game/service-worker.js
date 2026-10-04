@@ -1,5 +1,8 @@
-const CACHE_NAME='space-music-college-0.93.2-mobile1';
+const CACHE_NAME='space-music-college-0.93.3-mobile1';
 const APP_FILES=[
+  './garden-flight-0933.html',
+  './garden-flight-0933.bundle.js',
+  './garden-flight-0933.css',
   './',
   './assets/artifact-cymbal.webp',
   './assets/artifact-drum-engine.png',

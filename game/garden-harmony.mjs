@@ -282,7 +282,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     arpeggioRound(){accompaniment.activate('arpWave',1);state.feedback='Арпеджио начнётся со следующего аккорда на один круг';emit();},
     restartFromRoot(){clearTimeout(state.timer);state.running=true;state.held=false;state.cursor=-1;state.basePlayed=true;state.feedback='Возврат к тонике';sound();schedule();},
     jumpToMiddle(){clearTimeout(state.timer);state.running=true;state.held=false;state.cursor=Math.max(-1,Math.floor(exercise.sequence.length/2)-1);state.feedback='Маршрут продолжен с середины';step();},
-    hold(arpeggio=false){if(!state.running||state.complete)return {ignored:true};state.held=true;state.arpeggio=arpeggio;state.feedback='∞ Повторяем текущий аккорд в темпе';emit();return {held:true};},
+    hold(arpeggio=false){if(!state.running||state.complete)return {ignored:true};clearTimeout(state.timer);if(state.cursor<0)state.cursor=0;state.held=true;state.arpeggio=arpeggio;state.feedback='∞ Повторяем текущий аккорд в темпе';sound();schedule();return {held:true};},
     replayCurrent(){if(!state.held||state.cursor<0)return;state.feedback=state.arpeggio?'Арпеджио прозвучит ещё раз':'Аккорд прозвучит ещё раз';sound();emit();},
     continue(){if(!state.held)return;state.held=false;state.arpeggio=false;state.feedback='Продолжаем маршрут';emit();},
     snapshot

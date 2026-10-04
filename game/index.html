@@ -28,7 +28,7 @@
         }
       }).catch(() => {});
     } else if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.93.2').catch(()=>{}));
+      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.93.3').catch(()=>{}));
     }
   </script>
 </head>

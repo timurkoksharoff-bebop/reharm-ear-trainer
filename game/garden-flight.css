@@ -187,3 +187,97 @@ body.garden-impact #world,body.garden-impact #life,body.garden-impact #ship-laye
 body.garden-impact .vignette{box-shadow:inset 0 0 75px #ffac6859}
 .vital-pickup{display:block;width:18px;height:18px;object-fit:contain;filter:drop-shadow(0 0 5px var(--vital))}
 @media(max-width:760px){.vital-pickup{width:16px;height:16px}.vital-event{top:71px}}
+
+/* Compact flight controls: no permanent navigation slab over the ship. */
+.flight-tools{position:fixed;z-index:18;left:10px;top:91px;pointer-events:auto}
+.flight-tools summary{list-style:none;width:30px;height:27px;display:grid;place-items:center;cursor:pointer;font:22px Georgia;color:#b6ded4;background:#09272b26;border:1px solid #aadfd32b;border-radius:15px}
+.flight-tools summary::-webkit-details-marker{display:none}
+.flight-tools-body{margin-top:5px;padding:8px;border:0;border-radius:0;background:transparent;backdrop-filter:none;box-shadow:none;width:210px}
+.jump-charges{display:flex;gap:5px;justify-content:space-between}
+.jump-charges button{position:relative;background:transparent;border:0;color:#b6ded4;opacity:.25;font:15px Georgia;padding:3px;min-height:28px}
+.jump-charges button.ready{opacity:.85;text-shadow:0 0 5px #83d7c64d}
+.jump-charges b{font:8px sans-serif;margin-left:2px}
+.route-practice{display:flex;align-items:center;gap:9px;margin-top:7px}
+.route-practice button{background:transparent;border:0;min-height:28px;padding:3px;color:#b6ded4}
+.route-practice span{font:9px sans-serif;color:#b6ded4}
+.route-practice button[aria-pressed=true]{color:#ecfff6;text-shadow:0 0 7px #9eebcb;border-bottom:1px solid #b4e5d36b}
+/* 0.93: open scenery, one slim route band and a small listening dock. */
+body.training .site-header{left:auto;right:8px;top:max(7px,env(safe-area-inset-top));padding:0;z-index:6}
+body.training .site-header .brand,body.training .back-to-planets,body.training .garden-home,
+body.training .caption,body.training .gesture{display:none}
+body.training .mandala-trigger{width:34px;height:34px;min-height:34px;font-size:23px!important;padding:0}
+#harmony-hud[data-variant=minimal] .route-panel.route-panel{top:max(8px,env(safe-area-inset-top));left:12px;right:54px;width:auto;max-height:none;transform:none;padding:0!important;overflow:visible}
+#harmony-hud[data-variant=minimal] .route-heading{display:flex!important;gap:8px;margin:0 35px 7px 0;align-items:center;height:20px}
+#harmony-hud[data-variant=minimal] .route-heading img,#harmony-hud[data-variant=minimal] .route-heading small,#harmony-hud[data-variant=minimal] .route-heading em{display:none}
+#harmony-hud[data-variant=minimal] .route-identity{min-width:0;flex:1}
+#harmony-hud[data-variant=minimal] .route-heading strong{font:11px/1.3 ui-monospace,monospace;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#harmony-hud[data-variant=minimal] #route-progress{font:10px/1 ui-monospace,monospace;white-space:nowrap}
+#harmony-hud[data-variant=minimal] .chord-route.chord-route{display:flex;flex-direction:row;align-items:flex-start;flex-wrap:nowrap;width:100%;gap:clamp(4px,1vw,14px);overflow-x:auto;overflow-y:hidden;padding:5px 3px 9px;margin:0;scrollbar-width:thin;pointer-events:auto}
+#harmony-hud[data-variant=minimal] .chord-slot.chord-slot{display:flex;flex:1 0 24px;width:auto;flex-direction:column;align-items:center;gap:4px;min-width:24px;height:auto;min-height:36px;padding:0}
+#harmony-hud[data-variant=minimal] .route-copy small{display:none}
+#harmony-hud[data-variant=minimal] .route-copy b{font-size:10px;max-width:90px}
+#harmony-hud[data-variant=minimal] .route-node{width:19px;height:19px}
+#harmony-hud[data-variant=minimal] .route-node em{font-size:9px}
+#harmony-hud[data-variant=minimal] .round-line,#harmony-hud[data-variant=minimal] .panel-kicker,#harmony-hud[data-variant=minimal] .center-readout{display:none}
+.route-tools{position:absolute;right:0;top:0;pointer-events:auto;z-index:7}
+.route-tools summary{list-style:none;cursor:pointer;width:30px;height:24px;display:grid;place-items:center;border-radius:12px;border:1px solid #8ed4c466;background:#06272ad9;font:21px/1 sans-serif}
+.route-tools summary::-webkit-details-marker{display:none}
+.route-tools .route-mandalas{position:absolute;right:0;top:26px;width:250px;background:#05252af5;box-shadow:0 10px 25px #0006;padding:10px;gap:6px}
+.route-tools .route-mandalas>button{min-height:35px;font-size:10px}
+.route-tools .route-mandalas>.route-mandala-action{font-size:9px}
+.route-tools .route-mandalas>small{font-size:8px;white-space:normal}
+#harmony-hud[data-variant=minimal] .answers-panel.answers-panel{top:88px;left:auto;right:12px;bottom:auto;transform:none;width:max-content;max-width:min(310px,calc(100vw - 24px));max-height:calc(100dvh - 235px);overflow-y:auto}
+#harmony-hud[data-variant=minimal] .quality-options{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;margin:0}
+#harmony-hud[data-variant=minimal] .quality-option{min-height:32px;min-width:44px;padding:4px 10px;border-radius:18px;font-size:13px}
+#harmony-hud[data-variant=minimal] .answers-panel .mission-toggle{display:block;margin:8px 0 0 auto;min-width:78px;min-height:32px;padding:4px 12px;border-radius:18px;border:1px solid #a0f7e875;background:#03252b80;pointer-events:auto;font-size:11px}
+#harmony-hud[data-variant=minimal] .answers-panel .text-control{display:block;margin-left:auto;pointer-events:auto}
+#harmony-hud[data-variant=minimal] .answer-feedback{max-width:205px;margin:6px 0 0 auto;text-align:right;font-size:10px}
+#harmony-hud[data-variant=minimal] .degrees-panel{width:min(750px,calc(100% - 24px));bottom:max(9px,env(safe-area-inset-bottom))}
+#harmony-hud[data-variant=minimal] .degree-options{grid-template-columns:repeat(12,minmax(0,1fr));gap:4px}
+#harmony-hud[data-variant=minimal] .degree-option{min-width:0;min-height:32px;font-size:12px;padding:0 2px}
+@media(max-width:440px){
+  #harmony-hud[data-variant=minimal] .degree-options{grid-template-columns:repeat(6,minmax(0,1fr))}
+  #harmony-hud[data-variant=minimal] .degree-option{min-height:34px}
+  #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{max-width:205px}
+  #harmony-hud[data-variant=minimal] .quality-option{min-height:34px;font-size:12px}
+}
+/* Stable two-column answer rail and unobstructed scenery. */
+#harmony-hud[data-variant=minimal] .answers-panel.answers-panel{right:6px;top:92px;width:140px;max-width:140px;max-height:calc(100dvh - 210px)}
+#harmony-hud[data-variant=minimal] .quality-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px}
+#harmony-hud[data-variant=minimal] .quality-option{min-width:0;min-height:27px;padding:2px 3px;font-size:11px;background:#03252b20}
+.quality-option.filtered,.degree-option.filtered{visibility:hidden}
+.quality-advanced summary{font:10px sans-serif;cursor:pointer;margin:6px 0;color:#badbd0;pointer-events:auto}
+.arrangement-status{left:11px;right:auto;top:136px;bottom:auto;transform:none;width:24px;display:flex;flex-direction:column;gap:12px}
+.arrangement-status button{width:17px;height:17px;min-height:17px;padding:0;border-radius:50%;background:var(--flower);border:1px solid #defff570;opacity:.68;box-shadow:0 0 7px color-mix(in srgb,var(--flower),transparent 65%)}
+.artifact-belt{left:auto;right:8px;bottom:90px;transform:none;background:transparent;border:0;box-shadow:none;backdrop-filter:none;padding:0}
+.assist-charges{display:flex;gap:4px}
+.artifact-belt button{background:transparent;border:0;width:30px;height:30px}
+.artifact-belt button.ready{box-shadow:none;opacity:.75}
+.artifact-belt b{background:transparent;color:#c4e5d8;font-size:8px}
+#assist-status{font:8px sans-serif;max-width:145px;color:#add0c3}
+#harmony-hud[data-variant=minimal] .chord-route.chord-route{gap:3px;flex-wrap:wrap;overflow:visible;max-height:66px}
+#harmony-hud[data-variant=minimal] .chord-slot.chord-slot{min-height:24px;min-width:22px;gap:2px}
+#harmony-hud[data-variant=minimal] .chord-route:before{display:none}
+.flight-tools summary{position:relative;width:38px;height:38px;border-radius:50%;color:#aedcca;background:#09272b18;border-color:#aadfd32b}
+.flight-tools summary svg{width:30px;height:30px;display:block}
+.lotus-repeat{display:none;position:absolute;right:-3px;bottom:-3px;font:12px Georgia;color:#e5f8dc}
+.flight-tools summary.repeating .lotus-repeat{display:block}
+.flight-tools-body{max-width:calc(100vw - 30px);max-height:calc(100dvh - 230px);overflow:auto}
+.flight-tools .assist-charges{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px}
+.flight-tools .assist-charges button{position:relative;width:36px;height:36px;min-height:36px;background:transparent;border:1px solid #acdaca35;border-radius:50%;padding:2px;opacity:.8}
+.flight-tools .assist-charges img{width:30px;height:30px;object-fit:contain}
+.flight-tools .assist-charges b{position:absolute;right:-3px;bottom:0;color:#d6e9c7;font:9px sans-serif}
+.flight-tools #assist-status{margin:5px 0 0;max-width:190px}
+/* Student palette: permanent right rail; only required extras to its left. */
+body.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{width:72px;max-width:72px;overflow:visible;right:7px;top:92px}
+body.student-palette #harmony-hud[data-variant=minimal] #quality-options{grid-template-columns:1fr;gap:4px}
+body.student-palette #harmony-hud[data-variant=minimal] .quality-option{min-height:29px;font-size:12px;width:72px}
+body.student-palette .quality-advanced{position:absolute;right:80px;top:0;width:72px}
+body.student-palette .quality-advanced summary{display:none}
+body.student-palette #quality-advanced-options{grid-template-columns:1fr!important;gap:4px}
+body.student-palette #harmony-hud[data-variant=minimal] .answer-feedback{width:145px;margin-left:-73px;font-size:8px}
+body.student-palette #harmony-hud[data-variant=minimal] .answers-panel .mission-toggle{min-width:72px;padding:3px 5px;font-size:9px}
+@media(max-height:570px){body.student-palette #harmony-hud[data-variant=minimal] .quality-option{min-height:23px;font-size:10px}body.student-palette #harmony-hud[data-variant=minimal] #quality-options{gap:2px}}
+#harmony-hud[data-variant=minimal] .answers-panel .mission-toggle{position:fixed;left:11px;right:auto;top:calc(98px + env(safe-area-inset-top));width:64px;margin:0;transform:none}
+.flight-tools{top:calc(140px + env(safe-area-inset-top))}
+.arrangement-status{top:calc(195px + env(safe-area-inset-top))}

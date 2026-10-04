@@ -1,4 +1,4 @@
-const CACHE_NAME='space-music-college-0.92-mobile1';
+const CACHE_NAME='space-music-college-0.93.1-mobile1';
 const APP_FILES=[
   './',
   './assets/artifact-cymbal.webp',

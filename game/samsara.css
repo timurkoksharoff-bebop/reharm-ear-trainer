@@ -141,6 +141,15 @@ body.samsara-world .route-track{top:128px!important;max-width:180px}
 body.samsara-world .planet-name{top:145px!important;font-size:9px}
 body.samsara-world .floating-deck .cockpit{width:min(640px,100%);left:50%!important;transform:translateX(-50%);bottom:12px!important;max-height:26dvh!important;overflow:auto;background:transparent!important;pointer-events:none}
 body.samsara-world .floating-deck .cockpit button{pointer-events:auto}
+
+/* Desktop Color Tones: all twelve choices plus Submit without nested scroll. */
+@media(min-width:600px){
+  body.samsara-world .cabinet.floating-deck:has(.special-panel[data-kind=tones]:not([hidden])) .cockpit{max-height:none!important;overflow:visible;bottom:8px!important}
+  body.samsara-world .cabinet.floating-deck .special-panel[data-kind=tones]{max-height:none;overflow:visible;padding:6px 8px!important}
+  body.samsara-world .cabinet.floating-deck .special-panel[data-kind=tones] #special-options{grid-template-columns:repeat(6,minmax(0,1fr));max-height:none;overflow:visible;gap:4px}
+  body.samsara-world .cabinet.floating-deck .special-panel[data-kind=tones] #special-options button{min-height:30px;padding:3px;font-size:13px}
+  body.samsara-world .cabinet.floating-deck .special-panel[data-kind=tones]>span{font-size:10px;margin:1px 0 4px}
+}
 body.samsara-world .floating-deck .pad,body.samsara-world .floating-deck .quality-pads .pad{min-height:32px!important;border-color:#f3dfbb80!important;background:#292d2980!important;color:#fff5df!important}
 body.samsara-world .floating-deck .pad.selected{background:#7a9164a8!important}
 body.samsara-world .samsara-artifacts{justify-content:center;min-height:28px!important}

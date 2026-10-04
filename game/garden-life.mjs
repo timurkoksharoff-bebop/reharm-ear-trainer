@@ -8,17 +8,19 @@ export const GARDEN_RESOURCES=Object.freeze({
 
 export const GARDEN_ITEMS=Object.freeze({
   ...Object.fromEntries(Object.entries(GARDEN_ARRANGEMENTS).map(([kind,spec])=>[kind,{...spec,resource:'arrangement',sprite:null,size:80,arrangement:true,label:spec.label}])),
-  arrangementBoost:{resource:'inventory',amount:1,sprite:'midpoint-seed',label:'Семя усиления · +1 круг',color:'#f4de98',size:72,artifact:true},
+  arrangementBoost:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:4,rounds:1},sprite:'midpoint-seed',label:'Семя фокуса · ступени ×4 · круг',color:'#f4de98',size:66,artifact:true,rare:true},
   fuel:{resource:'fuel',amount:10,sprite:'fuel-seed',label:'Энергетическое семя',color:'#e9b95e',size:68},
   water:{resource:'water',amount:9,sprite:'water-pearl',label:'Водяная жемчужина',color:'#75f4ef',size:62},
   crew:{resource:'crew',amount:8,sprite:'crew-berries',label:'Спелые ягоды',color:'#a7ec86',size:70},
   hull:{resource:'hull',amount:11,sprite:'repair-lotus',label:'Смола лотоса',color:'#dcc9ff',size:72},
   poison:{resource:'crew',amount:-8,hullAmount:-3,sprite:'poison-seed',label:'Ядовитое семя',color:'#ff716c',size:68,harmful:true},
-  arpeggio:{resource:'inventory',amount:1,sprite:'arpeggio-flower',label:'Цветок арпеджио',color:'#8ff7ed',size:78,artifact:true},
-  restart:{resource:'inventory',amount:1,sprite:'root-flower',label:'Корневой цветок',color:'#ffd18a',size:78,artifact:true},
-  hold:{resource:'inventory',amount:1,sprite:'hold-flower',label:'Лента удержания',color:'#b7ef86',size:78,artifact:true},
-  holdArpeggio:{resource:'inventory',amount:1,sprite:'hold-arpeggio-flower',label:'Папоротник арпеджио',color:'#b9fff3',size:78,artifact:true},
-  midpoint:{resource:'inventory',amount:1,sprite:'midpoint-seed',label:'Семя середины',color:'#87bfff',size:78,artifact:true},
+  arpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',reveal:true},sprite:'arpeggio-flower',label:'Лунный цветок · открыть ступень',color:'#8ff7ed',size:66,artifact:true,rare:true},
+  restart:{resource:'inventory',amount:1,assist:{answerKind:'quality',reveal:true},sprite:'root-flower',label:'Корневой лотос · открыть тип',color:'#ffd18a',size:66,artifact:true,rare:true},
+  hold:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:2,steps:5},sprite:'hold-flower',label:'Зелёная лента · типы ×2 · 5 ходов',color:'#b7ef86',size:66,artifact:true,rare:true},
+  holdArpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:2,steps:3},sprite:'hold-arpeggio-flower',label:'Папоротник · ступени ×2 · 3 хода',color:'#b9fff3',size:66,artifact:true,rare:true},
+  midpoint:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:1},sprite:'midpoint-seed',label:'Синее семя · типы ×4 · круг',color:'#87bfff',size:66,artifact:true,rare:true},
+  focusRare:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:2},sprite:'water-pearl',label:'Редкая жемчужина · типы ×4 · 2 круга',color:'#9bd4ee',size:58,artifact:true,rare:true},
+  ...Object.fromEntries([-7,-5,-3,3,5,7].map(delta=>[`jump${delta<0?'Back':'Forward'}${Math.abs(delta)}`,{resource:'inventory',amount:2,navigationDelta:delta,sprite:null,label:`Прыжок ${delta>0?'+':'−'}${Math.abs(delta)} · два заряда`,color:'#abe5d4',size:48,artifact:true}])),
   crater:{resource:'hull',amount:-6,sprite:'crater',label:'Удар о кратер',color:'#ff7b5f',size:126,harmful:true,ground:true,damage:6},
   stoneAsteroid:{resource:'hull',amount:-5,sprite:'meteor-volcanic',label:'Каменный астероид',color:'#a8a595',size:70,harmful:true,asteroid:true,damage:5},
   porousAsteroid:{resource:'hull',amount:-3,sprite:'crater',label:'Пористый астероид',color:'#7b8d83',size:52,harmful:true,asteroid:true,damage:3},
@@ -29,8 +31,8 @@ export const GARDEN_ITEMS=Object.freeze({
 });
 
 const weightedItem=(resources,random)=>{
-  const entries=Object.entries(GARDEN_ITEMS).filter(([,item])=>!item.ground&&!item.storm&&!item.asteroid&&!item.pressure&&!item.arrangement).map(([kind,item])=>{
-    const value=resources[item.resource]??100,need=item.artifact?.11:item.harmful?.3:1+Math.max(0,76-value)/15+(value<30?4:0);
+  const entries=Object.entries(GARDEN_ITEMS).filter(([,item])=>!item.ground&&!item.storm&&!item.asteroid&&!item.pressure&&!item.arrangement&&!item.rare).map(([kind,item])=>{
+    const value=resources[item.resource]??100,need=item.navigationDelta?.11:item.artifact?.22:item.harmful?.3:1+Math.max(0,76-value)/15+(value<30?4:0);
     return {kind,weight:need};
   });
   let cursor=random()*entries.reduce((sum,item)=>sum+item.weight,0);
@@ -50,15 +52,28 @@ export class GardenLife{
   }
   reset(){
     this.time=0;this.spawnClock=1.4;this.craterClock=3.4;this.asteroidClock=6.5;this.stormClock=8.5;this.gameOver=false;
-    this.arrangementClock=5;this.arrangementOrder=0;
+    this.arrangementClock=5;this.arrangementOrder=0;this.assistClock=30+this.random()*25;
     this.entities=[];this.effects=[];this.chips=[];this.event=null;this.eventAge=99;this.eventCounter=0;this.flightForce={x:0,y:0,intensity:0};this.impact=0;
     this.campIdle=0;this.campPressure=null;this.lastShip=null;this.critical=null;this.failureResource=null;
-    this.resources={fuel:86,water:78,crew:92,hull:84};this.inventory={arpeggio:0,restart:0,hold:0,holdArpeggio:0,midpoint:0,arrangementBoost:0};
+    this.resources={fuel:86,water:78,crew:92,hull:84};this.inventory=Object.fromEntries(Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact).map(([kind])=>[kind,0]));
   }
   setImages(images){this.images={...images};}
   setResource(name,value){if(name in this.resources)this.resources[name]=clamp(value);}
+  wrongAnswer(kind,value,qualityOrder=[]){
+    if(this.gameOver)return;
+    const resource=kind==='degree'?(Number(value)<6?'fuel':'water'):(qualityOrder.indexOf(value)%2===0?'crew':'hull');
+    this.resources[resource]=clamp(this.resources[resource]-3);
+    announce(this,{kind:'wrongAnswer',item:{resource,label:`Ошибка · ${GARDEN_RESOURCES[resource].label} −3`,harmful:true,color:GARDEN_RESOURCES[resource].color},x:.5,y:.55});
+    this.updateCritical(0);
+  }
   getFlightForce(){return {...this.flightForce};}
   consumeArtifact(kind){if(!(kind in this.inventory)||this.inventory[kind]<1)return false;this.inventory[kind]-=1;return true;}
+  useJump(mission,kind){
+    const delta=GARDEN_ITEMS[kind]?.navigationDelta;
+    if(!Number.isInteger(delta))return {ignored:true};
+    return mission.shift(delta,{consume:()=>this.consumeArtifact(kind)});
+  }
+  useAssist(mission,kind){const spec=GARDEN_ITEMS[kind]?.assist;if(!spec)return {ignored:true};return mission.assist(spec,{consume:()=>this.consumeArtifact(kind)});}
   forceSpawn(kind='water',overrides={}){
     const item=GARDEN_ITEMS[kind]??GARDEN_ITEMS.water,edge=!item.ground&&!item.storm&&this.random()<.28,fromLeft=this.random()<.5;
     const entity={id:`${kind}-${this.time.toFixed(3)}-${this.random().toFixed(6)}`,kind,item,
@@ -69,6 +84,7 @@ export class GardenLife{
       spin:item.storm?(fromLeft?1:-1)*(.42+this.random()*.28):(this.random()-.5)*(item.artifact?1.2:item.harmful?.8:.42),phase:this.random()*Math.PI*2,
       age:0,rounds:item.arrangement?1+Math.floor(this.random()*3):0,scale:item.ground?.78+this.random()*.34:item.storm?.82+this.random()*.28:.82+this.random()*.3,
       collected:false,triggered:false,impactArmed:true,lastDamage:-999,baseY:item.storm?.2+this.random()*.3:0,...overrides};
+    if(item.asteroid&&!item.fatal){const resource=overrides.damageResource??['fuel','water','crew','hull'][Math.floor(this.random()*4)];entity.item={...item,resource,color:GARDEN_RESOURCES[resource].color,label:`${item.label} · ${GARDEN_RESOURCES[resource].label}`,damageResource:resource};}
     if(item.storm&&overrides.y!==undefined)entity.baseY=overrides.y;
     if(!item.ground&&!item.storm)for(let attempt=0;attempt<8;attempt++){
       const crowded=this.entities.some(other=>!other.item.ground&&!other.item.storm&&Math.hypot(other.x-entity.x,other.y-entity.y)<.16);
@@ -90,7 +106,7 @@ export class GardenLife{
     entity.collected=true;const item=entity.item;
     if(item.fatal)this.gameOver=true;
     if(item.arrangement)this.onArrangement?.(entity.kind,entity.rounds);
-    else if(item.artifact)this.inventory[entity.kind]=Math.min(9,(this.inventory[entity.kind]||0)+1);
+    else if(item.artifact)this.inventory[entity.kind]=Math.min(99,(this.inventory[entity.kind]||0)+item.amount);
     else{this.resources[item.resource]=clamp(this.resources[item.resource]+item.amount);if(item.hullAmount)this.resources.hull=clamp(this.resources.hull+item.hullAmount);}
     announce(this,entity);return true;
   }
@@ -100,9 +116,9 @@ export class GardenLife{
     entity.triggered=true;entity.impactArmed=false;entity.lastDamage=this.time;
     if(item.fatal){this.resources.hull=0;this.gameOver=true;this.failureResource='lava';}
     else{
-      this.resources.hull=clamp(this.resources.hull-(item.damage??Math.abs(item.amount||8)));
-      this.resources.crew=clamp(this.resources.crew-Math.max(1,(item.damage??8)*.12));
-      this.resources.fuel=clamp(this.resources.fuel-Math.max(1,(item.damage??8)*.08));
+      const damage=(item.damage??Math.abs(item.amount||8))*1.15,resource=item.damageResource??'hull';
+      this.resources[resource]=clamp(this.resources[resource]-damage);
+      for(const secondary of ['crew','fuel'])if(secondary!==resource)this.resources[secondary]=clamp(this.resources[secondary]-Math.max(1,(item.damage??8)*(secondary==='crew'?.12:.08))*1.15);
     }
     const severity=item.fatal?1:clamp((item.damage??8)/28,.24,.9),awayX=-dx/distance,awayY=-dy/distance;
     this.flightForce.x+=awayX*(.34+severity*.38);this.flightForce.y+=awayY*(.28+severity*.32);this.flightForce.intensity=Math.max(this.flightForce.intensity,severity);
@@ -129,17 +145,25 @@ export class GardenLife{
     if(this.critical.age>=3.5){this.gameOver=true;this.failureResource=empty;}
   }
   update(dt,view={}){
-    this.flightForce={x:0,y:0,intensity:0};if(!dt||view.paused||this.gameOver)return;
+    this.flightForce={x:0,y:0,intensity:0};if(!dt||view.paused||view.active===false||view.flying===false||this.gameOver)return;
     this.impact=Math.max(0,this.impact-dt*2.8);
     this.time+=dt;this.eventAge+=dt;const speed=Number(view.speed)||0;
     if(view.active){this.resources.fuel=clamp(this.resources.fuel-dt*(.06+speed*.04));this.resources.water=clamp(this.resources.water-dt*(.03+speed*.01));this.resources.crew=clamp(this.resources.crew-dt*(.008+Math.max(0,18-this.resources.water)*.002));if(this.resources.fuel<6)this.resources.hull=clamp(this.resources.hull-dt*(6-this.resources.fuel)*.01);}
-    this.spawnClock-=dt;this.craterClock-=dt;this.asteroidClock-=dt;this.stormClock-=dt;
+    this.spawnClock-=dt;this.craterClock-=dt;this.asteroidClock-=dt;this.stormClock-=dt;this.assistClock-=dt;
     if(view.active)this.arrangementClock-=dt;
     const pickupCount=this.entities.filter(entity=>!entity.item.ground&&!entity.item.storm&&!entity.item.asteroid).length;
+    if(this.assistClock<=0&&pickupCount<6){
+      const roll=this.random(),kinds=Object.keys(GARDEN_ITEMS).filter(kind=>GARDEN_ITEMS[kind].assist&&!GARDEN_ITEMS[kind].assist.reveal&&kind!=='focusRare');
+      const kind=roll<.03?'focusRare':roll<.13&&view.routeLength>=8?(this.random()<.5?'arpeggio':'restart'):kinds[Math.floor(this.random()*kinds.length)];
+      const x=.22+this.random()*.56,y=-.10;
+      this.forceSpawn(this.random()<.28?'lavaAsteroid':'stoneAsteroid',{x:x-.075,y:y+.03,scale:.6,vy:.085,vx:0});
+      const pickup=this.forceSpawn(kind,{x:x+.075,y:y-.055,scale:.78,vy:.085,vx:0});pickup.x=x+.075;pickup.y=y-.055;
+      this.assistClock=40+this.random()*35;
+    }
     if(this.arrangementClock<=0&&pickupCount<6){const styles=Object.keys(GARDEN_ARRANGEMENTS),kind=styles[this.arrangementOrder++%styles.length];this.forceSpawn(kind);this.arrangementClock=12+this.random()*8;}
     if(this.spawnClock<=0&&pickupCount<6){this.forceSpawn(weightedItem(this.resources,this.random));this.spawnClock=4.7+this.random()*3.8;}
     if(this.craterClock<=0&&this.entities.filter(entity=>entity.item.ground).length<2){this.forceSpawn('crater');this.craterClock=16+this.random()*10;}
-    if(this.asteroidClock<=0&&this.entities.filter(entity=>entity.item.asteroid).length<2){const roll=this.random(),kind=roll<.008?'lavaAsteroid':roll<.24?'crystalAsteroid':roll<.58?'porousAsteroid':'stoneAsteroid';this.forceSpawn(kind,{scale:.58+this.random()*1.25,shapeSeed:this.random()});this.asteroidClock=11+this.random()*9;}
+    if(this.asteroidClock<=0&&this.entities.filter(entity=>entity.item.asteroid).length<2){const roll=this.random(),kind=roll<.09?'lavaAsteroid':roll<.30?'crystalAsteroid':roll<.62?'porousAsteroid':'stoneAsteroid';this.forceSpawn(kind,{scale:kind==='lavaAsteroid'?.45+this.random()*.22:.58+this.random()*1.25,shapeSeed:this.random()});this.asteroidClock=11+this.random()*9;}
     if(this.stormClock<=0&&!this.entities.some(entity=>entity.item.storm)){this.forceSpawn('storm');this.stormClock=40+this.random()*20;}
     const w=Math.max(1,Number(view.width)||1),h=Math.max(1,Number(view.height)||1),sx=Number(view.x)||w*.5,sy=Number(view.y)||h*.56;
     this.updateCampPressure(dt,view,w,h,sx,sy);
@@ -155,6 +179,8 @@ export class GardenLife{
       if(entity.item.ground){entity.vy+=(.05+speed*.06-entity.vy)*(1-Math.exp(-dt*.9));entity.y+=entity.vy*dt;entity.angle+=Math.sin(entity.phase)*dt*.012;continue;}
       const seed=entity.phase+this.time*.22+entity.y*10.4,flow=Math.sin(seed)*.031+Math.cos(seed*.47+entity.x*8)*.015;
       const targetVx=flow+(entity.kind==='poison'?Math.sin(this.time*.7+entity.phase)*.012:0);entity.vx+=(targetVx-entity.vx)*(1-Math.exp(-dt*1.2));entity.vy+=((entity.item.asteroid?.074:.052)+speed*.055-entity.vy)*(1-Math.exp(-dt*.75));entity.x+=entity.vx*dt;entity.y+=entity.vy*dt;entity.angle+=entity.spin*dt+Math.sin(seed*.63)*dt*.08;
+      // Recover lateral entrants and reflect drift before leaving the reachable field.
+      if(entity.age>2){const margin=Math.min(.23,entity.item.size*entity.scale/w*.5+.10);if(entity.x<margin){entity.x+=(margin-entity.x)*Math.min(1,dt*3);entity.vx=Math.abs(entity.vx)+.015;}else if(entity.x>1-margin){entity.x-=(entity.x-1+margin)*Math.min(1,dt*3);entity.vx=-Math.abs(entity.vx)-.015;}}
     }
     const floaters=this.entities.filter(entity=>!entity.item.ground&&!entity.item.storm);
     for(let i=0;i<floaters.length;i++)for(let j=i+1;j<floaters.length;j++){const a=floaters[i],b=floaters[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=.095;if(d<min){const force=(min-d)*.26/d;a.vx-=dx*force;b.vx+=dx*force;a.vy-=dy*force*.28;b.vy+=dy*force*.28;if(a.item.asteroid&&b.item.asteroid&&this.time-(a.lastCollision??-99)>1.1){a.lastCollision=b.lastCollision=this.time;for(let chip=0;chip<5;chip++){const angle=this.random()*Math.PI*2;this.chips.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2,vx:Math.cos(angle)*(.025+this.random()*.05),vy:Math.sin(angle)*(.025+this.random()*.05),age:0,life:.35+this.random()*.45,size:1+this.random()*2,color:'#c7c1a8'});}}}}
@@ -179,9 +205,11 @@ export class GardenLife{
     for(const entity of this.entities){
       const x=entity.x*w,y=entity.y*h,pulse=entity.item.ground?1:1+Math.sin(this.time*1.8+entity.phase)*.045,size=entity.item.size*entity.scale*pulse;
       if(entity.item.storm){this.drawStorm(ctx,entity,x,y,size,night);continue;}
-      const image=this.images[entity.item.sprite];ctx.save();ctx.translate(x,y);ctx.rotate(entity.angle);ctx.globalAlpha=Math.min(1,entity.age*2.4)*(entity.item.ground?.84:.92+night*.08);ctx.shadowColor=entity.item.color;ctx.shadowBlur=entity.item.ground?4:(entity.item.harmful?8:13)+night*9;if(entity.item.arrangement)drawGardenArrangementFlower(ctx,entity.item,size,entity.rounds);else if(entity.item.asteroid&&image){if(entity.kind==='crystalAsteroid')ctx.filter='hue-rotate(100deg) saturate(1.3)';if(entity.kind==='lavaAsteroid'){ctx.filter='sepia(1) saturate(4) hue-rotate(-28deg)';ctx.shadowBlur=size*.34;}ctx.drawImage(image,-size/2,-size/2,size,size);}else if(entity.item.asteroid)this.drawAsteroid(ctx,entity,size);else if(image)ctx.drawImage(image,-size/2,-size/2,size,size);else{ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(0,0,size*.22,size*.34,0,0,Math.PI*2);ctx.fill();}ctx.restore();
-      if(entity.item.arrangement){ctx.save();ctx.fillStyle=entity.item.color;ctx.textAlign='center';ctx.font='12px Georgia';ctx.shadowColor='#061b20';ctx.shadowBlur=5;ctx.fillText(`${entity.item.detail} · ${entity.rounds} кр.`,x,y+size*.64);ctx.restore();}
+      const image=this.images[entity.item.sprite];ctx.save();ctx.translate(x,y);ctx.rotate(entity.item.navigationDelta?0:entity.angle);ctx.globalAlpha=Math.min(1,entity.age*2.4)*(entity.item.ground?.84:.92+night*.08);ctx.shadowColor=entity.item.color;ctx.shadowBlur=entity.item.ground?4:(entity.item.harmful?8:13)+night*9;if(entity.item.navigationDelta){const delta=entity.item.navigationDelta;ctx.fillStyle='#bde8da';ctx.font=`${Math.round(size*.44)}px Georgia`;ctx.textAlign='center';ctx.fillText(`${delta>0?'+':'−'}${Math.abs(delta)}`,0,size*.12);}else if(entity.item.arrangement)drawGardenArrangementFlower(ctx,entity.item,size,entity.rounds);else if(entity.item.asteroid&&image){if(entity.kind==='crystalAsteroid')ctx.filter='hue-rotate(100deg) saturate(1.3)';if(entity.kind==='lavaAsteroid'){ctx.filter='sepia(1) saturate(4) hue-rotate(-28deg)';ctx.shadowBlur=size*.34;}ctx.drawImage(image,-size/2,-size/2,size,size);}else if(entity.item.asteroid)this.drawAsteroid(ctx,entity,size);else if(image)ctx.drawImage(image,-size/2,-size/2,size,size);else{ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(0,0,size*.22,size*.34,0,0,Math.PI*2);ctx.fill();}ctx.restore();
+      if(entity.item.asteroid&&!entity.item.fatal){ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(x,y,size*.36,size*.30,entity.angle,0,Math.PI*2);ctx.fill();ctx.restore();}
+      if(entity.item.navigationDelta){ctx.save();ctx.fillStyle='#bde8da';ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillText(`×${entity.item.amount}`,x,y+size*.45);ctx.restore();}
       if(entity.item.fatal){ctx.save();ctx.globalAlpha=.48+.3*Math.sin(this.time*4+entity.phase);ctx.strokeStyle='#ff693f';ctx.lineWidth=2;ctx.shadowColor='#ff3e1f';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(x,y,size*.58,0,Math.PI*2);ctx.stroke();ctx.restore();}
+      if(entity.item.fatal){ctx.save();ctx.fillStyle='#ffb49c';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.shadowColor='#d20f00';ctx.shadowBlur=12;ctx.fillText('☠',x,y-size*.67);ctx.restore();}
       if(!entity.item.ground){const halo=.5+.5*Math.sin(this.time*2.1+entity.phase);ctx.save();ctx.globalAlpha=.09+halo*.08;ctx.strokeStyle=entity.item.color;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x,y,size*(.45+halo*.06),size*(.34+halo*.04),entity.angle*.35,0,Math.PI*2);ctx.stroke();ctx.restore();}
       else if(!entity.triggered){ctx.save();ctx.globalAlpha=.16+.08*Math.sin(this.time*2.4+entity.phase);ctx.strokeStyle='#ff9a70';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(x,y,size*.36,size*.29,entity.angle,0,Math.PI*2);ctx.stroke();ctx.restore();}
     }

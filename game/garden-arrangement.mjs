@@ -43,9 +43,9 @@ export function gardenArrangementEvents(notes,arrangement={},seconds=4){
 }
 
 export function drawGardenArrangementFlower(ctx,spec,size,rounds=1){
-  const radius=size*.27;ctx.save();ctx.strokeStyle=spec.color;ctx.fillStyle=spec.color;ctx.lineWidth=1.2;
-  for(let i=0;i<spec.petals;i++){ctx.save();ctx.rotate(i*Math.PI*2/spec.petals);ctx.globalAlpha=.74;ctx.beginPath();ctx.ellipse(radius*.6,0,radius*.75,radius*(spec.track==='bass'?.42:.22),.22,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.95;ctx.stroke();ctx.restore();}
-  ctx.globalAlpha=1;ctx.fillStyle='#102c30';ctx.beginPath();ctx.arc(0,0,size*.13,0,Math.PI*2);ctx.fill();ctx.fillStyle=spec.color;ctx.font=`${size*.21}px Georgia`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(spec.symbol,0,0);
-  for(let i=0;i<rounds;i++){ctx.globalAlpha=.45;ctx.beginPath();ctx.arc(0,0,size*(.35+i*.035),0,Math.PI*2);ctx.stroke();}
-  ctx.globalAlpha=1;ctx.fillStyle='#102c30';ctx.beginPath();ctx.arc(size*.31,size*.29,size*.12,0,Math.PI*2);ctx.fill();ctx.fillStyle=spec.color;ctx.font=`bold ${size*.15}px sans-serif`;ctx.fillText(String(rounds),size*.31,size*.29);ctx.restore();
+  const radius=size*.27,opacity=ctx.globalAlpha*.35;ctx.save();ctx.strokeStyle=spec.color;ctx.fillStyle=spec.color;ctx.lineWidth=1.2;
+  for(let i=0;i<spec.petals;i++){ctx.save();ctx.rotate(i*Math.PI*2/spec.petals);ctx.globalAlpha=opacity*.74;ctx.beginPath();ctx.ellipse(radius*.6,0,radius*.75,radius*(spec.track==='bass'?.42:.22),.22,0,Math.PI*2);ctx.fill();ctx.globalAlpha=opacity*.95;ctx.stroke();ctx.restore();}
+  ctx.globalAlpha=opacity;ctx.fillStyle='#102c30';ctx.beginPath();ctx.arc(0,0,size*.13,0,Math.PI*2);ctx.fill();ctx.fillStyle=spec.color;ctx.font=`${size*.21}px Georgia`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(spec.symbol,0,0);
+  for(let i=0;i<rounds;i++){ctx.globalAlpha=opacity*.45;ctx.beginPath();ctx.arc(0,0,size*(.35+i*.035),0,Math.PI*2);ctx.stroke();}
+  ctx.restore();
 }

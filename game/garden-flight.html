@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d2326">
   <title>Сад Эха · первый полёт</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="garden-flight.css?v=0.92">
+  <link rel="stylesheet" href="garden-flight.css?v=0.93.1">
 </head>
 <body class="training">
   <canvas id="world" aria-label="Полёт над Садом Эха. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -58,20 +58,14 @@
     </div>
   </section>
   <section id="artifact-belt" class="artifact-belt hud" aria-label="Накопленные артефакты">
-    <button id="flower-guide-toggle" class="flower-guide-toggle" aria-label="Цветы аранжировки" aria-expanded="false" title="Цветы аранжировки">✿</button>
-    <button data-use-artifact="arrangementBoost" aria-label="Продлить арпеджио и бас на один круг" title="Семя усиления · +1 круг"><img src="assets/echo-garden/collectibles/midpoint-seed.webp" alt=""><b>0</b></button>
-    <button data-use-artifact="arpeggio" aria-label="Арпеджио на один круг"><img src="assets/echo-garden/collectibles/arpeggio-flower.webp" alt=""><b>0</b></button>
-    <button data-use-artifact="restart" aria-label="Начать с тоники"><img src="assets/echo-garden/collectibles/root-flower.webp" alt=""><b>0</b></button>
-    <button data-use-artifact="hold" aria-label="Удержать текущий аккорд"><img src="assets/echo-garden/collectibles/hold-flower.webp" alt=""><b>0</b></button>
-    <button data-use-artifact="holdArpeggio" aria-label="Удержать арпеджио"><img src="assets/echo-garden/collectibles/hold-arpeggio-flower.webp" alt=""><b>0</b></button>
-    <button data-use-artifact="midpoint" aria-label="Запустить с середины"><img src="assets/echo-garden/collectibles/midpoint-seed.webp" alt=""><b>0</b></button>
-    <button id="artifact-repeat" class="artifact-continue" hidden aria-label="Ещё раз услышать удержанный аккорд">↻ Ещё раз</button>
-    <button id="artifact-continue" class="artifact-continue" hidden>▶</button>
+    <div id="jump-charges" class="jump-charges" aria-label="Заряды прыжков"></div>
+    <div id="assist-charges" class="assist-charges" aria-label="Редкие подсказки"></div>
+    <p id="assist-status" aria-live="polite"></p>
   </section>
   <section id="arrangement-status" class="arrangement-status hud" aria-label="Звучащие слои"></section>
   <section id="flower-guide" class="flower-guide hud" hidden aria-label="Цветы аранжировки">
     <header><h2>Цветы аранжировки</h2><button id="flower-guide-close" aria-label="Закрыть цветы">×</button></header>
-    <p id="flower-guide-note">Поймай цветок кораблём. Слой начнётся со следующего аккорда; бас и арпеджио можно сочетать. Повтор продлевает тот же рисунок, другой цветок заменяет его. Семя усиления добавляет круг.</p>
+    <p id="flower-guide-note">Поймай цветок кораблём. Слой начнётся со следующего аккорда; бас и арпеджио можно сочетать. Повтор продлевает тот же рисунок, другой цветок заменяет его. Красное ядро смертельно: облетай его.</p>
     <label>Длительность <select id="flower-rounds" aria-label="Количество кругов"><option value="1">1 круг</option><option value="2">2 круга</option><option value="3">3 круга</option></select></label>
     <div id="flower-guide-list"></div>
     <small>Круг = все аккорды маршрута. Счёт идёт только на новых аккордах, не на повторах. Не более трёх кругов запаса; нажатие на активный слой убирает его со следующего аккорда.</small>
@@ -82,29 +76,21 @@
       <div class="panel-kicker"><span class="signal-dot"></span> МАРШРУТ</div>
       <div class="route-heading"><img id="mission-mandala" src="assets/echo-garden/tours/reharm.webp" alt=""><span class="route-identity"><strong id="mission-title">Reharmonization+</strong><small id="mission-source">Chapter 1 · Fig. 1.6</small><em id="mission-code">01F01</em></span><button id="route-favorite" type="button" aria-label="Добавить маршрут в избранное" aria-pressed="false">♡</button><span id="route-progress">1 / 4</span></div>
       <ol id="chord-route" class="chord-route" aria-label="Цепочка аккордов"></ol>
-      <nav id="route-mandalas" class="route-mandalas" aria-label="Мандалы навигации по длинному маршруту" hidden>
-        <button type="button" data-route-shift="-7" aria-label="Назад на семь аккордов"><i aria-hidden="true"></i><span>−7</span></button>
-        <button type="button" data-route-shift="-5" aria-label="Назад на пять аккордов"><i aria-hidden="true"></i><span>−5</span></button>
-        <button type="button" data-route-shift="-3" aria-label="Назад на три аккорда"><i aria-hidden="true"></i><span>−3</span></button>
-        <button type="button" data-route-shift="3" aria-label="Вперёд на три аккорда"><i aria-hidden="true"></i><span>+3</span></button>
-        <button type="button" data-route-shift="5" aria-label="Вперёд на пять аккордов"><i aria-hidden="true"></i><span>+5</span></button>
-        <button id="route-reveal" type="button" class="route-mandala-action" aria-pressed="false"><span aria-hidden="true">◎</span> Открыть</button>
-        <button id="route-teleport" type="button" class="route-mandala-action route-super" aria-pressed="false"><span aria-hidden="true">✦</span> Точный переход <b id="route-teleport-count">1</b></button>
-        <small id="route-navigation-hint">Выбери мандалу или открой нужную позицию.</small>
-      </nav>
+      <div class="route-practice"><button id="infinity-toggle" type="button" aria-label="Повторять текущий аккорд" aria-pressed="false">∞</button><button id="flower-guide-toggle" aria-label="Цветы аранжировки" aria-expanded="false">✿</button><span id="infinity-status"></span></div>
       <div class="round-line"><span>КРУГ <b id="round-number">01</b></span><span id="bar-countdown">4.0 сек</span></div>
     </aside>
 
     <div class="center-readout">
       <div class="reticle" aria-hidden="true"><i></i><span id="completion-number">25</span><small>%</small></div>
       <p id="mission-prompt">База известна. Запусти последовательность.</p>
-      <button id="mission-toggle" class="mission-toggle">▶ Запустить полёт</button>
-      <button id="mission-restart" class="text-control" hidden>Собрать заново</button>
     </div>
 
     <aside class="answers-panel glass-panel">
       <div class="panel-kicker">ТИП / НАДСТРОЙКА</div>
       <div id="quality-options" class="answer-options quality-options"></div>
+      <details id="quality-advanced" class="quality-advanced"><summary>＋ Надстройки</summary><div id="quality-advanced-options" class="quality-options"></div></details>
+      <button id="mission-toggle" class="mission-toggle">▶ Лететь</button>
+      <button id="mission-restart" class="text-control" hidden>Собрать заново</button>
       <p id="answer-feedback" class="answer-feedback" aria-live="polite">Нажми аккорд, пока он звучит</p>
     </aside>
 
@@ -170,6 +156,6 @@
   </section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p>Приближаемся к Саду Эха…</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden>Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=0.92" onerror="document.getElementById('load-progress').textContent='Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=0.93.1" onerror="document.getElementById('load-progress').textContent='Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 </body>
 </html>

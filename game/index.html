@@ -7,10 +7,10 @@
   <meta name="description" content="Слушай сигнал. Ломай щиты. Лети дальше. Музыкальная космическая аркада Space Music College.">
   <title>Space Music College</title>
   <link rel="icon" type="image/png" href="assets/brand/orbital-v1/icon-64.png">
-  <link rel="manifest" href="manifest.webmanifest?v=0.92">
+  <link rel="manifest" href="manifest.webmanifest?v=0.93">
   <link rel="apple-touch-icon" href="assets/brand/orbital-v1/icon-180.png">
-  <link rel="stylesheet" href="game.css?v=0.92">
-  <link rel="stylesheet" href="industrial.css?v=0.92">
+  <link rel="stylesheet" href="game.css?v=0.93">
+  <link rel="stylesheet" href="industrial.css?v=0.93">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <script>
@@ -28,7 +28,7 @@
         }
       }).catch(() => {});
     } else if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.92').catch(()=>{}));
+      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.93.1').catch(()=>{}));
     }
   </script>
 </head>
@@ -77,8 +77,8 @@
     </section>
     <footer><span>Тяни корабль · стрельба автоматическая</span><button id="help" aria-label="Как играть">?</button></footer>
   </main>
-  <link rel="stylesheet" href="console.css?v=0.92">
-  <link rel="stylesheet" href="samsara.css?v=0.92">
-  <script src="game.bundle.js?v=0.92"></script>
+  <link rel="stylesheet" href="console.css?v=0.93">
+  <link rel="stylesheet" href="samsara.css?v=0.93">
+  <script src="game.bundle.js?v=0.93"></script>
 </body>
 </html>

@@ -24,11 +24,13 @@ function recognizeChord(chroma,bassPc){
 export function stepFromMidi(notes){
   const bassMidi=Math.min(...notes),bassPc=(bassMidi%12+12)%12,chroma=Array(12).fill(0);notes.forEach(note=>chroma[(note%12+12)%12]++);
   const found=recognizeChord(chroma,bassPc),suffix=found.quality==='maj'?'':found.quality==='1'?' · 1/8':found.quality,base=`${NOTE_NAMES[found.root]}${suffix}`,label=bassPc===found.root?base:`${base}/${NOTE_NAMES[bassPc]}`;
-  return {id:crypto.randomUUID(),degree:label,label,rootPc:found.root,quality:found.quality,notes:[...notes],bassMidi,duration:0,audio:null,mimeType:'',bassOffset:(bassPc-found.root+12)%12};
+  const pcs=new Set(notes.map(note=>(note-found.root+120)%12));
+  const voicingNote=found.quality==='6'&&!pcs.has(4)?'no-third':found.quality==='6'&&!pcs.has(7)?'no-fifth':null;
+  return {id:crypto.randomUUID(),degree:label,label,rootPc:found.root,quality:found.quality,notes:[...notes],voicingNote,bassMidi,duration:0,audio:null,mimeType:'',bassOffset:(bassPc-found.root+12)%12,bassPc};
 }
 function builtInRoute(spec){
   const steps=spec.chords.map(stepFromMidi),baseRoot=steps[0]?.rootPc??0;
-  return {...spec,builtin:true,created:'2000-01-01T00:00:00.000Z',baseTonic:baseRoot,sequence:steps.map(step=>({...step,offset:(step.rootPc-baseRoot+12)%12})),distractors:[]};
+  return {...spec,builtin:true,created:'2000-01-01T00:00:00.000Z',baseTonic:baseRoot,sequence:steps.map(step=>({...step,offset:(step.rootPc-baseRoot+12)%12,bassOffset:(step.bassPc-baseRoot+12)%12})),distractors:[]};
 }
 const chordLabel=(chroma,bassPc)=>recognizeChord(chroma,bassPc).label;
 const qualityIntervals=quality=>CHORDS.find(([name])=>name===quality)?.[1]??[0,4,7];

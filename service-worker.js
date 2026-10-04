@@ -1,4 +1,4 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.87";
+const CACHE_NAME = "reharm-ear-trainer-v0.92";
 const APP_FILES = [
   "./game/",
   "./game/game.bundle.js",

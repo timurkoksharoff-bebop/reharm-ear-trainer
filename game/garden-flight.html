@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d2326">
   <title>Сад Эха · первый полёт</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="garden-flight.css?v=0.87">
+  <link rel="stylesheet" href="garden-flight.css?v=0.92">
 </head>
 <body class="training">
   <canvas id="world" aria-label="Полёт над Садом Эха. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -27,16 +27,16 @@
 
   <section id="garden-vitals" class="garden-vitals hud" aria-label="Запасы экспедиции">
     <article class="vital" data-resource="fuel" style="--vital:#e8b85d;--level:.86">
-      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>FUEL</strong><small id="vital-fuel">86</small>
+      <img class="vital-pickup" src="assets/echo-garden/collectibles/fuel-seed.webp" alt="" aria-hidden="true"><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>FUEL</strong><small id="vital-fuel">86</small>
     </article>
     <article class="vital" data-resource="water" style="--vital:#75e9ed;--level:.78">
-      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>H₂O</strong><small id="vital-water">78</small>
+      <img class="vital-pickup" src="assets/echo-garden/collectibles/water-pearl.webp" alt="" aria-hidden="true"><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>H₂O</strong><small id="vital-water">78</small>
     </article>
     <article class="vital" data-resource="crew" style="--vital:#9ee08a;--level:.92">
-      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>CREW</strong><small id="vital-crew">92</small>
+      <img class="vital-pickup" src="assets/echo-garden/collectibles/crew-berries.webp" alt="" aria-hidden="true"><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>CREW</strong><small id="vital-crew">92</small>
     </article>
     <article class="vital" data-resource="hull" style="--vital:#d8c4f5;--level:.84">
-      <span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>HULL</strong><small id="vital-hull">84</small>
+      <img class="vital-pickup" src="assets/echo-garden/collectibles/repair-lotus.webp" alt="" aria-hidden="true"><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>HULL</strong><small id="vital-hull">84</small>
     </article>
     <p id="vital-event" class="vital-event" aria-live="polite"></p>
   </section>
@@ -58,6 +58,8 @@
     </div>
   </section>
   <section id="artifact-belt" class="artifact-belt hud" aria-label="Накопленные артефакты">
+    <button id="flower-guide-toggle" class="flower-guide-toggle" aria-label="Цветы аранжировки" aria-expanded="false" title="Цветы аранжировки">✿</button>
+    <button data-use-artifact="arrangementBoost" aria-label="Продлить арпеджио и бас на один круг" title="Семя усиления · +1 круг"><img src="assets/echo-garden/collectibles/midpoint-seed.webp" alt=""><b>0</b></button>
     <button data-use-artifact="arpeggio" aria-label="Арпеджио на один круг"><img src="assets/echo-garden/collectibles/arpeggio-flower.webp" alt=""><b>0</b></button>
     <button data-use-artifact="restart" aria-label="Начать с тоники"><img src="assets/echo-garden/collectibles/root-flower.webp" alt=""><b>0</b></button>
     <button data-use-artifact="hold" aria-label="Удержать текущий аккорд"><img src="assets/echo-garden/collectibles/hold-flower.webp" alt=""><b>0</b></button>
@@ -65,6 +67,14 @@
     <button data-use-artifact="midpoint" aria-label="Запустить с середины"><img src="assets/echo-garden/collectibles/midpoint-seed.webp" alt=""><b>0</b></button>
     <button id="artifact-repeat" class="artifact-continue" hidden aria-label="Ещё раз услышать удержанный аккорд">↻ Ещё раз</button>
     <button id="artifact-continue" class="artifact-continue" hidden>▶</button>
+  </section>
+  <section id="arrangement-status" class="arrangement-status hud" aria-label="Звучащие слои"></section>
+  <section id="flower-guide" class="flower-guide hud" hidden aria-label="Цветы аранжировки">
+    <header><h2>Цветы аранжировки</h2><button id="flower-guide-close" aria-label="Закрыть цветы">×</button></header>
+    <p id="flower-guide-note">Поймай цветок кораблём. Слой начнётся со следующего аккорда; бас и арпеджио можно сочетать. Повтор продлевает тот же рисунок, другой цветок заменяет его. Семя усиления добавляет круг.</p>
+    <label>Длительность <select id="flower-rounds" aria-label="Количество кругов"><option value="1">1 круг</option><option value="2">2 круга</option><option value="3">3 круга</option></select></label>
+    <div id="flower-guide-list"></div>
+    <small>Круг = все аккорды маршрута. Счёт идёт только на новых аккордах, не на повторах. Не более трёх кругов запаса; нажатие на активный слой убирает его со следующего аккорда.</small>
   </section>
 
   <section id="harmony-hud" class="harmony-hud hud" data-variant="minimal" aria-label="Навигационная гармоническая панель">
@@ -160,6 +170,6 @@
   </section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p>Приближаемся к Саду Эха…</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden>Попробовать снова</button></div>
-  <script type="module" src="garden-flight.mjs?v=0.87"></script>
+  <script src="garden-flight.bundle.js?v=0.92" onerror="document.getElementById('load-progress').textContent='Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 </body>
 </html>

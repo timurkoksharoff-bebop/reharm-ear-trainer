@@ -10,9 +10,9 @@
 .world-selector-shell{position:relative;width:100%;height:100%;min-height:100dvh;overflow:hidden;isolation:isolate;color:#eadac0;background:#030912 url('design-concepts/world-menus-2026-09-25/carousel/cockpit.png') center/100% 100% no-repeat;touch-action:pan-y;user-select:none}
 .world-selector-shell.observatory{background-image:url('design-concepts/world-menus-2026-09-25/carousel/observatory.png')}
 .world-selector-shell::after{content:"";position:absolute;z-index:8;inset:0;pointer-events:none;background:linear-gradient(#01060a82 0 5%,transparent 18% 63%,#02070b99 83%,#02070b 100%)}
-.world-brand{position:absolute;z-index:12;top:2.1%;left:21%;width:58%;display:grid;text-align:center;color:#ecd9b7;text-shadow:0 3px 18px #000}
-.world-brand span{font:500 clamp(15px,5vw,25px)/1 Georgia,serif;letter-spacing:.26em;padding-left:.26em}
-.world-brand strong{font:400 clamp(31px,8.5vw,58px)/.94 Georgia,'Times New Roman',serif;letter-spacing:.055em}
+.world-brand{position:absolute;z-index:12;top:2.1%;left:21%;width:58%;display:grid;justify-items:center;text-align:center;color:#ecd9b7;text-shadow:0 3px 18px #000}
+.world-brand span{display:block;max-width:100%;font:500 clamp(13px,3.8vw,21px)/1 Georgia,serif;letter-spacing:.16em;white-space:nowrap}
+.world-brand strong{display:block;max-width:100%;font:400 clamp(31px,8.5vw,58px)/.94 Georgia,'Times New Roman',serif;letter-spacing:.055em;white-space:nowrap}
 .world-brand i{display:block;width:72%;height:7px;margin:8px auto 0;background:linear-gradient(90deg,transparent,#c8a970 20% 80%,transparent);clip-path:polygon(0 45%,44% 45%,50% 0,56% 45%,100% 45%,100% 55%,56% 55%,50% 100%,44% 55%,0 55%);opacity:.78}
 .world-frame-toggle{position:absolute;z-index:14;top:2.2%;right:3%;display:flex;gap:3px;padding:3px;border:1px solid #c4aa7b44;border-radius:14px;background:#071019a8}
 .world-frame-toggle button{width:27px;height:21px;padding:0;border:0;border-radius:10px;background:transparent;color:#a5aca7;font:9px/1 ui-monospace,monospace}

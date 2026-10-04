@@ -1,4 +1,5 @@
 import {BOOK_CATALOG} from './book-catalog.mjs';
+import {createGardenArrangement,gardenArrangementEvents} from './garden-arrangement.mjs';
 
 const INTERVALS={
   '1':[0],
@@ -23,7 +24,13 @@ export class GardenPad{
       ['assets/echo-garden/samples/felt-c3.wav',48],
       ['assets/echo-garden/samples/felt-e3.wav',52],
       ['assets/echo-garden/samples/felt-g3.wav',55]
-    ].map(async([url,midi])=>{const response=await fetch(url);if(!response.ok)throw Error(`Не загрузился семпл ${url}`);return {midi,data:await response.arrayBuffer()};}));
+    ].map(async([url,midi])=>{
+      const embedded=globalThis.GARDEN_SAMPLE_DATA?.[url];
+      if(embedded)return {midi,data:Uint8Array.from(atob(embedded),c=>c.charCodeAt(0)).buffer};
+      const response=await fetch(url);if(!response.ok)throw Error(`Не загрузился семпл ${url}`);return {midi,data:await response.arrayBuffer()};
+    }));
+    // Handle early failure without an unhandled rejection, then report it on play.
+    this.sampleData.catch(()=>{});
   }
   async unlock(){
     if(!this.context){
@@ -48,11 +55,11 @@ export class GardenPad{
     const p=PRESETS[this.preset],t=this.context.currentTime;
     this.filter.frequency.setTargetAtTime(p.cutoff,t,.18);this.delay.delayTime.setTargetAtTime(p.delay,t,.18);this.delayFeedback.gain.setTargetAtTime(p.feedback,t,.18);
   }
-  async play(chord,tonicPitchClass=5,{arpeggio=false}={}){
+  async play(chord,tonicPitchClass=5,{arpeggio=false,arrangement={},barSeconds=4}={}){
     const generation=++this.generation;
     await this.unlock();
     if(generation!==this.generation)return;
-    const c=this.context,p=PRESETS[this.preset],now=c.currentTime;
+    const c=this.context,p=PRESETS[this.preset],now=c.currentTime;this.lastArrangement=[];
     for(const voice of this.voices){voice.gain.gain.cancelScheduledValues(now);voice.gain.gain.setTargetAtTime(.0001,now,.035);setTimeout(()=>voice.stop(),180);}
     this.voices=[];
     if(chord.audio instanceof Blob){
@@ -66,13 +73,28 @@ export class GardenPad{
     // Imported MIDI routes retain the player's exact register, voicing and
     // independent bass instead of being rebuilt from the detected label.
     const notes=Array.isArray(chord.notes)&&chord.notes.length?[...chord.notes]:[bass,...(INTERVALS[chord.quality]??INTERVALS.maj).map(interval=>root+interval)];
+    this.lastArrangement=gardenArrangementEvents(notes,chord.reference?{}:arrangement,barSeconds);
+    // Sustained foundation stays identifiable underneath two quieter layers.
+    // All future attacks belong to this voice group, so pause/route changes
+    // cancel them together rather than leaving an accompaniment running.
+    if(this.lastArrangement.length){
+      const group=c.createGain(),sources=[];group.gain.value=1;group.connect(this.cleanOutput);
+      for(const event of this.lastArrangement){
+        const tone=c.createOscillator(),level=c.createGain(),at=now+event.at;
+        tone.type=event.track==='bass'?'triangle':'sine';tone.frequency.value=frequency(event.midi);
+        level.gain.setValueAtTime(.0001,at);level.gain.exponentialRampToValueAtTime(event.level,at+.009);level.gain.exponentialRampToValueAtTime(.0001,at+event.duration);
+        tone.connect(level);level.connect(group);tone.start(at);tone.stop(at+event.duration+.025);sources.push(tone);
+        tone.onended=()=>{try{tone.disconnect();level.disconnect();}catch{}};
+      }
+      this.voices.push({gain:group,stop:()=>{for(const tone of sources){try{tone.stop();}catch{}}try{group.disconnect();}catch{}}});
+    }
     if(p.engine==='sample'){
       const group=c.createGain(),sources=[];group.gain.setValueAtTime(.68/Math.sqrt(notes.length),now);group.connect(this.cleanOutput);
       notes.forEach((midi,index)=>{
         const sample=this.sampleBuffers.reduce((best,item)=>Math.abs(item.midi-midi)<Math.abs(best.midi-midi)?item:best,this.sampleBuffers[0]);
         const voice=c.createBufferSource(),voiceGain=c.createGain();voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi)/12);voiceGain.gain.value=index===0?.62:1;voice.connect(voiceGain);voiceGain.connect(group);voice.start(now+(arpeggio?index*.18:0));sources.push(voice);
       });
-      const voice={gain:group,stop:()=>{for(const item of sources){try{item.stop();}catch{}}try{group.disconnect();}catch{}}};this.voices=[voice];return;
+      const voice={gain:group,stop:()=>{for(const item of sources){try{item.stop();}catch{}}try{group.disconnect();}catch{}}};this.voices.push(voice);return;
     }
     const group=c.createGain();group.gain.setValueAtTime(.0001,now);group.connect(this.output);
     if(p.engine==='felt'){
@@ -95,7 +117,7 @@ export class GardenPad{
       if(p.engine==='deep'){const sub=c.createOscillator(),subGain=c.createGain();sub.type='sine';sub.frequency.value=frequency(midi-12);subGain.gain.value=index===0?.24:.055;sub.connect(subGain);subGain.connect(group);sub.start(now);oscillators.push(sub);}
     });
     const voice={gain:group,stop:()=>{for(const oscillator of oscillators){try{oscillator.stop();}catch{}}try{group.disconnect();}catch{}}};
-    this.voices=[voice];
+    this.voices.push(voice);
   }
   async feedback(correct,{complete=false,kind='degree',value=0}={}){
     await this.unlock();
@@ -148,6 +170,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
   const reference={...tonic,degree:`БАЗА ${tonic.degree}`,offset:0,bassOffset:null,reference:true};
   const exercise=sourceExercise;
   const longRoute=exercise.sequence.length>5;
+  const accompaniment=createGardenArrangement(exercise.sequence.length);
   const state={exercise,cursor:-1,round:1,basePlayed:false,progress:exercise.sequence.map(()=>({degree:false,quality:false})),running:false,complete:false,feedback:'',barSeconds,timer:0,deadline:0,held:false,arpeggio:false,arpeggioRounds:0,navigation:{enabled:longRoute,revealedPosition:-1,teleportCharges:longRoute?1:0}};
   const choices=[...exercise.sequence,...(exercise.distractors??[])]
     .filter((chord,index,list)=>list.findIndex(item=>keyOf(item)===keyOf(chord))===index);
@@ -155,7 +178,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
   const snapshot=()=>({
     exercise,cursor:state.cursor,round:state.round,progress:state.progress.map(part=>({...part})),parts:state.progress.map(part=>({...part})),solved:solvedIndexes(),
     solvedParts:state.progress.reduce((sum,part)=>sum+Number(part.degree)+Number(part.quality),0),totalParts:exercise.sequence.length*2,
-    running:state.running,complete:state.complete,basePlayed:state.basePlayed,feedback:state.feedback,barSeconds:state.barSeconds,deadline:state.deadline,choices,reference,held:state.held,arpeggio:state.arpeggio||state.arpeggioRounds>0,navigation:{...state.navigation},
+    running:state.running,complete:state.complete,basePlayed:state.basePlayed,feedback:state.feedback,barSeconds:state.barSeconds,deadline:state.deadline,choices,reference,held:state.held,arpeggio:state.arpeggio||state.arpeggioRounds>0,arrangement:state.cursor<0?{}:accompaniment.current(),arrangementStatus:accompaniment.snapshot(),navigation:{...state.navigation},
     current:state.cursor<0?reference:exercise.sequence[state.cursor],currentParts:state.cursor<0?{degree:true,quality:true}:{...state.progress[state.cursor]}
   });
   const emit=()=>onChange?.(snapshot());
@@ -170,7 +193,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     if(!state.running)return;
     state.feedback='';state.cursor+=1;
     if(state.cursor>=exercise.sequence.length){state.cursor=0;state.round+=1;}
-    sound();if(state.arpeggioRounds>0)state.arpeggioRounds-=1;schedule();
+    accompaniment.next();sound();if(state.arpeggioRounds>0)state.arpeggioRounds-=1;schedule();
   }
   return {
     start(){
@@ -180,7 +203,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
       state.basePlayed=true;sound();schedule();
     },
     pause(){state.running=false;state.held=false;clearTimeout(state.timer);state.timer=0;state.deadline=0;emit();},
-    restart(){clearTimeout(state.timer);state.cursor=-1;state.round=1;state.basePlayed=false;state.progress=exercise.sequence.map(()=>({degree:false,quality:false}));state.running=false;state.complete=false;state.feedback='';state.deadline=0;state.navigation.revealedPosition=-1;state.navigation.teleportCharges=longRoute?1:0;emit();},
+    restart(){clearTimeout(state.timer);accompaniment.reset();state.cursor=-1;state.round=1;state.basePlayed=false;state.progress=exercise.sequence.map(()=>({degree:false,quality:false}));state.running=false;state.complete=false;state.feedback='';state.deadline=0;state.navigation.revealedPosition=-1;state.navigation.teleportCharges=longRoute?1:0;emit();},
     answerPart(kind,value){
       if(!state.running||state.cursor<0||state.complete||!['degree','quality'].includes(kind))return {ignored:true};
       const part=state.progress[state.cursor];
@@ -222,7 +245,10 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
       if(result.ignored){state.navigation.teleportCharges+=1;return result;}
       return {...result,charges:state.navigation.teleportCharges};
     },
-    arpeggioRound(){state.arpeggioRounds=exercise.sequence.length;state.feedback='Следующий гармонический круг звучит арпеджио';sound();emit();},
+    arrange(style,rounds=1){if(!accompaniment.activate(style,rounds))return false;state.feedback='Цветок добавит слой со следующего аккорда';emit();return true;},
+    boostArrangement(){const applied=accompaniment.boost();state.feedback=applied?'Активные слои продлены на один круг':'Сначала поймай цветок арпеджио или баса';emit();return applied;},
+    clearArrangement(track){if(!accompaniment.clear(track))return false;state.feedback='Слой выключится со следующего аккорда';emit();return true;},
+    arpeggioRound(){accompaniment.activate('arpWave',1);state.feedback='Арпеджио начнётся со следующего аккорда на один круг';emit();},
     restartFromRoot(){clearTimeout(state.timer);state.running=true;state.held=false;state.cursor=-1;state.basePlayed=true;state.feedback='Возврат к тонике';sound();schedule();},
     jumpToMiddle(){clearTimeout(state.timer);state.running=true;state.held=false;state.cursor=Math.max(-1,Math.floor(exercise.sequence.length/2)-1);state.feedback='Маршрут продолжен с середины';step();},
     hold(arpeggio=false){if(state.cursor<0)return;clearTimeout(state.timer);state.running=true;state.held=true;state.arpeggio=arpeggio;state.feedback=arpeggio?'Арпеджио удерживается до сигнала':'Аккорд удерживается до сигнала';sound();emit();},

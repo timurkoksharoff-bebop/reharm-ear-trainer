@@ -8,16 +8,22 @@ const GROUND = `precision highp float;
 varying vec2 v_uv;
 uniform sampler2D u_base,u_bloom,u_thaw;
 uniform vec2 u_resolution,u_pilot;
-uniform float u_size,u_scroll,u_pan,u_time,u_growth,u_night,u_lantern;
+uniform float u_size,u_scroll,u_pan,u_time,u_growth,u_night,u_lantern,u_mirror;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 vec2 hash2(vec2 p){return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);}
+vec3 tileSample(sampler2D tex,vec2 p){
+  // Canyon paintings are not seamless. Mirroring keeps their edge pixels
+  // continuous at every wrap without changing the original Garden sampling.
+  vec2 uv=u_mirror>.5?1.-abs(mod(p,2.)-1.):fract(p);
+  return texture2D(tex,uv).rgb;
+}
 vec3 gardenTile(sampler2D tex,vec2 p){
   vec2 cell=floor(p),f=fract(p);f=f*f*(3.-2.*f);
-  vec3 a=texture2D(tex,fract(p+hash2(cell)*.74)).rgb;
-  vec3 b=texture2D(tex,fract(p+hash2(cell+vec2(1.,0.))*.74)).rgb;
-  vec3 c=texture2D(tex,fract(p+hash2(cell+vec2(0.,1.))*.74)).rgb;
-  vec3 d=texture2D(tex,fract(p+hash2(cell+vec2(1.,1.))*.74)).rgb;
+  vec3 a=tileSample(tex,p+hash2(cell)*.74);
+  vec3 b=tileSample(tex,p+hash2(cell+vec2(1.,0.))*.74);
+  vec3 c=tileSample(tex,p+hash2(cell+vec2(0.,1.))*.74);
+  vec3 d=tileSample(tex,p+hash2(cell+vec2(1.,1.))*.74);
   return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
 }
 vec3 terrain(sampler2D tex,vec2 uv){
@@ -136,6 +142,7 @@ export function createGardenRenderer(groundCanvas,shipCanvas,images) {
       ground.v('u_resolution',s.width,s.height);ground.v('u_pilot',s.x/s.width,s.y/s.height);
       ground.f('u_size',s.worldSize);ground.f('u_scroll',s.scroll);ground.f('u_pan',s.pan);ground.f('u_time',s.time);
       ground.f('u_growth',s.growth);ground.f('u_night',s.night);ground.f('u_lantern',s.lantern?1:0);
+      ground.f('u_mirror',s.mirrorTiles?1:0);
       g.drawArrays(g.TRIANGLES,0,6);
 
       const gl=vessel.gl;gl.viewport(0,0,shipCanvas.width,shipCanvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);

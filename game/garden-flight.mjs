@@ -2,6 +2,8 @@ import {createGardenRenderer} from './garden-flight-renderer.mjs';
 import {createGardenMission,GardenPad,gardenExercisesForChapter} from './garden-harmony.mjs';
 import {GardenSequenceStudio} from './garden-sequence-studio.mjs';
 import {createGardenLife,GARDEN_RESOURCES,GARDEN_ITEMS} from './garden-life.mjs';
+import {createGardenRewards} from './garden-rewards.mjs';
+import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const STATES=[
@@ -14,8 +16,9 @@ const clamp=(x,a,b)=>Math.min(b,Math.max(a,x)),mod=(x,n)=>(x%n+n)%n;
 const s={ready:false,from:0,to:0,transition:1,pending:null,growth:0,ship:1,time:0,travel:0,scroll:0,pan:0,night:0,lightMode:'cycle',cycle:0,lantern:true,paused:reduced,speed:2,altitude:1.25,visit:0,clean:false,angle:0,motionX:0,motionY:0,thrust:.45,brake:0,x:0,y:0,width:1,height:1,worldSize:1,tour:'reharm',chapter:1,mode:'quest',gameOver:false};
 let renderer,images,last=0,raf=0,dpr=1,dragId=null,tx=.5,ty=.56,keys=new Set(),loaded=0;
 const pad=new GardenPad();
-const gardenLife=createGardenLife();
-let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false,routeNavigationMode='';
+const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrange(style,rounds)});
+const gardenRewards=createGardenRewards({reduced});
+let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,lastCollisionEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false,routeNavigationMode='';
 const PROGRESS_KEY='echo-garden-progress.v1';
 const FAVORITES_KEY='echo-garden-favorites.v1';
 const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],lastRouteId:saved.lastRouteId||''};}catch{return {level:1,completed:[],lastRouteId:''};}};
@@ -68,11 +71,20 @@ function renderVitals(){
     element?.classList.remove('changed','harmful');void element?.offsetWidth;element?.classList.add('changed');element?.classList.toggle('harmful',event.harmful);
   }
   const callout=$('vital-event');
-  if(event&&model.eventAge<2.4){const item=GARDEN_ITEMS[event.kind];callout.textContent=`${event.harmful?'−':'+'} ${item?.label??event.label}`;callout.classList.toggle('harmful',event.harmful);callout.classList.add('visible');}
+  if(event&&model.eventAge<2.4){callout.textContent=`${event.harmful?'−':'+'} ${event.label}`;callout.classList.toggle('harmful',event.harmful);callout.classList.add('visible');}
   else callout.classList.remove('visible');
   for(const button of document.querySelectorAll('[data-use-artifact]')){const count=model.inventory[button.dataset.useArtifact]||0;button.querySelector('b').textContent=String(count);button.classList.toggle('ready',count>0);button.disabled=count<1;}
 }
+function collisionThud(){
+  const audio=pad.context;if(!audio||audio.state!=='running')return;
+  const at=audio.currentTime,oscillator=audio.createOscillator(),gain=audio.createGain();
+  oscillator.type='triangle';oscillator.frequency.setValueAtTime(110,at);oscillator.frequency.exponentialRampToValueAtTime(43,at+.2);
+  gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.13,at+.009);gain.gain.exponentialRampToValueAtTime(.0001,at+.25);
+  oscillator.connect(gain);gain.connect(pad.cleanOutput||audio.destination);oscillator.start(at);oscillator.stop(at+.27);
+  oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
+}
 function renderMission(model){
+  const layers=Object.entries(model.arrangementStatus||{});$('arrangement-status').replaceChildren(...layers.map(([track,item])=>{const button=document.createElement('button'),spec=GARDEN_ARRANGEMENTS[item.style];button.textContent=`${spec.symbol} ${spec.label} · ${item.remaining} акк. (${item.rounds||'<1'} кр.)`;button.style.setProperty('--flower',spec.color);button.title=`${spec.detail}. ${item.playing?'Сейчас звучит':'Со следующего аккорда'}. Нажми, чтобы убрать слой.`;button.addEventListener('click',()=>{mission.clearArrangement(track);});return button;}));
   lastMissionPosition=`${model.round}:${model.cursor}`;
   const progress=model.progress??model.parts??model.exercise.sequence.map((_,index)=>({degree:model.solved.includes(index),quality:model.solved.includes(index)}));
   const solved=new Set(model.solved),total=model.exercise.sequence.length,solvedParts=model.solvedParts??progress.reduce((sum,part)=>sum+Number(part.degree)+Number(part.quality),0),percent=Math.round(solvedParts/(total*2)*100);
@@ -113,7 +125,7 @@ function renderMission(model){
   }
   const currentParts=model.currentParts??(model.cursor>=0?progress[model.cursor]:{degree:true,quality:true});
   const mayAnswer=model.running&&model.cursor>=0&&!solved.has(model.cursor),qualities=[...new Set(model.choices.map(chord=>chord.quality))];
-  const answerPart=(kind,value)=>{const result=mission.answerPart(kind,value);if(!result.ignored)pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});};
+  const answerPart=(kind,value)=>{const result=mission.answerPart(kind,value);if(!result.ignored){gardenRewards.answer(result,kind,{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});}};
   $('degree-options').replaceChildren(...DEGREE_NAMES.map((name,offset)=>{const button=document.createElement('button');const locked=mayAnswer&&currentParts.degree&&Number(model.current.offset)===offset;button.className=`degree-option${locked?' selected locked':''}`;button.textContent=name;button.dataset.degree=String(offset);button.disabled=!mayAnswer||currentParts.degree;button.addEventListener('click',()=>answerPart('degree',offset));return button;}));
   $('quality-options').replaceChildren(...qualities.map(quality=>{const button=document.createElement('button');const locked=mayAnswer&&currentParts.quality&&model.current.quality===quality;button.className=`quality-option${locked?' selected locked':''}`;button.textContent=quality==='1'?'1 / 8':quality;button.dataset.quality=quality;button.disabled=!mayAnswer||currentParts.quality;button.addEventListener('click',()=>answerPart('quality',quality));return button;}));
   const waitingForFinal=finalMissing&&model.running&&model.cursor>=0&&model.cursor!==finalMissing.index;
@@ -123,7 +135,7 @@ function renderMission(model){
   $('mission-toggle').textContent=model.running?'Ⅱ Остановить':'▶ Запустить полёт';$('mission-restart').hidden=!model.complete;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
-function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);currentRoute=exercise;completionHandled=false;lastMissionPosition='';routeNavigationMode='';mission=createGardenMission({exercise,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
+function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();currentRoute=exercise;completionHandled=false;lastMissionPosition='';routeNavigationMode='';mission=createGardenMission({exercise,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
 let activeExercises=[];
 function routeTitle(route,index=0){return route.name&&route.name!==route.id?route.name:exerciseCode(route,index);}
 function renderGardenRouteList(){
@@ -203,11 +215,14 @@ $('start-choose').addEventListener('click',async()=>{hideGardenStart();await stu
 $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){mission.pause();pad.stop(true);return;}try{await pad.unlock();if(s.paused)s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
-$('mission-restart').addEventListener('click',()=>{mission.restart();s.paused=false;ui();});
+$('mission-restart').addEventListener('click',()=>{gardenRewards.reset();mission.restart();s.paused=false;ui();});
 for(const button of document.querySelectorAll('[data-route-shift]'))button.addEventListener('click',()=>mission.shift(Number(button.dataset.routeShift)));
 $('route-reveal').addEventListener('click',()=>{routeNavigationMode=routeNavigationMode==='reveal'?'':'reveal';renderMission(mission.snapshot());});
 $('route-teleport').addEventListener('click',()=>{if(mission.snapshot().navigation?.teleportCharges<1)return;routeNavigationMode=routeNavigationMode==='teleport'?'':'teleport';renderMission(mission.snapshot());});
-for(const button of document.querySelectorAll('[data-use-artifact]'))button.addEventListener('click',()=>{const kind=button.dataset.useArtifact;if((kind==='hold'||kind==='holdArpeggio')&&mission.snapshot().cursor<0){$('answer-feedback').textContent='Сначала дождись первого аккорда последовательности';return;}if(!gardenLife.consumeArtifact(kind))return;if(kind==='arpeggio')mission.arpeggioRound();if(kind==='restart')mission.restartFromRoot();if(kind==='midpoint')mission.jumpToMiddle();if(kind==='hold'||kind==='holdArpeggio'){mission.hold(kind==='holdArpeggio');$('artifact-continue').hidden=false;$('artifact-repeat').hidden=false;}renderVitals();});
+for(const button of document.querySelectorAll('[data-use-artifact]'))button.addEventListener('click',()=>{const kind=button.dataset.useArtifact;if(kind==='arrangementBoost'&&!mission.boostArrangement())return;if((kind==='hold'||kind==='holdArpeggio')&&mission.snapshot().cursor<0){$('answer-feedback').textContent='Сначала дождись первого аккорда последовательности';return;}if(!gardenLife.consumeArtifact(kind))return;if(kind==='arpeggio')mission.arpeggioRound();if(kind==='restart')mission.restartFromRoot();if(kind==='midpoint')mission.jumpToMiddle();if(kind==='hold'||kind==='holdArpeggio'){mission.hold(kind==='holdArpeggio');$('artifact-continue').hidden=false;$('artifact-repeat').hidden=false;}renderVitals();});
+$('flower-guide-toggle').addEventListener('click',()=>{$('flower-guide').hidden=!$('flower-guide').hidden;$('flower-guide-toggle').setAttribute('aria-expanded',String(!$('flower-guide').hidden));});
+$('flower-guide-close').addEventListener('click',()=>{$('flower-guide').hidden=true;$('flower-guide-toggle').setAttribute('aria-expanded','false');});
+$('flower-guide-list').replaceChildren(...Object.entries(GARDEN_ARRANGEMENTS).map(([style,spec])=>{const item=document.createElement('article'),canvas=document.createElement('canvas');canvas.width=canvas.height=72;const icon=canvas.getContext('2d');icon.translate(36,36);drawGardenArrangementFlower(icon,spec,66,2);const copy=document.createElement('p');copy.textContent=`${spec.label} — ${spec.detail}`;const button=document.createElement('button');button.textContent='Вырастить на пути';button.setAttribute('aria-label',`Вырастить: ${spec.label}`);button.addEventListener('click',()=>{if(!mission.snapshot().running){$('flower-guide-note').textContent='Сначала запусти музыкальный полёт.';return;}if(gardenLife.entities.some(entity=>entity.item.arrangement&&!entity.collected)){ $('flower-guide-note').textContent='Цветок уже летит. Поймай его или пропусти.';return;}gardenLife.forceSpawn(style,{x:tx,y:Math.max(.06,ty-.30),rounds:Number($('flower-rounds').value),vx:0});$('flower-guide').hidden=true;$('flower-guide-toggle').setAttribute('aria-expanded','false');});item.append(canvas,copy,button);return item;}));
 $('artifact-repeat').addEventListener('click',()=>mission.replayCurrent());
 $('artifact-continue').addEventListener('click',()=>{mission.continue();$('artifact-continue').hidden=true;$('artifact-repeat').hidden=true;});
 for(const button of document.querySelectorAll('[data-pad]'))button.addEventListener('click',()=>{pad.applyPreset(button.dataset.pad);for(const item of document.querySelectorAll('[data-pad]'))item.setAttribute('aria-pressed',String(item===button));});
@@ -230,6 +245,7 @@ function update(dt){
   s.time=mod(s.time+dt,Math.PI*2000);s.visit+=dt;
   s.travel=mod(s.travel+dt*s.speed*18,100000);
   s.scroll=mod(s.scroll+dt*s.speed*18/s.worldSize,2);
+  gardenRewards.step(dt,{ground:dt*s.speed*18/s.height});
   s.growth=mod(s.growth+dt*.014,4);
   if(s.lightMode==='cycle')s.cycle=mod(s.cycle+dt*2,360);
   const target=s.lightMode==='day'?0:s.lightMode==='dusk'?.48:s.lightMode==='night'?1:(1-Math.cos(s.cycle*Math.PI/180))/2;
@@ -242,7 +258,7 @@ function update(dt){
   s.angle+=(clamp(dx/s.width,-.3,.3)-s.angle)*(1-Math.exp(-dt*4));
   s.pan+=((s.x/s.width-.5)*.13-s.pan)*(1-Math.exp(-dt));
   const missionState=mission?.snapshot();
-  gardenLife.update(dt,{...s,active:Boolean(missionState?.running),answering:Boolean(missionState?.running&&missionState.cursor>=0)});
+  gardenLife.update(dt,{...s,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
   const lifeState=gardenLife.snapshot();
   if(lifeState.gameOver&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').hidden=false;}
   const shake=lifeState.impact||0,shakeX=Math.sin(s.time*83)*shake*7,shakeY=Math.cos(s.time*71)*shake*5;
@@ -250,6 +266,11 @@ function update(dt){
   document.body.classList.toggle('garden-impact',shake>.05);
   const hazardForce=gardenLife.getFlightForce();
   tx=clamp(tx+hazardForce.x*dt,.1,.9);ty=clamp(ty+hazardForce.y*dt,.2,.78);
+  if(lifeState.event?.id!==lastCollisionEvent&&['crater','stoneAsteroid','porousAsteroid','crystalAsteroid','lavaAsteroid'].includes(lifeState.event?.kind)){
+    lastCollisionEvent=lifeState.event.id;
+    tx=clamp(tx+hazardForce.x*.11,.1,.9);ty=clamp(ty+hazardForce.y*.11,.2,.78);
+    collisionThud();navigator.vibrate?.(35);
+  }
 }
 function atmosphere(){
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,s.width,s.height);
@@ -265,6 +286,8 @@ function atmosphere(){
     ctx.fillStyle=`rgba(229,255,182,${alpha})`;ctx.beginPath();ctx.arc(x,y,p.r,0,Math.PI*2);ctx.fill();
   }
   ctx.globalCompositeOperation='source-over';
+  gardenRewards.draw(ctx,s.width,s.height);
+  if(new URLSearchParams(location.search).has('qa')){life.dataset.rewards=JSON.stringify(gardenRewards.snapshot());life.dataset.arrangement=JSON.stringify({status:mission?.snapshot().arrangementStatus||{},events:pad.lastArrangement||[],pickups:gardenLife.snapshot().entities.filter(item=>GARDEN_ITEMS[item.kind]?.arrangement)});}
   gardenLife.draw(ctx,s);
 }
 let uiTick=0;
@@ -278,8 +301,9 @@ async function load(){
   const lifeFiles=[...new Set(Object.values(GARDEN_ITEMS).map(item=>item.sprite).filter(Boolean))];
   const paths=[...STATES.map(x=>x.file),'manta','lotus',...lifeFiles.map(file=>`collectibles/${file}`)];
   images=await Promise.all(paths.map(file=>new Promise((resolve,reject)=>{
-    const img=new Image();img.onload=()=>{$('load-progress').textContent=`Готово ${++loaded} из ${paths.length}`;resolve(img);};img.onerror=()=>reject(Error(`Не загрузился пейзаж: ${file}. Проверь соединение и попробуй снова.`));
-    const asset=window.GARDEN_ASSETS?.[file]||`assets/echo-garden/${file}.webp`;img.src=(file==='manta'||file==='lotus')?`${asset}${asset.includes('?')?'&':'?'}cutout=2`:asset;
+    const img=new Image(),timeout=setTimeout(()=>reject(Error(`Слишком долгая загрузка: ${file}. Попробуй снова.`)),20000);
+    img.onload=()=>{clearTimeout(timeout);$('load-progress').textContent=`Готово ${++loaded} из ${paths.length}`;resolve(img);};img.onerror=()=>{clearTimeout(timeout);reject(Error(`Не загрузился пейзаж: ${file}. Попробуй снова.`));};
+    const asset=window.GARDEN_ASSETS?.[file]||`assets/echo-garden/${file}.${file==='collectibles/meteor-volcanic'?'png':'webp'}`;img.src=!asset.startsWith('data:')&&(file==='manta'||file==='lotus')?`${asset}${asset.includes('?')?'&':'?'}cutout=2`:asset;
   })));
   renderer=createGardenRenderer(world,shipLayer,images.slice(0,6));
   gardenLife.setImages(Object.fromEntries(lifeFiles.map((file,index)=>[file,images[6+index]])));

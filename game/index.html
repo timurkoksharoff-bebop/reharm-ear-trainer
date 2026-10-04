@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#090d1b">
   <meta name="description" content="Слушай сигнал. Ломай щиты. Лети дальше. Музыкальная космическая аркада Space Music College.">
   <title>Space Music College</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%2371f6d1' d='M32 4 58 54 32 43 6 54Z'/%3E%3C/svg%3E">
-  <link rel="manifest" href="manifest.webmanifest?v=0.87">
-  <link rel="apple-touch-icon" href="../icon-180.png?v=0.33">
-  <link rel="stylesheet" href="game.css?v=0.87">
-  <link rel="stylesheet" href="industrial.css?v=0.87">
+  <link rel="icon" type="image/png" href="assets/brand/orbital-v1/icon-64.png">
+  <link rel="manifest" href="manifest.webmanifest?v=0.92">
+  <link rel="apple-touch-icon" href="assets/brand/orbital-v1/icon-180.png">
+  <link rel="stylesheet" href="game.css?v=0.92">
+  <link rel="stylesheet" href="industrial.css?v=0.92">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <script>
@@ -28,7 +28,7 @@
         }
       }).catch(() => {});
     } else if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-      window.addEventListener('load',()=>navigator.serviceWorker.register('../service-worker.js?v=0.87').catch(()=>{}));
+      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.92').catch(()=>{}));
     }
   </script>
 </head>
@@ -37,7 +37,7 @@
   <main class="cabinet">
     <header class="topbar">
       <a class="wordmark" href="./" aria-label="Space Music College, начало"><span class="brand-mark">≋</span><span>SPACE MUSIC <b>COLLEGE</b></span></a>
-      <span class="prototype">BUILD 087</span>
+      <span class="prototype">BUILD 092</span>
       <button id="home" class="home-button" type="button" aria-label="Вернуться в главное меню">HOME</button>
       <button id="language" class="language" type="button">RU / EN</button>
       <button id="pause" class="icon-button" aria-label="Пауза" disabled>Ⅱ</button>
@@ -46,6 +46,7 @@
       <div class="machine-rail left-rail" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <div class="machine-rail right-rail" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       <canvas id="space" aria-label="Перетаскивай корабль по полю или управляй стрелками. Ответы — кнопки под полем."></canvas>
+      <div id="samsara-warning" class="samsara-warning" hidden role="status" aria-live="polite" aria-atomic="true"></div>
       <div class="hud" aria-live="off">
         <div><span class="micro" id="sector-name">СЕКТОР 01 · МАЯК</span><strong id="score">000000</strong></div>
         <div class="hud-right"><span class="micro">ЩИТ КОРАБЛЯ</span><span id="health" aria-label="Щит: 5 из 5">▰▰▰▰▰</span></div>
@@ -76,8 +77,8 @@
     </section>
     <footer><span>Тяни корабль · стрельба автоматическая</span><button id="help" aria-label="Как играть">?</button></footer>
   </main>
-  <link rel="stylesheet" href="console.css?v=0.87">
-  <link rel="stylesheet" href="samsara.css?v=0.87">
-  <script src="game.bundle.js?v=0.87"></script>
+  <link rel="stylesheet" href="console.css?v=0.92">
+  <link rel="stylesheet" href="samsara.css?v=0.92">
+  <script src="game.bundle.js?v=0.92"></script>
 </body>
 </html>

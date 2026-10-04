@@ -6,6 +6,16 @@ const LEVELS=[
 ];
 const clamp=value=>Math.max(0,Math.min(100,value));
 export const SAMSARA_RESOURCE_LABELS={fuel:'Топливо исчерпано',energy:'Энергия исчерпана',crew:'Экипаж потерял силы',hull:'Корпус лотоса разрушен'};
+export const SAMSARA_SUPPLY_WARNINGS={
+  fuel:{name:'ТОПЛИВО',supply:'собери топливное семя'},
+  energy:{name:'ЭНЕРГИЯ',supply:'собери водяную жемчужину'},
+  crew:{name:'ЭКИПАЖ',supply:'собери ягоды экипажа'},
+  hull:{name:'КОРПУС',supply:'собери ремонтный лотос'},
+};
+export function samsaraResourceWarnings(vitals,hullPercent=100){
+  return Object.entries({...vitals,hull:hullPercent}).filter(([key,value])=>SAMSARA_SUPPLY_WARNINGS[key]&&value<=25)
+    .sort((a,b)=>a[1]-b[1]).map(([key,value])=>({key,value:Math.max(0,Math.ceil(value)),critical:value<=12,...SAMSARA_SUPPLY_WARNINGS[key]}));
+}
 export function samsaraBalance(level=0){return LEVELS[Math.max(0,Math.min(LEVELS.length-1,Math.round(level)))]}
 export function samsaraStartingVitals(level=0){return {...samsaraBalance(level).start}}
 export function stepSamsaraVitals(vitals,dt,{level=0,forces=0}={}){

@@ -13,8 +13,11 @@ development modules retained in this repository predate this frozen release;
 do not rebuild the 0.92 publication from those modules. The copied distribution
 modules and assets are kept alongside the frozen bundles for inspection.
 
-Offline cache: `space-music-college-0.92`. The parent Trainer cache is bumped
-to `reharm-ear-trainer-v0.92` so previously cached game entry points update.
+Offline cache: `space-music-college-0.92-mobile1`. The parent Trainer cache is bumped
+to `reharm-ear-trainer-v0.92-mobile1` so previously cached game entry points update.
+The mobile adapter precaches the directory start URL and resolves versioned
+asset URLs against this release's own cache, including on the first offline
+visit to Echo Garden. Gameplay and visuals remain those of frozen 0.92.
 
 The release includes the two canyon routes and their approved landscape
 awakening images, new cast and album artifacts, Echo Garden arrangement

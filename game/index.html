@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#090d1b">
   <meta name="description" content="Слушай сигнал. Ломай щиты. Лети дальше. Музыкальная космическая аркада Space Music College.">
   <title>Space Music College</title>
@@ -28,7 +28,7 @@
         }
       }).catch(() => {});
     } else if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.93.1').catch(()=>{}));
+      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=0.93.2').catch(()=>{}));
     }
   </script>
 </head>

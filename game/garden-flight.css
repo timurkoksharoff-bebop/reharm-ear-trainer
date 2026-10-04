@@ -281,3 +281,5 @@ body.student-palette #harmony-hud[data-variant=minimal] .answers-panel .mission-
 #harmony-hud[data-variant=minimal] .answers-panel .mission-toggle{position:fixed;left:11px;right:auto;top:calc(98px + env(safe-area-inset-top));width:64px;margin:0;transform:none}
 .flight-tools{top:calc(140px + env(safe-area-inset-top))}
 .arrangement-status{top:calc(195px + env(safe-area-inset-top))}
+#harmony-hud[data-variant=minimal] .chord-route.route-long{display:grid;grid-template-columns:repeat(var(--route-half),minmax(0,1fr));grid-template-rows:repeat(2,auto);grid-auto-flow:row;gap:3px;width:100%;max-height:none}
+#harmony-hud[data-variant=minimal] .chord-route.route-long .chord-slot{width:100%;min-width:0}

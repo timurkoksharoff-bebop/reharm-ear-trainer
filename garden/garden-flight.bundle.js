@@ -1,4 +1,4 @@
-/* Сад Эха 0.96 — standalone browser bundle */
+/* Сад Эха 0.97 — standalone browser bundle */
 (()=>{
 window.GARDEN_ASSETS={"collectibles/meteor-volcanic":"assets/echo-garden/collectibles/meteor-volcanic.webp"};
 /* Game-only touch guard. Editable fields retain their normal text gestures. */
@@ -15,15 +15,16 @@ window.GARDEN_ASSETS={"collectibles/meteor-volcanic":"assets/echo-garden/collect
     const now = performance.now();
     if (previousTap>0 && event.changedTouches.length === 1 && now - previousTap < 300 && !editable(event.target)) {
       cancel(event);
-      // Preserve the second game-button activation after cancelling Safari's
-      // synthetic double-tap zoom. Disabled controls remain inactive.
-      const button=event.target.closest?.('button');
-      if(button&&!button.disabled)button.click();
+      // Preserve quick taps on all native game controls, including the lotus
+      // summary. Cancelling zoom without restoring its click swallowed rapid
+      // menu taps. Disabled controls remain inactive.
+      const control=event.target.closest?.('button,summary,a[href]');
+      if(control&&!control.disabled&&control.getAttribute('aria-disabled')!=='true')control.click();
     }
     previousTap = now;
   }, {passive:false});
   const style = document.createElement('style');
-  style.textContent = 'html,body{overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}button,a,canvas{touch-action:none}input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;touch-action:auto}input[type="text"],input[type="search"],textarea,select{font-size:max(16px,1em)}.overlay,.menu-panel,.flower-guide,.flight-tools-body,.answers-panel,.route-list,.studio,.library-panel,[role="dialog"]{touch-action:pan-y}';
+  style.textContent = 'html,body{overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}button,a,summary,canvas{touch-action:none}input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;touch-action:auto}input[type="text"],input[type="search"],textarea,select{font-size:max(16px,1em)}.overlay,.menu-panel,.flower-guide,.flight-tools-body,.answers-panel,.route-list,.studio,.library-panel,[role="dialog"]{touch-action:pan-y}';
   document.head.append(style);
   // A manifest preference is not a lock. Request the real API only when supported.
   const lockPortrait = () => {
@@ -2583,17 +2584,17 @@ function showGardenStart(state='menu'){
 }
 function hideGardenStart(){document.body.classList.remove('start-open');$('garden-start').hidden=true;}
 const tutorialSteps=[
- ['Добро пожаловать','#world-controls','Кнопка справа сверху открывает выбор главы, маршрута, тембра и корабля. Лёгкий — спокойное обучение, Средний — обычный полёт, Сложный — экспериментальный режим для опытных.'],
+ ['Добро пожаловать','#world-controls','Кнопка справа сверху открывает выбор главы, маршрута, тембра и корабля. Абитуриент — спокойное обучение, Студент — обычный полёт, Преподаватель — экспериментальный режим для опытных.'],
  ['Управление кораблём','#world','Веди корабль пальцем, мышью или стрелками. Предмет засчитывается при касании кораблём: полезные лови, опасные обходи.'],
  ['Цепочка аккордов','#chord-route','Сверху — позиции последовательности. Подсвеченная позиция сейчас звучит. Сначала услышишь тонику — ориентир для определения ступеней.'],
  ['Услышь бас','#degree-options','Нижняя полоса — БАС: самая низкая нота относительно тоники. I — тоника, V — пятая ступень, ♭II — пониженная вторая. Например, IV/I: внизу выбираем I, а справа — IV maj. Бас и корень верхнего аккорда могут отличаться.'],
  ['Узнай аккорд','#quality-options','Справа — тип звучащего аккорда: maj — мажор, m — минор, 7 — доминантсептаккорд, maj7 — большой мажорный, m7 — минорный септаккорд. Бас и аккорд угадываются независимо. Для отдельного баса рядом появляются ответы со ступенью верхнего аккорда: например IV maj. Правильный выбор остаётся подсвеченным.'],
- ['Запасы корабля','#garden-vitals','Жёлтая пробирка — топливо, голубая — вода, зелёная — экипаж, фиолетовая — корпус. В среднем и сложном режимах они расходуются со временем даже без ответов. Ошибки и столкновения тоже отнимают запас.'],
- ['Пополнение','#garden-vitals','Семя пополняет топливо, жемчужина — воду, ягоды — экипаж, ремонтный лотос — корпус. Лови нужное кораблём. В лёгком режиме запас защищён нижней границей 25%; в остальных режимах пустая пробирка означает опасность завершения полёта.'],
- ['Опасности','#world','Камни повреждают корабль; оттенок указывает пострадавшую пробирку. Кратер и смерч опасны при сближении. Красное смертельное ядро завершает полёт при столкновении — его нельзя ловить. В лёгком режиме смертельные ядра отключены.'],
+ ['Запасы корабля','#garden-vitals','Жёлтая пробирка — топливо, голубая — вода, зелёная — экипаж, фиолетовая — корпус. В режимах «Студент» и «Преподаватель» они расходуются со временем даже без ответов. Ошибки и столкновения тоже отнимают запас.'],
+ ['Пополнение','#garden-vitals','Семя пополняет топливо, жемчужина — воду, ягоды — экипаж, ремонтный лотос — корпус. Лови нужное кораблём. В режиме «Абитуриент» запас защищён нижней границей 25%; в остальных режимах пустая пробирка означает опасность завершения полёта.'],
+ ['Опасности','#world','Камни повреждают корабль; оттенок указывает пострадавшую пробирку. Кратер и смерч опасны при сближении. Красное смертельное ядро завершает полёт при столкновении — его нельзя ловить. В режиме «Абитуриент» смертельные ядра отключены.'],
  ['Лотос управления','.flight-tools summary','Этот лотос раскрывает повтор, прыжки и подсказки. Нажатие вне меню закрывает его. Сейчас мы раскрываем его для обзора, ничего не активируя.'],
  ['Бесконечный повтор','#infinity-toggle','Поймай зелёный лотос со знаком ∞, затем активируй его в меню лотоса. Один заряд удерживает звучащий аккорд без ограничения по кругам. Правильный ответ по любой одной части сразу переключает на следующую позицию. Для выхода без ответа нажми отдельную пульсирующую кнопку «Лететь дальше» слева. Это не пауза: корабль летит, запасы расходуются.'],
- ['Прыжки','#jump-charges','Цифры −7, −5, −3, +3, +5, +7 сдвигают позицию в цепочке. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. Пустая кнопка не работает. В лёгком режиме прыжки отключены.'],
+ ['Прыжки','#jump-charges','Цифры −7, −5, −3, +3, +5, +7 сдвигают позицию в цепочке. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. Пустая кнопка не работает. В режиме «Абитуриент» прыжки отключены.'],
  ['Цветок открытия','#assist-charges','Переливчатый цветок открывает басовую ступень текущей позиции. Если она уже найдена, заряд не тратится. Сначала поймай его кораблём, затем нажми в меню лотоса.'],
  ['Семя и корневая спираль','#assist-charges','Семя скрывает неправильные аккорды; корневая спираль — неправильные басовые ступени. Оттенок показывает силу: бледные убирают примерно половину вариантов на 3–5 ходов, насыщенные оставляют четверть на круг, самое редкое семя действует два круга. Правильная кнопка остаётся на привычном месте.'],
  ['Цветы аранжировки','#world-controls','Цветы добавляют бас или арпеджио на один, два или три круга. Партия вступает со следующего аккорда. Бас и арпеджио можно сочетать. Каталог с объяснениями цветов и настройкой пробного цветка находится в основных настройках, а не в лотосе.'],

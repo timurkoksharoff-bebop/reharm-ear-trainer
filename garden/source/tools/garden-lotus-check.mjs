@@ -38,4 +38,30 @@ for(const routeLength of [4,8]){
   spawned.update(.01,{width:400,height:600,x:200,y:500,active:true,flying:true,answering:false,routeLength});
   assert.equal(spawned.snapshot().entities.some(entity=>entity.kind==='degreeReveal'),routeLength>=8,'Rare reveal flowers spawn only on routes with at least eight positions');
 }
-console.log('Restored degree flower: exact approved sprite, single-part reveal, no charge for solved/paused/reference positions; compound answers and every filter preserve the correct target.');
+for(const kind of ['holdArpeggio','arrangementBoost'])for(let bass=0;bass<12;bass++)for(const found of ['none','degree','quality','both']){
+  const route={id:'spiral-regression',baseTonic:0,sequence:[{offset:(bass+5)%12,bassOffset:bass,quality:'maj'},{offset:7,quality:'sus4'}]};
+  const spiralLife=new GardenLife(),spiralMission=createGardenMission({exercise:route,barSeconds:3600});
+  try{
+    spiralLife.collect(spiralLife.forceSpawn(kind));
+    assert(spiralLife.useAssist(spiralMission,kind).ignored);assert.equal(spiralLife.inventory[kind],1);
+    spiralMission.start();assert(spiralLife.useAssist(spiralMission,kind).ignored);spiralMission.advance();
+    if(found==='degree'||found==='both')spiralMission.answerPart('degree',bass);
+    if(found==='quality'||found==='both')spiralMission.answerPart('quality',gardenQualityAnswer(route.sequence[0]));
+    spiralMission.assist(GARDEN_ITEMS.qualityFocus.assist,{consume:()=>true});
+    const before=spiralMission.snapshot(),result=spiralLife.useAssist(spiralMission,kind),after=spiralMission.snapshot(),divisor=GARDEN_ITEMS[kind].assist.divisor;
+    assert(result.assisted);assert.equal(spiralLife.inventory[kind],0);
+    assert.deepEqual(after.currentParts,before.currentParts);assert.deepEqual(after.filters.quality,before.filters.quality);
+    const choices=gardenFilteredChoices('degree',after.current,after.filters.degree);
+    assert.equal(choices.size,1+Math.ceil(11/divisor));assert(choices.has(bass));
+    assert(spiralLife.useAssist(spiralMission,kind).ignored,'empty charge is not reused');
+    spiralLife.collect(spiralLife.forceSpawn(kind));spiralMission.pause();
+    assert(spiralLife.useAssist(spiralMission,kind).ignored);assert.equal(spiralLife.inventory[kind],1);
+    spiralMission.start();
+    for(let step=1;step<=after.filters.degree.remaining;step++){
+      spiralMission.advance();const state=spiralMission.snapshot();
+      if(step<after.filters.degree.remaining){assert.equal(state.filters.degree.remaining,after.filters.degree.remaining-step);assert(gardenFilteredChoices('degree',state.current,state.filters.degree).has(gardenBassOffset(state.current)));}
+      else{assert.equal(state.filters.degree,null);assert.equal(gardenFilteredChoices('degree',state.current,null).size,12);}
+    }
+  }finally{spiralMission.pause();}
+}
+console.log('Restored degree flower and root spirals PASS: 96 ordinary/strong pickup, independent-bass, found-answer, paused, empty-charge and expiry cases; every filter preserves the correct answer.');

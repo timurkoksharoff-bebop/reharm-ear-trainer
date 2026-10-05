@@ -17,6 +17,10 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   await page.locator('.garden-route-choice').filter({hasText:'Chill 1'}).click();
   await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);
   assert(!(await page.locator('#flight-tutorial').isVisible()));
+  // Rapid real touch taps must toggle the native lotus summary, not vanish
+  // into the double-tap zoom guard.
+  await page.locator('.flight-tools summary').tap();assert.notEqual(await page.locator('.flight-tools').getAttribute('open'),null);
+  await page.locator('.flight-tools summary').tap();assert.equal(await page.locator('.flight-tools').getAttribute('open'),null);
   const snap=()=>page.evaluate(()=>gardenFlight.snapshot());
   // A launch/menu/answer click leaves a button focused. Gameplay keys must
   // still work without an extra click on the canvas.
@@ -71,6 +75,22 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   await page.evaluate(()=>gardenFlight.advanceChord());await pickup('qualityFocus');
   await page.locator('.flight-tools summary').click();await page.locator('[data-use-artifact="qualityFocus"]').click();
   assert((await snap()).mission.filters.quality);assert.equal(await page.locator('.flight-tools').getAttribute('open'),null);
+  await pickup('hold');await page.locator('.flight-tools summary').tap();await page.locator('[data-use-artifact="hold"]').tap();
+  const qualityFilter=(await snap()).mission.filters.quality;
+  for(const kind of ['holdArpeggio','arrangementBoost']){
+   await pickup(kind);await page.locator('.flight-tools summary').tap();await page.locator(`[data-use-artifact="${kind}"]`).tap();
+   const filtered=await snap(),divisor=kind==='holdArpeggio'?2:4;
+   assert.equal(filtered.life.inventory[kind],0);assert.equal(filtered.mission.filters.degree.divisor,divisor);
+   assert.equal(await page.locator('.degree-option:visible').count(),1+Math.ceil(11/divisor),'root hides wrong basses in the actual lower rail');
+   assert(await page.locator(`[data-degree="${filtered.mission.current.bassOffset??filtered.mission.current.offset}"]`).isVisible(),'correct bass remains available');
+   assert.deepEqual(filtered.mission.filters.quality,qualityFilter,'root never changes the chord filter');
+   assert.equal(await page.locator('.flight-tools').getAttribute('open'),null);
+  }
+  await page.locator('#mission-toggle').tap();const pausedFilter=(await snap()).mission.filters.degree;
+  await page.waitForTimeout(300);assert.deepEqual((await snap()).mission.filters.degree,pausedFilter);
+  await page.locator('#mission-toggle').tap();assert((await snap()).mission.held);
+  await page.screenshot({path:'/private/tmp/garden-097-root-filter.png'});
+  await page.locator('#infinity-continue').tap();
   await pickup('shield');await page.locator('.flight-tools summary').click();await page.locator('[data-use-artifact="shield"]').click();
   assert.equal((await snap()).life.shieldHits,3);assert.equal((await snap()).life.inventory.shield,0);
   await page.screenshot({path:'/private/tmp/garden-095-cocoon.png'});
@@ -111,6 +131,9 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   for(const [width,height] of [[320,568],[390,844],[430,932],[1440,900]]){
    await page.setViewportSize({width,height});
    assert(await page.locator('#start-random').isVisible());
+   assert.deepEqual(await page.locator('.difficulty-picker button').allTextContents(),['Абитуриент','Студент','Преподаватель']);
+   const modes=await page.locator('.difficulty-picker button').evaluateAll(buttons=>buttons.map(button=>({y:button.getBoundingClientRect().y,overflow:button.scrollWidth>button.clientWidth})));
+   assert(modes.every(mode=>Math.abs(mode.y-modes[0].y)<1&&!mode.overflow),`three mode names fit one row at ${width}`);
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert(!overflow,`overflow ${width}`);
    await page.locator('#start-tutorial').click();
    for(const selector of ['#garden-home','#mission-toggle','#quality-options','#degree-options','#flight-tutorial']){
@@ -129,6 +152,6 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   assert(pending.length>0,'optional sprite network is stalled during launch');assert(await quick.locator('#garden-start').isVisible(),'scenery and menu launch despite stalled collectibles');
   for(const request of pending)await request.continue();
   await progressive.close();
-  console.log('Browser PASS: keyboard after button focus, exact Chill 1, correct/wrong/manual infinity exits, restored flower, filters, 3-hit cocoon, immediate restoration pickup, safe exit, no icon/chain collisions, vertical liquid nodes, four viewports, offline, progressive launch with stalled sprites.');
+  console.log('Browser PASS: rapid touch lotus taps, ordinary/strong root pickup and lower-rail filtering, three academic modes in one row, keyboard after button focus, exact Chill 1, correct/wrong/manual infinity exits, restored flower, 3-hit cocoon, immediate restoration pickup, safe exit, no icon/chain collisions, vertical liquid nodes, four viewports, offline, progressive launch with stalled sprites.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

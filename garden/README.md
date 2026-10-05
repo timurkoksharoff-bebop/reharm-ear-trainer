@@ -1,4 +1,4 @@
-# Сад Эха 0.96
+# Сад Эха 0.97
 
 Standalone PWA, desktop and mobile browsers. Entry point: ./index.html. Install from the browser's Add to Home Screen action. This is not an App Store/Google Play binary.
 
@@ -8,7 +8,7 @@ Only Garden runtime assets are precached (about 10 MB), no other planets. On fir
 
 Source: source/. Requires Node.js and sharp. Run node source/tools/build-garden-standalone.mjs /absolute/output/path. Bump version (and therefore CACHE_NAME) for each PWA release. Browser regression uses Playwright and Chrome: GARDEN_RELEASE_URL=http://127.0.0.1:PORT/ node source/tools/garden-release-check.cjs.
 
-## 0.96
+## 0.97
 
 - Bottom rail grades the actual bass; slash-chord answers specify the upper chord degree separately. Exact musical notes/catalog preserved.
 - sus4 has a fixed place in the right rail (Chill 1 regression).

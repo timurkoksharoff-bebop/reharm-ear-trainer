@@ -1,4 +1,4 @@
-/* Сад Эха 0.95 — standalone browser bundle */
+/* Сад Эха 0.96 — standalone browser bundle */
 (()=>{
 window.GARDEN_ASSETS={"collectibles/meteor-volcanic":"assets/echo-garden/collectibles/meteor-volcanic.webp"};
 /* Game-only touch guard. Editable fields retain their normal text gestures. */
@@ -2315,7 +2315,7 @@ class GardenLife{
       if(!entity.item.ground){const halo=.5+.5*Math.sin(this.time*2.1+entity.phase);ctx.save();ctx.globalAlpha=.09+halo*.08;ctx.strokeStyle=entity.item.color;ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x,y,size*(.45+halo*.06),size*(.34+halo*.04),entity.angle*.35,0,Math.PI*2);ctx.stroke();ctx.restore();}
       else if(!entity.triggered){ctx.save();ctx.globalAlpha=.16+.08*Math.sin(this.time*2.4+entity.phase);ctx.strokeStyle='#ff9a70';ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(x,y,size*.36,size*.29,entity.angle,0,Math.PI*2);ctx.stroke();ctx.restore();}
     }
-    if(this.campPressure){const pressure=this.campPressure,x=pressure.x*w,y=pressure.y*h,charge=clamp((pressure.age-1.1)/1.5,0,1);ctx.save();ctx.translate(x,y);ctx.strokeStyle=`rgba(214,151,255,${.18+charge*.42})`;ctx.fillStyle=`rgba(88,35,104,${.05+charge*.12})`;for(let ring=0;ring<3;ring++){const radius=25+ring*16+Math.sin(this.time*3+ring)*5;ctx.lineWidth=1+charge;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();}for(let i=0;i<12;i++){const angle=i*Math.PI*2/12+this.time*.35,radius=18+(i%3)*13;ctx.beginPath();ctx.arc(Math.cos(angle)*radius,Math.sin(angle)*radius,1.5+charge*2,0,Math.PI*2);ctx.fill();}ctx.restore();}
+if(this.campPressure){const pressure=this.campPressure,x=pressure.x*w,y=pressure.y*h,charge=clamp((pressure.age-1.1)/1.5,0,1);ctx.save();ctx.translate(x,y);ctx.strokeStyle=`rgba(214,151,255,${.12+charge*.20})`;ctx.fillStyle=`rgba(88,35,104,${.03+charge*.06})`;for(let ring=0;ring<3;ring++){const radius=25+ring*16+Math.sin(this.time*3+ring)*5;ctx.lineWidth=.55+charge*.50;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();}for(let i=0;i<12;i++){const angle=i*Math.PI*2/12+this.time*.35,radius=18+(i%3)*13;ctx.beginPath();ctx.arc(Math.cos(angle)*radius,Math.sin(angle)*radius,1.5+charge*2,0,Math.PI*2);ctx.fill();}ctx.restore();}
     for(const chip of this.chips){ctx.save();ctx.globalAlpha=1-chip.age/chip.life;ctx.fillStyle=chip.color;ctx.translate(chip.x*w,chip.y*h);ctx.rotate(chip.age*7);ctx.fillRect(-chip.size,-chip.size*.45,chip.size*2,chip.size*.9);ctx.restore();}
     for(const effect of this.effects){const t=effect.age/1.15,x=effect.x*w,y=effect.y*h,r=18+t*64;ctx.save();ctx.globalAlpha=(1-t)*.38;ctx.strokeStyle=effect.color;ctx.lineWidth=effect.harmful?1.2:.8;ctx.setLineDash([2+t*8,5+t*5]);ctx.beginPath();ctx.ellipse(x,y,r,r*(.62+Math.sin(t*9)*.05),t*.7,0,Math.PI*2);ctx.stroke();ctx.restore();}
     ctx.restore();

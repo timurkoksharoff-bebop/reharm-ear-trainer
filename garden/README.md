@@ -1,4 +1,4 @@
-# Сад Эха 0.95
+# Сад Эха 0.96
 
 Standalone PWA, desktop and mobile browsers. Entry point: ./index.html. Install from the browser's Add to Home Screen action. This is not an App Store/Google Play binary.
 
@@ -8,7 +8,7 @@ Only Garden runtime assets are precached (about 10 MB), no other planets. On fir
 
 Source: source/. Requires Node.js and sharp. Run node source/tools/build-garden-standalone.mjs /absolute/output/path. Bump version (and therefore CACHE_NAME) for each PWA release. Browser regression uses Playwright and Chrome: GARDEN_RELEASE_URL=http://127.0.0.1:PORT/ node source/tools/garden-release-check.cjs.
 
-## 0.95
+## 0.96
 
 - Bottom rail grades the actual bass; slash-chord answers specify the upper chord degree separately. Exact musical notes/catalog preserved.
 - sus4 has a fixed place in the right rail (Chill 1 regression).
@@ -25,6 +25,8 @@ Source: source/. Requires Node.js and sharp. Run node source/tools/build-garden-
 - Active accompaniment buttons display miniatures of the exact caught flowers.
 - Progressive launch loads scenery/ship first; optional items load in the background. Mobile uses a lighter shader and adaptive pixel density. Scene and ship textures are smaller; meteor alpha is preserved in compact WebP.
 - Root spirals filter bass, coloured seeds filter chords, with no letters in the sky. Stronger colours leave fewer choices.
+- Anti-idle pressure rings are thinner and more transparent; timing and reserve damage are unchanged.
+
 - Growing vine and fireflies for a correct bass; existing chord blossom retained.
 - Visible Garden home exit, paused settings, refined welcome guide and offline install.
 

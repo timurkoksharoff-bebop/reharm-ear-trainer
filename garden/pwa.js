@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator&&location.protocol!=='file:'){const register=()=>navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(()=>{});if(window.gardenFlight?.snapshot().ready)register();else addEventListener('garden-ready',register,{once:true});}

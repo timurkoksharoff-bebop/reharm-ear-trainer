@@ -16,7 +16,8 @@ export const GARDEN_ITEMS=Object.freeze({
   poison:{resource:'crew',amount:-8,hullAmount:-3,sprite:'poison-seed',label:'Ядовитое семя',color:'#ff716c',size:68,harmful:true},
   arpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',reveal:true},sprite:'arpeggio-flower',label:'Лунный цветок · открыть ступень',color:'#8ff7ed',size:66,artifact:true,rare:true},
   restart:{resource:'inventory',amount:1,assist:{answerKind:'quality',reveal:true},sprite:'root-flower',label:'Корневой лотос · открыть тип',color:'#ffd18a',size:66,artifact:true,rare:true},
-  hold:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:2,steps:5},sprite:'hold-flower',label:'Зелёная лента · типы ×2 · 5 ходов',color:'#b7ef86',size:66,artifact:true,rare:true},
+  hold:{resource:'inventory',amount:1,repeat:true,sprite:'hold-flower',label:'Лотос бесконечности · удержать аккорд',color:'#b7ef86',size:66,artifact:true},
+  qualityFocus:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:2,steps:5},sprite:'root-flower',label:'Цветок фокуса · типы ×2 · 5 ходов',color:'#c7b6ec',size:66,artifact:true,rare:true},
   holdArpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:2,steps:3},sprite:'hold-arpeggio-flower',label:'Папоротник · ступени ×2 · 3 хода',color:'#b9fff3',size:66,artifact:true,rare:true},
   midpoint:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:1},sprite:'midpoint-seed',label:'Синее семя · типы ×4 · круг',color:'#87bfff',size:66,artifact:true,rare:true},
   focusRare:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:2},sprite:'water-pearl',label:'Редкая жемчужина · типы ×4 · 2 круга',color:'#9bd4ee',size:58,artifact:true,rare:true},
@@ -62,7 +63,7 @@ export class GardenLife{
   wrongAnswer(kind,value,qualityOrder=[]){
     if(this.gameOver)return;
     const resource=kind==='degree'?(Number(value)<6?'fuel':'water'):(qualityOrder.indexOf(value)%2===0?'crew':'hull');
-    this.resources[resource]=clamp(this.resources[resource]-3);
+    this.resources[resource]=Math.max(this.difficulty?.minResource||0,clamp(this.resources[resource]-(this.difficulty?.wrongDamage??3)));
     announce(this,{kind:'wrongAnswer',item:{resource,label:`Ошибка · ${GARDEN_RESOURCES[resource].label} −3`,harmful:true,color:GARDEN_RESOURCES[resource].color},x:.5,y:.55});
     this.updateCritical(0);
   }
@@ -74,6 +75,13 @@ export class GardenLife{
     return mission.shift(delta,{consume:()=>this.consumeArtifact(kind)});
   }
   useAssist(mission,kind){const spec=GARDEN_ITEMS[kind]?.assist;if(!spec)return {ignored:true};return mission.assist(spec,{consume:()=>this.consumeArtifact(kind)});}
+  useRepeat(mission,kind='hold'){
+    const state=mission.snapshot();
+    if(!GARDEN_ITEMS[kind]?.repeat||!state.running||state.complete||state.cursor<0)return {ignored:true};
+    if(state.held){mission.continue();return {held:false};}
+    if(!this.consumeArtifact(kind))return {ignored:true};
+    return mission.hold();
+  }
   forceSpawn(kind='water',overrides={}){
     const item=GARDEN_ITEMS[kind]??GARDEN_ITEMS.water,edge=!item.ground&&!item.storm&&this.random()<.28,fromLeft=this.random()<.5;
     const entity={id:`${kind}-${this.time.toFixed(3)}-${this.random().toFixed(6)}`,kind,item,
@@ -84,12 +92,14 @@ export class GardenLife{
       spin:item.storm?(fromLeft?1:-1)*(.42+this.random()*.28):(this.random()-.5)*(item.artifact?1.2:item.harmful?.8:.42),phase:this.random()*Math.PI*2,
       age:0,rounds:item.arrangement?1+Math.floor(this.random()*3):0,scale:item.ground?.78+this.random()*.34:item.storm?.82+this.random()*.28:.82+this.random()*.3,
       collected:false,triggered:false,impactArmed:true,lastDamage:-999,baseY:item.storm?.2+this.random()*.3:0,...overrides};
+    if(item.fatal){entity.x=Math.max(.18,Math.min(.82,entity.x));entity.vx=0;}
     if(item.asteroid&&!item.fatal){const resource=overrides.damageResource??['fuel','water','crew','hull'][Math.floor(this.random()*4)];entity.item={...item,resource,color:GARDEN_RESOURCES[resource].color,label:`${item.label} · ${GARDEN_RESOURCES[resource].label}`,damageResource:resource};}
     if(item.storm&&overrides.y!==undefined)entity.baseY=overrides.y;
     if(!item.ground&&!item.storm)for(let attempt=0;attempt<8;attempt++){
       const crowded=this.entities.some(other=>!other.item.ground&&!other.item.storm&&Math.hypot(other.x-entity.x,other.y-entity.y)<.16);
       if(!crowded)break;entity.x=.17+this.random()*.66;entity.y=-.08-this.random()*.1;
     }
+    if(this.difficulty?.minResource&&(item.navigationDelta||item.fatal||item.storm||item.assist)){entity.collected=true;return entity;}
     this.entities.push(entity);return entity;
   }
   applyDamage(entity,{repeat=false}={}){
@@ -147,7 +157,9 @@ export class GardenLife{
   update(dt,view={}){
     this.flightForce={x:0,y:0,intensity:0};if(!dt||view.paused||view.active===false||view.flying===false||this.gameOver)return;
     this.impact=Math.max(0,this.impact-dt*2.8);
-    this.time+=dt;this.eventAge+=dt;const speed=Number(view.speed)||0;
+    this.time+=dt;this.eventAge+=dt;const speed=Number(view.speed)||0,profile=this.difficulty||{drain:1,spawnRate:1,minResource:0};
+    for(const resource of ['fuel','water','crew','hull'])this.resources[resource]=Math.max(profile.minResource,clamp(this.resources[resource]-dt*({fuel:.32,water:.22,crew:.14,hull:.1}[resource])*profile.drain));
+    dt*=profile.spawnRate;
     if(view.active){this.resources.fuel=clamp(this.resources.fuel-dt*(.06+speed*.04));this.resources.water=clamp(this.resources.water-dt*(.03+speed*.01));this.resources.crew=clamp(this.resources.crew-dt*(.008+Math.max(0,18-this.resources.water)*.002));if(this.resources.fuel<6)this.resources.hull=clamp(this.resources.hull-dt*(6-this.resources.fuel)*.01);}
     this.spawnClock-=dt;this.craterClock-=dt;this.asteroidClock-=dt;this.stormClock-=dt;this.assistClock-=dt;
     if(view.active)this.arrangementClock-=dt;
@@ -178,9 +190,9 @@ export class GardenLife{
       }
       if(entity.item.ground){entity.vy+=(.05+speed*.06-entity.vy)*(1-Math.exp(-dt*.9));entity.y+=entity.vy*dt;entity.angle+=Math.sin(entity.phase)*dt*.012;continue;}
       const seed=entity.phase+this.time*.22+entity.y*10.4,flow=Math.sin(seed)*.031+Math.cos(seed*.47+entity.x*8)*.015;
-      const targetVx=flow+(entity.kind==='poison'?Math.sin(this.time*.7+entity.phase)*.012:0);entity.vx+=(targetVx-entity.vx)*(1-Math.exp(-dt*1.2));entity.vy+=((entity.item.asteroid?.074:.052)+speed*.055-entity.vy)*(1-Math.exp(-dt*.75));entity.x+=entity.vx*dt;entity.y+=entity.vy*dt;entity.angle+=entity.spin*dt+Math.sin(seed*.63)*dt*.08;
+      const targetVx=entity.item.fatal?0:flow+(entity.kind==='poison'?Math.sin(this.time*.7+entity.phase)*.012:0);entity.vx=entity.item.fatal?0:entity.vx+(targetVx-entity.vx)*(1-Math.exp(-dt*1.2));entity.vy+=((entity.item.asteroid?.074:.052)+speed*.055-entity.vy)*(1-Math.exp(-dt*.75));entity.x+=entity.vx*dt;entity.y+=entity.vy*dt;entity.angle+=entity.spin*dt+Math.sin(seed*.63)*dt*.08;
       // Recover lateral entrants and reflect drift before leaving the reachable field.
-      if(entity.age>2){const margin=Math.min(.23,entity.item.size*entity.scale/w*.5+.10);if(entity.x<margin){entity.x+=(margin-entity.x)*Math.min(1,dt*3);entity.vx=Math.abs(entity.vx)+.015;}else if(entity.x>1-margin){entity.x-=(entity.x-1+margin)*Math.min(1,dt*3);entity.vx=-Math.abs(entity.vx)-.015;}}
+      if(!entity.item.fatal){const margin=Math.min(.23,entity.item.size*entity.scale/w*.5+.10);if(entity.x<margin){entity.x+=(margin-entity.x)*Math.min(1,dt*1.5);entity.vx=Math.abs(entity.vx)+.015;}else if(entity.x>1-margin){entity.x-=(entity.x-1+margin)*Math.min(1,dt*1.5);entity.vx=-Math.abs(entity.vx)-.015;}}
     }
     const floaters=this.entities.filter(entity=>!entity.item.ground&&!entity.item.storm);
     for(let i=0;i<floaters.length;i++)for(let j=i+1;j<floaters.length;j++){const a=floaters[i],b=floaters[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=.095;if(d<min){const force=(min-d)*.26/d;a.vx-=dx*force;b.vx+=dx*force;a.vy-=dy*force*.28;b.vy+=dy*force*.28;if(a.item.asteroid&&b.item.asteroid&&this.time-(a.lastCollision??-99)>1.1){a.lastCollision=b.lastCollision=this.time;for(let chip=0;chip<5;chip++){const angle=this.random()*Math.PI*2;this.chips.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2,vx:Math.cos(angle)*(.025+this.random()*.05),vy:Math.sin(angle)*(.025+this.random()*.05),age:0,life:.35+this.random()*.45,size:1+this.random()*2,color:'#c7c1a8'});}}}}
@@ -189,6 +201,7 @@ export class GardenLife{
     for(const effect of this.effects)effect.age+=dt;this.effects=this.effects.filter(effect=>effect.age<1.15);
     for(const chip of this.chips){chip.age+=dt;chip.x+=chip.vx*dt;chip.y+=chip.vy*dt;chip.vy+=.045*dt;}this.chips=this.chips.filter(chip=>chip.age<chip.life);
     for(const petal of this.ambient){const flow=Math.sin(this.time*.18+petal.phase+petal.y*9)*.008;petal.x+=flow*dt;petal.y+=(petal.speed+speed*.015)*dt;petal.phase+=petal.spin*dt;if(petal.y>1.08){petal.y=-.06;petal.x=this.random();}if(petal.x<-.05)petal.x=1.05;if(petal.x>1.05)petal.x=-.05;}
+    if(profile.minResource){for(const key of Object.keys(this.resources))this.resources[key]=Math.max(profile.minResource,this.resources[key]);this.gameOver=false;this.critical=null;}
     this.updateCritical(dt);
   }
   drawStorm(ctx,entity,x,y,size,night){

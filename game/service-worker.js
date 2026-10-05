@@ -1,9 +1,5 @@
-const CACHE_NAME='space-music-college-0.93.3-mobile1';
+const CACHE_NAME='space-music-college-0.94';
 const APP_FILES=[
-  './garden-flight-0933.html',
-  './garden-flight-0933.bundle.js',
-  './garden-flight-0933.css',
-  './',
   './assets/artifact-cymbal.webp',
   './assets/artifact-drum-engine.png',
   './assets/artifact-guitar.webp',
@@ -61,6 +57,7 @@ const APP_FILES=[
   './assets/echo-garden/samples/felt-c3.wav',
   './assets/echo-garden/samples/felt-e3.wav',
   './assets/echo-garden/samples/felt-g3.wav',
+  './assets/echo-garden/start-garden-orbital-v3.jpg',
   './assets/echo-garden/tours/ambient.webp',
   './assets/echo-garden/tours/anime.webp',
   './assets/echo-garden/tours/chill.webp',
@@ -177,6 +174,7 @@ const APP_FILES=[
   './game.bundle.js',
   './game.css',
   './garden-arrangement.mjs',
+  './garden-difficulty.mjs',
   './garden-flight-renderer.mjs',
   './garden-flight.bundle.js',
   './garden-flight.css',
@@ -216,16 +214,4 @@ const APP_FILES=[
 ];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('space-music-college-')&&key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',event=>{
-  if(event.request.method!=='GET')return;
-  if(new URL(event.request.url).origin!==self.location.origin)return;
-  event.respondWith(caches.open(CACHE_NAME).then(async cache=>{
-    // Versioned HTML references must resolve to the precached public asset.
-    // Restrict lookup to this release, not an older parent Trainer cache.
-    const cached=await cache.match(event.request,{ignoreSearch:true});
-    if(cached)return cached;
-    const response=await fetch(event.request);
-    if(response.ok)await cache.put(event.request,response.clone());
-    return response;
-  }));
-});
+self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request).then(response=>{if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put(event.request,response.clone()));return response;})));});

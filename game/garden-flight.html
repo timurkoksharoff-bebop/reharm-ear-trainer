@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d2326">
   <title>Сад Эха · первый полёт</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="garden-flight.css?v=0.93.1">
+  <link rel="stylesheet" href="garden-flight.css?v=0.94">
 </head>
 <body class="training">
   <canvas id="world" aria-label="Полёт над Садом Эха. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -42,18 +42,29 @@
   </section>
   <section id="game-over" class="game-over hud" hidden role="alertdialog" aria-label="Миссия провалена"><span>КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ</span><strong>MISSION FAILED</strong><p>Экспедиция потеряла устойчивость. Маршрут остаётся прежним.</p><button id="retry-mission">Повторить миссию</button></section>
 
+  <button id="tutorial-open" aria-label="Как играть: приветственный тур">ⓘ</button>
+  <aside id="flight-tutorial" hidden aria-live="polite"><strong id="tutorial-title"></strong><p id="tutorial-copy"></p><button id="tutorial-back">← Назад</button><button id="tutorial-next">Дальше →</button><button id="tutorial-close">Пропустить тур</button></aside>
   <section id="garden-start" class="garden-start" hidden aria-label="Главное меню Сада Эха">
     <div class="garden-start-shell">
-      <div class="start-mandala" aria-hidden="true"><i></i><i></i><i></i><b>✦</b></div>
       <div class="start-copy">
-        <span class="overline">САД ЭХА · ЭКСПЕДИЦИЯ</span>
-        <h2 id="start-title">Выбери путь</h2>
-        <p id="start-note">Сад усложняет маршруты постепенно и запоминает пройденные уровни.</p>
-        <div class="garden-progress"><span>УРОВЕНЬ <b id="garden-level">01</b></span><i><b id="garden-level-progress"></b></i><small id="garden-completed">0 маршрутов пройдено</small></div>
+        <span class="overline">МУЗЫКАЛЬНЫЙ ПОЛЁТ</span>
+        <h2 id="start-title">Сад Эха</h2>
+        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Лёгкий</button><button data-difficulty="medium" aria-pressed="true">Средний</button><button data-difficulty="hard" aria-pressed="false">Сложный</button></div>
+      </div>
+      <div class="start-controls">
         <div class="start-actions">
-          <button id="start-random" class="start-choice random-choice"><span>✦</span><strong>Случайный маршрут</strong><small>Уровень подберётся по текущему развитию</small></button>
-          <button id="start-choose" class="start-choice"><span>◎</span><strong>Выбрать маршрут</strong><small>Тур, глава и последовательность вручную</small></button>
+          <button id="start-random" class="start-choice random-choice" type="button"><span aria-hidden="true">✦</span><strong>Начать полёт</strong><small>Случайный маршрут</small></button>
+          <button id="start-choose" class="start-choice" type="button"><span aria-hidden="true">◎</span><strong>Выбрать маршрут</strong><small>Тур и глава</small></button>
         </div>
+        <button id="start-tutorial" class="start-tutorial" type="button"><span aria-hidden="true">ⓘ</span><span><strong>Как играть</strong><small>Управление и ответы</small></span><span aria-hidden="true">→</span></button>
+        <details class="start-route-details">
+          <summary>О полёте <span aria-hidden="true">⌄</span></summary>
+          <div class="start-route-info">
+            <p id="start-note">Сад усложняет маршруты постепенно и запоминает пройденные уровни.</p>
+            <div class="garden-progress"><span>УРОВЕНЬ <b id="garden-level">01</b></span><i><b id="garden-level-progress"></b></i><small id="garden-completed">0 маршрутов пройдено</small></div>
+            <p id="start-difficulty-note" class="difficulty-note">Обычный полёт: запасы расходуются, ошибки и камни наносят урон.</p>
+          </div>
+        </details>
       </div>
     </div>
   </section>
@@ -66,7 +77,8 @@
   <section id="flower-guide" class="flower-guide hud" hidden aria-label="Цветы аранжировки">
     <header><h2>Цветы аранжировки</h2><button id="flower-guide-close" aria-label="Закрыть цветы">×</button></header>
     <p id="flower-guide-note">Поймай цветок кораблём. Слой начнётся со следующего аккорда; бас и арпеджио можно сочетать. Повтор продлевает тот же рисунок, другой цветок заменяет его. Красное ядро смертельно: облетай его.</p>
-    <label>Длительность <select id="flower-rounds" aria-label="Количество кругов"><option value="1">1 круг</option><option value="2">2 круга</option><option value="3">3 круга</option></select></label>
+    <label>Длительность следующего пробного цветка <select id="flower-rounds" aria-label="Количество кругов пробного цветка"><option value="1">1 круг</option><option value="2">2 круга</option><option value="3">3 круга</option></select></label>
+    <small>Этот выбор действует только после «Вырастить на пути» и поимки цветка. Он не меняет уже звучащие партии и случайные цветы.</small>
     <div id="flower-guide-list"></div>
     <small>Круг = все аккорды маршрута. Счёт идёт только на новых аккордах, не на повторах. Не более трёх кругов запаса; нажатие на активный слой убирает его со следующего аккорда.</small>
   </section>
@@ -140,6 +152,7 @@
       <section class="route-picker"><div class="route-picker-heading"><div><span class="panel-kicker">ПОСЛЕДОВАТЕЛЬНОСТИ</span><strong id="mandala-tour-name">Reharm</strong></div><div class="mode-switch" role="group" aria-label="Режим прохождения"><button data-mode="quest" class="selected" aria-pressed="true">Квест</button><button data-mode="free" aria-pressed="false">Свободный</button></div></div><div id="reharm-chapters" class="reharm-chapters"><span>ГЛАВА <b id="mandala-chapter">01</b></span><div id="chapter-orbit" class="chapter-orbit" role="group" aria-label="16 уровней Reharmonization+"></div></div><div id="garden-route-list" class="garden-route-list"></div></section>
     </div>
     <div id="settings-panel" class="mandala-controls">
+      <button id="tutorial-settings-open" type="button">ⓘ Пройти приветственный тур снова</button>
       <div class="world-cycle" aria-label="Непрерывный живой цикл планеты"><span><small>ЕДИНЫЙ МИР</small><strong id="world-cycle-name">Синие сады</strong></span><i aria-hidden="true"><b id="world-cycle-progress"></b></i><em>единая карта · живой цикл</em></div>
       <div class="music-settings">
         <label class="exercise-picker"><span>Фигура</span><select id="exercise-select" aria-label="Фигура выбранной главы"></select></label>
@@ -156,6 +169,6 @@
   </section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p>Приближаемся к Саду Эха…</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden>Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=0.93.1" onerror="document.getElementById('load-progress').textContent='Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=0.94" onerror="document.getElementById('load-progress').textContent='Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 </body>
 </html>

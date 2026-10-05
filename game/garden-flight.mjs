@@ -1,5 +1,6 @@
 import {createGardenRenderer} from './garden-flight-renderer.mjs';
 import {createGardenMission,GardenPad,gardenExercisesForChapter,gardenDegreeLabel,gardenQualityLabel,gardenChordLabel,gardenAnswerState,gardenCanonicalQuality,GARDEN_QUALITY_PALETTE,GARDEN_CORE_QUALITIES,gardenFilteredChoices} from './garden-harmony.mjs';
+import {difficultyProfile} from './garden-difficulty.mjs';
 import {GardenSequenceStudio} from './garden-sequence-studio.mjs';
 import {createGardenLife,GARDEN_RESOURCES,GARDEN_ITEMS} from './garden-life.mjs';
 import {createGardenRewards} from './garden-rewards.mjs';
@@ -22,6 +23,9 @@ const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrang
 const gardenRewards=createGardenRewards({reduced});
 let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,lastCollisionEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false;
 const PROGRESS_KEY='echo-garden-progress.v1';
+const TUTORIAL_KEY='echo-garden-welcome-dismissed.v1';
+const wasTutorialDismissed=()=>{try{return localStorage.getItem(TUTORIAL_KEY)==='1';}catch{return false;}};
+let difficulty='medium',tutorialStep=0,tutorialDismissed=wasTutorialDismissed(),tutorialActive=false;
 const FAVORITES_KEY='echo-garden-favorites.v1';
 const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],lastRouteId:saved.lastRouteId||''};}catch{return {level:1,completed:[],lastRouteId:''};}};
 const progress=loadProgress();
@@ -61,6 +65,7 @@ function ui(){
 }
 function renderVitals(){
   const model=gardenLife.snapshot();
+  const repeatState=mission?.snapshot();$('infinity-toggle').disabled=!repeatState?.running||repeatState.complete||(!repeatState.held&&(model.inventory.hold||0)<1);$('infinity-toggle').title=repeatState?.held?'Выключить повтор и продолжить':`Повторить аккорд · зарядов лотоса: ${model.inventory.hold||0}`;
   for(const [name,definition] of Object.entries(GARDEN_RESOURCES)){
     const element=document.querySelector(`.vital[data-resource="${name}"]`),value=Math.round(model.resources[name]);
     if(!element)continue;
@@ -75,7 +80,7 @@ function renderVitals(){
   const callout=$('vital-event');
   if(event&&model.eventAge<2.4){callout.textContent=`${event.harmful?'−':'+'} ${event.label}`;callout.classList.toggle('harmful',event.harmful);callout.classList.add('visible');}
   else callout.classList.remove('visible');
-  for(const button of document.querySelectorAll('[data-use-artifact]')){const kind=button.dataset.useArtifact,count=model.inventory[kind]||0,spec=GARDEN_ITEMS[kind],state=mission?.snapshot();button.querySelector('b').textContent=count?String(count):'';button.classList.toggle('ready',count>0);button.hidden=!spec.navigationDelta&&count<1;button.disabled=count<1||s.paused||!state?.running||state.cursor<0||(spec.assist?.reveal&&(state.exercise.sequence.length<8||state.currentParts[spec.assist.answerKind]));}
+  for(const button of document.querySelectorAll('[data-use-artifact]')){const kind=button.dataset.useArtifact,count=model.inventory[kind]||0,spec=GARDEN_ITEMS[kind],state=mission?.snapshot(),repeating=Boolean(spec.repeat&&state?.held);button.querySelector('b').textContent=count?String(count):'';button.classList.toggle('ready',count>0||repeating);button.classList.toggle('repeating',repeating);button.setAttribute('aria-pressed',String(repeating));if(spec.repeat){button.title=repeating?'∞ Повтор включён · нажми, чтобы продолжить':`${spec.label} · зарядов: ${count}`;button.setAttribute('aria-label',button.title);}button.hidden=!spec.navigationDelta&&count<1&&!repeating;button.disabled=(!repeating&&count<1)||s.paused||!state?.running||state.cursor<0||(spec.assist?.reveal&&(state.exercise.sequence.length<8||state.currentParts[spec.assist.answerKind]));}
 }
 function collisionThud(){
   const audio=pad.context;if(!audio||audio.state!=='running')return;
@@ -86,6 +91,7 @@ function collisionThud(){
   oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
 }
 function renderMission(model){
+  renderTutorial(model);
   const layers=Object.entries(model.arrangementStatus||{});$('arrangement-status').replaceChildren(...layers.map(([track,item])=>{const button=document.createElement('button'),spec=GARDEN_ARRANGEMENTS[item.style];button.style.setProperty('--flower',spec.color);button.title=`${spec.label}: отключить партию`;button.setAttribute('aria-label',button.title);button.addEventListener('click',()=>{mission.clearArrangement(track);});return button;}));
   lastMissionPosition=`${model.round}:${model.cursor}`;
   const progress=model.progress??model.parts??model.exercise.sequence.map((_,index)=>({degree:model.solved.includes(index),quality:model.solved.includes(index)}));
@@ -127,7 +133,7 @@ function renderMission(model){
   $('quality-advanced-options').replaceChildren(...qualities.filter(q=>!GARDEN_CORE_QUALITIES.includes(q)).map(makeQuality));
   const advanced=qualities.filter(q=>!GARDEN_CORE_QUALITIES.includes(q));$('quality-advanced').hidden=advanced.length===0;$('quality-advanced').open=!prototypePalette||document.body.dataset.paletteLayout==='expanded';
   $('assist-status').textContent=Object.entries(model.filters||{}).filter(([,filter])=>filter).map(([kind,filter])=>`${kind==='degree'?'Ступени':'Типы'} ×${filter.divisor} · ${filter.remaining} ходов`).join(' / ');
-  $('infinity-toggle').disabled=!model.running||model.complete;$('infinity-toggle').setAttribute('aria-pressed',String(model.held));$('infinity-status').textContent=model.held?'Повтор текущего аккорда':'';const toolsSummary=document.querySelector('.flight-tools summary');if(toolsSummary){toolsSummary.classList.toggle('repeating',model.held);toolsSummary.setAttribute('aria-label',model.held?'Лотос: повтор включён — открыть управление':'Лотос: прыжки, повтор и подсказки');}
+  $('infinity-toggle').disabled=!model.running||model.complete||(!model.held&&(gardenLife.inventory.hold||0)<1);$('infinity-toggle').setAttribute('aria-pressed',String(model.held));$('infinity-status').textContent=model.held?`∞ Позиция ${model.cursor+1} · повтор до отключения`:'';const toolsSummary=document.querySelector('.flight-tools summary');if(toolsSummary){toolsSummary.classList.toggle('repeating',model.held);toolsSummary.setAttribute('aria-label',model.held?'Лотос: повтор включён — открыть управление':'Лотос: прыжки, повтор и подсказки');}
   const waitingForFinal=finalMissing&&model.running&&model.cursor>=0&&model.cursor!==finalMissing.index;
   $('answer-feedback').textContent=model.complete?'Маршрут собран. Последовательность распознана.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?'Ступень и тип фиксируются независимо':model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
   const referenceName=String(model.reference.degree).replace(/^БАЗА\s*/, '');
@@ -135,7 +141,7 @@ function renderMission(model){
   $('mission-toggle').textContent=model.running?'Ⅱ Пауза':'▶ Лететь';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Запустить полёт и музыку');$('mission-restart').hidden=!model.complete;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
-function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
+function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
 let activeExercises=[];
 function routeTitle(route,index=0){return route.name&&route.name!==route.id?route.name:exerciseCode(route,index);}
 function renderGardenRouteList(){
@@ -165,23 +171,53 @@ function updateProgressCard(){
 function showGardenStart(state='menu'){
   mission?.pause();pad.stop(true);s.paused=true;keys.clear();setGardenMenu(false);$('game-over').hidden=true;
   document.body.classList.add('start-open');$('garden-start').hidden=false;
-  $('start-title').textContent=state==='complete'?'Уровень пройден':'Выбери путь';
+  $('start-title').textContent=state==='complete'?'Уровень пройден':'Сад Эха';
   $('start-note').textContent=state==='complete'?`Маршрут «${routeTitle(currentRoute)}» собран. Сад открыл следующий уровень.`:'Сад усложняет маршруты постепенно и запоминает пройденные уровни.';
-  $('start-random').querySelector('strong').textContent=state==='complete'?'Следующий случайный маршрут':'Случайный маршрут';
+  $('start-random').querySelector('strong').textContent=state==='complete'?'Следующий полёт':'Начать полёт';
+  document.querySelector('.start-route-details')?.removeAttribute('open');
   updateProgressCard();ui();
 }
 function hideGardenStart(){document.body.classList.remove('start-open');$('garden-start').hidden=true;}
+const tutorialSteps=[
+ ['Добро пожаловать','#world-controls','Кнопка справа сверху открывает выбор главы, маршрута, тембра и корабля. Лёгкий — спокойное обучение, Средний — обычный полёт, Сложный — экспериментальный режим для опытных.'],
+ ['Управление кораблём','#world','Веди корабль пальцем, мышью или стрелками. Предмет засчитывается при касании кораблём: полезные лови, опасные обходи.'],
+ ['Цепочка аккордов','#chord-route','Сверху — позиции последовательности. Подсвеченная позиция сейчас звучит. Сначала услышишь тонику — ориентир для определения ступеней.'],
+ ['Ступень','#degree-options','Нижние кнопки — корень аккорда относительно тоники. I — первая, II — вторая, ♭II — пониженная вторая. Отдельный бас дробного аккорда не меняет ответ о корне.'],
+ ['Тип аккорда','#quality-options','Справа — тип звучащего аккорда: maj — мажор, m — минор, 7 — доминантсептаккорд, maj7 — большой мажорный, m7 — минорный септаккорд. Ступень и тип угадываются независимо; правильная кнопка подсвечивается.'],
+ ['Запасы корабля','#garden-vitals','Жёлтая пробирка — топливо, голубая — вода, зелёная — экипаж, фиолетовая — корпус. В среднем и сложном режимах они расходуются со временем даже без ответов. Ошибки и столкновения тоже отнимают запас.'],
+ ['Пополнение','#garden-vitals','Семя пополняет топливо, жемчужина — воду, ягоды — экипаж, ремонтный лотос — корпус. Лови нужное кораблём. В лёгком режиме запас защищён нижней границей 25%; в остальных режимах пустая пробирка означает опасность завершения полёта.'],
+ ['Опасности','#world','Камни повреждают корабль; оттенок указывает пострадавшую пробирку. Кратер и смерч опасны при сближении. Красное смертельное ядро завершает полёт при столкновении — его нельзя ловить. В лёгком режиме смертельные ядра отключены.'],
+ ['Лотос управления','.flight-tools summary','Этот лотос раскрывает повтор, прыжки и подсказки. Нажатие вне меню закрывает его. Сейчас мы раскрываем его для обзора, ничего не активируя.'],
+ ['Бесконечный повтор','#infinity-toggle','Поймай зелёный лотос со знаком ∞, затем активируй его в меню лотоса. Один заряд удерживает звучащий аккорд без ограничения по кругам. Повторное нажатие выключает повтор бесплатно и продолжает цепочку. Это не пауза: корабль летит, запасы расходуются.'],
+ ['Прыжки','#jump-charges','Цифры −7, −5, −3, +3, +5, +7 сдвигают позицию в цепочке. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. Пустая кнопка не работает. В лёгком режиме прыжки отключены.'],
+ ['Редкие подсказки','#assist-charges','Пойманные артефакты могут открыть ступень либо тип текущего аккорда или временно скрыть часть неправильных вариантов. Активируются нажатием в лотосе; правильный вариант остаётся на прежнем месте. В лёгком режиме они не нужны — ответ объясняется напрямую.'],
+ ['Цветы аранжировки','#world-controls','Цветы добавляют бас или арпеджио на один, два или три круга. Партия вступает со следующего аккорда. Бас и арпеджио можно сочетать. Каталог с объяснениями цветов и настройкой пробного цветка находится в основных настройках, а не в лотосе.'],
+ ['Отключение партии','#arrangement-status','Когда звучит дополнительная партия, слева появляется небольшой цветной кружок. Нажми его, чтобы выключить эту партию, не останавливая остальную музыку.'],
+ ['Пауза и готовность','#mission-toggle','Пауза останавливает музыку, движение, расход и сбор предметов. «Лететь» запускает снова. Тур можно повторить кнопкой ⓘ. Теперь выбери лёгкий режим и попробуй короткий маршрут.']
+];
+function renderTutorial(model){if(!$('flight-tutorial'))return;const visible=tutorialActive||(difficulty!=='hard'&&!tutorialDismissed&&model.running);$('flight-tutorial').hidden=!visible;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));if(!visible)return;const [title,selector,text]=tutorialSteps[tutorialStep];$('tutorial-title').textContent=`${tutorialStep+1}/${tutorialSteps.length} · ${title}`;$('tutorial-back').disabled=tutorialStep===0;$('tutorial-next').textContent=tutorialStep===tutorialSteps.length-1?'Готово ✓':'Дальше →';if(tutorialActive&&tutorialStep>=8&&tutorialStep<=12)flightTools.open=true;const target=document.querySelector(selector);target?.classList.add('tutorial-focus');const chord=!tutorialActive&&difficulty==='light'&&model.current?`Сейчас: ${gardenDegreeLabel(model.current.offset)} · ${gardenQualityLabel(model.current.quality)}. `:'';$('tutorial-copy').textContent=chord+text;}
+for(const button of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))button.addEventListener('click',()=>{difficulty=button.dataset.difficulty;document.body.dataset.difficulty=difficulty;gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;$('start-difficulty-note').textContent={light:'Спокойный полёт: короткие маршруты, медленное движение и защищённые запасы.',medium:'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.',hard:'Для опытных: длинные маршруты, высокая скорость и сложная гармония. Пока эксперимент.'}[difficulty];for(const item of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))item.setAttribute('aria-pressed',String(item===button));});
+function finishTutorial(){tutorialActive=false;tutorialDismissed=true;try{localStorage.setItem(TUTORIAL_KEY,'1');}catch{}flightTools.open=false;renderTutorial(mission.snapshot());if(!mission.snapshot().running)showGardenStart();}
+function openTutorial(){mission.pause();pad.stop(true);s.paused=true;hideGardenStart();setGardenMenu(false);tutorialActive=true;tutorialStep=0;renderTutorial(mission.snapshot());}
+$('tutorial-open').addEventListener('click',openTutorial);
+$('tutorial-settings-open').addEventListener('click',openTutorial);
+$('start-tutorial').addEventListener('click',openTutorial);
+$('tutorial-next').addEventListener('click',()=>{if(tutorialStep===tutorialSteps.length-1){finishTutorial();return;}tutorialStep++;renderTutorial(mission.snapshot());});
+$('tutorial-back').addEventListener('click',()=>{tutorialStep=Math.max(0,tutorialStep-1);renderTutorial(mission.snapshot());});
+$('tutorial-close').addEventListener('click',finishTutorial);
 function allBookRoutes(maxChapter=16){const routes=[];for(let chapter=1;chapter<=maxChapter;chapter++)for(const route of gardenExercisesForChapter(chapter))routes.push(route);return routes;}
 async function randomGardenRoute(){
   await studio.refresh();
   const unlockedChapter=Math.min(16,1+Math.floor((progress.level-1)/2)),maxLength=Math.min(18,4+Math.floor((progress.level-1)/2));
   const book=allBookRoutes(unlockedChapter),tour=(studio.routes||[]).filter(route=>route.sequence.length<=maxLength);
-  let pool=[...book,...tour].filter(route=>route.id!==progress.lastRouteId);if(!pool.length)pool=[...book,...tour];
+  const profile=difficultyProfile(difficulty),eligible=difficulty==='light'?allBookRoutes(profile.maxChapter).filter(route=>route.sequence.length<=profile.maxLength):difficulty==='hard'?[...allBookRoutes(),...tour].filter(route=>route.sequence.length>=8):[...book,...tour];
+  let pool=eligible.filter(route=>route.id!==progress.lastRouteId);if(!pool.length)pool=eligible;
   const route=pool[Math.floor(Math.random()*pool.length)]||gardenExercisesForChapter(1)[0];
   launchRoute(route);
 }
 async function launchRoute(route){
   if(!route)return;
+  gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
   hideGardenStart();setGardenMenu(false);$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);
   try{await pad.unlock();s.paused=false;mission.start();$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}catch(error){$('answer-feedback').textContent=error.message;s.paused=false;ui();}
 }
@@ -220,20 +256,23 @@ for(const [kind,spec] of Object.entries(GARDEN_ITEMS).filter(([,item])=>item.art
   const button=document.createElement('button'),badge=document.createElement('b');
   button.dataset.useArtifact=kind;button.title=spec.label;button.setAttribute('aria-label',spec.label);
   if(spec.navigationDelta)button.append(document.createTextNode(`${spec.navigationDelta>0?'+':'−'}${Math.abs(spec.navigationDelta)}`));
-  else{const image=document.createElement('img');image.src=`assets/echo-garden/collectibles/${spec.sprite}.webp`;image.alt='';image.width=image.height=32;button.append(image);}
+  else{const image=document.createElement('img');image.src=`assets/echo-garden/collectibles/${spec.sprite}.webp`;image.alt='';image.width=image.height=32;button.append(image);if(spec.repeat){const mark=document.createElement('span');mark.className='repeat-artifact-mark';mark.textContent='∞';button.append(mark);}}
   button.append(badge);$(spec.navigationDelta?'jump-charges':'assist-charges').append(button);
 }
 const flightTools=document.createElement('details'),flightToolsSummary=document.createElement('summary'),flightToolsBody=document.createElement('div');
 flightTools.open=false;
 flightTools.className='flight-tools';flightToolsSummary.innerHTML='<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 31C9 26 9 15 20 7C31 15 31 26 20 31Z"/><path d="M20 31C8 31 3 22 5 14C14 15 20 22 20 31ZM20 31C32 31 37 22 35 14C26 15 20 22 20 31Z"/><path d="M20 31C10 36 3 29 2 24C10 23 16 25 20 31ZM20 31C30 36 37 29 38 24C30 23 24 25 20 31Z"/></g></svg><span class="lotus-repeat" aria-hidden="true">∞</span>';flightToolsSummary.setAttribute('aria-label','Лотос: прыжки, повтор и подсказки');flightToolsBody.className='flight-tools-body';
 flightToolsBody.append($('jump-charges'),document.querySelector('.route-practice'),$('assist-charges'),$('assist-status'));flightTools.append(flightToolsSummary,flightToolsBody);document.body.append(flightTools);$('artifact-belt').hidden=true;
-document.addEventListener('click',event=>{const button=event.target.closest('[data-use-artifact]');if(!button||s.paused||!mission?.snapshot().running)return;const kind=button.dataset.useArtifact;if(GARDEN_ITEMS[kind].navigationDelta)gardenLife.useJump(mission,kind);else gardenLife.useAssist(mission,kind);renderVitals();});
-$('infinity-toggle').addEventListener('click',async()=>{const repeating=mission.snapshot().held;if(repeating){mission.continue();flightTools.open=false;return;}try{await pad.unlock();const result=mission.hold();if(result.ignored){$('answer-feedback').textContent='Запусти полёт, затем включи повтор';return;}flightTools.open=false;}catch(error){$('answer-feedback').textContent=`Не удалось включить звук: ${error.message}`;}});
+document.addEventListener('click',async event=>{const button=event.target.closest('[data-use-artifact]');if(!button||button.disabled||s.paused||!mission?.snapshot().running)return;const kind=button.dataset.useArtifact;if(GARDEN_ITEMS[kind].repeat){try{await pad.unlock();if(!s.paused)gardenLife.useRepeat(mission,kind);}catch(error){$('answer-feedback').textContent=`Не удалось включить повтор: ${error.message}`;}}else if(GARDEN_ITEMS[kind].navigationDelta)gardenLife.useJump(mission,kind);else gardenLife.useAssist(mission,kind);renderVitals();});
+$('infinity-toggle').addEventListener('click',async()=>{try{await pad.unlock();const result=gardenLife.useRepeat(mission);if(result.ignored){$('answer-feedback').textContent='Сначала поймай лотос бесконечности';return;}flightTools.open=false;renderVitals();}catch(error){$('answer-feedback').textContent=`Не удалось включить звук: ${error.message}`;}});
 document.addEventListener('pointerdown',event=>{if(flightTools.open&&!flightTools.contains(event.target))flightTools.open=false;},true);
 flightToolsBody.addEventListener('click',event=>{if(event.target.closest('button')&&!event.target.closest('button').disabled)flightTools.open=false;});
-$('flower-guide-toggle').addEventListener('click',()=>{$('flower-guide').hidden=!$('flower-guide').hidden;$('flower-guide-toggle').setAttribute('aria-expanded',String(!$('flower-guide').hidden));});
-$('flower-guide-close').addEventListener('click',()=>{$('flower-guide').hidden=true;$('flower-guide-toggle').setAttribute('aria-expanded','false');});
-$('flower-guide-list').replaceChildren(...Object.entries(GARDEN_ARRANGEMENTS).map(([style,spec])=>{const item=document.createElement('article'),canvas=document.createElement('canvas');canvas.width=canvas.height=72;const icon=canvas.getContext('2d');icon.translate(36,36);drawGardenArrangementFlower(icon,spec,66,2);const copy=document.createElement('p');copy.textContent=`${spec.label} — ${spec.detail}`;const button=document.createElement('button');button.textContent='Вырастить на пути';button.setAttribute('aria-label',`Вырастить: ${spec.label}`);button.addEventListener('click',()=>{if(!mission.snapshot().running){$('flower-guide-note').textContent='Сначала запусти музыкальный полёт.';return;}if(gardenLife.entities.some(entity=>entity.item.arrangement&&!entity.collected)){ $('flower-guide-note').textContent='Цветок уже летит. Поймай его или пропусти.';return;}gardenLife.forceSpawn(style,{x:tx,y:Math.max(.06,ty-.30),rounds:Number($('flower-rounds').value),vx:0});$('flower-guide').hidden=true;$('flower-guide-toggle').setAttribute('aria-expanded','false');});item.append(canvas,copy,button);return item;}));
+const flowerSettings=document.createElement('details'),flowerSettingsSummary=document.createElement('summary');
+flowerSettings.className='flower-settings';flowerSettingsSummary.textContent='Цветы аранжировки · справочник и проба';
+flowerSettings.append(flowerSettingsSummary,$('flower-guide'));$('settings-panel').append(flowerSettings);$('flower-guide').hidden=false;
+$('flower-guide-toggle').hidden=true;
+$('flower-guide-close').addEventListener('click',()=>{flowerSettings.open=false;});
+$('flower-guide-list').replaceChildren(...Object.entries(GARDEN_ARRANGEMENTS).map(([style,spec])=>{const item=document.createElement('article'),canvas=document.createElement('canvas');canvas.width=canvas.height=72;const icon=canvas.getContext('2d');icon.translate(36,36);drawGardenArrangementFlower(icon,spec,66,2);const copy=document.createElement('p');copy.textContent=`${spec.label} — ${spec.detail}`;const button=document.createElement('button');button.textContent='Вырастить на пути';button.setAttribute('aria-label',`Вырастить: ${spec.label}`);button.addEventListener('click',()=>{if(!mission.snapshot().running){$('flower-guide-note').textContent='Сначала запусти музыкальный полёт.';return;}if(gardenLife.entities.some(entity=>entity.item.arrangement&&!entity.collected)){ $('flower-guide-note').textContent='Цветок уже летит. Поймай его или пропусти.';return;}gardenLife.forceSpawn(style,{x:tx,y:Math.max(.06,ty-.30),rounds:Number($('flower-rounds').value),vx:0});flowerSettings.open=false;setGardenMenu(false);});item.append(canvas,copy,button);return item;}));
 $('artifact-belt').addEventListener('click',event=>{if(event.target.closest('[data-use-artifact]')&&(s.paused||!mission.snapshot().running))event.stopImmediatePropagation();},true);
 for(const button of document.querySelectorAll('[data-pad]'))button.addEventListener('click',()=>{pad.applyPreset(button.dataset.pad);for(const item of document.querySelectorAll('[data-pad]'))item.setAttribute('aria-pressed',String(item===button));});
 $('speed').addEventListener('input',e=>{s.speed=Number(e.target.value);$('speed-value').value=s.speed.toFixed(1)+'×';});
@@ -331,4 +370,8 @@ $('retry').addEventListener('click',()=>location.reload());
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();s.ready=false;last=0;$('loading').hidden=false;$('load-progress').textContent='Восстанавливаем изображение…';});
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextrestored',()=>{try{renderer?.dispose();renderer=createGardenRenderer(world,shipLayer,images.slice(0,6));s.ready=true;last=0;$('loading').hidden=true;}catch(e){error(e);}});
 window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),mission:mission.snapshot(),life:gardenLife.snapshot(),progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
+if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','localhost'].includes(location.hostname)){
+ const probe=document.createElement('button');probe.id='qa-repeat-pickup';probe.textContent='Проверка: выпустить лотос ∞';probe.style.cssText='position:fixed;left:12px;bottom:180px;z-index:60;color:#d9edcd;background:#102922;border:1px solid #799e84;padding:8px';
+ probe.addEventListener('click',()=>{if(!mission.snapshot().running)return;gardenLife.forceSpawn('hold',{x:s.x/s.width,y:s.y/s.height-.12,vx:0});});document.body.append(probe);
+}
 ui();renderVitals();updateProgressCard();load().catch(error);

@@ -269,6 +269,22 @@ body.training .mandala-trigger{width:34px;height:34px;min-height:34px;font-size:
 .flight-tools .assist-charges b{position:absolute;right:-3px;bottom:0;color:#d6e9c7;font:9px sans-serif}
 .flight-tools #assist-status{margin:5px 0 0;max-width:190px}
 /* Student palette: permanent right rail; only required extras to its left. */
+.difficulty-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0}
+.difficulty-picker button{min-width:0;min-height:42px;padding:8px 6px;background:rgba(5,25,28,.18);border:1px solid #a0ccb54d;border-radius:12px;color:#dce8e0;font-size:13px}
+.difficulty-picker button[aria-pressed=true]{color:#fff4d6;border-color:#e5d5a5b3;background:#b8dcaa12;box-shadow:inset 0 0 12px #d1eaa30a}
+#flight-tutorial{position:fixed;z-index:35;left:12px;top:23%;width:min(270px,42vw);padding:12px;border:1px solid #90c3af66;border-radius:16px;background:rgba(8,27,28,.48);color:#f0f5dd;font-size:13px;line-height:1.5}
+#flight-tutorial[hidden]{display:none}#flight-tutorial button{border:1px solid #90c3af66;border-radius:14px;color:inherit;background:transparent;padding:6px;margin:3px}
+body[data-difficulty=light] [data-use-artifact]:not([data-use-artifact=hold]){display:none!important}
+#tutorial-open{position:fixed;left:14px;top:55px;z-index:50;width:30px;height:30px;border:1px solid #a4d5bb66;border-radius:50%;background:transparent;color:#d9edcd}
+.tutorial-focus{outline:2px solid #f5df9b!important;outline-offset:4px;filter:drop-shadow(0 0 7px #f5df9b66)}
+#world.tutorial-focus{outline-offset:-8px;filter:none}
+#flight-tutorial strong{display:block;font-size:14px;color:#f5df9b}
+.flower-settings{width:100%;margin-top:12px;border-top:1px solid #a4d5bb44;padding-top:10px;color:#d9edcd}
+.flower-settings summary{cursor:pointer}
+.repeat-artifact-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:17px;color:#e3f4c5;text-shadow:0 1px 3px #102922}
+[data-use-artifact=hold]{position:relative}
+[data-use-artifact=hold].repeating{border-color:#d3eaa3;box-shadow:0 0 10px #cbe9a322;background:transparent}
+.flower-settings #flower-guide{position:static!important;inset:auto!important;width:100%!important;max-width:none!important;max-height:none!important;transform:none!important;margin:8px 0!important;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important;padding:0!important}
 body.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{width:72px;max-width:72px;overflow:visible;right:7px;top:92px}
 body.student-palette #harmony-hud[data-variant=minimal] #quality-options{grid-template-columns:1fr;gap:4px}
 body.student-palette #harmony-hud[data-variant=minimal] .quality-option{min-height:29px;font-size:12px;width:72px}
@@ -283,3 +299,73 @@ body.student-palette #harmony-hud[data-variant=minimal] .answers-panel .mission-
 .arrangement-status{top:calc(195px + env(safe-area-inset-top))}
 #harmony-hud[data-variant=minimal] .chord-route.route-long{display:grid;grid-template-columns:repeat(var(--route-half),minmax(0,1fr));grid-template-rows:repeat(2,auto);grid-auto-flow:row;gap:3px;width:100%;max-height:none}
 #harmony-hud[data-variant=minimal] .chord-route.route-long .chord-slot{width:100%;min-width:0}
+/* Preserve the portrait painting; place the menu in its open sky and garden. */
+.garden-start{--start-menu-width:clamp(240px,28vw,330px);--start-edge:clamp(24px,5vw,64px);display:block;padding:0;background:#142536;backdrop-filter:none;overflow:hidden}
+.garden-start:before{content:"";position:absolute;inset:0 auto 0 0;width:calc(100% - var(--start-menu-width) - var(--start-edge));background:url('assets/echo-garden/start-garden-orbital-v3.jpg') center/contain no-repeat;pointer-events:none}
+.garden-start-shell{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) var(--start-menu-width);grid-template-rows:auto 1fr;align-content:start;align-items:start;gap:24px;width:100%;height:100%;min-height:0;padding:clamp(24px,17vh,150px) var(--start-edge) 24px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;overflow:visible;text-shadow:0 2px 10px #051321b3}
+.start-copy,.start-controls{min-width:0;grid-column:2}
+.start-copy>.overline{display:block;font-size:10px;letter-spacing:.19em;color:#e0e9df;text-align:left}
+.start-copy h2{font-size:38px;line-height:1.08;margin:9px 0 18px;text-align:left;color:#faf4df}
+.garden-start .difficulty-picker{gap:5px}
+.garden-start .difficulty-picker button{min-width:44px;min-height:44px;padding:8px 3px;font-size:12px;border-radius:9px;background:#07182726;border-color:#b6d5d15c;text-shadow:inherit}
+.garden-start .difficulty-picker button[aria-pressed=true]{background:#d3dec916;border-color:#edd8a7b3;color:#fff2cb;box-shadow:none}
+.start-controls{display:grid;gap:12px}
+.start-actions{gap:8px}
+.garden-start .start-choice{min-height:64px;display:grid;grid-template-columns:22px minmax(0,1fr);grid-template-rows:auto auto;gap:3px 9px;align-items:center;padding:11px 12px;border:1px solid #c2dbd545;border-radius:12px;background:#0920323d;backdrop-filter:blur(2px);box-shadow:none;text-shadow:inherit}
+.garden-start .start-choice:hover{background:#15334645;border-color:#e9d8b678;transform:none}
+.garden-start .start-choice>span{grid-row:1/3;width:22px;height:22px;border:0;border-radius:0;font-size:17px;color:#e5d9ac}
+.garden-start .start-choice strong{align-self:end;font:16px/1.25 Georgia,serif;color:#f5f0df}
+.garden-start .start-choice small{align-self:start;font-size:10px;line-height:1.4;color:#c4d2d3}
+.garden-start .random-choice{border-color:#e5d7ad70;background:#c4d9ae0c}
+.garden-start .start-tutorial{display:flex;align-items:center;gap:9px;width:100%;min-height:56px;padding:8px 2px;margin:0;border:0;border-radius:0;background:transparent;text-align:left;color:#d0deda;text-shadow:inherit}
+.start-tutorial>span:nth-child(2){display:grid;gap:3px;flex:1;min-width:0}
+.start-tutorial strong{font-weight:400;font-size:13px}
+.start-tutorial small{font-size:10px;line-height:1.4;color:#c0d1d1}
+.start-tutorial>span:first-child{font-size:18px;color:#e2d4a9}
+.start-tutorial>span:last-child{font-size:15px}
+.garden-start .start-tutorial:hover{color:#fff2ce;background:transparent}
+.start-route-details{min-width:0;color:#d4e1dc;font-size:12px;border-top:1px solid #c0d6d130}
+.start-route-details>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:6px 2px;list-style:none;cursor:pointer}
+.start-route-details>summary::-webkit-details-marker{display:none}
+.start-route-details>summary:focus-visible{outline:2px solid #e2ffc6;outline-offset:3px}
+.start-route-details[open]>summary>span{transform:rotate(180deg)}
+.start-route-info{max-height:min(180px,calc(100dvh - 510px));overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:0 2px 6px}
+.start-route-info p{margin:0 0 12px;color:#c2d2d2;font-size:11px;line-height:1.5}
+.start-route-info .garden-progress{gap:7px 9px;margin:0 0 12px}
+.start-route-info .garden-progress>small{color:#c0d1d1;line-height:1.4}
+.start-route-info .difficulty-note{margin-bottom:0;color:#bdcbd0}
+body.start-open #tutorial-open{display:none}
+body.start-open .hud,body.start-open .flight-tools{visibility:hidden}
+@media(orientation:landscape) and (max-height:700px){
+  .garden-start-shell{padding-top:24px;gap:16px}
+  .start-copy h2{font-size:30px;margin-bottom:12px}
+  .start-controls{gap:8px}
+  .start-route-info{max-height:max(70px,calc(100dvh - 385px))}
+}
+@media(orientation:portrait){
+  .garden-start{background:url('assets/echo-garden/start-garden-orbital-v3.jpg') 62% center/cover no-repeat #142536}
+  .garden-start:before{display:none}
+  .garden-start-shell{display:block;padding:0}
+  .start-copy{position:absolute;top:calc(24px + env(safe-area-inset-top));left:calc(18px + env(safe-area-inset-left));width:min(220px,calc(58vw - 18px))}
+  .start-copy>.overline{font-size:9px;letter-spacing:.17em}
+  .start-copy h2{font-size:clamp(27px,7.4vw,34px);margin:9px 0 14px}
+  .garden-start .difficulty-picker{gap:4px}
+  .garden-start .difficulty-picker button{font-size:11px;padding:7px 2px}
+  .start-controls{position:absolute;top:32%;right:calc(12px + env(safe-area-inset-right));width:min(114px,28vw);gap:8px}
+  .garden-start .start-choice{min-height:64px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;gap:3px;padding:8px 7px;border-radius:10px}
+  .garden-start .start-choice>span{display:none}
+  .garden-start .start-choice strong{font-size:13px;line-height:1.25}
+  .garden-start .start-choice small{font-size:9px;line-height:1.4}
+  .garden-start .start-tutorial{min-height:56px;padding:6px 2px;gap:0}
+  .start-tutorial>span:first-child,.start-tutorial>span:last-child{display:none}
+  .start-tutorial strong{font-size:12px}
+  .start-tutorial small{font-size:9px}
+  .start-route-details{font-size:11px}
+  .start-route-info{max-height:min(180px,calc(68dvh - 292px - env(safe-area-inset-bottom)));padding-right:3px}
+  .start-route-info p{font-size:10px;line-height:1.45}
+  .start-route-info .garden-progress{grid-template-columns:1fr;gap:6px}
+  .start-route-info .garden-progress>i{width:100%}
+  .start-route-info .garden-progress>span{font-size:8px;letter-spacing:.08em}
+  .start-route-info .garden-progress>span b{font-size:14px}
+  .start-route-info .garden-progress>small{font-size:9px}
+}

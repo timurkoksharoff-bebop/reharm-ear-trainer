@@ -240,7 +240,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
         part[kind]=true;
         const positionComplete=part.degree&&part.quality;
         state.feedback=positionComplete?'Обе части сигнала встроены в маршрут':kind==='degree'?'Ступень зафиксирована':'Тип аккорда зафиксирован';
-        if(state.progress.every(item=>item.degree&&item.quality)){state.complete=true;state.running=false;clearTimeout(state.timer);state.deadline=0;}
+        if(!state.held&&state.progress.every(item=>item.degree&&item.quality)){state.complete=true;state.running=false;clearTimeout(state.timer);state.deadline=0;}
       }else state.feedback=kind==='degree'?'Ступень не совпала — вторая часть сохранена':'Тип не совпал — найденная ступень сохранена';
       emit();return {correct,kind,positionComplete:part.degree&&part.quality,complete:state.complete};
     },
@@ -248,7 +248,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
       if(!state.running||state.cursor<0||state.complete)return {ignored:true};
       const target=exercise.sequence[state.cursor],part=state.progress[state.cursor];
       const correct=Number(chord.offset)===Number(target.offset)&&gardenCanonicalQuality(chord.quality)===gardenCanonicalQuality(target.quality);
-      if(correct){part.degree=true;part.quality=true;state.feedback='Обе части сигнала встроены в маршрут';if(state.progress.every(item=>item.degree&&item.quality)){state.complete=true;state.running=false;clearTimeout(state.timer);state.deadline=0;}}
+      if(correct){part.degree=true;part.quality=true;state.feedback='Обе части сигнала встроены в маршрут';if(!state.held&&state.progress.every(item=>item.degree&&item.quality)){state.complete=true;state.running=false;clearTimeout(state.timer);state.deadline=0;}}
       else state.feedback='Не совпало — найденные раньше части сохранены';
       emit();return {correct,positionComplete:part.degree&&part.quality,complete:state.complete};
     },
@@ -284,7 +284,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     jumpToMiddle(){clearTimeout(state.timer);state.running=true;state.held=false;state.cursor=Math.max(-1,Math.floor(exercise.sequence.length/2)-1);state.feedback='Маршрут продолжен с середины';step();},
     hold(arpeggio=false){if(!state.running||state.complete)return {ignored:true};clearTimeout(state.timer);if(state.cursor<0)state.cursor=0;state.held=true;state.arpeggio=arpeggio;state.feedback='∞ Повторяем текущий аккорд в темпе';sound();schedule();return {held:true};},
     replayCurrent(){if(!state.held||state.cursor<0)return;state.feedback=state.arpeggio?'Арпеджио прозвучит ещё раз':'Аккорд прозвучит ещё раз';sound();emit();},
-    continue(){if(!state.held)return;state.held=false;state.arpeggio=false;state.feedback='Продолжаем маршрут';emit();},
+    continue(){if(!state.held)return;state.held=false;state.arpeggio=false;state.feedback='Продолжаем маршрут';if(state.progress.every(item=>item.degree&&item.quality)){state.complete=true;state.running=false;clearTimeout(state.timer);state.deadline=0;}emit();},
     snapshot
   };
 }

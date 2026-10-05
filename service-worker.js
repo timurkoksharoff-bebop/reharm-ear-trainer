@@ -1,4 +1,4 @@
-const CACHE_NAME = "reharm-ear-trainer-v0.93.3-mobile1";
+const CACHE_NAME = "reharm-ear-trainer-v0.94-mobile1";
 const APP_FILES = [
   "./game/",
   "./game/game.bundle.js",
@@ -8,8 +8,12 @@ const APP_FILES = [
   "./game/samsara.css",
   "./game/manifest.webmanifest",
   "./game/garden-flight.html",
-  "./game/garden-flight.css?v=0.87",
-  "./game/garden-flight.mjs?v=0.87",
+  "./game/garden-flight.css?v=0.94",
+  "./game/garden-flight.mjs?v=0.94",
+  "./game/garden-flight.bundle.js?v=0.94",
+  "./game/garden-flight-094.html",
+  "./game/garden-flight-094.css",
+  "./game/garden-flight-094.bundle.js",
   "./game/garden-flight-renderer.mjs",
   "./game/garden-harmony.mjs",
   "./game/garden-life.mjs",
@@ -23,6 +27,7 @@ const APP_FILES = [
   "./game/assets/echo-garden/white-thaw-aligned.webp",
   "./game/assets/echo-garden/amber-fjords.webp",
   "./game/assets/echo-garden/manta.webp",
+  "./game/assets/echo-garden/start-garden-orbital-v3.jpg",
   "./game/assets/echo-garden/lotus.webp",
   "./game/assets/echo-garden/collectibles/fuel-seed.webp",
   "./game/assets/echo-garden/collectibles/water-pearl.webp",

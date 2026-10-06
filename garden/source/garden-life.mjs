@@ -17,7 +17,7 @@ export const GARDEN_ITEMS=Object.freeze({
   crew:{resource:'crew',amount:8,sprite:'crew-berries',label:'Спелые ягоды',color:'#a7ec86',size:70},
   hull:{resource:'hull',amount:11,sprite:'repair-lotus',label:'Смола лотоса',color:'#dcc9ff',size:72},
   poison:{resource:'crew',amount:-8,hullAmount:-3,sprite:'poison-seed',label:'Ядовитое семя',color:'#ff716c',size:68,harmful:true},
-  degreeReveal:{resource:'inventory',amount:1,assist:{answerKind:'degree',reveal:true},sprite:'arpeggio-flower',label:'Лунный цветок · открыть ступень текущей позиции',color:'#a9b6ec',size:72,artifact:true,rare:true},
+  degreeReveal:{resource:'inventory',amount:1,assist:{answerKind:'both',reveal:true},sprite:'arpeggio-flower',label:'Лунный цветок · открыть ступень и аккорд текущей позиции',color:'#a9b6ec',size:72,artifact:true,rare:true},
   hold:{resource:'inventory',amount:1,repeat:true,sprite:'hold-flower',label:'Лотос бесконечности · удержать аккорд',color:'#b7ef86',size:33,artifact:true},
   qualityFocus:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:2,steps:5},sprite:'root-flower',visualFilter:'saturate(.55) brightness(.94)',label:'Жемчужный бутон · половина вариантов аккорда · 5 ходов',color:'#d9c4a2',size:66,artifact:true,rare:true},
   holdArpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:2,steps:3},sprite:'hold-arpeggio-flower',visualFilter:'hue-rotate(54deg) saturate(.50) brightness(.94)',label:'Сиреневая лоза · половина вариантов баса · 3 хода',color:'#d1b9ee',size:66,artifact:true,rare:true},

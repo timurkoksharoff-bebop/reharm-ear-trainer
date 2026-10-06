@@ -1,6 +1,6 @@
 import {createGardenRenderer} from './garden-flight-renderer.mjs';
 import {gardenBassOffset,gardenQualityAnswer,gardenQualityAnswerLabel,gardenAvailableAnswers,createGardenMission,GardenPad,gardenExercisesForChapter,gardenDegreeLabel,gardenQualityLabel,gardenChordLabel,gardenAnswerState,gardenCanonicalQuality,GARDEN_QUALITY_PALETTE,GARDEN_CORE_QUALITIES,gardenFilteredChoices} from './garden-harmony.mjs';
-import {difficultyProfile} from './garden-difficulty.mjs';
+import {difficultyProfile,GARDEN_ADMISSION_ROUTES,gardenAdmissionState,recordGardenAdmission} from './garden-difficulty.mjs';
 import {GardenSequenceStudio} from './garden-sequence-studio.mjs';
 import {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS} from './garden-life.mjs';
 import {createGardenRewards} from './garden-rewards.mjs';
@@ -30,7 +30,7 @@ const wasTutorialDismissed=()=>{try{return localStorage.getItem(TUTORIAL_KEY)===
 let menuWasRunning=false,exitWasRunning=false;
 let difficulty='medium',tutorialStep=0,tutorialDismissed=wasTutorialDismissed(),tutorialActive=false;
 const FAVORITES_KEY='echo-garden-favorites.v1';
-const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],lastRouteId:saved.lastRouteId||''};}catch{return {level:1,completed:[],lastRouteId:''};}};
+const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],lastRouteId:saved.lastRouteId||'',admissionCompleted:Array.isArray(saved.admissionCompleted)?saved.admissionCompleted:[]};}catch{return {level:1,completed:[],lastRouteId:'',admissionCompleted:[]};}};
 const progress=loadProgress();
 const saveProgress=()=>{try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress));}catch{}}
 const loadFavorites=()=>{try{return new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]'));}catch{return new Set();}};
@@ -57,6 +57,7 @@ function resize(){
 }
 resize();addEventListener('resize',resize);window.visualViewport?.addEventListener('resize',resize);
 function ui(){
+  document.body.classList.toggle('bright-garden',s.night<.45);
   const active=Math.floor(mod(s.growth,4)),item=STATES[active],progress=mod(s.growth,1);
   $('state-title').textContent=item.name;$('state-note').textContent=item.note;
   $('state-number').textContent=`ЖИВОЙ ЦИКЛ · 0${active+1} / 04`;
@@ -150,12 +151,12 @@ let activeExercises=[];
 function routeTitle(route,index=0){return route.name&&route.name!==route.id?route.name:exerciseCode(route,index);}
 function renderGardenRouteList(){
   const list=$('garden-route-list');if(!list)return;
-  const routes=s.tour==='favorites'?[...allBookRoutes(),...(studio?.routes||[])].filter(route=>favorites.has(routeIdentity(route))):s.tour==='reharm'?activeExercises:(studio?.routes||[]).filter(route=>(route.tour||'reharm')===s.tour);
+  const routes=difficulty==='light'?GARDEN_ADMISSION_ROUTES:s.tour==='favorites'?[...allBookRoutes(),...(studio?.routes||[])].filter(route=>favorites.has(routeIdentity(route))):s.tour==='reharm'?activeExercises:(studio?.routes||[]).filter(route=>(route.tour||'reharm')===s.tour);
   list.replaceChildren(...routes.map((route,index)=>{const button=document.createElement('button');button.className='garden-route-choice';button.innerHTML=`<span>${route.chapter?exerciseCode(route,index):String(route.number||index+1).padStart(2,'0')}</span><strong>${routeTitle(route,index)}</strong><small>${route.sequence.length} аккордов · ${TOUR_NAMES[routeTour(route)]||routeTour(route)}${favorites.has(routeIdentity(route))?' · ♥':''}</small>`;button.addEventListener('click',()=>launchRoute(route));return button;}));
   if(!routes.length){const empty=document.createElement('p');empty.className='garden-route-empty';empty.textContent=s.tour==='favorites'?'Нажми ♡ возле текущего маршрута — он появится здесь для точного повторного полёта.':'В этом туре пока нет последовательностей. Их можно добавить в Sound & Route Lab.';list.append(empty);}
-  $('reharm-chapters').hidden=s.tour!=='reharm';
+  $('reharm-chapters').hidden=difficulty==='light'||s.tour!=='reharm';
 }
-function selectChapter(chapter=1,{bind=false}={}){s.chapter=clamp(Number(chapter)||1,1,16);activeExercises=gardenExercisesForChapter(s.chapter);$('mandala-chapter').textContent=String(s.chapter).padStart(2,'0');$('exercise-select').replaceChildren(...activeExercises.map((exercise,index)=>{const option=document.createElement('option');option.value=exercise.id;option.textContent=exerciseCode(exercise,index);return option;}));if(bind&&activeExercises[0])bindMission(activeExercises[0]);for(const button of document.querySelectorAll('[data-chapter]')){const selected=Number(button.dataset.chapter)===s.chapter;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));}renderGardenRouteList();}
+function selectChapter(chapter=1,{bind=false}={}){s.chapter=difficulty==='light'?1:clamp(Number(chapter)||1,1,16);activeExercises=difficulty==='light'?GARDEN_ADMISSION_ROUTES:gardenExercisesForChapter(s.chapter);$('mandala-chapter').textContent=String(s.chapter).padStart(2,'0');$('exercise-select').replaceChildren(...activeExercises.map((exercise,index)=>{const option=document.createElement('option');option.value=exercise.id;option.textContent=exerciseCode(exercise,index);return option;}));if(bind&&activeExercises[0])bindMission(activeExercises[0]);for(const button of document.querySelectorAll('[data-chapter]')){const selected=Number(button.dataset.chapter)===s.chapter;button.classList.toggle('selected',selected);button.disabled=difficulty==='light';button.setAttribute('aria-pressed',String(selected));}renderGardenRouteList();}
 selectChapter(1,{bind:true});
 studio=new GardenSequenceStudio({
   onUse:route=>{queuedStudioRoute=route;},
@@ -178,30 +179,51 @@ function showGardenStart(state='menu'){
   $('start-title').textContent=state==='complete'?'Уровень пройден':'Сад Эха';
   $('start-note').textContent=state==='complete'?`Маршрут «${routeTitle(currentRoute)}» собран. Сад открыл следующий уровень.`:'Сад усложняет маршруты постепенно и запоминает пройденные уровни.';
   $('start-random').querySelector('strong').textContent=state==='complete'?'Следующий полёт':'Начать полёт';
+  updateAdmissionCard();
   document.querySelector('.start-route-details')?.removeAttribute('open');
   updateProgressCard();ui();
 }
 function hideGardenStart(){document.body.classList.remove('start-open');$('garden-start').hidden=true;}
 const tutorialSteps=[
- ['Добро пожаловать','#world-controls','Кнопка справа сверху открывает выбор главы, маршрута, тембра и корабля. Абитуриент — спокойное обучение, Студент — обычный полёт, Преподаватель — экспериментальный режим для опытных.'],
+ ['Добро пожаловать','#world-controls','Кнопка справа сверху открывает выбор главы, маршрута, тембра и корабля. Абитуриент — три коротких учебных полёта, Студент — обычный полёт. Режим Преподаватель пока недоступен.'],
  ['Управление кораблём','#world','Веди корабль пальцем, мышью или стрелками. Предмет засчитывается при касании кораблём: полезные лови, опасные обходи.'],
  ['Цепочка аккордов','#chord-route','Сверху — позиции последовательности. Подсвеченная позиция сейчас звучит. Сначала услышишь тонику — ориентир для определения ступеней.'],
  ['Услышь бас','#degree-options','Нижняя полоса — БАС: самая низкая нота относительно тоники. I — тоника, V — пятая ступень, ♭II — пониженная вторая. Например, IV/I: внизу выбираем I, а справа — IV maj. Бас и корень верхнего аккорда могут отличаться.'],
  ['Узнай аккорд','#quality-options','Справа — тип звучащего аккорда: maj — мажор, m — минор, 7 — доминантсептаккорд, maj7 — большой мажорный, m7 — минорный септаккорд. Бас и аккорд угадываются независимо. Для отдельного баса рядом появляются ответы со ступенью верхнего аккорда: например IV maj. Правильный выбор остаётся подсвеченным.'],
- ['Запасы корабля','#garden-vitals','Жёлтая пробирка — топливо, голубая — вода, зелёная — экипаж, фиолетовая — корпус. В режимах «Студент» и «Преподаватель» они расходуются со временем даже без ответов. Ошибки и столкновения тоже отнимают запас.'],
+ ['Запасы корабля','#garden-vitals','Жёлтая пробирка — топливо, голубая — вода, зелёная — экипаж, фиолетовая — корпус. В режиме «Студент» они расходуются со временем даже без ответов. Ошибки и столкновения тоже отнимают запас.'],
  ['Пополнение','#garden-vitals','Семя пополняет топливо, жемчужина — воду, ягоды — экипаж, ремонтный лотос — корпус. Лови нужное кораблём. В режиме «Абитуриент» запас защищён нижней границей 25%; в остальных режимах пустая пробирка означает опасность завершения полёта.'],
  ['Опасности','#world','Камни повреждают корабль; оттенок указывает пострадавшую пробирку. Кратер и смерч опасны при сближении. Красное смертельное ядро завершает полёт при столкновении — его нельзя ловить. В режиме «Абитуриент» смертельные ядра отключены.'],
  ['Лотос управления','.flight-tools summary','Этот лотос раскрывает повтор, прыжки и подсказки. Нажатие вне меню закрывает его. Сейчас мы раскрываем его для обзора, ничего не активируя.'],
  ['Бесконечный повтор','#infinity-toggle','Поймай зелёный лотос со знаком ∞, затем активируй его в меню лотоса. Один заряд удерживает звучащий аккорд без ограничения по кругам. Правильный ответ по любой одной части сразу переключает на следующую позицию. Для выхода без ответа нажми отдельную пульсирующую кнопку «Лететь дальше» слева. Это не пауза: корабль летит, запасы расходуются.'],
  ['Прыжки','#jump-charges','Цифры −7, −5, −3, +3, +5, +7 сдвигают позицию в цепочке. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. Пустая кнопка не работает. В режиме «Абитуриент» прыжки отключены.'],
- ['Цветок открытия','#assist-charges','Переливчатый цветок открывает басовую ступень текущей позиции. Если она уже найдена, заряд не тратится. Сначала поймай его кораблём, затем нажми в меню лотоса.'],
+ ['Цветок открытия','#assist-charges','Переливчатый синий цветок сразу открывает и басовую ступень, и аккорд текущей позиции. Если одна часть уже найдена, откроется другая. Если найдены обе, заряд не тратится. Сначала поймай цветок кораблём, затем нажми в меню лотоса.'],
  ['Семя и корневая спираль','#assist-charges','Семя скрывает неправильные аккорды; корневая спираль — неправильные басовые ступени. Оттенок показывает силу: бледные убирают примерно половину вариантов на 3–5 ходов, насыщенные оставляют четверть на круг, самое редкое семя действует два круга. Правильная кнопка остаётся на привычном месте.'],
  ['Цветы аранжировки','#world-controls','Цветы добавляют бас или арпеджио на один, два или три круга. Партия вступает со следующего аккорда. Бас и арпеджио можно сочетать. Каталог с объяснениями цветов и настройкой пробного цветка находится в основных настройках, а не в лотосе.'],
  ['Отключение партии','#arrangement-status','Когда звучит дополнительная партия, слева появляется миниатюра пойманного цветка. Нажми её, чтобы выключить эту партию, не останавливая остальную музыку.'],
  ['Пауза и выход','#garden-home','Ⅱ останавливает музыку, движение, расход и сбор предметов. ▶ продолжает. Стрелка возврата сверху, рядом с настройками, возвращает на заставку после подтверждения: там можно начать заново или выбрать другой маршрут. Обучение доступно в меню и настройках.']
 ];
 function renderTutorial(model){if(!$('flight-tutorial'))return;const visible=tutorialActive||(difficulty!=='hard'&&!tutorialDismissed&&model.running);$('flight-tutorial').hidden=!visible;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));document.body.classList.toggle('tutorial-open',visible);if(!visible)return;const [title,selector,text]=tutorialSteps[tutorialStep];$('tutorial-title').textContent=`${tutorialStep+1}/${tutorialSteps.length} · ${title}`;$('tutorial-back').disabled=tutorialStep===0;$('tutorial-next').textContent=tutorialStep===tutorialSteps.length-1?'Готово ✓':'Дальше →';document.body.classList.toggle('tutorial-open',visible);$('tutorial-progress').style.setProperty('--progress',`${(tutorialStep+1)/tutorialSteps.length*100}%`);flightTools.open=tutorialActive&&tutorialStep>=8&&tutorialStep<=12;const target=document.querySelector(selector);target?.classList.add('tutorial-focus');const chord=!tutorialActive&&difficulty==='light'&&model.current?`Сейчас бас ${gardenDegreeLabel(gardenBassOffset(model.current))}; аккорд ${gardenQualityAnswerLabel(gardenQualityAnswer(model.current))}. `:'';$('tutorial-copy').textContent=chord+text;}
-for(const button of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))button.addEventListener('click',()=>{difficulty=button.dataset.difficulty;document.body.dataset.difficulty=difficulty;gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;$('start-difficulty-note').textContent={light:'Спокойный полёт: короткие маршруты, медленное движение и защищённые запасы.',medium:'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.',hard:'Для опытных: длинные маршруты, высокая скорость и сложная гармония. Пока эксперимент.'}[difficulty];for(const item of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))item.setAttribute('aria-pressed',String(item===button));});
+function updateAdmissionCard(){
+  if(difficulty==='light'){
+    const admission=gardenAdmissionState(progress);
+    $('start-random').querySelector('strong').textContent=admission.finished?'Повторить обучение':'Учебный полёт';
+    $('start-random').querySelector('small').textContent=admission.finished?'Обучение пройдено':`${admission.completed.length+1} / ${admission.total} · ${admission.next.sequence.length} аккорда`;
+    $('start-note').textContent=admission.finished?'Вы зачислены в Space Music College. Продолжайте в режиме «Студент».':'Три коротких учебных маршрута. Пройдите их, чтобы поступить в Space Music College.';
+  }else $('start-random').querySelector('small').textContent='Случайный маршрут';
+}
+function selectDifficulty(name){
+  if(!['light','medium'].includes(name))return;
+  difficulty=name;document.body.dataset.difficulty=difficulty;gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
+  $('start-difficulty-note').textContent=difficulty==='light'?'Три учебных маршрута по 3–4 аккорда, медленное движение и защищённые запасы.':'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.';
+  for(const item of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))item.setAttribute('aria-pressed',String(item.dataset.difficulty===difficulty));
+  if(difficulty==='light')s.tour='reharm';
+  for(const item of document.querySelectorAll('[data-tour]')){item.disabled=difficulty==='light'&&item.dataset.tour!=='reharm';item.setAttribute('aria-pressed',String(item.dataset.tour===s.tour));item.classList.toggle('selected',item.dataset.tour===s.tour);}
+  const selectedTour=document.querySelector(`[data-tour="${s.tour}"]`);$('mandala-tour-name').textContent=selectedTour?.getAttribute('aria-label')||s.tour;
+  selectChapter(s.chapter);$('start-random').querySelector('strong').textContent='Начать полёт';updateAdmissionCard();
+}
+for(const button of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))button.addEventListener('click',()=>{if(!button.disabled)selectDifficulty(button.dataset.difficulty);});
+$('enrollment-student').addEventListener('click',()=>{$('enrollment').hidden=true;selectDifficulty('medium');showGardenStart();});
+$('enrollment-close').addEventListener('click',()=>{$('enrollment').hidden=true;$('start-random').focus({preventScroll:true});});
 function finishTutorial(){tutorialActive=false;tutorialDismissed=true;try{localStorage.setItem(TUTORIAL_KEY,'1');}catch{}flightTools.open=false;renderTutorial(mission.snapshot());if(!mission.snapshot().running)showGardenStart();}
 function openTutorial(){mission.pause();pad.stop(true);s.paused=true;hideGardenStart();setGardenMenu(false,{resume:false});tutorialActive=true;tutorialStep=0;renderTutorial(mission.snapshot());}
 $('tutorial-settings-open').addEventListener('click',openTutorial);
@@ -211,6 +233,7 @@ $('tutorial-back').addEventListener('click',()=>{tutorialStep=Math.max(0,tutoria
 $('tutorial-close').addEventListener('click',finishTutorial);
 function allBookRoutes(maxChapter=16){const routes=[];for(let chapter=1;chapter<=maxChapter;chapter++)for(const route of gardenExercisesForChapter(chapter))routes.push(route);return routes;}
 async function randomGardenRoute(){
+  if(difficulty==='light'){launchRoute(gardenAdmissionState(progress).next);return;}
   await studio.refresh();
   const unlockedChapter=Math.min(16,1+Math.floor((progress.level-1)/2)),maxLength=Math.min(18,4+Math.floor((progress.level-1)/2));
   const book=allBookRoutes(unlockedChapter),tour=(studio.routes||[]).filter(route=>route.sequence.length<=maxLength);
@@ -221,6 +244,7 @@ async function randomGardenRoute(){
 }
 async function launchRoute(route){
   if(!route)return;
+  if(difficulty==='light'&&!GARDEN_ADMISSION_ROUTES.some(item=>item.id===route.id))return;
   gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
   hideGardenStart();setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);
   try{await pad.unlock();s.paused=false;mission.start();world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}catch(error){$('answer-feedback').textContent=error.message;s.paused=false;ui();}
@@ -228,8 +252,10 @@ async function launchRoute(route){
 function completeGardenLevel(){
   completionHandled=true;s.paused=true;pad.stop(true);
   const id=currentRoute?.id||`${currentRoute?.source||'route'}:${currentRoute?.name||''}`;
-  if(id&&!progress.completed.includes(id))progress.completed.push(id);progress.lastRouteId=id;progress.level+=1;saveProgress();
+  if(id&&!progress.completed.includes(id))progress.completed.push(id);progress.lastRouteId=id;progress.level+=1;
+  const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
   showGardenStart('complete');
+  if(enrolled){$('enrollment').hidden=false;$('enrollment-student').focus({preventScroll:true});}
 }
 async function retryCurrentMission(){
   if(!currentRoute)return;hideGardenStart();$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(currentRoute);

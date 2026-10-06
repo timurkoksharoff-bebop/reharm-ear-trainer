@@ -8,12 +8,12 @@ for(const found of ['none','degree','quality','both']){
     life.collect(life.forceSpawn('degreeReveal'));mission.start();mission.advance();
     if(found==='degree'||found==='both')mission.answerPart('degree',0);
     if(found==='quality'||found==='both')mission.answerPart('quality','5:maj');
-    const result=life.useAssist(mission,'degreeReveal'),alreadyFound=found==='degree'||found==='both';
-    assert.deepEqual(mission.snapshot().currentParts,{degree:true,quality:found==='quality'||found==='both'},'The restored flower reveals only the lower degree, preserving the chord-answer state');
+    const result=life.useAssist(mission,'degreeReveal'),alreadyFound=found==='both';
+    assert.deepEqual(mission.snapshot().currentParts,{degree:true,quality:true},'The flower fills both answers atomically, preserving whichever part was already found');
     assert.equal(life.inventory.degreeReveal,alreadyFound?1:0);
     assert.equal(Boolean(result.ignored),alreadyFound);
     assert(gardenAnswerState(mission.snapshot(),'degree',0).selected);
-    assert.equal(gardenAnswerState(mission.snapshot(),'quality','5:maj').selected,found==='quality'||found==='both');
+    assert.equal(gardenAnswerState(mission.snapshot(),'quality','5:maj').selected,true);
   }finally{mission.pause();}
 }
 const life=new GardenLife(),mission=createGardenMission({exercise,barSeconds:999});
@@ -30,7 +30,7 @@ try{
   mission.pause();assert(life.useAssist(mission,'degreeReveal').ignored);assert.equal(life.inventory.degreeReveal,1);
 }finally{mission.pause();}
 assert.equal(GARDEN_ITEMS.degreeReveal.sprite,'arpeggio-flower','The approved pinwheel is restored with its exact existing sprite');
-assert.equal(GARDEN_ITEMS.degreeReveal.assist.answerKind,'degree');
+assert.equal(GARDEN_ITEMS.degreeReveal.assist.answerKind,'both');
 assert.equal(GARDEN_ITEMS.arpeggio,undefined,'The extra blue full-answer artifact is removed from active play');
 for(const item of Object.values(GARDEN_ITEMS).filter(i=>i.assist&&!i.assist.reveal))assert.equal(item.sprite,item.assist.answerKind==='degree'?'hold-arpeggio-flower':'root-flower','Filters reuse the approved spiral and seed sprites');
 for(const routeLength of [4,8]){

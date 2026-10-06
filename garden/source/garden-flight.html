@@ -50,7 +50,7 @@
       <div class="start-copy">
         <span class="overline start-college"><span>SPACE MUSIC</span><strong>COLLEGE</strong><i aria-hidden="true"></i></span>
         <h2 id="start-title">Сад Эха</h2>
-        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
+        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false" disabled title="Режим преподавателя скоро появится">Преподаватель</button></div>
       </div>
       <div class="start-controls">
         <div class="start-actions">
@@ -69,6 +69,7 @@
       </div>
     </div>
   </section>
+  <section id="enrollment" class="enrollment" hidden role="dialog" aria-modal="true" aria-labelledby="enrollment-title"><div class="enrollment-card"><span class="enrollment-college">SPACE MUSIC COLLEGE</span><span class="enrollment-flower" aria-hidden="true">✺</span><h2 id="enrollment-title">Вы зачислены!</h2><p>Три учебных полёта пройдены.<br>Добро пожаловать в Space Music College.<br>Продолжайте в режиме «Студент».</p><button id="enrollment-student">Продолжить как студент →</button><button id="enrollment-close">Остаться в учебном режиме</button></div></section>
   <section id="artifact-belt" class="artifact-belt hud" aria-label="Накопленные артефакты">
     <div id="jump-charges" class="jump-charges" aria-label="Заряды прыжков"></div>
     <div id="assist-charges" class="assist-charges" aria-label="Редкие подсказки"></div>

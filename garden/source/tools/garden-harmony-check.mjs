@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createGardenMission,GardenPad,gardenExercisesForChapter,PRESETS} from '../garden-harmony.mjs';
 import {stepFromMidi} from '../garden-sequence-studio.mjs';
+import {BUILTIN_TOUR_ROUTES} from '../garden-tour-routes.mjs';
 
 const exercise={
   id:'test-garden',name:'Fig. 1.99',source:'test',baseTonic:5,
@@ -96,6 +97,14 @@ assert.equal(fig210Mission.snapshot().complete,true,'Fig. 2.10 completes at 14/1
 const octave=stepFromMidi([60,72]);
 assert.equal(octave.quality,'1','a doubled note is an octave/unison, not an invented major chord');
 assert.match(octave.label,/1\/8/,'the octave/unison answer is visible to the player');
+const chill3=BUILTIN_TOUR_ROUTES.find(route=>route.id==='builtin-chill-03');
+assert.ok(chill3,'Chill 3 imported MIDI route remains available');
+for(const [index,voicing] of [[3,[47,54,57,60,63]],[6,[47,51,54,57,60,63]]]){
+  const chord=stepFromMidi(chill3.chords[index]);
+  assert.equal(chord.rootPc,11,`Chill 3 position ${index+1} root is B`);
+  assert.equal(chord.quality,'7b9',`Chill 3 position ${index+1} is dominant seventh with flat ninth`);
+  assert.deepEqual(chord.notes,voicing,`Chill 3 position ${index+1} keeps its original MIDI voicing`);
+}
 const octaveMission=createGardenMission({
   exercise:{id:'octave-route',name:'Octave route',source:'test',baseTonic:0,sequence:[{...octave,offset:0},{...octave,id:'octave-2',offset:0}]},
   barSeconds:999,onChord:()=>{}

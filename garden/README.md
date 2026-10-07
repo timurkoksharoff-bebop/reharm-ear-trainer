@@ -1,4 +1,4 @@
-# Сад Эха 0.98
+# Сад Эха 0.99
 
 Standalone PWA, desktop and mobile browsers. Entry point: ./index.html. Install from the browser's Add to Home Screen action. This is not an App Store/Google Play binary.
 
@@ -8,11 +8,11 @@ Only Garden runtime assets are precached (about 10 MB), no other planets. On fir
 
 Source: source/. Requires Node.js and sharp. Run node source/tools/build-garden-standalone.mjs /absolute/output/path. Bump version (and therefore CACHE_NAME) for each PWA release. Browser regression uses Playwright and Chrome: GARDEN_RELEASE_URL=http://127.0.0.1:PORT/ node source/tools/garden-release-check.cjs.
 
-## 0.98
+## 0.99
 
 - Bottom rail grades the actual bass; slash-chord answers specify the upper chord degree separately. Exact musical notes/catalog preserved.
 - sus4 has a fixed place in the right rail (Chill 1 regression).
-- Iridescent blue flower reveals both missing answer parts atomically, including independent slash basses; fully solved positions keep the charge.
+- Iridescent flower reveals the missing bass degree without spending a charge on a solved position.
 - Cocoon protects three ordinary stone impacts; lava, errors and reserve drain bypass it.
 - Infinity exits immediately on a correct answer or the visible ▶ button.
 
@@ -32,6 +32,6 @@ Source: source/. Requires Node.js and sharp. Run node source/tools/build-garden-
 
 Verification: 119 routes with two filter strengths; 679 book sonorities and 22 qualities in 12 keys; pickup-to-inventory infinity regression; responsive browser run at 320/390/430/1440 widths; offline reload. Physical iPhone/Android device testing is still required.
 
-## Admission and daylight update
+## 0.99
 
-Abiturient consists of three exact existing book routes: Fig. 1.6 (4 chords), Fig. 1.7 (4), Fig. 1.9 (3). Passing all three shows enrollment in Space Music College and a Student-mode action. Admission progress is device-local and does not reset existing favorites/progress. Teacher is visible but disabled for now. Daylight chord outlines use a light stroke with a thin dark halo; the glass fill remains transparent. Browser regression: node source/tools/garden-admission-reveal-check.cjs.
+The MIDI answer recognizer now identifies exact B7(♭9) voicings in Chill 3, preserving the original note lists and showing the extension in the secondary chord palette. Regression test verifies both affected positions and their untouched MIDI pitches.

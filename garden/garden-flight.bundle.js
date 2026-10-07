@@ -1,4 +1,4 @@
-/* Сад Эха 0.98 — standalone browser bundle */
+/* Сад Эха 0.99 — standalone browser bundle */
 (()=>{
 window.GARDEN_ASSETS={"collectibles/meteor-volcanic":"assets/echo-garden/collectibles/meteor-volcanic.webp"};
 /* Game-only touch guard. Editable fields retain their normal text gestures. */
@@ -1759,7 +1759,7 @@ const NOTE_NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'
 const CHORDS=[
   ['1',[0]],
   ['maj',[0,4,7]],['m',[0,3,7]],['6',[0,4,7,9]],['m6',[0,3,7,9]],
-  ['maj7',[0,4,7,11]],['7',[0,4,7,10]],['m7',[0,3,7,10]],['m7♭5',[0,3,6,10]],
+  ['maj7',[0,4,7,11]],['7',[0,4,7,10]],['7b9',[0,4,7,10,13]],['m7',[0,3,7,10]],['m7♭5',[0,3,6,10]],
   ['sus2',[0,2,7]],['sus4',[0,5,7]],['m9',[0,3,7,10,2]],['add9',[0,4,7,2]]
 ];
 const TOURS=Object.freeze([

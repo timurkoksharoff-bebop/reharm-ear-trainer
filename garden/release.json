@@ -1,6 +1,6 @@
 {
-  "version": "0.98",
+  "version": "0.99",
   "name": "Сад Эха",
   "standalone": true,
-  "notes": "Blue flower reveals both missing answers atomically; stronger transparent chord outlines in daylight; three short admission flights and enrollment in Space Music College; Teacher mode reserved but disabled."
+  "notes": "MIDI recognition now identifies dominant flat-nine chords in Chill 3 without changing the original voicings; the answer appears as a chord extension in the secondary palette."
 }

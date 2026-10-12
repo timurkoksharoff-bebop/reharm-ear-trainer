@@ -1,4 +1,4 @@
-# Сад Эха 0.99
+# Сад Эха 1.14
 
 Standalone PWA, desktop and mobile browsers. Entry point: ./index.html. Install from the browser's Add to Home Screen action. This is not an App Store/Google Play binary.
 
@@ -8,7 +8,7 @@ Only Garden runtime assets are precached (about 10 MB), no other planets. On fir
 
 Source: source/. Requires Node.js and sharp. Run node source/tools/build-garden-standalone.mjs /absolute/output/path. Bump version (and therefore CACHE_NAME) for each PWA release. Browser regression uses Playwright and Chrome: GARDEN_RELEASE_URL=http://127.0.0.1:PORT/ node source/tools/garden-release-check.cjs.
 
-## 0.99
+## 1.14
 
 - Bottom rail grades the actual bass; slash-chord answers specify the upper chord degree separately. Exact musical notes/catalog preserved.
 - sus4 has a fixed place in the right rail (Chill 1 regression).
@@ -32,6 +32,5 @@ Source: source/. Requires Node.js and sharp. Run node source/tools/build-garden-
 
 Verification: 119 routes with two filter strengths; 679 book sonorities and 22 qualities in 12 keys; pickup-to-inventory infinity regression; responsive browser run at 320/390/430/1440 widths; offline reload. Physical iPhone/Android device testing is still required.
 
-## 0.99
-
-The MIDI answer recognizer now identifies exact B7(♭9) voicings in Chill 3, preserving the original note lists and showing the extension in the secondary chord palette. Regression test verifies both affected positions and their untouched MIDI pitches.
+- Sound & Route Lab adds Jazz Standards and device-local custom categories, each assigned one of 20 procedural mandalas. Completing a route keeps the flight open with replay and unvisited-next-route choices.
+- Default playback is 20% louder with device-local volume and 3-band EQ. Familiar arrangements remain common; faster experimental flowers appear rarely.

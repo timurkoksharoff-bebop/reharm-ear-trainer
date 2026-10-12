@@ -5,12 +5,7 @@ export function createGardenRewards({reduced=false,rng=Math.random}={}){
   function answer(result,kind,{x=.5,y=.4}={}){
     if(!result?.correct||result.ignored)return false;
     count++;lastKind=kind;
-    if(kind==='degree'){
-      vines.push({x,y,age:0,life:5.2,phase:rng()*Math.PI*2});vines=vines.slice(-4);
-      for(let i=0;i<(reduced?3:9);i++){const angle=rng()*Math.PI*2,spread=.025+rng()*.065;motes.push({x:x+Math.cos(angle)*spread,y:y+Math.sin(angle)*spread,age:0,life:3+rng(),phase:rng()*Math.PI*2,vx:(rng()-.5)*.01,vy:-.008});}
-    }
-    if(kind==='quality')blooms.push({x,y,age:0,life:3.4});
-    if(result.positionComplete||result.complete)waves.push({x,y,age:0,life:2.8});
+    if(kind==='degree'||kind==='quality')blooms.push({x,y,age:0,life:3.4,kind,phase:rng()*Math.PI*2});
     motes=motes.slice(-88);blooms=blooms.slice(-6);waves=waves.slice(-4);return true;
   }
   function step(dt,{ground=.0}={}){
@@ -41,10 +36,18 @@ export function createGardenRewards({reduced=false,rng=Math.random}={}){
       ctx.fillStyle=light;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
     }
     for(const p of blooms){
-      const fade=Math.min(1,p.age/.4,(p.life-p.age)/.8),open=reduced?1:Math.min(1,p.age/1.1),radius=Math.min(width,height)*.042;
-      ctx.save();ctx.translate(p.x*width,p.y*height);ctx.fillStyle=`rgba(124,255,211,${fade*.30})`;
-      for(let i=0;i<7;i++){ctx.save();ctx.rotate(i*Math.PI*2/7);ctx.beginPath();ctx.ellipse(0,-radius*open*.68,radius*.32,radius*open*.85,0,0,Math.PI*2);ctx.fill();ctx.restore();}
-      ctx.fillStyle=`rgba(255,244,167,${fade*.9})`;ctx.beginPath();ctx.arc(0,0,radius*.22,0,Math.PI*2);ctx.fill();ctx.restore();
+      const fade=Math.min(1,p.age/.25,(p.life-p.age)/.8),open=reduced?1:Math.min(1,p.age/.65),radius=Math.min(width,height)*.038,degree=p.kind==='degree',petals=degree?5:7;
+      ctx.save();ctx.translate(p.x*width,p.y*height);ctx.rotate(p.phase+(reduced?0:p.age*.14));
+      for(let i=0;i<petals;i++){
+        ctx.save();ctx.rotate(i*Math.PI*2/petals);
+        ctx.fillStyle=degree?`rgba(159,207,244,${fade*.42})`:`rgba(124,225,197,${fade*.38})`;
+        ctx.strokeStyle=degree?`rgba(218,239,255,${fade*.52})`:`rgba(208,250,227,${fade*.48})`;ctx.lineWidth=1;
+        ctx.beginPath();
+        if(degree){const length=radius*open*.82;ctx.moveTo(0,0);ctx.bezierCurveTo(-radius*.28,-length*.28,-radius*.20,-length*.78,0,-length);ctx.bezierCurveTo(radius*.20,-length*.78,radius*.28,-length*.28,0,0);}
+        else ctx.ellipse(0,-radius*open*.56,radius*.27,radius*open*.68,0,0,Math.PI*2);
+        ctx.fill();ctx.stroke();ctx.restore();
+      }
+      ctx.fillStyle=degree?`rgba(238,220,164,${fade*.8})`:`rgba(238,225,170,${fade*.82})`;ctx.beginPath();ctx.arc(0,0,radius*.15,0,Math.PI*2);ctx.fill();ctx.restore();
     }
     for(const p of waves){
       const fade=Math.sin(Math.PI*p.age/p.life),radius=Math.min(width,height)*(reduced?.12:.05+p.age*.07);
@@ -52,5 +55,5 @@ export function createGardenRewards({reduced=false,rng=Math.random}={}){
     }
     ctx.restore();
   }
-  return {answer,step,draw,reset,snapshot:()=>({motes:motes.length,blooms:blooms.length,waves:waves.length,vines:vines.length,lastKind,count})};
+  return {answer,step,draw,reset,snapshot:()=>({motes:motes.length,blooms:blooms.length,flowerKinds:blooms.map(flower=>flower.kind),waves:waves.length,vines:vines.length,lastKind,count})};
 }

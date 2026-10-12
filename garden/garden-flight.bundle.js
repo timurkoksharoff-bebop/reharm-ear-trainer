@@ -1,4 +1,4 @@
-/* Сад Эха 0.99 — standalone browser bundle */
+/* Сад Эха 1.14 — standalone browser bundle */
 (()=>{
 window.GARDEN_ASSETS={"collectibles/meteor-volcanic":"assets/echo-garden/collectibles/meteor-volcanic.webp"};
 /* Game-only touch guard. Editable fields retain their normal text gestures. */
@@ -368,6 +368,12 @@ const GARDEN_ARRANGEMENTS=Object.freeze({
   bassChill:{track:'bass',label:'Лунная ягода',detail:'Chill · мягкая синкопа',color:'#9dc5ec',symbol:'≈',petals:4},
   bassFunk:{track:'bass',label:'Пружинящий ирис',detail:'Полуфанк · короткий бас',color:'#e7a2c9',symbol:'ϟ',petals:5}
 });
+const COMMON_ARRANGEMENTS=Object.freeze(['arpWave','arpBroken','bassCanon']);
+const EXPERIMENTAL_ARRANGEMENTS=Object.freeze(['arpSpark','arpMist','bassChill','bassFunk']);
+function chooseGardenArrangement(random=Math.random){
+  const pool=random()<.85?COMMON_ARRANGEMENTS:EXPERIMENTAL_ARRANGEMENTS;
+  return pool[Math.floor(random()*pool.length)];
+}
 
 function createGardenArrangement(length){
   const bars=Math.max(2,Number(length)||2),tracks={arpeggio:null,bass:null};let current={};
@@ -382,9 +388,10 @@ function createGardenArrangement(length){
   };
 }
 
-function gardenArrangementEvents(notes,arrangement={},seconds=4){
+function gardenArrangementEvents(notes,arrangement={},seconds=4,bassMidi=null){
   if(!Array.isArray(notes)||!notes.length||notes.some(note=>!Number.isFinite(note)))return [];
-  const sorted=[...new Set(notes)].sort((a,b)=>a-b),lowest=sorted[0],upper=sorted.length>1?sorted.slice(1):sorted;
+  const sorted=[...new Set(notes)].sort((a,b)=>a-b),lowest=Number.isFinite(bassMidi)?bassMidi:sorted[0],upper=sorted.filter(note=>note!==lowest);
+  if(!upper.length)upper.push(...sorted);
   const duration=Math.max(.4,Number(seconds)||4),events=[],arp=GARDEN_ARRANGEMENTS[arrangement.arpeggio],bass=GARDEN_ARRANGEMENTS[arrangement.bass];
   if(arp){
     const wave=upper.length<2?[0]:[...upper.map((_,i)=>i),...upper.slice(1,-1).map((_,i)=>upper.length-2-i)],broken=upper.map((_,i)=>(i%2?upper.length-1-Math.floor(i/2):Math.floor(i/2)));
@@ -409,7 +416,7 @@ function drawGardenArrangementFlower(ctx,spec,size,rounds=1,intensity=1){
   ctx.restore();
 }
 
-return {GARDEN_ARRANGEMENTS,createGardenArrangement,gardenArrangementEvents,drawGardenArrangementFlower};
+return {GARDEN_ARRANGEMENTS,chooseGardenArrangement,createGardenArrangement,gardenArrangementEvents,drawGardenArrangementFlower};
 })();
 const module_garden_harmony=(()=>{
 const {BOOK_CATALOG}=module_book_catalog;
@@ -469,7 +476,8 @@ const frequency=midi=>440*2**((midi-69)/12);
 
 class GardenPad{
   constructor({deferSamplesUntilReady=false}={}){
-    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBuffers=[];this.generation=0;
+    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.eqLow=null;this.eqMid=null;this.eqHigh=null;this.limiter=null;this.master=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBuffers=[];this.generation=0;
+    this.masterVolume=1.2;this.equalizer={low:0,mid:0,high:0};
     const loadSamples=()=>Promise.all([
       ['assets/echo-garden/samples/felt-c3.wav',48],
       ['assets/echo-garden/samples/felt-e3.wav',52],
@@ -489,12 +497,20 @@ class GardenPad{
       if(!Engine)throw Error('В этом браузере нет Web Audio.');
       const c=this.context=new Engine({latencyHint:'interactive'});
       this.output=c.createGain();this.output.gain.value=.46;
-      this.cleanOutput=c.createGain();this.cleanOutput.gain.value=.82;this.cleanOutput.connect(c.destination);
+      this.cleanOutput=c.createGain();this.cleanOutput.gain.value=.82;
+      this.eqLow=c.createBiquadFilter();this.eqLow.type='lowshelf';this.eqLow.frequency.value=160;
+      this.eqMid=c.createBiquadFilter();this.eqMid.type='peaking';this.eqMid.frequency.value=900;this.eqMid.Q.value=.8;
+      this.eqHigh=c.createBiquadFilter();this.eqHigh.type='highshelf';this.eqHigh.frequency.value=3800;
+      this.limiter=c.createDynamicsCompressor();this.limiter.threshold.value=-5;this.limiter.knee.value=5;this.limiter.ratio.value=8;this.limiter.attack.value=.004;this.limiter.release.value=.14;
+      this.master=c.createGain();this.master.gain.value=this.masterVolume;
+      this.eqLow.connect(this.eqMid);this.eqMid.connect(this.eqHigh);this.eqHigh.connect(this.limiter);this.limiter.connect(this.master);this.master.connect(c.destination);
+      this.cleanOutput.connect(this.eqLow);
       this.filter=c.createBiquadFilter();this.filter.type='lowpass';this.filter.Q.value=.72;
       this.delay=c.createDelay(1.4);this.delayFeedback=c.createGain();
       const wet=c.createGain();wet.gain.value=.24;
-      this.output.connect(this.filter);this.filter.connect(c.destination);
-      this.filter.connect(this.delay);this.delay.connect(this.delayFeedback);this.delayFeedback.connect(this.delay);this.delay.connect(wet);wet.connect(c.destination);
+      this.output.connect(this.filter);this.filter.connect(this.eqLow);
+      this.filter.connect(this.delay);this.delay.connect(this.delayFeedback);this.delayFeedback.connect(this.delay);this.delay.connect(wet);wet.connect(this.eqLow);
+      this.applyEqualizer();
       this.applyPreset(this.preset);
     }
     if(this.context.state!=='running')await this.context.resume();
@@ -505,6 +521,23 @@ class GardenPad{
     if(!this.context)return;
     const p=PRESETS[this.preset],t=this.context.currentTime;
     this.filter.frequency.setTargetAtTime(p.cutoff,t,.18);this.delay.delayTime.setTargetAtTime(p.delay,t,.18);this.delayFeedback.gain.setTargetAtTime(p.feedback,t,.18);
+  }
+  setMasterVolume(value){
+    this.masterVolume=Math.min(1.8,Math.max(.8,Number(value)||1.2));
+    if(this.master&&this.context)this.master.gain.setTargetAtTime(this.masterVolume,this.context.currentTime,.04);
+  }
+  setEqualizer(band,value){
+    if(!Object.prototype.hasOwnProperty.call(this.equalizer,band))return;
+    this.equalizer[band]=Math.min(6,Math.max(-6,Number(value)||0));
+    this.applyEqualizer();
+  }
+  applyEqualizer(){
+    if(!this.context)return;
+    const now=this.context.currentTime;
+    for(const band of ['low','mid','high']){
+      const node=this[{low:'eqLow',mid:'eqMid',high:'eqHigh'}[band]];
+      if(node)node.gain.setTargetAtTime(this.equalizer[band],now,.04);
+    }
   }
   async play(chord,tonicPitchClass=5,{arpeggio=false,arrangement={},barSeconds=4}={}){
     const generation=++this.generation;
@@ -526,7 +559,11 @@ class GardenPad{
     const exactNotes=Array.isArray(chord.notes)&&chord.notes.length;
     if(!exactNotes&&!GARDEN_INTERVALS[chord.quality])throw Error(`Неизвестный тип аккорда: ${chord.quality}. Воспроизведение остановлено, без подмены мажором.`);
     const notes=exactNotes?[...chord.notes]:[bass,...GARDEN_INTERVALS[chord.quality].map(interval=>root+interval)];
-    this.lastArrangement=gardenArrangementEvents(notes,chord.reference?{}:arrangement,barSeconds);
+    // Imported MIDI voicings may store only the mid-register chord stack in
+    // `notes`; their actual bass is represented separately by bassOffset.
+    // Keep the bass flower in the true low register instead of treating the
+    // stack's lowest note (often G3 or higher) as the bass.
+    this.lastArrangement=gardenArrangementEvents(notes,chord.reference?{}:arrangement,barSeconds,bass);
     // Sustained foundation stays identifiable underneath two quieter layers.
     // All future attacks belong to this voice group, so pause/route changes
     // cancel them together rather than leaving an accompaniment running.
@@ -648,16 +685,18 @@ function createGardenMission({onChange,onChord,barSeconds=4,exercise:providedExe
     if(state.cursor>=exercise.sequence.length){state.cursor=0;state.round+=1;}
     accompaniment.next();sound();if(state.arpeggioRounds>0)state.arpeggioRounds-=1;schedule();
   }
-  const finish=()=>{state.complete=true;state.running=false;state.held=false;state.arpeggio=false;clearTimeout(state.timer);state.timer=0;state.deadline=0;};
+  const finish=()=>{state.complete=true;state.running=true;state.held=false;state.arpeggio=false;clearTimeout(state.timer);state.timer=0;state.deadline=0;};
   const settleAnswer=()=>{
-    if(state.progress.every(item=>item.degree&&item.quality)){finish();emit();return false;}
+    if(state.progress.every(item=>item.degree&&item.quality)){finish();state.feedback='Маршрут собран — слушаем его дальше';step();return true;}
     if(state.held){state.held=false;state.arpeggio=false;step();return true;}
     emit();return false;
   };
   return {
     start(){
       if(state.running)return;
-      state.running=true;state.complete=false;state.feedback='';
+      state.running=true;
+      if(state.complete){state.feedback='Продолжаем слушать собранный маршрут';step();return;}
+      state.feedback='';
       if(state.cursor<0&&state.basePlayed){step();return;}
       state.basePlayed=true;sound();schedule();
     },
@@ -689,7 +728,7 @@ function createGardenMission({onChange,onChord,barSeconds=4,exercise:providedExe
     },
     advance(){step();},
     shift(delta,{consume}={}){
-      if(!state.running||state.complete||state.cursor<0||![-7,-5,-3,3,5,7].includes(delta)||typeof consume!=='function')return {ignored:true};
+      if(!state.running||state.complete||state.cursor<0||![-5,-3,-2,2,3,5].includes(delta)||typeof consume!=='function')return {ignored:true};
       const position=(state.cursor+delta%exercise.sequence.length+exercise.sequence.length)%exercise.sequence.length;
       if(position===state.cursor||!consume())return {ignored:true};
       return moveTo(position,`Мандала сместила маршрут на ${delta>0?'+':''}${delta}: позиция ${position+1}`);
@@ -1762,11 +1801,52 @@ const CHORDS=[
   ['maj7',[0,4,7,11]],['7',[0,4,7,10]],['7b9',[0,4,7,10,13]],['m7',[0,3,7,10]],['m7♭5',[0,3,6,10]],
   ['sus2',[0,2,7]],['sus4',[0,5,7]],['m9',[0,3,7,10,2]],['add9',[0,4,7,2]]
 ];
-const TOURS=Object.freeze([
+const DEFAULT_TOURS=Object.freeze([
   ['reharm','Reharm'],['anime','Anime'],['chill','Chill'],['ambient','Ambient'],['cinematic','Cinematic'],
-  ['deep-house','Deep House'],['funk','Funk'],['gospel','Gospel'],['drum-bass','Drum & Bass']
+  ['deep-house','Deep House'],['funk','Funk'],['gospel','Gospel'],['drum-bass','Drum & Bass'],['jazz-standards','Jazz Standards']
+]);
+// Routes already saved in the author's local Sound & Route Lab. Keep these in
+// the standalone catalog too: browser IndexedDB is origin-local and is not
+// copied by the release builder.
+const SAVED_CINEMATIC_ROUTES=Object.freeze([
+  {id:'cinematic-journeying',tour:'cinematic',number:'16',name:'Journeying',source:'Sound & Route Lab · Cinematic 16',baseTonic:0,manualSteps:[
+    [0,'6',[36,57,62,64,67],'C69'],[2,'m6',[38,53,57,59,64],'Dm69'],[0,'maj',[40,55,60,64,67],'C/E'],
+    [5,'maj7',[41,55,57,64,69],'Fmaj9'],[7,'maj',[43,60,62,67,71],'Gmaj add11'],[9,'m9',[45,59,60,64,67],'Am9'],
+    [2,'m7',[38,53,60,62,65],'Dm7'],[7,'6',[43,52,55,59,64],'Em/G']
+  ]},
+  {id:'cinematic-triumph',tour:'cinematic',number:'15',name:'Triumph',source:'Sound & Route Lab · Cinematic 15',baseTonic:9,manualSteps:[
+    [9,'m9',[45,67,71,72,76],'Am9'],[4,'m7',[40,64,67,71,74],'Em7'],[5,'maj7',[41,64,65,69,72],'Fmaj7'],
+    [2,'m9',[38,65,69,72,76],'Dm9'],[4,'m7',[40,64,67,69,74],'Em7'],[9,'m9',[43,65,69,71,76],'Am9/G'],
+    [9,'m7',[45,69,72,76,79],'Am7'],[7,'maj',[47,71,74,79,83],'G/B']
+  ]},
+  {id:'cinematic-suspense-04',tour:'cinematic',number:'04',name:'Cinematic Suspense 4',source:'Sound & Route Lab · Cinematic 04',baseTonic:9,manualSteps:[
+    [5,'m',[41,48,56],'Fm'],[8,'maj',[44,51,56,60],'A♭'],[10,'m9',[46,53,60,61],'B♭m9'],[10,'m',[46,53,58,61],'B♭m'],
+    [3,'maj',[39,46,51,55],'E♭'],[8,'sus2',[44,51,56,58],'A♭sus2'],[1,'maj',[37,44,53],'C♯'],[1,'maj',[49,53,56],'C♯']
+  ]},
+  {id:'cinematic-epic-13',tour:'cinematic',number:'13',name:'Cinematic epic',source:'Sound & Route Lab · Cinematic 13',baseTonic:7,manualSteps:[
+    [3,'maj7',[27,39,50,55,58],'E♭maj7'],[5,'maj',[29,41,48,53,57],'F'],[7,'m',[31,43,50,55,58],'Gm'],
+    [10,'maj',[34,46,53,58,62],'B♭'],[2,'m',[26,38,45,50,53],'Dm'],[0,'m',[24,36,43,48,51],'Cm'],
+    [5,'maj',[29,41,48,53,57],'F'],[7,'m',[31,43,50,55,58],'Gm'],[10,'maj',[34,46,53,58,62],'B♭']
+  ]}
 ]);
 const $=id=>document.getElementById(id),magnitude=db=>db<=-100?0:10**(db/20),median=values=>values.length?[...values].sort((a,b)=>a-b)[Math.floor(values.length/2)]:0;
+const MANDALA_COUNT=20;
+function gardenMandalaDataUri(seed=0){
+  const index=((Math.trunc(Number(seed)||0)%MANDALA_COUNT)+MANDALA_COUNT)%MANDALA_COUNT,palettes=[['#d5f3df','#8ee8d5','#f0d990'],['#d7d0ff','#91ddf0','#e9c9ee'],['#f4d7bd','#c5e9dc','#e3c5fa'],['#c6e7ff','#b9e7c1','#ffe4a6'],['#e2d3ff','#86dcd0','#f2d6e1']];
+  const [a,b,c]=palettes[index%palettes.length],petals=8+(index%7)*2,rings=3+index%4,rotation=(index*17)%360,parts=[];
+  parts.push(`<circle cx="128" cy="128" r="119" fill="#03191dcc" stroke="${b}" stroke-opacity=".42" stroke-width="1.4"/>`);
+  for(let ring=0;ring<rings;ring++){
+    const radius=25+ring*(80/rings),count=petals+(ring%2?petals:0),color=[a,b,c][ring%3],dash=ring%2?'1.2 3':'none';
+    parts.push(`<circle cx="128" cy="128" r="${radius.toFixed(1)}" fill="none" stroke="${color}" stroke-opacity="${(.22+ring*.045).toFixed(2)}" stroke-width="${ring===rings-1?1.5:1}" ${dash==='none'?'':`stroke-dasharray="${dash}"`}/>`);
+    for(let point=0;point<count;point++){
+      const angle=(Math.PI*2*point/count)+rotation*Math.PI/180+(ring%2)*Math.PI/count,x=128+Math.cos(angle)*radius,y=128+Math.sin(angle)*radius;
+      if(ring===0){const degrees=point*360/count+rotation;parts.push(`<ellipse cx="128" cy="${(128-radius/2).toFixed(2)}" rx="${(4+index%3).toFixed(1)}" ry="${(radius*.48).toFixed(1)}" transform="rotate(${degrees.toFixed(1)} 128 128)" fill="${color}" fill-opacity=".1" stroke="${color}" stroke-opacity=".58" stroke-width="1.1"/>`);}
+      parts.push(`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${ring===rings-1?1.9:1.25}" fill="${color}" fill-opacity=".78"/>`);
+    }
+  }
+  parts.push(`<circle cx="128" cy="128" r="18" fill="#0a2e36" fill-opacity=".85" stroke="${c}" stroke-opacity=".76" stroke-width="1.4"/><circle cx="128" cy="128" r="7" fill="${a}" fill-opacity=".82"/>`);
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">${parts.join('')}</svg>`)}`;
+}
 function chooseMime(){for(const type of ['audio/webm;codecs=opus','audio/mp4;codecs=mp4a.40.2','audio/webm','audio/mp4'])if(MediaRecorder?.isTypeSupported(type))return type;return '';}
 function recognizeChord(chroma,bassPc){
   const total=chroma.reduce((a,b)=>a+b,0)||1,normalized=chroma.map(value=>value/total);let best={score:-Infinity,root:0,quality:'maj'};
@@ -1785,8 +1865,9 @@ function stepFromMidi(notes){
   return {id:crypto.randomUUID(),degree:label,label,rootPc:found.root,quality:found.quality,notes:[...notes],voicingNote,bassMidi,duration:0,audio:null,mimeType:'',bassOffset:(bassPc-found.root+12)%12,bassPc};
 }
 function builtInRoute(spec){
-  const steps=spec.chords.map(stepFromMidi),baseRoot=steps[0]?.rootPc??0;
-  return {...spec,builtin:true,created:'2000-01-01T00:00:00.000Z',baseTonic:baseRoot,sequence:steps.map(step=>({...step,offset:(step.rootPc-baseRoot+12)%12,bassOffset:(step.bassPc-baseRoot+12)%12})),distractors:[]};
+  const steps=spec.manualSteps?spec.manualSteps.map(([rootPc,quality,notes,label])=>{const bassMidi=Math.min(...notes),bassPc=(bassMidi%12+12)%12;return {degree:label,label,rootPc,quality,notes:[...notes],bassMidi,bassPc};}):spec.chords.map(stepFromMidi),baseRoot=spec.baseTonic??steps[0]?.rootPc??0;
+  const {manualSteps,...metadata}=spec;
+  return {...metadata,builtin:true,created:'2000-01-01T00:00:00.000Z',baseTonic:baseRoot,sequence:steps.map(step=>({...step,offset:(step.rootPc-baseRoot+12)%12,bassOffset:(step.bassPc-baseRoot+12)%12})),distractors:[]};
 }
 const chordLabel=(chroma,bassPc)=>recognizeChord(chroma,bassPc).label;
 const qualityIntervals=quality=>CHORDS.find(([name])=>name===quality)?.[1]??[0,4,7];
@@ -1847,18 +1928,23 @@ function parseMidi(arrayBuffer){
   if(!chords.length)throw Error('не найдено одновременных групп нот');
   return {format,division,chords};
 }
-function openDatabase(){return new Promise((resolve,reject)=>{const request=indexedDB.open('echo-garden-studio',1);request.onupgradeneeded=()=>request.result.createObjectStore('routes',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
-async function databaseAction(mode,work){const db=await openDatabase();return new Promise((resolve,reject)=>{const tx=db.transaction('routes',mode),store=tx.objectStore('routes'),result=work(store);tx.oncomplete=()=>{db.close();resolve(result?.result)};tx.onerror=()=>{db.close();reject(tx.error);};});}
+function openDatabase(){return new Promise((resolve,reject)=>{const request=indexedDB.open('echo-garden-studio',2);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains('routes'))db.createObjectStore('routes',{keyPath:'id'});if(!db.objectStoreNames.contains('categories'))db.createObjectStore('categories',{keyPath:'id'});};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
+async function databaseAction(mode,work,storeName='routes'){const db=await openDatabase();return new Promise((resolve,reject)=>{const tx=db.transaction(storeName,mode),store=tx.objectStore(storeName),result=work(store);tx.oncomplete=()=>{db.close();resolve(result?.result)};tx.onerror=()=>{db.close();reject(tx.error);};});}
 
 class GardenSequenceStudio{
-  constructor({onUse,onOpen,onClose}={}){
-    this.onUse=onUse;this.onOpen=onOpen;this.onClose=onClose;this.steps=[];this.routes=[];this.capture=null;
+  constructor({onUse,onOpen,onClose,onCategories}={}){
+    this.onUse=onUse;this.onOpen=onOpen;this.onClose=onClose;this.onCategories=onCategories;this.steps=[];this.routes=[];this.categories=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true}));this.capture=null;
+    $('studio-category-form')?.addEventListener('submit',event=>{event.preventDefault();this.addCategory();});
     $('studio-add-step')?.addEventListener('click',()=>this.addManualStep());
     $('studio-import-audio')?.addEventListener('change',event=>{for(const file of event.target.files||[])this.addManualStep(file);event.target.value='';});
     $('studio-import-route')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(file)this.importRouteFile(file);event.target.value='';});
     this.renderSteps();this.refresh();
   }
-  async refresh(){const saved=await databaseAction('readonly',store=>store.getAll()).catch(()=>[]);saved.sort((a,b)=>b.created.localeCompare(a.created));this.routes=[...BUILTIN_TOUR_ROUTES.map(builtInRoute),...saved];this.renderLibrary();}
+  async refresh(){const [saved,categories]=await Promise.all([databaseAction('readonly',store=>store.getAll()).catch(()=>[]),databaseAction('readonly',store=>store.getAll(),'categories').catch(()=>[])]);saved.sort((a,b)=>b.created.localeCompare(a.created));const defaults=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true}));this.categories=[...defaults,...categories.filter(category=>!defaults.some(item=>item.id===category.id))];this.routes=[...BUILTIN_TOUR_ROUTES.map(builtInRoute),...SAVED_CINEMATIC_ROUTES.map(builtInRoute),...saved.filter(route=>!SAVED_CINEMATIC_ROUTES.some(item=>item.name===route.name&&item.tour===route.tour))];this.renderCategoryOptions();this.renderLibrary();this.onCategories?.(this.categories);}
+  renderCategoryOptions(selected=$('studio-tour')?.value){const select=$('studio-tour');if(!select)return;select.replaceChildren(...this.categories.map(category=>{const option=document.createElement('option');option.value=category.id;option.textContent=category.name;option.selected=category.id===selected;return option;}));}
+  async addCategory(){const input=$('studio-category-name'),status=$('studio-category-status'),name=input?.value.trim();if(!name){status.textContent='Введи название категории.';input?.focus();return;}if(this.categories.some(category=>category.name.toLocaleLowerCase()===name.toLocaleLowerCase())){status.textContent='Такая категория уже есть.';return;}
+    const used=new Set(this.categories.map(category=>category.mandalaSeed).filter(Number.isInteger)),customCount=this.categories.filter(category=>!category.builtin).length,mandalaSeed=Array.from({length:MANDALA_COUNT},(_,index)=>index).find(index=>!used.has(index))??(customCount+1)%MANDALA_COUNT,id=`custom-${crypto.randomUUID()}`,category={id,name,mandalaSeed,created:new Date().toISOString()};
+    await databaseAction('readwrite',store=>store.put(category),'categories');input.value='';status.textContent=`«${name}» добавлена · мандала ${String(mandalaSeed+1).padStart(2,'0')} из ${MANDALA_COUNT}.`;await this.refresh();this.renderCategoryOptions(id);}
   open(){this.onOpen?.();$('sequence-studio').hidden=false;$('studio-name').focus();this.refresh(); }
   close(){if(this.capture)this.stopCapture();$('sequence-studio').hidden=true;this.onClose?.();}
   async startCapture(){
@@ -1918,7 +2004,7 @@ class GardenSequenceStudio{
     // keyboard input before the seven-chord route begins on Fm7.
     const chordGroups=/^anime\s+3$/i.test(stem.trim())&&parsed.chords.length===9?parsed.chords.slice(2):parsed.chords;
     this.steps=chordGroups.map(stepFromMidi);
-    const match=stem.match(/^(.+?)\s+(\d+)$/);if(match){const folder=match[1].trim().toLowerCase().replace(/\s+tour$/,'');const option=[...$('studio-tour').options].find(item=>item.value===folder||item.textContent.toLowerCase()===`${folder} tour`);if(option)$('studio-tour').value=option.value;$('studio-number').value=String(Number(match[2])).padStart(2,'0');}
+    const match=stem.match(/^(.+?)\s+(\d+)$/);if(match){const folder=match[1].trim().toLowerCase().replace(/\s+tour$/,'');const option=[...$('studio-tour').options].find(item=>item.value===folder||item.textContent.toLowerCase()===folder||item.textContent.toLowerCase()===`${folder} tour`);if(option)$('studio-tour').value=option.value;$('studio-number').value=String(Number(match[2])).padStart(2,'0');}
     $('studio-name').value=stem;this.renderSteps();
   }
   async importMusicXml(file){
@@ -1949,13 +2035,13 @@ class GardenSequenceStudio{
   async save(){
     const name=$('studio-name').value.trim()||`Маршрут ${this.routes.length+1}`,number=$('studio-number').value.trim()||String(this.routes.length+1).padStart(2,'0'),tour=$('studio-tour')?.value||'reharm';
     const baseRoot=this.steps[0].rootPc;
-    const route={id:`user-${crypto.randomUUID()}`,name,number,tour,created:new Date().toISOString(),source:`${TOURS.find(([id])=>id===tour)?.[1]||'Reharm Tour'} · маршрут ${number}`,baseTonic:baseRoot,sequence:this.steps.map(step=>({...step,degree:step.label,offset:(step.rootPc-baseRoot+12)%12})),distractors:[]};
+    const route={id:`user-${crypto.randomUUID()}`,name,number,tour,created:new Date().toISOString(),source:`${this.categories.find(category=>category.id===tour)?.name||'Reharm'} · маршрут ${number}`,baseTonic:baseRoot,sequence:this.steps.map(step=>({...step,degree:step.label,offset:(step.rootPc-baseRoot+12)%12})),distractors:[]};
     await databaseAction('readwrite',store=>store.put(route));this.steps=[];this.renderSteps();$('studio-name').value='';$('studio-number').value='';await this.refresh();$('studio-error').textContent=`«${name}» сохранён.`;return route;
   }
   renderLibrary(){
-    $('studio-library').replaceChildren(...TOURS.map(([tourId,tourName])=>{
-      const folder=document.createElement('section');folder.className='library-folder';const routes=this.routes.filter(route=>(route.tour||'reharm')===tourId);
-      const heading=document.createElement('header');heading.innerHTML=`<strong>${tourName}</strong><span>${routes.length}</span>`;folder.append(heading);
+    $('studio-library').replaceChildren(...this.categories.map(category=>{
+      const folder=document.createElement('section');folder.className='library-folder';const routes=this.routes.filter(route=>(route.tour||'reharm')===category.id);
+      const heading=document.createElement('header');if(Number.isInteger(category.mandalaSeed)){const icon=document.createElement('img');icon.className='library-mandala';icon.alt='';icon.src=gardenMandalaDataUri(category.mandalaSeed);heading.append(icon);}const title=document.createElement('strong');title.textContent=category.name;const count=document.createElement('span');count.textContent=String(routes.length);heading.append(title,count);folder.append(heading);
       for(const route of routes){
         const row=document.createElement('article');row.className='library-route';
         const text=document.createElement('div');text.innerHTML=`<small>МАРШРУТ ${route.number}</small><strong>${route.name}</strong><span>${route.sequence.length} аккордов</span>`;
@@ -1968,10 +2054,10 @@ class GardenSequenceStudio{
   }
 }
 
-return {stepFromMidi,parseMidi,GardenSequenceStudio};
+return {SAVED_CINEMATIC_ROUTES,gardenMandalaDataUri,stepFromMidi,parseMidi,GardenSequenceStudio};
 })();
 const module_garden_life=(()=>{
-const {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower}=module_garden_arrangement;
+const {GARDEN_ARRANGEMENTS,chooseGardenArrangement,drawGardenArrangementFlower}=module_garden_arrangement;
 const clamp=(value,min=0,max=100)=>Math.min(max,Math.max(min,value));
 const modulo=(value,period)=>((value%period)+period)%period;
 
@@ -1981,8 +2067,8 @@ const GARDEN_RESOURCES=Object.freeze({
 });
 
 const GARDEN_ITEMS=Object.freeze({
-  restoration:{resource:'all',amount:100,restoration:true,sprite:null,label:'Колесо жизни · все запасы восстановлены',color:'#b8eee0',size:92,rare:true},
-  shield:{resource:'inventory',amount:1,shield:true,sprite:'cocoon-shield',label:'Кокон · защита от трёх ударов камней',color:'#cbded8',size:70,artifact:true,rare:true},
+  restoration:{resource:'all',amount:100,restoration:true,sprite:null,label:'Колесо жизни · все запасы восстановлены',color:'#b8eee0',size:64,rare:true},
+  shield:{resource:'inventory',amount:1,shield:true,sprite:null,label:'Космический кокон · автоматически защищает от трёх ударов камней',color:'#bce9ee',size:70,rare:true},
   ...Object.fromEntries(Object.entries(GARDEN_ARRANGEMENTS).map(([kind,spec])=>[kind,{...spec,resource:'arrangement',sprite:null,size:80,arrangement:true,label:spec.label}])),
   arrangementBoost:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:4,rounds:1},sprite:'hold-arpeggio-flower',visualFilter:'hue-rotate(72deg) saturate(.75) brightness(1.04)',label:'Аметист баса · оставить четверть вариантов · круг',color:'#a87aff',size:66,artifact:true,rare:true},
   fuel:{resource:'fuel',amount:10,sprite:'fuel-seed',label:'Энергетическое семя',color:'#e9b95e',size:68},
@@ -1996,7 +2082,7 @@ const GARDEN_ITEMS=Object.freeze({
   holdArpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:2,steps:3},sprite:'hold-arpeggio-flower',visualFilter:'hue-rotate(54deg) saturate(.50) brightness(.94)',label:'Сиреневая лоза · половина вариантов баса · 3 хода',color:'#d1b9ee',size:66,artifact:true,rare:true},
   midpoint:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:1},sprite:'root-flower',visualFilter:'saturate(.84) brightness(1.03)',label:'Янтарный бутон · оставить четверть вариантов аккорда · круг',color:'#d9ad72',size:66,artifact:true,rare:true},
   focusRare:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:2},sprite:'root-flower',visualFilter:'saturate(.94) brightness(1.10)',label:'Солнечный бутон · четверть вариантов аккорда · 2 круга',color:'#ecc285',size:68,artifact:true,rare:true},
-  ...Object.fromEntries([-7,-5,-3,3,5,7].map(delta=>[`jump${delta<0?'Back':'Forward'}${Math.abs(delta)}`,{resource:'inventory',amount:2,navigationDelta:delta,sprite:null,label:`Прыжок ${delta>0?'+':'−'}${Math.abs(delta)} · два заряда`,color:'#abe5d4',size:48,artifact:true}])),
+  ...Object.fromEntries([-5,-3,-2,2,3,5].map(delta=>[`jump${delta<0?'Back':'Forward'}${Math.abs(delta)}`,{resource:'inventory',amount:2,navigationDelta:delta,spawnWeight:Math.abs(delta)===2?2.2:Math.abs(delta)===3?1.8:.7,sprite:null,label:`Прыжок ${delta>0?'+':'−'}${Math.abs(delta)} · два заряда`,color:'#abe5d4',size:48,artifact:true}])),
   crater:{resource:'hull',amount:-6,sprite:'crater',label:'Удар о кратер',color:'#ff7b5f',size:126,harmful:true,ground:true,damage:6},
   stoneAsteroid:{resource:'hull',amount:-5,sprite:'meteor-volcanic',label:'Каменный астероид',color:'#a8a595',size:70,harmful:true,asteroid:true,damage:5},
   porousAsteroid:{resource:'hull',amount:-3,sprite:'crater',label:'Пористый астероид',color:'#7b8d83',size:52,harmful:true,asteroid:true,damage:3},
@@ -2017,22 +2103,44 @@ function drawGardenLifeWheel(ctx,size,time,phase=0){
     ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
     for(let i=0;i<count;i++){
       const a=i*Math.PI*2/count;ctx.save();ctx.rotate(a);
-      if(shape==='bead'){ctx.globalAlpha=alpha*(.55+.32*Math.sin(time*1.4+i*.5)**2);ctx.beginPath();ctx.arc(radius,0,size*.012,0,Math.PI*2);ctx.stroke();}
-      else if(shape==='tick'){ctx.beginPath();ctx.moveTo(radius-size*.015,0);ctx.lineTo(radius+size*.019,0);ctx.stroke();}
+      if(shape==='bead'){ctx.globalAlpha=alpha*(.55+.32*Math.sin(time*1.4+i*.5)**2);ctx.beginPath();ctx.arc(radius,0,size*.014,0,Math.PI*2);ctx.stroke();}
+      else if(shape==='tick'){const marker=i===0||i===Math.floor(count/3)||i===Math.floor(count*2/3);ctx.beginPath();ctx.moveTo(radius-size*(marker ? .024 : .018),0);ctx.lineTo(radius+size*(marker ? .034 : .023),0);ctx.stroke();if(marker){ctx.globalAlpha=alpha*.78;ctx.beginPath();ctx.arc(radius,0,size*.014,0,Math.PI*2);ctx.fill();}}
       else{ctx.beginPath();ctx.moveTo(radius-size*.05,0);ctx.bezierCurveTo(radius-size*.014,-size*.025,radius+size*.015,-size*.028,radius+size*.043,0);ctx.bezierCurveTo(radius+size*.014,size*.025,radius-size*.025,size*.024,radius-size*.05,0);ctx.stroke();}
       ctx.restore();
     }
     ctx.restore();
   };
   // Independently rotating circular linework, not one rotating painted disc.
-  orbit(size*.46,36,.16,colors[0],'tick');
-  orbit(size*.38,24,-.23,colors[1],'bead');
-  orbit(size*.29,12,.32,colors[2],'leaf');
-  orbit(size*.19,24,-.43,colors[0],'tick');
-  orbit(size*.10,12,.53,colors[3],'bead');
-  ctx.rotate(-time*.11+phase);ctx.strokeStyle=colors[2];ctx.globalAlpha=alpha*.38;ctx.lineWidth=Math.max(.6,size*.006);
+  orbit(size*.46,36,.38,colors[0],'tick');
+  orbit(size*.38,24,-.58,colors[1],'bead');
+  orbit(size*.29,12,.82,colors[2],'leaf');
+  orbit(size*.19,24,-1.08,colors[0],'tick');
+  orbit(size*.10,12,1.34,colors[3],'bead');
+  ctx.rotate(-time*.27+phase);ctx.strokeStyle=colors[2];ctx.globalAlpha=alpha*.48;ctx.lineWidth=Math.max(.6,size*.006);
   ctx.beginPath();for(let i=0;i<=96;i++){const a=i*Math.PI*2/96,r=size*(.425+Math.sin(a*12)*.012),x=Math.cos(a)*r,y=Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
   for(let lamp=0;lamp<4;lamp++){ctx.fillStyle=Object.values(GARDEN_RESOURCES)[lamp].color;ctx.globalAlpha=alpha*(.58+.25*Math.sin(time*2-lamp)**2);const a=lamp*Math.PI/2+time*.24;ctx.beginPath();ctx.arc(Math.cos(a)*size*.048,Math.sin(a)*size*.048,size*.014,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+}
+function drawGardenShieldBubble(ctx,size,time,phase=0,flash=0,hits=3){
+  const alpha=ctx.globalAlpha,r=size*.46,pulse=1+Math.sin(time*1.4+phase)*.025;
+  ctx.save();ctx.scale(pulse,pulse);ctx.lineCap='round';ctx.lineJoin='round';
+  const shell=ctx.createRadialGradient(-r*.3,-r*.36,r*.06,0,0,r);
+  shell.addColorStop(0,'rgba(222,250,255,.16)');shell.addColorStop(.44,'rgba(137,219,235,.045)');shell.addColorStop(.84,'rgba(122,178,229,.018)');shell.addColorStop(1,'rgba(194,237,241,.11)');
+  ctx.globalAlpha=alpha*(.72+flash*.16);ctx.fillStyle=shell;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+  const rim=ctx.createLinearGradient(-r,-r,r,r);rim.addColorStop(0,'rgba(224,250,255,.67)');rim.addColorStop(.24,'rgba(122,236,232,.38)');rim.addColorStop(.56,'rgba(169,171,238,.32)');rim.addColorStop(.82,'rgba(210,244,247,.55)');rim.addColorStop(1,'rgba(146,217,230,.26)');
+  ctx.strokeStyle=rim;ctx.globalAlpha=alpha*(.76+flash*.2);ctx.lineWidth=Math.max(.8,size*.012)+flash*.8;ctx.shadowColor='#83e8ef';ctx.shadowBlur=size*.13;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+  // A fine cosmic wake wraps the sphere; dotted motes make it feel in motion
+  // without reading as a heavy ring or a soap-film highlight.
+  for(let stream=0;stream<3;stream++){
+    const rotation=time*(stream===1?-.31:.22)+(stream-1)*2.1+phase;
+    ctx.save();ctx.rotate(rotation);ctx.strokeStyle=stream===1?'rgba(188,179,246,.46)':'rgba(127,238,228,.48)';ctx.lineWidth=Math.max(.55,size*.008);ctx.globalAlpha=alpha*(.46+flash*.2);
+    ctx.beginPath();ctx.ellipse(0,0,r*(.78+stream*.055),r*(.31+stream*.04),stream*.08,-.95,.97);ctx.stroke();
+    for(let mote=0;mote<4;mote++){const a=-.92+mote*.48+((time*.42+phase+stream*.19)%(Math.PI*.15)),x=Math.cos(a)*r*(.78+stream*.055),y=Math.sin(a)*r*(.31+stream*.04);ctx.globalAlpha=alpha*(.30+.48*Math.sin(time*2+mote+stream)**2);ctx.fillStyle=stream===1?'#dfd5ff':'#c8fff2';ctx.beginPath();ctx.arc(x,y,Math.max(.7,size*.014),0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  }
+  // A restrained inner crescent gives the transparent surface a readable edge.
+  ctx.strokeStyle='rgba(240,252,255,.43)';ctx.globalAlpha=alpha*.72;ctx.lineWidth=Math.max(.6,size*.007);ctx.beginPath();ctx.ellipse(-r*.08,-r*.06,r*.72,r*.86,-.34,3.95,5.15);ctx.stroke();
+  for(let mark=0;mark<Math.max(0,Math.min(3,hits));mark++){const a=-Math.PI/2+mark*Math.PI*2/3+time*.12;ctx.save();ctx.rotate(a);ctx.fillStyle='rgba(226,255,247,.78)';ctx.globalAlpha=alpha*(.48+.22*Math.sin(time*2+mark)**2);ctx.shadowColor='#a4fff1';ctx.shadowBlur=size*.07;ctx.beginPath();ctx.arc(r*.91,0,Math.max(1,size*.018),0,Math.PI*2);ctx.fill();ctx.restore();}
   ctx.restore();
 }
 function drawGardenAssistGlyph(ctx,item,size){
@@ -2063,7 +2171,7 @@ function drawGardenAssistGlyph(ctx,item,size){
 const weightedItem=(resources,random)=>{
   const entries=Object.entries(GARDEN_ITEMS).filter(([,item])=>!item.ground&&!item.storm&&!item.asteroid&&!item.pressure&&!item.arrangement&&!item.rare).map(([kind,item])=>{
     const value=resources[item.resource]??100,need=item.navigationDelta?.11:item.artifact?.22:item.harmful?.3:1+Math.max(0,76-value)/15+(value<30?4:0);
-    return {kind,weight:need};
+    return {kind,weight:need*(item.spawnWeight??1)};
   });
   let cursor=random()*entries.reduce((sum,item)=>sum+item.weight,0);
   return entries.find(item=>(cursor-=item.weight)<=0)?.kind??'water';
@@ -2084,7 +2192,7 @@ class GardenLife{
     this.restorationAppeared=false;this.restorationRescueChecked=false;
     this.shieldHits=0;this.shieldFlash=0;this.shieldFade=0;
     this.time=0;this.spawnClock=1.4;this.craterClock=3.4;this.asteroidClock=6.5;this.stormClock=8.5;this.gameOver=false;
-    this.arrangementClock=5;this.arrangementOrder=0;this.assistClock=30+this.random()*25;
+    this.arrangementClock=5;this.assistClock=30+this.random()*25;
     this.entities=[];this.effects=[];this.chips=[];this.event=null;this.eventAge=99;this.eventCounter=0;this.flightForce={x:0,y:0,intensity:0};this.impact=0;
     this.campIdle=0;this.campPressure=null;this.lastShip=null;this.critical=null;this.failureResource=null;
     this.resources={fuel:86,water:78,crew:92,hull:84};this.inventory=Object.fromEntries(Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact).map(([kind])=>[kind,0]));
@@ -2100,13 +2208,6 @@ class GardenLife{
   }
   getFlightForce(){return {...this.flightForce};}
   consumeArtifact(kind){if(!(kind in this.inventory)||this.inventory[kind]<1)return false;this.inventory[kind]-=1;return true;}
-  useShield(mission,kind='shield'){
-    const state=mission.snapshot();
-    if(!GARDEN_ITEMS[kind]?.shield||!state.running||state.complete||state.cursor<0||this.shieldHits>0||!this.consumeArtifact(kind))return {ignored:true};
-    this.shieldHits=3;this.shieldFlash=.15;this.shieldFade=1;
-    announce(this,{kind:'shield',item:{resource:'artifact',label:'Кокон раскрыт',color:GARDEN_ITEMS.shield.color},x:.5,y:.56});
-    return {shield:true,hits:3};
-  }
   useJump(mission,kind){
     const delta=GARDEN_ITEMS[kind]?.navigationDelta;
     if(!Number.isInteger(delta))return {ignored:true};
@@ -2156,9 +2257,10 @@ class GardenLife{
     if(item.fatal)this.gameOver=true;
     if(item.restoration){for(const resource of Object.keys(this.resources))this.resources[resource]=100;this.critical=null;this.failureResource=null;}
     else if(item.arrangement)this.onArrangement?.(entity.kind,entity.rounds);
+    else if(item.shield){this.shieldHits=3;this.shieldFlash=.15;this.shieldFade=1;}
     else if(item.artifact)this.inventory[entity.kind]=Math.min(99,(this.inventory[entity.kind]||0)+item.amount);
     else{this.resources[item.resource]=clamp(this.resources[item.resource]+item.amount);if(item.hullAmount)this.resources.hull=clamp(this.resources.hull+item.hullAmount);}
-    announce(this,entity);return true;
+    announce(this,item.shield?{...entity,item:{...item,resource:'artifact',label:'Космический кокон активирован · защита от трёх ударов',color:item.color}}:entity);return true;
   }
   asteroidImpact(entity,view,w,h){
     if(!entity||!entity.impactArmed||this.time-entity.lastDamage<2.5)return false;
@@ -2233,7 +2335,7 @@ class GardenLife{
       const pickup=this.forceSpawn(kind,{x:x+.075,y:y-.055,scale:.78,vy:.085,vx:0});pickup.x=x+.075;pickup.y=y-.055;
       this.assistClock=40+this.random()*35;
     }
-    if(this.arrangementClock<=0&&pickupCount<6){const styles=Object.keys(GARDEN_ARRANGEMENTS),kind=styles[this.arrangementOrder++%styles.length];this.forceSpawn(kind);this.arrangementClock=12+this.random()*8;}
+    if(this.arrangementClock<=0&&pickupCount<6){this.forceSpawn(chooseGardenArrangement(this.random));this.arrangementClock=28+this.random()*16;}
     if(this.spawnClock<=0&&pickupCount<6){this.forceSpawn(weightedItem(this.resources,this.random));this.spawnClock=4.7+this.random()*3.8;}
     if(this.craterClock<=0&&this.entities.filter(entity=>entity.item.ground).length<2){this.forceSpawn('crater');this.craterClock=16+this.random()*10;}
     if(this.asteroidClock<=0&&this.entities.filter(entity=>entity.item.asteroid).length<2){const roll=this.random(),kind=roll<.09?'lavaAsteroid':roll<.30?'crystalAsteroid':roll<.62?'porousAsteroid':'stoneAsteroid';this.forceSpawn(kind,{scale:kind==='lavaAsteroid'?.45+this.random()*.22:.58+this.random()*1.25,shapeSeed:this.random()});this.asteroidClock=11+this.random()*9;}
@@ -2291,11 +2393,15 @@ class GardenLife{
   draw(ctx,view={}){
     const w=Math.max(1,Number(view.width)||1),h=Math.max(1,Number(view.height)||1),night=Number(view.night)||0;ctx.save();ctx.globalCompositeOperation='source-over';
     if(this.shieldFade>0&&view.ship!==2){
+      // Keep the active protection as a restrained halo around the ship. The
+      // collectible is the small bubble below; this field must never dominate
+      // the flight scene or grow with the desktop viewport.
       const x=view.x??w*.5,y=view.y??h*.56,r=Math.min(190,Math.max(110,w*.22))*(view.ship===1?1.35:1)*.59,pulse=1+Math.sin(this.time*1.2)*.012;
       ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse*1.12);ctx.globalAlpha=this.shieldFade;
-      const skin=ctx.createRadialGradient(-r*.23,-r*.35,r*.05,0,0,r);skin.addColorStop(0,'rgba(216,234,245,.035)');skin.addColorStop(.78,'rgba(165,212,223,.006)');skin.addColorStop(1,`rgba(203,220,232,${.04+this.shieldFlash*.11})`);ctx.fillStyle=skin;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
-      const edge=ctx.createLinearGradient(-r,-r,r,r);edge.addColorStop(0,'rgba(221,232,240,.28)');edge.addColorStop(.28,'rgba(153,221,221,.1)');edge.addColorStop(.65,'rgba(205,178,218,.08)');edge.addColorStop(1,'rgba(240,228,189,.25)');ctx.strokeStyle=edge;ctx.lineWidth=.8+this.shieldFlash*.8;ctx.stroke();
-      ctx.strokeStyle='rgba(234,244,243,.17)';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(-r*.06,-r*.05,r*.85,3.6,4.8);ctx.stroke();
+      // No shell fill at all: only a hairline contour, so scenery and ship stay
+      // completely unobscured while the shield is active.
+      const edge=ctx.createLinearGradient(-r,-r,r,r);edge.addColorStop(0,'rgba(221,232,240,.30)');edge.addColorStop(.28,'rgba(153,221,221,.14)');edge.addColorStop(.65,'rgba(205,178,218,.12)');edge.addColorStop(1,'rgba(240,228,189,.28)');ctx.strokeStyle=edge;ctx.lineWidth=.65+this.shieldFlash*.45;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle='rgba(234,244,243,.16)';ctx.lineWidth=.55;ctx.beginPath();ctx.arc(-r*.06,-r*.05,r*.85,3.6,4.8);ctx.stroke();
       for(let petal=0;petal<this.shieldHits;petal++){const a=-Math.PI/2+petal*Math.PI*2/3;ctx.save();ctx.rotate(a);ctx.strokeStyle='rgba(219,232,208,.32)';ctx.beginPath();ctx.ellipse(r*.97,0,4,1.8,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
       ctx.restore();
     }
@@ -2307,6 +2413,7 @@ class GardenLife{
       if(entity.item.restoration){
         ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*1.8)*.84;drawGardenLifeWheel(ctx,size,entity.age,entity.phase);ctx.restore();continue;
       }
+      if(entity.item.shield){ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*2.4)*.88;drawGardenShieldBubble(ctx,size,entity.age,entity.phase,0,3);ctx.restore();continue;}
       if(entity.item.assist&&!entity.item.assist.reveal&&!entity.item.sprite){ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*2.4);drawGardenAssistGlyph(ctx,entity.item,size);ctx.restore();continue;}
       const image=this.images[entity.item.sprite],filterArtifact=entity.item.assist&&!entity.item.assist.reveal;ctx.save();ctx.translate(x,y);ctx.rotate(entity.item.navigationDelta?0:entity.item.assist?Math.sin(entity.age*.6+entity.phase)*.035:entity.angle);ctx.globalAlpha=Math.min(1,entity.age*2.4)*(filterArtifact?(entity.item.assist.divisor===4?.64:.50):entity.item.ground?.84:.92+night*.08);ctx.shadowColor=entity.item.color;ctx.shadowBlur=filterArtifact?2:entity.item.ground?4:(entity.item.harmful?8:13)+night*9;if(entity.item.visualFilter)ctx.filter=entity.item.visualFilter;if(entity.item.navigationDelta){const delta=entity.item.navigationDelta;ctx.fillStyle='#bde8da';ctx.font=`${Math.round(size*.44)}px Georgia`;ctx.textAlign='center';ctx.fillText(`${delta>0?'+':'−'}${Math.abs(delta)}`,0,size*.12);}else if(entity.item.arrangement)drawGardenArrangementFlower(ctx,entity.item,size,entity.rounds);else if(entity.item.asteroid&&image){if(entity.kind==='crystalAsteroid')ctx.filter='hue-rotate(100deg) saturate(1.3)';if(entity.kind==='lavaAsteroid'){ctx.filter='sepia(1) saturate(4) hue-rotate(-28deg)';ctx.shadowBlur=size*.34;}ctx.drawImage(image,-size/2,-size/2,size,size);}else if(entity.item.asteroid)this.drawAsteroid(ctx,entity,size);else if(image)ctx.drawImage(image,-size/2,-size/2,size,size);else{ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(0,0,size*.22,size*.34,0,0,Math.PI*2);ctx.fill();}ctx.restore();
       if(entity.item.asteroid&&!entity.item.fatal){ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(x,y,size*.36,size*.30,entity.angle,0,Math.PI*2);ctx.fill();ctx.restore();}
@@ -2326,7 +2433,7 @@ if(this.campPressure){const pressure=this.campPressure,x=pressure.x*w,y=pressure
 
 const createGardenLife=options=>new GardenLife(options);
 
-return {GARDEN_RESOURCES,GARDEN_ITEMS,drawGardenLifeWheel,drawGardenAssistGlyph,GardenLife,createGardenLife};
+return {GARDEN_RESOURCES,GARDEN_ITEMS,drawGardenLifeWheel,drawGardenShieldBubble,drawGardenAssistGlyph,GardenLife,createGardenLife};
 })();
 const module_garden_rewards=(()=>{
 // Short, bounded nature reactions. No music, scoring, or route mutation here.
@@ -2336,12 +2443,7 @@ function createGardenRewards({reduced=false,rng=Math.random}={}){
   function answer(result,kind,{x=.5,y=.4}={}){
     if(!result?.correct||result.ignored)return false;
     count++;lastKind=kind;
-    if(kind==='degree'){
-      vines.push({x,y,age:0,life:5.2,phase:rng()*Math.PI*2});vines=vines.slice(-4);
-      for(let i=0;i<(reduced?3:9);i++){const angle=rng()*Math.PI*2,spread=.025+rng()*.065;motes.push({x:x+Math.cos(angle)*spread,y:y+Math.sin(angle)*spread,age:0,life:3+rng(),phase:rng()*Math.PI*2,vx:(rng()-.5)*.01,vy:-.008});}
-    }
-    if(kind==='quality')blooms.push({x,y,age:0,life:3.4});
-    if(result.positionComplete||result.complete)waves.push({x,y,age:0,life:2.8});
+    if(kind==='degree'||kind==='quality')blooms.push({x,y,age:0,life:3.4,kind,phase:rng()*Math.PI*2});
     motes=motes.slice(-88);blooms=blooms.slice(-6);waves=waves.slice(-4);return true;
   }
   function step(dt,{ground=.0}={}){
@@ -2372,10 +2474,18 @@ function createGardenRewards({reduced=false,rng=Math.random}={}){
       ctx.fillStyle=light;ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
     }
     for(const p of blooms){
-      const fade=Math.min(1,p.age/.4,(p.life-p.age)/.8),open=reduced?1:Math.min(1,p.age/1.1),radius=Math.min(width,height)*.042;
-      ctx.save();ctx.translate(p.x*width,p.y*height);ctx.fillStyle=`rgba(124,255,211,${fade*.30})`;
-      for(let i=0;i<7;i++){ctx.save();ctx.rotate(i*Math.PI*2/7);ctx.beginPath();ctx.ellipse(0,-radius*open*.68,radius*.32,radius*open*.85,0,0,Math.PI*2);ctx.fill();ctx.restore();}
-      ctx.fillStyle=`rgba(255,244,167,${fade*.9})`;ctx.beginPath();ctx.arc(0,0,radius*.22,0,Math.PI*2);ctx.fill();ctx.restore();
+      const fade=Math.min(1,p.age/.25,(p.life-p.age)/.8),open=reduced?1:Math.min(1,p.age/.65),radius=Math.min(width,height)*.038,degree=p.kind==='degree',petals=degree?5:7;
+      ctx.save();ctx.translate(p.x*width,p.y*height);ctx.rotate(p.phase+(reduced?0:p.age*.14));
+      for(let i=0;i<petals;i++){
+        ctx.save();ctx.rotate(i*Math.PI*2/petals);
+        ctx.fillStyle=degree?`rgba(159,207,244,${fade*.42})`:`rgba(124,225,197,${fade*.38})`;
+        ctx.strokeStyle=degree?`rgba(218,239,255,${fade*.52})`:`rgba(208,250,227,${fade*.48})`;ctx.lineWidth=1;
+        ctx.beginPath();
+        if(degree){const length=radius*open*.82;ctx.moveTo(0,0);ctx.bezierCurveTo(-radius*.28,-length*.28,-radius*.20,-length*.78,0,-length);ctx.bezierCurveTo(radius*.20,-length*.78,radius*.28,-length*.28,0,0);}
+        else ctx.ellipse(0,-radius*open*.56,radius*.27,radius*open*.68,0,0,Math.PI*2);
+        ctx.fill();ctx.stroke();ctx.restore();
+      }
+      ctx.fillStyle=degree?`rgba(238,220,164,${fade*.8})`:`rgba(238,225,170,${fade*.82})`;ctx.beginPath();ctx.arc(0,0,radius*.15,0,Math.PI*2);ctx.fill();ctx.restore();
     }
     for(const p of waves){
       const fade=Math.sin(Math.PI*p.age/p.life),radius=Math.min(width,height)*(reduced?.12:.05+p.age*.07);
@@ -2383,7 +2493,7 @@ function createGardenRewards({reduced=false,rng=Math.random}={}){
     }
     ctx.restore();
   }
-  return {answer,step,draw,reset,snapshot:()=>({motes:motes.length,blooms:blooms.length,waves:waves.length,vines:vines.length,lastKind,count})};
+  return {answer,step,draw,reset,snapshot:()=>({motes:motes.length,blooms:blooms.length,flowerKinds:blooms.map(flower=>flower.kind),waves:waves.length,vines:vines.length,lastKind,count})};
 }
 
 return {createGardenRewards};
@@ -2417,7 +2527,7 @@ const module_garden_flight=(()=>{
 const {createGardenRenderer}=module_garden_flight_renderer;
 const {gardenBassOffset,gardenQualityAnswer,gardenQualityAnswerLabel,gardenAvailableAnswers,createGardenMission,GardenPad,gardenExercisesForChapter,gardenDegreeLabel,gardenQualityLabel,gardenChordLabel,gardenAnswerState,gardenCanonicalQuality,GARDEN_QUALITY_PALETTE,GARDEN_CORE_QUALITIES,gardenFilteredChoices}=module_garden_harmony;
 const {difficultyProfile,GARDEN_ADMISSION_ROUTES,gardenAdmissionState,recordGardenAdmission}=module_garden_difficulty;
-const {GardenSequenceStudio}=module_garden_sequence_studio;
+const {GardenSequenceStudio,gardenMandalaDataUri}=module_garden_sequence_studio;
 const {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS}=module_garden_life;
 const {createGardenRewards}=module_garden_rewards;
 const {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower}=module_garden_arrangement;
@@ -2446,14 +2556,14 @@ const wasTutorialDismissed=()=>{try{return localStorage.getItem(TUTORIAL_KEY)===
 let menuWasRunning=false,exitWasRunning=false;
 let difficulty='medium',tutorialStep=0,tutorialDismissed=wasTutorialDismissed(),tutorialActive=false;
 const FAVORITES_KEY='echo-garden-favorites.v1';
-const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],lastRouteId:saved.lastRouteId||'',admissionCompleted:Array.isArray(saved.admissionCompleted)?saved.admissionCompleted:[]};}catch{return {level:1,completed:[],lastRouteId:'',admissionCompleted:[]};}};
+const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],seenRouteIds:Array.isArray(saved.seenRouteIds)?saved.seenRouteIds:[],lastRouteId:saved.lastRouteId||'',admissionCompleted:Array.isArray(saved.admissionCompleted)?saved.admissionCompleted:[]};}catch{return {level:1,completed:[],seenRouteIds:[],lastRouteId:'',admissionCompleted:[]};}};
 const progress=loadProgress();
 const saveProgress=()=>{try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress));}catch{}}
 const loadFavorites=()=>{try{return new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]'));}catch{return new Set();}};
 const favorites=loadFavorites();
 const routeIdentity=route=>String(route?.id||`${route?.source||'route'}:${route?.name||''}`);
 const saveFavorites=()=>{try{localStorage.setItem(FAVORITES_KEY,JSON.stringify([...favorites]));navigator.storage?.persist?.();}catch{}};
-const TOUR_NAMES={reharm:'Reharmonization+',anime:'Anime',chill:'Chill',ambient:'Ambient',cinematic:'Cinematic','deep-house':'Deep House',funk:'Funk',gospel:'Gospel','drum-bass':'Drum & Bass',favorites:'Избранные полёты'};
+const TOUR_NAMES={reharm:'Reharmonization+',anime:'Anime',chill:'Chill',ambient:'Ambient',cinematic:'Cinematic','deep-house':'Deep House',funk:'Funk',gospel:'Gospel','drum-bass':'Drum & Bass','jazz-standards':'Jazz Standards',favorites:'Избранные полёты'};
 const routeTour=route=>route?.chapter?'reharm':route?.tour||'reharm';
 const DEGREE_NAMES=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
 const exerciseCode=(exercise,index)=>{
@@ -2556,10 +2666,10 @@ function renderMission(model){
   document.body.classList.toggle('infinity-active',Boolean(model.held));$('infinity-continue').hidden=!model.held||model.complete;$('infinity-continue').disabled=!model.running||s.paused;
   $('infinity-toggle').disabled=!model.running||model.complete||(!model.held&&(gardenLife.inventory.hold||0)<1);$('infinity-toggle').setAttribute('aria-pressed',String(model.held));$('infinity-status').textContent=model.held?`∞ Позиция ${model.cursor+1} · повтор до ответа`:'';const toolsSummary=document.querySelector('.flight-tools summary');if(toolsSummary){toolsSummary.classList.toggle('repeating',model.held);toolsSummary.setAttribute('aria-label',model.held?'Лотос: повтор включён — открыть управление':'Лотос: прыжки, повтор и подсказки');}
   const waitingForFinal=finalMissing&&model.running&&model.cursor>=0&&model.cursor!==finalMissing.index;
-  $('answer-feedback').textContent=model.complete?'Маршрут собран. Последовательность распознана.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?'Бас и аккорд — два независимых ответа':model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
+  $('answer-feedback').textContent=model.complete?'Маршрут собран · слушаем найденную гармонию дальше.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?'Бас и аккорд — два независимых ответа':model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
   const referenceName=String(model.reference.degree).replace(/^БАЗА\s*/, '');
-  $('mission-prompt').textContent=model.complete?`Все ${total} сигналов встроены в маршрут.`:model.running?(model.cursor<0?`Тоника ${referenceName} звучит один раз перед фигурой.`:waitingForFinal?`Ждём позицию ${finalMissing.index+1} — там остался ${finalMissing.kind}.`:solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':currentParts.degree?'Бас есть. Найди аккорд.':currentParts.quality?'Аккорд есть. Найди бас.':'Определи две части текущего аккорда.'):'Тоника известна. Запусти последовательность.';
-  $('mission-toggle').textContent=model.running?'Ⅱ':'▶';$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Запустить полёт и музыку');$('mission-restart').hidden=!model.complete;
+  $('mission-prompt').textContent=model.complete?`Все ${total} аккордов найдены. Подсвечены звучащий аккорд и его ступень.`:model.running?(model.cursor<0?`Тоника ${referenceName} звучит один раз перед фигурой.`:waitingForFinal?`Ждём позицию ${finalMissing.index+1} — там остался ${finalMissing.kind}.`:solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':currentParts.degree?'Бас есть. Найди аккорд.':currentParts.quality?'Аккорд есть. Найди бас.':'Определи две части текущего аккорда.'):'Тоника известна. Запусти последовательность.';
+  $('mission-toggle').textContent=model.running?'Ⅱ':'▶';$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Продолжить полёт и музыку');$('mission-restart').hidden=true;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
 function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
@@ -2572,16 +2682,25 @@ function renderGardenRouteList(){
   if(!routes.length){const empty=document.createElement('p');empty.className='garden-route-empty';empty.textContent=s.tour==='favorites'?'Нажми ♡ возле текущего маршрута — он появится здесь для точного повторного полёта.':'В этом туре пока нет последовательностей. Их можно добавить в Sound & Route Lab.';list.append(empty);}
   $('reharm-chapters').hidden=difficulty==='light'||s.tour!=='reharm';
 }
+function renderTourCategories(categories){
+  const orbit=$('tour-orbit');if(!orbit)return;
+  for(const category of categories)TOUR_NAMES[category.id]=category.name;
+  const buttons=categories.map((category,index)=>{const button=document.createElement('button');button.dataset.tour=category.id;button.style.setProperty('--i',String(index));button.setAttribute('aria-label',category.name);button.setAttribute('aria-pressed',String(category.id===s.tour));button.classList.toggle('selected',category.id===s.tour);const image=document.createElement('img');image.alt='';image.src=Number.isInteger(category.mandalaSeed)?gardenMandalaDataUri(category.mandalaSeed):`assets/echo-garden/tours/${category.id}.webp`;button.append(image);button.addEventListener('click',()=>selectTour(category.id,category.name));return button;});
+  const favoritesButton=document.createElement('button');favoritesButton.dataset.tour='favorites';favoritesButton.style.setProperty('--i',String(categories.length));favoritesButton.className='favorite-tour';favoritesButton.setAttribute('aria-label','Избранные полёты');favoritesButton.setAttribute('aria-pressed',String(s.tour==='favorites'));favoritesButton.classList.toggle('selected',s.tour==='favorites');favoritesButton.innerHTML='<span aria-hidden="true">♥</span>';favoritesButton.addEventListener('click',()=>selectTour('favorites','Избранные полёты'));buttons.push(favoritesButton);
+  orbit.style.setProperty('--tour-count',String(buttons.length));orbit.replaceChildren(...buttons);for(const button of buttons){button.disabled=difficulty==='light'&&button.dataset.tour!=='reharm';}
+  renderGardenRouteList();
+}
+function selectTour(id,name){s.tour=id;for(const item of document.querySelectorAll('[data-tour]')){const selected=item.dataset.tour===id;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}$('mandala-tour-name').textContent=name||TOUR_NAMES[id]||id;studio?.refresh().then(renderGardenRouteList);renderGardenRouteList();}
 function selectChapter(chapter=1,{bind=false}={}){s.chapter=difficulty==='light'?1:clamp(Number(chapter)||1,1,16);activeExercises=difficulty==='light'?GARDEN_ADMISSION_ROUTES:gardenExercisesForChapter(s.chapter);$('mandala-chapter').textContent=String(s.chapter).padStart(2,'0');$('exercise-select').replaceChildren(...activeExercises.map((exercise,index)=>{const option=document.createElement('option');option.value=exercise.id;option.textContent=exerciseCode(exercise,index);return option;}));if(bind&&activeExercises[0])bindMission(activeExercises[0]);for(const button of document.querySelectorAll('[data-chapter]')){const selected=Number(button.dataset.chapter)===s.chapter;button.classList.toggle('selected',selected);button.disabled=difficulty==='light';button.setAttribute('aria-pressed',String(selected));}renderGardenRouteList();}
 selectChapter(1,{bind:true});
 studio=new GardenSequenceStudio({
   onUse:route=>{queuedStudioRoute=route;},
   onOpen:()=>{studioPauseState=Boolean(mission?.snapshot().running);mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;ui();},
+  onCategories:renderTourCategories,
   onClose:()=>{if(queuedStudioRoute){const route=queuedStudioRoute;queuedStudioRoute=null;launchRoute(route);}else{if(studioPauseState){s.paused=false;mission?.start();}ui();}}
 });
 $('exercise-select').addEventListener('change',event=>bindMission(activeExercises.find(exercise=>exercise.id===event.target.value)));
 for(let chapter=1;chapter<=16;chapter++){const button=document.createElement('button');button.dataset.chapter=String(chapter);button.textContent=String(chapter).padStart(2,'0');button.setAttribute('aria-label',`Глава ${chapter}`);button.addEventListener('click',()=>selectChapter(chapter));$('chapter-orbit').append(button);}selectChapter(1);
-for(const button of document.querySelectorAll('[data-tour]'))button.addEventListener('click',async()=>{s.tour=button.dataset.tour;for(const item of document.querySelectorAll('[data-tour]')){const selected=item===button;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}$('mandala-tour-name').textContent=button.getAttribute('aria-label')||s.tour;await studio?.refresh();renderGardenRouteList();});
 $('route-favorite').addEventListener('click',()=>{if(!currentRoute)return;const id=routeIdentity(currentRoute);favorites.has(id)?favorites.delete(id):favorites.add(id);saveFavorites();renderMission(mission.snapshot());if(s.tour==='favorites')renderGardenRouteList();});
 for(const button of document.querySelectorAll('[data-mode]'))button.addEventListener('click',()=>{s.mode=button.dataset.mode;for(const item of document.querySelectorAll('[data-mode]')){const selected=item===button;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}});
 function updateProgressCard(){
@@ -2590,7 +2709,7 @@ function updateProgressCard(){
   $('garden-completed').textContent=`${progress.completed.length} ${progress.completed.length===1?'маршрут пройден':'маршрутов пройдено'}`;
 }
 function showGardenStart(state='menu'){
-  mission?.pause();pad.stop(true);s.paused=true;keys.clear();tutorialActive=false;$('flight-tutorial').hidden=true;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));document.querySelector('.flight-tools')?.removeAttribute('open');document.body.classList.remove('tutorial-open');setGardenMenu(false,{resume:false});$('game-over').hidden=true;
+  mission?.pause();pad.stop(true);s.paused=true;keys.clear();tutorialActive=false;$('flight-tutorial').hidden=true;$('mission-complete').hidden=true;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));document.querySelector('.flight-tools')?.removeAttribute('open');document.body.classList.remove('tutorial-open');setGardenMenu(false,{resume:false});$('game-over').hidden=true;
   document.body.classList.add('start-open');$('garden-start').hidden=false;
   $('start-title').textContent=state==='complete'?'Уровень пройден':'Сад Эха';
   $('start-note').textContent=state==='complete'?`Маршрут «${routeTitle(currentRoute)}» собран. Сад открыл следующий уровень.`:'Сад усложняет маршруты постепенно и запоминает пройденные уровни.';
@@ -2611,7 +2730,7 @@ const tutorialSteps=[
  ['Опасности','#world','Камни повреждают корабль; оттенок указывает пострадавшую пробирку. Кратер и смерч опасны при сближении. Красное смертельное ядро завершает полёт при столкновении — его нельзя ловить. В режиме «Абитуриент» смертельные ядра отключены.'],
  ['Лотос управления','.flight-tools summary','Этот лотос раскрывает повтор, прыжки и подсказки. Нажатие вне меню закрывает его. Сейчас мы раскрываем его для обзора, ничего не активируя.'],
  ['Бесконечный повтор','#infinity-toggle','Поймай зелёный лотос со знаком ∞, затем активируй его в меню лотоса. Один заряд удерживает звучащий аккорд без ограничения по кругам. Правильный ответ по любой одной части сразу переключает на следующую позицию. Для выхода без ответа нажми отдельную пульсирующую кнопку «Лететь дальше» слева. Это не пауза: корабль летит, запасы расходуются.'],
- ['Прыжки','#jump-charges','Цифры −7, −5, −3, +3, +5, +7 сдвигают позицию в цепочке. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. Пустая кнопка не работает. В режиме «Абитуриент» прыжки отключены.'],
+ ['Прыжки','#jump-charges','Цифры −5, −3, −2, +2, +3 и +5 сдвигают позицию в цепочке. Небольшие прыжки попадаются чаще. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. В режиме «Абитуриент» прыжки отключены.'],
  ['Цветок открытия','#assist-charges','Переливчатый синий цветок сразу открывает и басовую ступень, и аккорд текущей позиции. Если одна часть уже найдена, откроется другая. Если найдены обе, заряд не тратится. Сначала поймай цветок кораблём, затем нажми в меню лотоса.'],
  ['Семя и корневая спираль','#assist-charges','Семя скрывает неправильные аккорды; корневая спираль — неправильные басовые ступени. Оттенок показывает силу: бледные убирают примерно половину вариантов на 3–5 ходов, насыщенные оставляют четверть на круг, самое редкое семя действует два круга. Правильная кнопка остаётся на привычном месте.'],
  ['Цветы аранжировки','#world-controls','Цветы добавляют бас или арпеджио на один, два или три круга. Партия вступает со следующего аккорда. Бас и арпеджио можно сочетать. Каталог с объяснениями цветов и настройкой пробного цветка находится в основных настройках, а не в лотосе.'],
@@ -2648,40 +2767,44 @@ $('tutorial-next').addEventListener('click',()=>{if(tutorialStep===tutorialSteps
 $('tutorial-back').addEventListener('click',()=>{tutorialStep=Math.max(0,tutorialStep-1);renderTutorial(mission.snapshot());});
 $('tutorial-close').addEventListener('click',finishTutorial);
 function allBookRoutes(maxChapter=16){const routes=[];for(let chapter=1;chapter<=maxChapter;chapter++)for(const route of gardenExercisesForChapter(chapter))routes.push(route);return routes;}
-async function randomGardenRoute(){
-  if(difficulty==='light'){launchRoute(gardenAdmissionState(progress).next);return;}
+async function randomGardenRoute({unseenOnly=false}={}){
+  if(difficulty==='light'){const admission=gardenAdmissionState(progress);if(admission.next)launchRoute(admission.next);else $('mission-complete-copy').textContent='Абитуриентский маршрут завершён. Переключись на «Студент», чтобы открыть новые полёты.';return;}
   await studio.refresh();
   const unlockedChapter=Math.min(16,1+Math.floor((progress.level-1)/2)),maxLength=Math.min(18,4+Math.floor((progress.level-1)/2));
   const book=allBookRoutes(unlockedChapter),tour=(studio.routes||[]).filter(route=>route.sequence.length<=maxLength);
   const profile=difficultyProfile(difficulty),eligible=difficulty==='light'?allBookRoutes(profile.maxChapter).filter(route=>route.sequence.length<=profile.maxLength):difficulty==='hard'?[...allBookRoutes(),...tour].filter(route=>route.sequence.length>=8):[...book,...tour];
-  let pool=eligible.filter(route=>route.id!==progress.lastRouteId);if(!pool.length)pool=eligible;
+  let pool=eligible.filter(route=>route.id!==progress.lastRouteId);if(unseenOnly)pool=pool.filter(route=>!progress.seenRouteIds.includes(routeIdentity(route)));
+  if(unseenOnly&&!pool.length){pool=eligible.filter(route=>routeIdentity(route)!==routeIdentity(currentRoute));if(!pool.length){$('mission-complete-copy').textContent='Все доступные маршруты уже пройдены. Полёт и музыка продолжаются; выбери другой тур через меню маршрутов.';$('mission-next-route').disabled=true;return;}$('mission-complete-copy').textContent='Новых маршрутов на этом уровне больше нет. Продолжаем другим маршрутом, не начиная текущий заново.';$('mission-next-route').textContent='✦ Следующий маршрут';}
+  else if(unseenOnly){$('mission-complete-copy').textContent=`«${routeTitle(currentRoute)}» завершён. Музыка продолжает идти по уже разгаданной цепочке, пока ты не выберешь следующий маршрут.`;$('mission-next-route').textContent='✦ Следующий маршрут';}
+  if(!pool.length)pool=eligible;
   const route=pool[Math.floor(Math.random()*pool.length)]||gardenExercisesForChapter(1)[0];
   launchRoute(route);
 }
 async function launchRoute(route){
   if(!route)return;
   if(difficulty==='light'&&!GARDEN_ADMISSION_ROUTES.some(item=>item.id===route.id))return;
+  const id=routeIdentity(route);if(!progress.seenRouteIds.includes(id)){progress.seenRouteIds.push(id);saveProgress();}
   gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
-  hideGardenStart();setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);
+  hideGardenStart();$('mission-complete').hidden=true;setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);
   try{await pad.unlock();s.paused=false;mission.start();world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}catch(error){$('answer-feedback').textContent=error.message;s.paused=false;ui();}
 }
 function completeGardenLevel(){
-  completionHandled=true;s.paused=true;pad.stop(true);
+  completionHandled=true;s.paused=false;
   const id=currentRoute?.id||`${currentRoute?.source||'route'}:${currentRoute?.name||''}`;
-  if(id&&!progress.completed.includes(id))progress.completed.push(id);progress.lastRouteId=id;progress.level+=1;
+  const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
-  showGardenStart('complete');
+  $('mission-complete-copy').textContent=`«${routeTitle(currentRoute)}» завершён. Уже разгаданные аккорды и ступени продолжают звучать по кругу; текущая позиция подсвечена.`;$('mission-next-route').disabled=false;$('mission-next-route').textContent='✓ Завершено · следующий маршрут →';$('mission-complete').hidden=false;
   if(enrolled){$('enrollment').hidden=false;$('enrollment-student').focus({preventScroll:true});}
 }
 async function retryCurrentMission(){
-  if(!currentRoute)return;hideGardenStart();$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(currentRoute);
+  if(!currentRoute)return;$('mission-complete').hidden=true;hideGardenStart();$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(currentRoute);
   try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}
 }
 function chooseState(index){
   index=clamp(Math.trunc(index),0,3);s.growth=index;s.from=s.to=index;s.visit=0;
   ui();
 }
-function pause(){s.paused=!s.paused;keys.clear();if(s.paused){mission?.pause();pad.stop(true);}else if(!mission?.snapshot().complete)mission?.start();ui();}
+function pause(){s.paused=!s.paused;keys.clear();if(s.paused){mission?.pause();pad.stop(true);}else mission?.start();ui();}
 function clean(value){s.clean=value;document.body.classList.toggle('clean',value);$('restore').hidden=!value;(value?$('restore'):$('clean')).focus();}
 function light(mode){s.lightMode=mode;if(mode==='cycle')s.cycle=Math.acos(clamp(1-2*s.night,-1,1))*180/Math.PI;if(s.paused||reduced)s.night=mode==='night'?1:mode==='dusk'?.48:mode==='day'?0:s.night;ui();}
 for(const b of document.querySelectorAll('[data-ship]'))b.addEventListener('click',()=>{s.ship=Number(b.dataset.ship);ui();});
@@ -2703,6 +2826,8 @@ $('exit-cancel').addEventListener('click',()=>closeExitConfirmation(true));
 $('exit-accept').addEventListener('click',()=>{closeExitConfirmation(false);showGardenStart();});
 $('start-random').addEventListener('click',randomGardenRoute);
 $('start-choose').addEventListener('click',async()=>{hideGardenStart();await studio.refresh();renderGardenRouteList();setGardenMenu(true);});
+$('mission-next-route').addEventListener('click',()=>randomGardenRoute({unseenOnly:true}));
+$('mission-to-menu').addEventListener('click',()=>showGardenStart());
 $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){s.paused=true;keys.clear();mission.pause({preserveHold:true});pad.stop(true);ui();return;}try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
@@ -2718,7 +2843,7 @@ const flightTools=document.createElement('details'),flightToolsSummary=document.
 flightTools.open=false;
 flightTools.className='flight-tools';flightToolsSummary.innerHTML='<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 31C9 26 9 15 20 7C31 15 31 26 20 31Z"/><path d="M20 31C8 31 3 22 5 14C14 15 20 22 20 31ZM20 31C32 31 37 22 35 14C26 15 20 22 20 31Z"/><path d="M20 31C10 36 3 29 2 24C10 23 16 25 20 31ZM20 31C30 36 37 29 38 24C30 23 24 25 20 31Z"/></g></svg><span class="lotus-repeat" aria-hidden="true">∞</span>';flightToolsSummary.setAttribute('aria-label','Лотос: прыжки, повтор и подсказки');flightToolsBody.className='flight-tools-body';
 flightToolsBody.append($('jump-charges'),document.querySelector('.route-practice'),$('assist-charges'),$('assist-status'));flightTools.append(flightToolsSummary,flightToolsBody);document.body.append(flightTools);$('artifact-belt').hidden=true;
-document.addEventListener('click',async event=>{const button=event.target.closest('[data-use-artifact]');if(!button||button.disabled||s.paused||!mission?.snapshot().running)return;const kind=button.dataset.useArtifact;if(GARDEN_ITEMS[kind].repeat){try{await pad.unlock();if(!s.paused)gardenLife.useRepeat(mission,kind);}catch(error){$('answer-feedback').textContent=`Не удалось включить повтор: ${error.message}`;}}else if(GARDEN_ITEMS[kind].shield)gardenLife.useShield(mission,kind);else if(GARDEN_ITEMS[kind].navigationDelta)gardenLife.useJump(mission,kind);else{const result=gardenLife.useAssist(mission,kind);if(result.correct&&!result.ignored){gardenRewards.answer(result,'quality',{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(true,{kind:'quality',complete:result.positionComplete}).catch(()=>{});}}renderVitals();});
+document.addEventListener('click',async event=>{const button=event.target.closest('[data-use-artifact]');if(!button||button.disabled||s.paused||!mission?.snapshot().running)return;const kind=button.dataset.useArtifact;if(GARDEN_ITEMS[kind].repeat){try{await pad.unlock();if(!s.paused)gardenLife.useRepeat(mission,kind);}catch(error){$('answer-feedback').textContent=`Не удалось включить повтор: ${error.message}`;}}else if(GARDEN_ITEMS[kind].navigationDelta)gardenLife.useJump(mission,kind);else{const result=gardenLife.useAssist(mission,kind);if(result.correct&&!result.ignored){gardenRewards.answer(result,'quality',{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(true,{kind:'quality',complete:result.positionComplete}).catch(()=>{});}}renderVitals();});
 $('infinity-continue').addEventListener('click',async()=>{if(s.paused||!mission.snapshot().running)return;try{await pad.unlock();mission.continue();flightTools.open=false;renderVitals();}catch(error){$('answer-feedback').textContent=`Не удалось продолжить: ${error.message}`;}});
 $('infinity-toggle').addEventListener('click',async()=>{try{await pad.unlock();const result=gardenLife.useRepeat(mission);if(result.ignored){$('answer-feedback').textContent='Сначала поймай лотос бесконечности';return;}flightTools.open=false;renderVitals();}catch(error){$('answer-feedback').textContent=`Не удалось включить звук: ${error.message}`;}});
 document.addEventListener('pointerdown',event=>{if(flightTools.open&&!flightTools.contains(event.target))flightTools.open=false;},true);
@@ -2731,6 +2856,8 @@ $('flower-guide-close').addEventListener('click',()=>{flowerSettings.open=false;
 $('flower-guide-list').replaceChildren(...Object.entries(GARDEN_ARRANGEMENTS).map(([style,spec])=>{const item=document.createElement('article'),canvas=document.createElement('canvas');canvas.width=canvas.height=72;const icon=canvas.getContext('2d');icon.translate(36,36);drawGardenArrangementFlower(icon,spec,66,2);const copy=document.createElement('p');copy.textContent=`${spec.label} — ${spec.detail}`;const button=document.createElement('button');button.textContent='Вырастить на пути';button.setAttribute('aria-label',`Вырастить: ${spec.label}`);button.addEventListener('click',()=>{if(!mission.snapshot().running){$('flower-guide-note').textContent='Сначала запусти музыкальный полёт.';return;}if(gardenLife.entities.some(entity=>entity.item.arrangement&&!entity.collected)){ $('flower-guide-note').textContent='Цветок уже летит. Поймай его или пропусти.';return;}gardenLife.forceSpawn(style,{x:tx,y:Math.max(.06,ty-.30),rounds:Number($('flower-rounds').value),vx:0});flowerSettings.open=false;setGardenMenu(false);});item.append(canvas,copy,button);return item;}));
 $('artifact-belt').addEventListener('click',event=>{if(event.target.closest('[data-use-artifact]')&&(s.paused||!mission.snapshot().running))event.stopImmediatePropagation();},true);
 for(const button of document.querySelectorAll('[data-pad]'))button.addEventListener('click',()=>{pad.applyPreset(button.dataset.pad);for(const item of document.querySelectorAll('[data-pad]'))item.setAttribute('aria-pressed',String(item===button));});
+const audioTuning=[['garden-volume','smc-garden-volume',value=>{pad.setMasterVolume(value/100);return `${value}%`;},120],['garden-eq-low','smc-garden-eq-low',value=>{pad.setEqualizer('low',value);return `${value} dB`;},0],['garden-eq-mid','smc-garden-eq-mid',value=>{pad.setEqualizer('mid',value);return `${value} dB`;},0],['garden-eq-high','smc-garden-eq-high',value=>{pad.setEqualizer('high',value);return `${value} dB`;},0]];
+for(const [id,key,apply,fallback] of audioTuning){const control=$(id),output=document.querySelector(`output[for="${id}"]`);let saved=Number(localStorage.getItem(key));if(!Number.isFinite(saved)||saved<Number(control.min)||saved>Number(control.max))saved=fallback;control.value=String(saved);const update=()=>{const value=Number(control.value);output.textContent=apply(value);localStorage.setItem(key,String(value));};control.addEventListener('input',update);update();}
 $('speed').addEventListener('input',e=>{s.speed=Number(e.target.value);$('speed-value').value=s.speed.toFixed(1)+'×';});
 $('altitude').addEventListener('input',e=>{s.altitude=Number(e.target.value);$('altitude-value').value=s.altitude.toFixed(2);s.worldSize=Math.max(s.width*.86,s.height*.95)/s.altitude;});
 function move(x,y){tx=clamp(x/s.width,.1,.9);ty=clamp(y/s.height,.2,.78);$('gesture').classList.add('dismissed');}
@@ -2766,7 +2893,7 @@ function update(dt){
   s.angle+=(clamp(dx/s.width,-.3,.3)-s.angle)*(1-Math.exp(-dt*4));
   s.pan+=((s.x/s.width-.5)*.13-s.pan)*(1-Math.exp(-dt));
   const missionState=mission?.snapshot();
-  gardenLife.update(dt,{...s,routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
+  if(!missionState?.complete)gardenLife.update(dt,{...s,routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
   const lifeState=gardenLife.snapshot();
   if(lifeState.gameOver&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').hidden=false;}
   const shake=lifeState.impact||0,shakeX=Math.sin(s.time*83)*shake*7,shakeY=Math.cos(s.time*71)*shake*5;

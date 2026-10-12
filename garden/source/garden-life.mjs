@@ -1,4 +1,4 @@
-import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
+import {GARDEN_ARRANGEMENTS,chooseGardenArrangement,drawGardenArrangementFlower} from './garden-arrangement.mjs';
 const clamp=(value,min=0,max=100)=>Math.min(max,Math.max(min,value));
 const modulo=(value,period)=>((value%period)+period)%period;
 
@@ -8,8 +8,8 @@ export const GARDEN_RESOURCES=Object.freeze({
 });
 
 export const GARDEN_ITEMS=Object.freeze({
-  restoration:{resource:'all',amount:100,restoration:true,sprite:null,label:'Колесо жизни · все запасы восстановлены',color:'#b8eee0',size:92,rare:true},
-  shield:{resource:'inventory',amount:1,shield:true,sprite:'cocoon-shield',label:'Кокон · защита от трёх ударов камней',color:'#cbded8',size:70,artifact:true,rare:true},
+  restoration:{resource:'all',amount:100,restoration:true,sprite:null,label:'Колесо жизни · все запасы восстановлены',color:'#b8eee0',size:64,rare:true},
+  shield:{resource:'inventory',amount:1,shield:true,sprite:null,label:'Космический кокон · автоматически защищает от трёх ударов камней',color:'#bce9ee',size:70,rare:true},
   ...Object.fromEntries(Object.entries(GARDEN_ARRANGEMENTS).map(([kind,spec])=>[kind,{...spec,resource:'arrangement',sprite:null,size:80,arrangement:true,label:spec.label}])),
   arrangementBoost:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:4,rounds:1},sprite:'hold-arpeggio-flower',visualFilter:'hue-rotate(72deg) saturate(.75) brightness(1.04)',label:'Аметист баса · оставить четверть вариантов · круг',color:'#a87aff',size:66,artifact:true,rare:true},
   fuel:{resource:'fuel',amount:10,sprite:'fuel-seed',label:'Энергетическое семя',color:'#e9b95e',size:68},
@@ -23,7 +23,7 @@ export const GARDEN_ITEMS=Object.freeze({
   holdArpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:2,steps:3},sprite:'hold-arpeggio-flower',visualFilter:'hue-rotate(54deg) saturate(.50) brightness(.94)',label:'Сиреневая лоза · половина вариантов баса · 3 хода',color:'#d1b9ee',size:66,artifact:true,rare:true},
   midpoint:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:1},sprite:'root-flower',visualFilter:'saturate(.84) brightness(1.03)',label:'Янтарный бутон · оставить четверть вариантов аккорда · круг',color:'#d9ad72',size:66,artifact:true,rare:true},
   focusRare:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:2},sprite:'root-flower',visualFilter:'saturate(.94) brightness(1.10)',label:'Солнечный бутон · четверть вариантов аккорда · 2 круга',color:'#ecc285',size:68,artifact:true,rare:true},
-  ...Object.fromEntries([-7,-5,-3,3,5,7].map(delta=>[`jump${delta<0?'Back':'Forward'}${Math.abs(delta)}`,{resource:'inventory',amount:2,navigationDelta:delta,sprite:null,label:`Прыжок ${delta>0?'+':'−'}${Math.abs(delta)} · два заряда`,color:'#abe5d4',size:48,artifact:true}])),
+  ...Object.fromEntries([-5,-3,-2,2,3,5].map(delta=>[`jump${delta<0?'Back':'Forward'}${Math.abs(delta)}`,{resource:'inventory',amount:2,navigationDelta:delta,spawnWeight:Math.abs(delta)===2?2.2:Math.abs(delta)===3?1.8:.7,sprite:null,label:`Прыжок ${delta>0?'+':'−'}${Math.abs(delta)} · два заряда`,color:'#abe5d4',size:48,artifact:true}])),
   crater:{resource:'hull',amount:-6,sprite:'crater',label:'Удар о кратер',color:'#ff7b5f',size:126,harmful:true,ground:true,damage:6},
   stoneAsteroid:{resource:'hull',amount:-5,sprite:'meteor-volcanic',label:'Каменный астероид',color:'#a8a595',size:70,harmful:true,asteroid:true,damage:5},
   porousAsteroid:{resource:'hull',amount:-3,sprite:'crater',label:'Пористый астероид',color:'#7b8d83',size:52,harmful:true,asteroid:true,damage:3},
@@ -44,22 +44,44 @@ export function drawGardenLifeWheel(ctx,size,time,phase=0){
     ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
     for(let i=0;i<count;i++){
       const a=i*Math.PI*2/count;ctx.save();ctx.rotate(a);
-      if(shape==='bead'){ctx.globalAlpha=alpha*(.55+.32*Math.sin(time*1.4+i*.5)**2);ctx.beginPath();ctx.arc(radius,0,size*.012,0,Math.PI*2);ctx.stroke();}
-      else if(shape==='tick'){ctx.beginPath();ctx.moveTo(radius-size*.015,0);ctx.lineTo(radius+size*.019,0);ctx.stroke();}
+      if(shape==='bead'){ctx.globalAlpha=alpha*(.55+.32*Math.sin(time*1.4+i*.5)**2);ctx.beginPath();ctx.arc(radius,0,size*.014,0,Math.PI*2);ctx.stroke();}
+      else if(shape==='tick'){const marker=i===0||i===Math.floor(count/3)||i===Math.floor(count*2/3);ctx.beginPath();ctx.moveTo(radius-size*(marker ? .024 : .018),0);ctx.lineTo(radius+size*(marker ? .034 : .023),0);ctx.stroke();if(marker){ctx.globalAlpha=alpha*.78;ctx.beginPath();ctx.arc(radius,0,size*.014,0,Math.PI*2);ctx.fill();}}
       else{ctx.beginPath();ctx.moveTo(radius-size*.05,0);ctx.bezierCurveTo(radius-size*.014,-size*.025,radius+size*.015,-size*.028,radius+size*.043,0);ctx.bezierCurveTo(radius+size*.014,size*.025,radius-size*.025,size*.024,radius-size*.05,0);ctx.stroke();}
       ctx.restore();
     }
     ctx.restore();
   };
   // Independently rotating circular linework, not one rotating painted disc.
-  orbit(size*.46,36,.16,colors[0],'tick');
-  orbit(size*.38,24,-.23,colors[1],'bead');
-  orbit(size*.29,12,.32,colors[2],'leaf');
-  orbit(size*.19,24,-.43,colors[0],'tick');
-  orbit(size*.10,12,.53,colors[3],'bead');
-  ctx.rotate(-time*.11+phase);ctx.strokeStyle=colors[2];ctx.globalAlpha=alpha*.38;ctx.lineWidth=Math.max(.6,size*.006);
+  orbit(size*.46,36,.38,colors[0],'tick');
+  orbit(size*.38,24,-.58,colors[1],'bead');
+  orbit(size*.29,12,.82,colors[2],'leaf');
+  orbit(size*.19,24,-1.08,colors[0],'tick');
+  orbit(size*.10,12,1.34,colors[3],'bead');
+  ctx.rotate(-time*.27+phase);ctx.strokeStyle=colors[2];ctx.globalAlpha=alpha*.48;ctx.lineWidth=Math.max(.6,size*.006);
   ctx.beginPath();for(let i=0;i<=96;i++){const a=i*Math.PI*2/96,r=size*(.425+Math.sin(a*12)*.012),x=Math.cos(a)*r,y=Math.sin(a)*r;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
   for(let lamp=0;lamp<4;lamp++){ctx.fillStyle=Object.values(GARDEN_RESOURCES)[lamp].color;ctx.globalAlpha=alpha*(.58+.25*Math.sin(time*2-lamp)**2);const a=lamp*Math.PI/2+time*.24;ctx.beginPath();ctx.arc(Math.cos(a)*size*.048,Math.sin(a)*size*.048,size*.014,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+}
+export function drawGardenShieldBubble(ctx,size,time,phase=0,flash=0,hits=3){
+  const alpha=ctx.globalAlpha,r=size*.46,pulse=1+Math.sin(time*1.4+phase)*.025;
+  ctx.save();ctx.scale(pulse,pulse);ctx.lineCap='round';ctx.lineJoin='round';
+  const shell=ctx.createRadialGradient(-r*.3,-r*.36,r*.06,0,0,r);
+  shell.addColorStop(0,'rgba(222,250,255,.16)');shell.addColorStop(.44,'rgba(137,219,235,.045)');shell.addColorStop(.84,'rgba(122,178,229,.018)');shell.addColorStop(1,'rgba(194,237,241,.11)');
+  ctx.globalAlpha=alpha*(.72+flash*.16);ctx.fillStyle=shell;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+  const rim=ctx.createLinearGradient(-r,-r,r,r);rim.addColorStop(0,'rgba(224,250,255,.67)');rim.addColorStop(.24,'rgba(122,236,232,.38)');rim.addColorStop(.56,'rgba(169,171,238,.32)');rim.addColorStop(.82,'rgba(210,244,247,.55)');rim.addColorStop(1,'rgba(146,217,230,.26)');
+  ctx.strokeStyle=rim;ctx.globalAlpha=alpha*(.76+flash*.2);ctx.lineWidth=Math.max(.8,size*.012)+flash*.8;ctx.shadowColor='#83e8ef';ctx.shadowBlur=size*.13;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+  // A fine cosmic wake wraps the sphere; dotted motes make it feel in motion
+  // without reading as a heavy ring or a soap-film highlight.
+  for(let stream=0;stream<3;stream++){
+    const rotation=time*(stream===1?-.31:.22)+(stream-1)*2.1+phase;
+    ctx.save();ctx.rotate(rotation);ctx.strokeStyle=stream===1?'rgba(188,179,246,.46)':'rgba(127,238,228,.48)';ctx.lineWidth=Math.max(.55,size*.008);ctx.globalAlpha=alpha*(.46+flash*.2);
+    ctx.beginPath();ctx.ellipse(0,0,r*(.78+stream*.055),r*(.31+stream*.04),stream*.08,-.95,.97);ctx.stroke();
+    for(let mote=0;mote<4;mote++){const a=-.92+mote*.48+((time*.42+phase+stream*.19)%(Math.PI*.15)),x=Math.cos(a)*r*(.78+stream*.055),y=Math.sin(a)*r*(.31+stream*.04);ctx.globalAlpha=alpha*(.30+.48*Math.sin(time*2+mote+stream)**2);ctx.fillStyle=stream===1?'#dfd5ff':'#c8fff2';ctx.beginPath();ctx.arc(x,y,Math.max(.7,size*.014),0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  }
+  // A restrained inner crescent gives the transparent surface a readable edge.
+  ctx.strokeStyle='rgba(240,252,255,.43)';ctx.globalAlpha=alpha*.72;ctx.lineWidth=Math.max(.6,size*.007);ctx.beginPath();ctx.ellipse(-r*.08,-r*.06,r*.72,r*.86,-.34,3.95,5.15);ctx.stroke();
+  for(let mark=0;mark<Math.max(0,Math.min(3,hits));mark++){const a=-Math.PI/2+mark*Math.PI*2/3+time*.12;ctx.save();ctx.rotate(a);ctx.fillStyle='rgba(226,255,247,.78)';ctx.globalAlpha=alpha*(.48+.22*Math.sin(time*2+mark)**2);ctx.shadowColor='#a4fff1';ctx.shadowBlur=size*.07;ctx.beginPath();ctx.arc(r*.91,0,Math.max(1,size*.018),0,Math.PI*2);ctx.fill();ctx.restore();}
   ctx.restore();
 }
 export function drawGardenAssistGlyph(ctx,item,size){
@@ -90,7 +112,7 @@ export function drawGardenAssistGlyph(ctx,item,size){
 const weightedItem=(resources,random)=>{
   const entries=Object.entries(GARDEN_ITEMS).filter(([,item])=>!item.ground&&!item.storm&&!item.asteroid&&!item.pressure&&!item.arrangement&&!item.rare).map(([kind,item])=>{
     const value=resources[item.resource]??100,need=item.navigationDelta?.11:item.artifact?.22:item.harmful?.3:1+Math.max(0,76-value)/15+(value<30?4:0);
-    return {kind,weight:need};
+    return {kind,weight:need*(item.spawnWeight??1)};
   });
   let cursor=random()*entries.reduce((sum,item)=>sum+item.weight,0);
   return entries.find(item=>(cursor-=item.weight)<=0)?.kind??'water';
@@ -111,7 +133,7 @@ export class GardenLife{
     this.restorationAppeared=false;this.restorationRescueChecked=false;
     this.shieldHits=0;this.shieldFlash=0;this.shieldFade=0;
     this.time=0;this.spawnClock=1.4;this.craterClock=3.4;this.asteroidClock=6.5;this.stormClock=8.5;this.gameOver=false;
-    this.arrangementClock=5;this.arrangementOrder=0;this.assistClock=30+this.random()*25;
+    this.arrangementClock=5;this.assistClock=30+this.random()*25;
     this.entities=[];this.effects=[];this.chips=[];this.event=null;this.eventAge=99;this.eventCounter=0;this.flightForce={x:0,y:0,intensity:0};this.impact=0;
     this.campIdle=0;this.campPressure=null;this.lastShip=null;this.critical=null;this.failureResource=null;
     this.resources={fuel:86,water:78,crew:92,hull:84};this.inventory=Object.fromEntries(Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact).map(([kind])=>[kind,0]));
@@ -127,13 +149,6 @@ export class GardenLife{
   }
   getFlightForce(){return {...this.flightForce};}
   consumeArtifact(kind){if(!(kind in this.inventory)||this.inventory[kind]<1)return false;this.inventory[kind]-=1;return true;}
-  useShield(mission,kind='shield'){
-    const state=mission.snapshot();
-    if(!GARDEN_ITEMS[kind]?.shield||!state.running||state.complete||state.cursor<0||this.shieldHits>0||!this.consumeArtifact(kind))return {ignored:true};
-    this.shieldHits=3;this.shieldFlash=.15;this.shieldFade=1;
-    announce(this,{kind:'shield',item:{resource:'artifact',label:'Кокон раскрыт',color:GARDEN_ITEMS.shield.color},x:.5,y:.56});
-    return {shield:true,hits:3};
-  }
   useJump(mission,kind){
     const delta=GARDEN_ITEMS[kind]?.navigationDelta;
     if(!Number.isInteger(delta))return {ignored:true};
@@ -183,9 +198,10 @@ export class GardenLife{
     if(item.fatal)this.gameOver=true;
     if(item.restoration){for(const resource of Object.keys(this.resources))this.resources[resource]=100;this.critical=null;this.failureResource=null;}
     else if(item.arrangement)this.onArrangement?.(entity.kind,entity.rounds);
+    else if(item.shield){this.shieldHits=3;this.shieldFlash=.15;this.shieldFade=1;}
     else if(item.artifact)this.inventory[entity.kind]=Math.min(99,(this.inventory[entity.kind]||0)+item.amount);
     else{this.resources[item.resource]=clamp(this.resources[item.resource]+item.amount);if(item.hullAmount)this.resources.hull=clamp(this.resources.hull+item.hullAmount);}
-    announce(this,entity);return true;
+    announce(this,item.shield?{...entity,item:{...item,resource:'artifact',label:'Космический кокон активирован · защита от трёх ударов',color:item.color}}:entity);return true;
   }
   asteroidImpact(entity,view,w,h){
     if(!entity||!entity.impactArmed||this.time-entity.lastDamage<2.5)return false;
@@ -260,7 +276,7 @@ export class GardenLife{
       const pickup=this.forceSpawn(kind,{x:x+.075,y:y-.055,scale:.78,vy:.085,vx:0});pickup.x=x+.075;pickup.y=y-.055;
       this.assistClock=40+this.random()*35;
     }
-    if(this.arrangementClock<=0&&pickupCount<6){const styles=Object.keys(GARDEN_ARRANGEMENTS),kind=styles[this.arrangementOrder++%styles.length];this.forceSpawn(kind);this.arrangementClock=12+this.random()*8;}
+    if(this.arrangementClock<=0&&pickupCount<6){this.forceSpawn(chooseGardenArrangement(this.random));this.arrangementClock=28+this.random()*16;}
     if(this.spawnClock<=0&&pickupCount<6){this.forceSpawn(weightedItem(this.resources,this.random));this.spawnClock=4.7+this.random()*3.8;}
     if(this.craterClock<=0&&this.entities.filter(entity=>entity.item.ground).length<2){this.forceSpawn('crater');this.craterClock=16+this.random()*10;}
     if(this.asteroidClock<=0&&this.entities.filter(entity=>entity.item.asteroid).length<2){const roll=this.random(),kind=roll<.09?'lavaAsteroid':roll<.30?'crystalAsteroid':roll<.62?'porousAsteroid':'stoneAsteroid';this.forceSpawn(kind,{scale:kind==='lavaAsteroid'?.45+this.random()*.22:.58+this.random()*1.25,shapeSeed:this.random()});this.asteroidClock=11+this.random()*9;}
@@ -318,11 +334,15 @@ export class GardenLife{
   draw(ctx,view={}){
     const w=Math.max(1,Number(view.width)||1),h=Math.max(1,Number(view.height)||1),night=Number(view.night)||0;ctx.save();ctx.globalCompositeOperation='source-over';
     if(this.shieldFade>0&&view.ship!==2){
+      // Keep the active protection as a restrained halo around the ship. The
+      // collectible is the small bubble below; this field must never dominate
+      // the flight scene or grow with the desktop viewport.
       const x=view.x??w*.5,y=view.y??h*.56,r=Math.min(190,Math.max(110,w*.22))*(view.ship===1?1.35:1)*.59,pulse=1+Math.sin(this.time*1.2)*.012;
       ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse*1.12);ctx.globalAlpha=this.shieldFade;
-      const skin=ctx.createRadialGradient(-r*.23,-r*.35,r*.05,0,0,r);skin.addColorStop(0,'rgba(216,234,245,.035)');skin.addColorStop(.78,'rgba(165,212,223,.006)');skin.addColorStop(1,`rgba(203,220,232,${.04+this.shieldFlash*.11})`);ctx.fillStyle=skin;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
-      const edge=ctx.createLinearGradient(-r,-r,r,r);edge.addColorStop(0,'rgba(221,232,240,.28)');edge.addColorStop(.28,'rgba(153,221,221,.1)');edge.addColorStop(.65,'rgba(205,178,218,.08)');edge.addColorStop(1,'rgba(240,228,189,.25)');ctx.strokeStyle=edge;ctx.lineWidth=.8+this.shieldFlash*.8;ctx.stroke();
-      ctx.strokeStyle='rgba(234,244,243,.17)';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(-r*.06,-r*.05,r*.85,3.6,4.8);ctx.stroke();
+      // No shell fill at all: only a hairline contour, so scenery and ship stay
+      // completely unobscured while the shield is active.
+      const edge=ctx.createLinearGradient(-r,-r,r,r);edge.addColorStop(0,'rgba(221,232,240,.30)');edge.addColorStop(.28,'rgba(153,221,221,.14)');edge.addColorStop(.65,'rgba(205,178,218,.12)');edge.addColorStop(1,'rgba(240,228,189,.28)');ctx.strokeStyle=edge;ctx.lineWidth=.65+this.shieldFlash*.45;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle='rgba(234,244,243,.16)';ctx.lineWidth=.55;ctx.beginPath();ctx.arc(-r*.06,-r*.05,r*.85,3.6,4.8);ctx.stroke();
       for(let petal=0;petal<this.shieldHits;petal++){const a=-Math.PI/2+petal*Math.PI*2/3;ctx.save();ctx.rotate(a);ctx.strokeStyle='rgba(219,232,208,.32)';ctx.beginPath();ctx.ellipse(r*.97,0,4,1.8,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
       ctx.restore();
     }
@@ -334,6 +354,7 @@ export class GardenLife{
       if(entity.item.restoration){
         ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*1.8)*.84;drawGardenLifeWheel(ctx,size,entity.age,entity.phase);ctx.restore();continue;
       }
+      if(entity.item.shield){ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*2.4)*.88;drawGardenShieldBubble(ctx,size,entity.age,entity.phase,0,3);ctx.restore();continue;}
       if(entity.item.assist&&!entity.item.assist.reveal&&!entity.item.sprite){ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*2.4);drawGardenAssistGlyph(ctx,entity.item,size);ctx.restore();continue;}
       const image=this.images[entity.item.sprite],filterArtifact=entity.item.assist&&!entity.item.assist.reveal;ctx.save();ctx.translate(x,y);ctx.rotate(entity.item.navigationDelta?0:entity.item.assist?Math.sin(entity.age*.6+entity.phase)*.035:entity.angle);ctx.globalAlpha=Math.min(1,entity.age*2.4)*(filterArtifact?(entity.item.assist.divisor===4?.64:.50):entity.item.ground?.84:.92+night*.08);ctx.shadowColor=entity.item.color;ctx.shadowBlur=filterArtifact?2:entity.item.ground?4:(entity.item.harmful?8:13)+night*9;if(entity.item.visualFilter)ctx.filter=entity.item.visualFilter;if(entity.item.navigationDelta){const delta=entity.item.navigationDelta;ctx.fillStyle='#bde8da';ctx.font=`${Math.round(size*.44)}px Georgia`;ctx.textAlign='center';ctx.fillText(`${delta>0?'+':'−'}${Math.abs(delta)}`,0,size*.12);}else if(entity.item.arrangement)drawGardenArrangementFlower(ctx,entity.item,size,entity.rounds);else if(entity.item.asteroid&&image){if(entity.kind==='crystalAsteroid')ctx.filter='hue-rotate(100deg) saturate(1.3)';if(entity.kind==='lavaAsteroid'){ctx.filter='sepia(1) saturate(4) hue-rotate(-28deg)';ctx.shadowBlur=size*.34;}ctx.drawImage(image,-size/2,-size/2,size,size);}else if(entity.item.asteroid)this.drawAsteroid(ctx,entity,size);else if(image)ctx.drawImage(image,-size/2,-size/2,size,size);else{ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(0,0,size*.22,size*.34,0,0,Math.PI*2);ctx.fill();}ctx.restore();
       if(entity.item.asteroid&&!entity.item.fatal){ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(x,y,size*.36,size*.30,entity.angle,0,Math.PI*2);ctx.fill();ctx.restore();}

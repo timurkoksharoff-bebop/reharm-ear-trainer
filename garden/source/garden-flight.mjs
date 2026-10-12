@@ -1,7 +1,7 @@
 import {createGardenRenderer} from './garden-flight-renderer.mjs';
 import {gardenBassOffset,gardenQualityAnswer,gardenQualityAnswerLabel,gardenAvailableAnswers,createGardenMission,GardenPad,gardenExercisesForChapter,gardenDegreeLabel,gardenQualityLabel,gardenChordLabel,gardenAnswerState,gardenCanonicalQuality,GARDEN_QUALITY_PALETTE,GARDEN_CORE_QUALITIES,gardenFilteredChoices} from './garden-harmony.mjs';
 import {difficultyProfile,GARDEN_ADMISSION_ROUTES,gardenAdmissionState,recordGardenAdmission} from './garden-difficulty.mjs';
-import {GardenSequenceStudio} from './garden-sequence-studio.mjs';
+import {GardenSequenceStudio,gardenMandalaDataUri} from './garden-sequence-studio.mjs';
 import {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS} from './garden-life.mjs';
 import {createGardenRewards} from './garden-rewards.mjs';
 import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
@@ -30,14 +30,14 @@ const wasTutorialDismissed=()=>{try{return localStorage.getItem(TUTORIAL_KEY)===
 let menuWasRunning=false,exitWasRunning=false;
 let difficulty='medium',tutorialStep=0,tutorialDismissed=wasTutorialDismissed(),tutorialActive=false;
 const FAVORITES_KEY='echo-garden-favorites.v1';
-const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],lastRouteId:saved.lastRouteId||'',admissionCompleted:Array.isArray(saved.admissionCompleted)?saved.admissionCompleted:[]};}catch{return {level:1,completed:[],lastRouteId:'',admissionCompleted:[]};}};
+const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],seenRouteIds:Array.isArray(saved.seenRouteIds)?saved.seenRouteIds:[],lastRouteId:saved.lastRouteId||'',admissionCompleted:Array.isArray(saved.admissionCompleted)?saved.admissionCompleted:[]};}catch{return {level:1,completed:[],seenRouteIds:[],lastRouteId:'',admissionCompleted:[]};}};
 const progress=loadProgress();
 const saveProgress=()=>{try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(progress));}catch{}}
 const loadFavorites=()=>{try{return new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]'));}catch{return new Set();}};
 const favorites=loadFavorites();
 const routeIdentity=route=>String(route?.id||`${route?.source||'route'}:${route?.name||''}`);
 const saveFavorites=()=>{try{localStorage.setItem(FAVORITES_KEY,JSON.stringify([...favorites]));navigator.storage?.persist?.();}catch{}};
-const TOUR_NAMES={reharm:'Reharmonization+',anime:'Anime',chill:'Chill',ambient:'Ambient',cinematic:'Cinematic','deep-house':'Deep House',funk:'Funk',gospel:'Gospel','drum-bass':'Drum & Bass',favorites:'Избранные полёты'};
+const TOUR_NAMES={reharm:'Reharmonization+',anime:'Anime',chill:'Chill',ambient:'Ambient',cinematic:'Cinematic','deep-house':'Deep House',funk:'Funk',gospel:'Gospel','drum-bass':'Drum & Bass','jazz-standards':'Jazz Standards',favorites:'Избранные полёты'};
 const routeTour=route=>route?.chapter?'reharm':route?.tour||'reharm';
 const DEGREE_NAMES=['I','♭II','II','♭III','III','IV','♯IV','V','♭VI','VI','♭VII','VII'];
 const exerciseCode=(exercise,index)=>{
@@ -140,10 +140,10 @@ function renderMission(model){
   document.body.classList.toggle('infinity-active',Boolean(model.held));$('infinity-continue').hidden=!model.held||model.complete;$('infinity-continue').disabled=!model.running||s.paused;
   $('infinity-toggle').disabled=!model.running||model.complete||(!model.held&&(gardenLife.inventory.hold||0)<1);$('infinity-toggle').setAttribute('aria-pressed',String(model.held));$('infinity-status').textContent=model.held?`∞ Позиция ${model.cursor+1} · повтор до ответа`:'';const toolsSummary=document.querySelector('.flight-tools summary');if(toolsSummary){toolsSummary.classList.toggle('repeating',model.held);toolsSummary.setAttribute('aria-label',model.held?'Лотос: повтор включён — открыть управление':'Лотос: прыжки, повтор и подсказки');}
   const waitingForFinal=finalMissing&&model.running&&model.cursor>=0&&model.cursor!==finalMissing.index;
-  $('answer-feedback').textContent=model.complete?'Маршрут собран. Последовательность распознана.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?'Бас и аккорд — два независимых ответа':model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
+  $('answer-feedback').textContent=model.complete?'Маршрут собран · слушаем найденную гармонию дальше.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?'Бас и аккорд — два независимых ответа':model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
   const referenceName=String(model.reference.degree).replace(/^БАЗА\s*/, '');
-  $('mission-prompt').textContent=model.complete?`Все ${total} сигналов встроены в маршрут.`:model.running?(model.cursor<0?`Тоника ${referenceName} звучит один раз перед фигурой.`:waitingForFinal?`Ждём позицию ${finalMissing.index+1} — там остался ${finalMissing.kind}.`:solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':currentParts.degree?'Бас есть. Найди аккорд.':currentParts.quality?'Аккорд есть. Найди бас.':'Определи две части текущего аккорда.'):'Тоника известна. Запусти последовательность.';
-  $('mission-toggle').textContent=model.running?'Ⅱ':'▶';$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Запустить полёт и музыку');$('mission-restart').hidden=!model.complete;
+  $('mission-prompt').textContent=model.complete?`Все ${total} аккордов найдены. Подсвечены звучащий аккорд и его ступень.`:model.running?(model.cursor<0?`Тоника ${referenceName} звучит один раз перед фигурой.`:waitingForFinal?`Ждём позицию ${finalMissing.index+1} — там остался ${finalMissing.kind}.`:solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':currentParts.degree?'Бас есть. Найди аккорд.':currentParts.quality?'Аккорд есть. Найди бас.':'Определи две части текущего аккорда.'):'Тоника известна. Запусти последовательность.';
+  $('mission-toggle').textContent=model.running?'Ⅱ':'▶';$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Продолжить полёт и музыку');$('mission-restart').hidden=true;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
 function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
@@ -156,16 +156,25 @@ function renderGardenRouteList(){
   if(!routes.length){const empty=document.createElement('p');empty.className='garden-route-empty';empty.textContent=s.tour==='favorites'?'Нажми ♡ возле текущего маршрута — он появится здесь для точного повторного полёта.':'В этом туре пока нет последовательностей. Их можно добавить в Sound & Route Lab.';list.append(empty);}
   $('reharm-chapters').hidden=difficulty==='light'||s.tour!=='reharm';
 }
+function renderTourCategories(categories){
+  const orbit=$('tour-orbit');if(!orbit)return;
+  for(const category of categories)TOUR_NAMES[category.id]=category.name;
+  const buttons=categories.map((category,index)=>{const button=document.createElement('button');button.dataset.tour=category.id;button.style.setProperty('--i',String(index));button.setAttribute('aria-label',category.name);button.setAttribute('aria-pressed',String(category.id===s.tour));button.classList.toggle('selected',category.id===s.tour);const image=document.createElement('img');image.alt='';image.src=Number.isInteger(category.mandalaSeed)?gardenMandalaDataUri(category.mandalaSeed):`assets/echo-garden/tours/${category.id}.webp`;button.append(image);button.addEventListener('click',()=>selectTour(category.id,category.name));return button;});
+  const favoritesButton=document.createElement('button');favoritesButton.dataset.tour='favorites';favoritesButton.style.setProperty('--i',String(categories.length));favoritesButton.className='favorite-tour';favoritesButton.setAttribute('aria-label','Избранные полёты');favoritesButton.setAttribute('aria-pressed',String(s.tour==='favorites'));favoritesButton.classList.toggle('selected',s.tour==='favorites');favoritesButton.innerHTML='<span aria-hidden="true">♥</span>';favoritesButton.addEventListener('click',()=>selectTour('favorites','Избранные полёты'));buttons.push(favoritesButton);
+  orbit.style.setProperty('--tour-count',String(buttons.length));orbit.replaceChildren(...buttons);for(const button of buttons){button.disabled=difficulty==='light'&&button.dataset.tour!=='reharm';}
+  renderGardenRouteList();
+}
+function selectTour(id,name){s.tour=id;for(const item of document.querySelectorAll('[data-tour]')){const selected=item.dataset.tour===id;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}$('mandala-tour-name').textContent=name||TOUR_NAMES[id]||id;studio?.refresh().then(renderGardenRouteList);renderGardenRouteList();}
 function selectChapter(chapter=1,{bind=false}={}){s.chapter=difficulty==='light'?1:clamp(Number(chapter)||1,1,16);activeExercises=difficulty==='light'?GARDEN_ADMISSION_ROUTES:gardenExercisesForChapter(s.chapter);$('mandala-chapter').textContent=String(s.chapter).padStart(2,'0');$('exercise-select').replaceChildren(...activeExercises.map((exercise,index)=>{const option=document.createElement('option');option.value=exercise.id;option.textContent=exerciseCode(exercise,index);return option;}));if(bind&&activeExercises[0])bindMission(activeExercises[0]);for(const button of document.querySelectorAll('[data-chapter]')){const selected=Number(button.dataset.chapter)===s.chapter;button.classList.toggle('selected',selected);button.disabled=difficulty==='light';button.setAttribute('aria-pressed',String(selected));}renderGardenRouteList();}
 selectChapter(1,{bind:true});
 studio=new GardenSequenceStudio({
   onUse:route=>{queuedStudioRoute=route;},
   onOpen:()=>{studioPauseState=Boolean(mission?.snapshot().running);mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;ui();},
+  onCategories:renderTourCategories,
   onClose:()=>{if(queuedStudioRoute){const route=queuedStudioRoute;queuedStudioRoute=null;launchRoute(route);}else{if(studioPauseState){s.paused=false;mission?.start();}ui();}}
 });
 $('exercise-select').addEventListener('change',event=>bindMission(activeExercises.find(exercise=>exercise.id===event.target.value)));
 for(let chapter=1;chapter<=16;chapter++){const button=document.createElement('button');button.dataset.chapter=String(chapter);button.textContent=String(chapter).padStart(2,'0');button.setAttribute('aria-label',`Глава ${chapter}`);button.addEventListener('click',()=>selectChapter(chapter));$('chapter-orbit').append(button);}selectChapter(1);
-for(const button of document.querySelectorAll('[data-tour]'))button.addEventListener('click',async()=>{s.tour=button.dataset.tour;for(const item of document.querySelectorAll('[data-tour]')){const selected=item===button;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}$('mandala-tour-name').textContent=button.getAttribute('aria-label')||s.tour;await studio?.refresh();renderGardenRouteList();});
 $('route-favorite').addEventListener('click',()=>{if(!currentRoute)return;const id=routeIdentity(currentRoute);favorites.has(id)?favorites.delete(id):favorites.add(id);saveFavorites();renderMission(mission.snapshot());if(s.tour==='favorites')renderGardenRouteList();});
 for(const button of document.querySelectorAll('[data-mode]'))button.addEventListener('click',()=>{s.mode=button.dataset.mode;for(const item of document.querySelectorAll('[data-mode]')){const selected=item===button;item.classList.toggle('selected',selected);item.setAttribute('aria-pressed',String(selected));}});
 function updateProgressCard(){
@@ -174,7 +183,7 @@ function updateProgressCard(){
   $('garden-completed').textContent=`${progress.completed.length} ${progress.completed.length===1?'маршрут пройден':'маршрутов пройдено'}`;
 }
 function showGardenStart(state='menu'){
-  mission?.pause();pad.stop(true);s.paused=true;keys.clear();tutorialActive=false;$('flight-tutorial').hidden=true;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));document.querySelector('.flight-tools')?.removeAttribute('open');document.body.classList.remove('tutorial-open');setGardenMenu(false,{resume:false});$('game-over').hidden=true;
+  mission?.pause();pad.stop(true);s.paused=true;keys.clear();tutorialActive=false;$('flight-tutorial').hidden=true;$('mission-complete').hidden=true;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));document.querySelector('.flight-tools')?.removeAttribute('open');document.body.classList.remove('tutorial-open');setGardenMenu(false,{resume:false});$('game-over').hidden=true;
   document.body.classList.add('start-open');$('garden-start').hidden=false;
   $('start-title').textContent=state==='complete'?'Уровень пройден':'Сад Эха';
   $('start-note').textContent=state==='complete'?`Маршрут «${routeTitle(currentRoute)}» собран. Сад открыл следующий уровень.`:'Сад усложняет маршруты постепенно и запоминает пройденные уровни.';
@@ -195,7 +204,7 @@ const tutorialSteps=[
  ['Опасности','#world','Камни повреждают корабль; оттенок указывает пострадавшую пробирку. Кратер и смерч опасны при сближении. Красное смертельное ядро завершает полёт при столкновении — его нельзя ловить. В режиме «Абитуриент» смертельные ядра отключены.'],
  ['Лотос управления','.flight-tools summary','Этот лотос раскрывает повтор, прыжки и подсказки. Нажатие вне меню закрывает его. Сейчас мы раскрываем его для обзора, ничего не активируя.'],
  ['Бесконечный повтор','#infinity-toggle','Поймай зелёный лотос со знаком ∞, затем активируй его в меню лотоса. Один заряд удерживает звучащий аккорд без ограничения по кругам. Правильный ответ по любой одной части сразу переключает на следующую позицию. Для выхода без ответа нажми отдельную пульсирующую кнопку «Лететь дальше» слева. Это не пауза: корабль летит, запасы расходуются.'],
- ['Прыжки','#jump-charges','Цифры −7, −5, −3, +3, +5, +7 сдвигают позицию в цепочке. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. Пустая кнопка не работает. В режиме «Абитуриент» прыжки отключены.'],
+ ['Прыжки','#jump-charges','Цифры −5, −3, −2, +2, +3 и +5 сдвигают позицию в цепочке. Небольшие прыжки попадаются чаще. Сначала поймай заряд. Цифра рядом показывает запас; каждое использование тратит один заряд. В режиме «Абитуриент» прыжки отключены.'],
  ['Цветок открытия','#assist-charges','Переливчатый синий цветок сразу открывает и басовую ступень, и аккорд текущей позиции. Если одна часть уже найдена, откроется другая. Если найдены обе, заряд не тратится. Сначала поймай цветок кораблём, затем нажми в меню лотоса.'],
  ['Семя и корневая спираль','#assist-charges','Семя скрывает неправильные аккорды; корневая спираль — неправильные басовые ступени. Оттенок показывает силу: бледные убирают примерно половину вариантов на 3–5 ходов, насыщенные оставляют четверть на круг, самое редкое семя действует два круга. Правильная кнопка остаётся на привычном месте.'],
  ['Цветы аранжировки','#world-controls','Цветы добавляют бас или арпеджио на один, два или три круга. Партия вступает со следующего аккорда. Бас и арпеджио можно сочетать. Каталог с объяснениями цветов и настройкой пробного цветка находится в основных настройках, а не в лотосе.'],
@@ -232,40 +241,44 @@ $('tutorial-next').addEventListener('click',()=>{if(tutorialStep===tutorialSteps
 $('tutorial-back').addEventListener('click',()=>{tutorialStep=Math.max(0,tutorialStep-1);renderTutorial(mission.snapshot());});
 $('tutorial-close').addEventListener('click',finishTutorial);
 function allBookRoutes(maxChapter=16){const routes=[];for(let chapter=1;chapter<=maxChapter;chapter++)for(const route of gardenExercisesForChapter(chapter))routes.push(route);return routes;}
-async function randomGardenRoute(){
-  if(difficulty==='light'){launchRoute(gardenAdmissionState(progress).next);return;}
+async function randomGardenRoute({unseenOnly=false}={}){
+  if(difficulty==='light'){const admission=gardenAdmissionState(progress);if(admission.next)launchRoute(admission.next);else $('mission-complete-copy').textContent='Абитуриентский маршрут завершён. Переключись на «Студент», чтобы открыть новые полёты.';return;}
   await studio.refresh();
   const unlockedChapter=Math.min(16,1+Math.floor((progress.level-1)/2)),maxLength=Math.min(18,4+Math.floor((progress.level-1)/2));
   const book=allBookRoutes(unlockedChapter),tour=(studio.routes||[]).filter(route=>route.sequence.length<=maxLength);
   const profile=difficultyProfile(difficulty),eligible=difficulty==='light'?allBookRoutes(profile.maxChapter).filter(route=>route.sequence.length<=profile.maxLength):difficulty==='hard'?[...allBookRoutes(),...tour].filter(route=>route.sequence.length>=8):[...book,...tour];
-  let pool=eligible.filter(route=>route.id!==progress.lastRouteId);if(!pool.length)pool=eligible;
+  let pool=eligible.filter(route=>route.id!==progress.lastRouteId);if(unseenOnly)pool=pool.filter(route=>!progress.seenRouteIds.includes(routeIdentity(route)));
+  if(unseenOnly&&!pool.length){pool=eligible.filter(route=>routeIdentity(route)!==routeIdentity(currentRoute));if(!pool.length){$('mission-complete-copy').textContent='Все доступные маршруты уже пройдены. Полёт и музыка продолжаются; выбери другой тур через меню маршрутов.';$('mission-next-route').disabled=true;return;}$('mission-complete-copy').textContent='Новых маршрутов на этом уровне больше нет. Продолжаем другим маршрутом, не начиная текущий заново.';$('mission-next-route').textContent='✦ Следующий маршрут';}
+  else if(unseenOnly){$('mission-complete-copy').textContent=`«${routeTitle(currentRoute)}» завершён. Музыка продолжает идти по уже разгаданной цепочке, пока ты не выберешь следующий маршрут.`;$('mission-next-route').textContent='✦ Следующий маршрут';}
+  if(!pool.length)pool=eligible;
   const route=pool[Math.floor(Math.random()*pool.length)]||gardenExercisesForChapter(1)[0];
   launchRoute(route);
 }
 async function launchRoute(route){
   if(!route)return;
   if(difficulty==='light'&&!GARDEN_ADMISSION_ROUTES.some(item=>item.id===route.id))return;
+  const id=routeIdentity(route);if(!progress.seenRouteIds.includes(id)){progress.seenRouteIds.push(id);saveProgress();}
   gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
-  hideGardenStart();setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);
+  hideGardenStart();$('mission-complete').hidden=true;setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);
   try{await pad.unlock();s.paused=false;mission.start();world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}catch(error){$('answer-feedback').textContent=error.message;s.paused=false;ui();}
 }
 function completeGardenLevel(){
-  completionHandled=true;s.paused=true;pad.stop(true);
+  completionHandled=true;s.paused=false;
   const id=currentRoute?.id||`${currentRoute?.source||'route'}:${currentRoute?.name||''}`;
-  if(id&&!progress.completed.includes(id))progress.completed.push(id);progress.lastRouteId=id;progress.level+=1;
+  const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
-  showGardenStart('complete');
+  $('mission-complete-copy').textContent=`«${routeTitle(currentRoute)}» завершён. Уже разгаданные аккорды и ступени продолжают звучать по кругу; текущая позиция подсвечена.`;$('mission-next-route').disabled=false;$('mission-next-route').textContent='✓ Завершено · следующий маршрут →';$('mission-complete').hidden=false;
   if(enrolled){$('enrollment').hidden=false;$('enrollment-student').focus({preventScroll:true});}
 }
 async function retryCurrentMission(){
-  if(!currentRoute)return;hideGardenStart();$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(currentRoute);
+  if(!currentRoute)return;$('mission-complete').hidden=true;hideGardenStart();$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(currentRoute);
   try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}
 }
 function chooseState(index){
   index=clamp(Math.trunc(index),0,3);s.growth=index;s.from=s.to=index;s.visit=0;
   ui();
 }
-function pause(){s.paused=!s.paused;keys.clear();if(s.paused){mission?.pause();pad.stop(true);}else if(!mission?.snapshot().complete)mission?.start();ui();}
+function pause(){s.paused=!s.paused;keys.clear();if(s.paused){mission?.pause();pad.stop(true);}else mission?.start();ui();}
 function clean(value){s.clean=value;document.body.classList.toggle('clean',value);$('restore').hidden=!value;(value?$('restore'):$('clean')).focus();}
 function light(mode){s.lightMode=mode;if(mode==='cycle')s.cycle=Math.acos(clamp(1-2*s.night,-1,1))*180/Math.PI;if(s.paused||reduced)s.night=mode==='night'?1:mode==='dusk'?.48:mode==='day'?0:s.night;ui();}
 for(const b of document.querySelectorAll('[data-ship]'))b.addEventListener('click',()=>{s.ship=Number(b.dataset.ship);ui();});
@@ -287,6 +300,8 @@ $('exit-cancel').addEventListener('click',()=>closeExitConfirmation(true));
 $('exit-accept').addEventListener('click',()=>{closeExitConfirmation(false);showGardenStart();});
 $('start-random').addEventListener('click',randomGardenRoute);
 $('start-choose').addEventListener('click',async()=>{hideGardenStart();await studio.refresh();renderGardenRouteList();setGardenMenu(true);});
+$('mission-next-route').addEventListener('click',()=>randomGardenRoute({unseenOnly:true}));
+$('mission-to-menu').addEventListener('click',()=>showGardenStart());
 $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){s.paused=true;keys.clear();mission.pause({preserveHold:true});pad.stop(true);ui();return;}try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
@@ -302,7 +317,7 @@ const flightTools=document.createElement('details'),flightToolsSummary=document.
 flightTools.open=false;
 flightTools.className='flight-tools';flightToolsSummary.innerHTML='<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 31C9 26 9 15 20 7C31 15 31 26 20 31Z"/><path d="M20 31C8 31 3 22 5 14C14 15 20 22 20 31ZM20 31C32 31 37 22 35 14C26 15 20 22 20 31Z"/><path d="M20 31C10 36 3 29 2 24C10 23 16 25 20 31ZM20 31C30 36 37 29 38 24C30 23 24 25 20 31Z"/></g></svg><span class="lotus-repeat" aria-hidden="true">∞</span>';flightToolsSummary.setAttribute('aria-label','Лотос: прыжки, повтор и подсказки');flightToolsBody.className='flight-tools-body';
 flightToolsBody.append($('jump-charges'),document.querySelector('.route-practice'),$('assist-charges'),$('assist-status'));flightTools.append(flightToolsSummary,flightToolsBody);document.body.append(flightTools);$('artifact-belt').hidden=true;
-document.addEventListener('click',async event=>{const button=event.target.closest('[data-use-artifact]');if(!button||button.disabled||s.paused||!mission?.snapshot().running)return;const kind=button.dataset.useArtifact;if(GARDEN_ITEMS[kind].repeat){try{await pad.unlock();if(!s.paused)gardenLife.useRepeat(mission,kind);}catch(error){$('answer-feedback').textContent=`Не удалось включить повтор: ${error.message}`;}}else if(GARDEN_ITEMS[kind].shield)gardenLife.useShield(mission,kind);else if(GARDEN_ITEMS[kind].navigationDelta)gardenLife.useJump(mission,kind);else{const result=gardenLife.useAssist(mission,kind);if(result.correct&&!result.ignored){gardenRewards.answer(result,'quality',{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(true,{kind:'quality',complete:result.positionComplete}).catch(()=>{});}}renderVitals();});
+document.addEventListener('click',async event=>{const button=event.target.closest('[data-use-artifact]');if(!button||button.disabled||s.paused||!mission?.snapshot().running)return;const kind=button.dataset.useArtifact;if(GARDEN_ITEMS[kind].repeat){try{await pad.unlock();if(!s.paused)gardenLife.useRepeat(mission,kind);}catch(error){$('answer-feedback').textContent=`Не удалось включить повтор: ${error.message}`;}}else if(GARDEN_ITEMS[kind].navigationDelta)gardenLife.useJump(mission,kind);else{const result=gardenLife.useAssist(mission,kind);if(result.correct&&!result.ignored){gardenRewards.answer(result,'quality',{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(true,{kind:'quality',complete:result.positionComplete}).catch(()=>{});}}renderVitals();});
 $('infinity-continue').addEventListener('click',async()=>{if(s.paused||!mission.snapshot().running)return;try{await pad.unlock();mission.continue();flightTools.open=false;renderVitals();}catch(error){$('answer-feedback').textContent=`Не удалось продолжить: ${error.message}`;}});
 $('infinity-toggle').addEventListener('click',async()=>{try{await pad.unlock();const result=gardenLife.useRepeat(mission);if(result.ignored){$('answer-feedback').textContent='Сначала поймай лотос бесконечности';return;}flightTools.open=false;renderVitals();}catch(error){$('answer-feedback').textContent=`Не удалось включить звук: ${error.message}`;}});
 document.addEventListener('pointerdown',event=>{if(flightTools.open&&!flightTools.contains(event.target))flightTools.open=false;},true);
@@ -315,6 +330,8 @@ $('flower-guide-close').addEventListener('click',()=>{flowerSettings.open=false;
 $('flower-guide-list').replaceChildren(...Object.entries(GARDEN_ARRANGEMENTS).map(([style,spec])=>{const item=document.createElement('article'),canvas=document.createElement('canvas');canvas.width=canvas.height=72;const icon=canvas.getContext('2d');icon.translate(36,36);drawGardenArrangementFlower(icon,spec,66,2);const copy=document.createElement('p');copy.textContent=`${spec.label} — ${spec.detail}`;const button=document.createElement('button');button.textContent='Вырастить на пути';button.setAttribute('aria-label',`Вырастить: ${spec.label}`);button.addEventListener('click',()=>{if(!mission.snapshot().running){$('flower-guide-note').textContent='Сначала запусти музыкальный полёт.';return;}if(gardenLife.entities.some(entity=>entity.item.arrangement&&!entity.collected)){ $('flower-guide-note').textContent='Цветок уже летит. Поймай его или пропусти.';return;}gardenLife.forceSpawn(style,{x:tx,y:Math.max(.06,ty-.30),rounds:Number($('flower-rounds').value),vx:0});flowerSettings.open=false;setGardenMenu(false);});item.append(canvas,copy,button);return item;}));
 $('artifact-belt').addEventListener('click',event=>{if(event.target.closest('[data-use-artifact]')&&(s.paused||!mission.snapshot().running))event.stopImmediatePropagation();},true);
 for(const button of document.querySelectorAll('[data-pad]'))button.addEventListener('click',()=>{pad.applyPreset(button.dataset.pad);for(const item of document.querySelectorAll('[data-pad]'))item.setAttribute('aria-pressed',String(item===button));});
+const audioTuning=[['garden-volume','smc-garden-volume',value=>{pad.setMasterVolume(value/100);return `${value}%`;},120],['garden-eq-low','smc-garden-eq-low',value=>{pad.setEqualizer('low',value);return `${value} dB`;},0],['garden-eq-mid','smc-garden-eq-mid',value=>{pad.setEqualizer('mid',value);return `${value} dB`;},0],['garden-eq-high','smc-garden-eq-high',value=>{pad.setEqualizer('high',value);return `${value} dB`;},0]];
+for(const [id,key,apply,fallback] of audioTuning){const control=$(id),output=document.querySelector(`output[for="${id}"]`);let saved=Number(localStorage.getItem(key));if(!Number.isFinite(saved)||saved<Number(control.min)||saved>Number(control.max))saved=fallback;control.value=String(saved);const update=()=>{const value=Number(control.value);output.textContent=apply(value);localStorage.setItem(key,String(value));};control.addEventListener('input',update);update();}
 $('speed').addEventListener('input',e=>{s.speed=Number(e.target.value);$('speed-value').value=s.speed.toFixed(1)+'×';});
 $('altitude').addEventListener('input',e=>{s.altitude=Number(e.target.value);$('altitude-value').value=s.altitude.toFixed(2);s.worldSize=Math.max(s.width*.86,s.height*.95)/s.altitude;});
 function move(x,y){tx=clamp(x/s.width,.1,.9);ty=clamp(y/s.height,.2,.78);$('gesture').classList.add('dismissed');}
@@ -350,7 +367,7 @@ function update(dt){
   s.angle+=(clamp(dx/s.width,-.3,.3)-s.angle)*(1-Math.exp(-dt*4));
   s.pan+=((s.x/s.width-.5)*.13-s.pan)*(1-Math.exp(-dt));
   const missionState=mission?.snapshot();
-  gardenLife.update(dt,{...s,routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
+  if(!missionState?.complete)gardenLife.update(dt,{...s,routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
   const lifeState=gardenLife.snapshot();
   if(lifeState.gameOver&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').hidden=false;}
   const shake=lifeState.impact||0,shakeX=Math.sin(s.time*83)*shake*7,shakeY=Math.cos(s.time*71)*shake*5;

@@ -1,6 +1,6 @@
 {
-  "version": "0.99",
+  "version": "1.14",
   "name": "Сад Эха",
   "standalone": true,
-  "notes": "MIDI recognition now identifies dominant flat-nine chords in Chill 3 without changing the original voicings; the answer appears as a chord extension in the secondary palette."
+  "notes": "Includes four saved Cinematic routes (Journeying, Triumph, Cinematic Suspense 4, Cinematic epic), retaining their tonic centers, first-degree functions and MIDI voicings. After all answers, the solved sequence keeps playing in order with the current chord and degree highlighted; the next-route action chooses a different route and never restarts the current one."
 }

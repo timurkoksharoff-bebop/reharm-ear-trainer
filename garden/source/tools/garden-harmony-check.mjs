@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createGardenMission,GardenPad,gardenExercisesForChapter,PRESETS} from '../garden-harmony.mjs';
+import {GardenLife} from '../garden-life.mjs';
 import {stepFromMidi} from '../garden-sequence-studio.mjs';
 import {BUILTIN_TOUR_ROUTES} from '../garden-tour-routes.mjs';
 
@@ -54,6 +55,11 @@ feedbackPad.context={
   createGain:()=>({gain:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}}),
   createOscillator:()=>({frequency:{setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){},start(){},stop(){},type:'sine',onended:null})
 };
+feedbackPad.master={gain:{setTargetAtTime(value){feedbackPad.testMasterGain=value;}}};
+feedbackPad.eqLow={gain:{setTargetAtTime(value){feedbackPad.testEqLow=value;}}};feedbackPad.eqMid={gain:{setTargetAtTime(value){feedbackPad.testEqMid=value;}}};feedbackPad.eqHigh={gain:{setTargetAtTime(value){feedbackPad.testEqHigh=value;}}};
+feedbackPad.setMasterVolume(1.2);feedbackPad.setEqualizer('low',4);feedbackPad.setEqualizer('mid',-2);feedbackPad.setEqualizer('high',1);
+assert.equal(feedbackPad.testMasterGain,1.2,'default playback level is raised by 20%');
+assert.deepEqual([feedbackPad.testEqLow,feedbackPad.testEqMid,feedbackPad.testEqHigh],[4,-2,1],'three EQ bands accept separate dB adjustments');
 await feedbackPad.feedback(true,{kind:'degree',value:0});
 const tonicFeedback={...feedbackPad.lastFeedback};
 await feedbackPad.feedback(true,{kind:'degree',value:7});
@@ -65,7 +71,8 @@ assert.equal(feedbackPad.lastFeedback.pitches.length,2,'quality confirmation has
 await feedbackPad.feedback(true,{kind:'quality',value:'maj7',complete:true});
 assert.equal(feedbackPad.lastFeedback.pitches.length,3,'completed positions add a soft completion shimmer');
 
-const firstBookMission=createGardenMission({barSeconds:999,onChord:()=>{}});
+const firstBookSounds=[];
+const firstBookMission=createGardenMission({barSeconds:999,onChord:chord=>firstBookSounds.push(chord.degree)});
 firstBookMission.start();
 assert.equal(firstBookMission.snapshot().reference.quality,'6','Fig. 1.6 starts from the known sixth-chord base');
 assert.deepEqual(firstBookMission.snapshot().exercise.sequence.map(chord=>chord.degree),['I6','VI−7','IV','I6'],'the full printed progression repeats after the one-shot reference');
@@ -75,7 +82,14 @@ for(const chord of firstBookMission.snapshot().exercise.sequence){
   assert.equal(firstBookMission.answerPart('quality',chord.quality).correct,true);
 }
 assert.equal(firstBookMission.snapshot().complete,true,'all four printed bars complete Fig. 1.6');
+assert.equal(firstBookMission.snapshot().running,true,'the solved route keeps flying and playing');
+assert.equal(firstBookMission.snapshot().cursor,0,'after completion playback loops to the first answered chord');
+assert.equal(firstBookSounds.at(-1),'I6','the first solved chord is sounding after the final answer');
+assert.equal(firstBookMission.answerPart('degree',0).ignored,true,'answered positions are locked after completion');
 assert.equal(firstBookMission.snapshot().solved.length,4);
+firstBookMission.pause();firstBookMission.start();
+assert.equal(firstBookMission.snapshot().running,true,'pause/continue resumes the completed route without resetting it');
+assert.equal(firstBookMission.snapshot().complete,true,'continuing does not reopen answer entry');firstBookMission.pause();
 
 const fig210=gardenExercisesForChapter(2).find(item=>item.id==='fig-2-10');
 assert.ok(fig210,'Fig. 2.10 must remain available to the Garden');
@@ -93,6 +107,7 @@ assert.equal(fig210Mission.snapshot().solvedParts,13,'Fig. 2.10 reaches the repo
 while(fig210Mission.snapshot().cursor!==3)fig210Mission.advance();
 assert.equal(fig210Mission.answerPart('quality','maj7').correct,true,'the visible maj7 answer completes borrowed bVIIMaj7');
 assert.equal(fig210Mission.snapshot().complete,true,'Fig. 2.10 completes at 14/14');
+assert.equal(fig210Mission.snapshot().running,true,'Fig. 2.10 continues into its solved playback loop');fig210Mission.pause();
 
 const octave=stepFromMidi([60,72]);
 assert.equal(octave.quality,'1','a doubled note is an octave/unison, not an invented major chord');
@@ -128,5 +143,12 @@ try{
  assert.equal(navigationMission.revealPosition(4).ignored,true,'old inspection retired');
  assert.equal(navigationMission.teleportTo(5).ignored,true,'old teleport retired');
  navigationMission.restart();assert.equal(navigationMission.snapshot().cursor,-1);
+ const jumpLife=new GardenLife();jumpLife.collect(jumpLife.forceSpawn('jumpBack2'));
+ navigationMission.start();navigationMission.advance();
+ assert.equal(navigationMission.shift(2,{consume:()=>true}).position,2);
+ const returned=jumpLife.useJump(navigationMission,'jumpBack2');
+ assert.equal(returned.position,0,'the collected minus-two artifact returns from position 3 to position 1');
+ assert.equal(jumpLife.inventory.jumpBack2,1,'one of the two charges is spent');
+ assert.equal(navigationSounds.at(-1),navigationSteps[0].degree,'the previous chord is immediately sounded again');
 }finally{navigationMission.pause();}
-console.log('Garden harmony passed: reference, independent bass + chord, completion, restart, timbres, paid jumps and retired free navigation.');
+console.log('Garden harmony passed: reference, independent bass + chord, completion, restart, timbres, paid +/-2/3/5 jumps and retired free navigation.');

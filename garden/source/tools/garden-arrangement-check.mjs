@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
-import {GARDEN_ARRANGEMENTS,createGardenArrangement,gardenArrangementEvents,drawGardenArrangementFlower} from '../garden-arrangement.mjs';
+import {GARDEN_ARRANGEMENTS,createGardenArrangement,gardenArrangementEvents,drawGardenArrangementFlower,chooseGardenArrangement} from '../garden-arrangement.mjs';
 import {createGardenMission,GardenPad} from '../garden-harmony.mjs';
 import {createGardenLife} from '../garden-life.mjs';
 
 const exercise={id:'arrangement-test',baseTonic:0,sequence:[{degree:'I6',offset:0,quality:'6'},{degree:'V/III',offset:7,quality:'7',bassOffset:4}],source:'test only'};
+assert.equal(chooseGardenArrangement(()=>.1),'arpWave','common vintage patterns dominate the pickup pool');
+assert.equal(chooseGardenArrangement(()=>.99),'bassFunk','experimental patterns remain available as occasional pickups');
 const heard=[],mission=createGardenMission({exercise,barSeconds:999,onChord:(chord,model)=>heard.push({chord,model})});
 mission.start();mission.advance();const count=heard.length;
 assert(mission.arrange('arpBroken',2));assert(mission.arrange('bassChill',1));
@@ -42,6 +44,10 @@ pad.unlock=async()=>{};pad.context={currentTime:10,createGain:()=>({gain:paramet
 await pad.play({offset:0,quality:'6'},0,{arrangement:{arpeggio:'arpSpark',bass:'bassFunk'},barSeconds:4});
 assert.equal(pad.lastArrangement.length,21);assert.equal(pad.voices.length,2,'layers and foundation are both cancellable voice groups');assert.equal(starts.filter(([kind])=>kind==='layer').length,21);
 const beforeStop=stops.length;pad.stop(true);assert(stops.length>=beforeStop+21,'stop cancels all future scheduled layer attacks');
+await pad.play({offset:0,quality:'m7',notes:[55,57,59,60,64]},7,{arrangement:{bass:'bassCanon'},barSeconds:4});
+assert.deepEqual(pad.lastArrangement.map(event=>event.midi),[43,55],'three-petal bass flower uses G2, not the chord stack low G3');
+await pad.play({offset:0,quality:'m7',notes:[55,57,59,60,64]},7,{arrangement:{arpeggio:'arpWave'},barSeconds:4});
+assert.deepEqual([...new Set(pad.lastArrangement.map(event=>event.midi))],[55,57,59,60,64],'arpeggio keeps every exact imported chord tone in its original register');
 await pad.play({offset:0,quality:'6',reference:true},0,{arrangement:{arpeggio:'arpSpark',bass:'bassFunk'}});assert.equal(pad.lastArrangement.length,0,'reference stays a plain chord');pad.stop(true);
 const ctx=new Proxy({},{get:(target,key)=>target[key]??(()=>{})});for(const spec of Object.values(GARDEN_ARRANGEMENTS))drawGardenArrangementFlower(ctx,spec,72,3);
 console.log('Garden arrangements passed: 7 styles, exact 1–3 rounds, chord/slash-bass pitches, combination/boost/expiry, no replay, duplicate catch, cancellation and reference.');

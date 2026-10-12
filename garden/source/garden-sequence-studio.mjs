@@ -6,11 +6,52 @@ const CHORDS=[
   ['maj7',[0,4,7,11]],['7',[0,4,7,10]],['7b9',[0,4,7,10,13]],['m7',[0,3,7,10]],['m7♭5',[0,3,6,10]],
   ['sus2',[0,2,7]],['sus4',[0,5,7]],['m9',[0,3,7,10,2]],['add9',[0,4,7,2]]
 ];
-const TOURS=Object.freeze([
+const DEFAULT_TOURS=Object.freeze([
   ['reharm','Reharm'],['anime','Anime'],['chill','Chill'],['ambient','Ambient'],['cinematic','Cinematic'],
-  ['deep-house','Deep House'],['funk','Funk'],['gospel','Gospel'],['drum-bass','Drum & Bass']
+  ['deep-house','Deep House'],['funk','Funk'],['gospel','Gospel'],['drum-bass','Drum & Bass'],['jazz-standards','Jazz Standards']
+]);
+// Routes already saved in the author's local Sound & Route Lab. Keep these in
+// the standalone catalog too: browser IndexedDB is origin-local and is not
+// copied by the release builder.
+export const SAVED_CINEMATIC_ROUTES=Object.freeze([
+  {id:'cinematic-journeying',tour:'cinematic',number:'16',name:'Journeying',source:'Sound & Route Lab · Cinematic 16',baseTonic:0,manualSteps:[
+    [0,'6',[36,57,62,64,67],'C69'],[2,'m6',[38,53,57,59,64],'Dm69'],[0,'maj',[40,55,60,64,67],'C/E'],
+    [5,'maj7',[41,55,57,64,69],'Fmaj9'],[7,'maj',[43,60,62,67,71],'Gmaj add11'],[9,'m9',[45,59,60,64,67],'Am9'],
+    [2,'m7',[38,53,60,62,65],'Dm7'],[7,'6',[43,52,55,59,64],'Em/G']
+  ]},
+  {id:'cinematic-triumph',tour:'cinematic',number:'15',name:'Triumph',source:'Sound & Route Lab · Cinematic 15',baseTonic:9,manualSteps:[
+    [9,'m9',[45,67,71,72,76],'Am9'],[4,'m7',[40,64,67,71,74],'Em7'],[5,'maj7',[41,64,65,69,72],'Fmaj7'],
+    [2,'m9',[38,65,69,72,76],'Dm9'],[4,'m7',[40,64,67,69,74],'Em7'],[9,'m9',[43,65,69,71,76],'Am9/G'],
+    [9,'m7',[45,69,72,76,79],'Am7'],[7,'maj',[47,71,74,79,83],'G/B']
+  ]},
+  {id:'cinematic-suspense-04',tour:'cinematic',number:'04',name:'Cinematic Suspense 4',source:'Sound & Route Lab · Cinematic 04',baseTonic:9,manualSteps:[
+    [5,'m',[41,48,56],'Fm'],[8,'maj',[44,51,56,60],'A♭'],[10,'m9',[46,53,60,61],'B♭m9'],[10,'m',[46,53,58,61],'B♭m'],
+    [3,'maj',[39,46,51,55],'E♭'],[8,'sus2',[44,51,56,58],'A♭sus2'],[1,'maj',[37,44,53],'C♯'],[1,'maj',[49,53,56],'C♯']
+  ]},
+  {id:'cinematic-epic-13',tour:'cinematic',number:'13',name:'Cinematic epic',source:'Sound & Route Lab · Cinematic 13',baseTonic:7,manualSteps:[
+    [3,'maj7',[27,39,50,55,58],'E♭maj7'],[5,'maj',[29,41,48,53,57],'F'],[7,'m',[31,43,50,55,58],'Gm'],
+    [10,'maj',[34,46,53,58,62],'B♭'],[2,'m',[26,38,45,50,53],'Dm'],[0,'m',[24,36,43,48,51],'Cm'],
+    [5,'maj',[29,41,48,53,57],'F'],[7,'m',[31,43,50,55,58],'Gm'],[10,'maj',[34,46,53,58,62],'B♭']
+  ]}
 ]);
 const $=id=>document.getElementById(id),magnitude=db=>db<=-100?0:10**(db/20),median=values=>values.length?[...values].sort((a,b)=>a-b)[Math.floor(values.length/2)]:0;
+const MANDALA_COUNT=20;
+export function gardenMandalaDataUri(seed=0){
+  const index=((Math.trunc(Number(seed)||0)%MANDALA_COUNT)+MANDALA_COUNT)%MANDALA_COUNT,palettes=[['#d5f3df','#8ee8d5','#f0d990'],['#d7d0ff','#91ddf0','#e9c9ee'],['#f4d7bd','#c5e9dc','#e3c5fa'],['#c6e7ff','#b9e7c1','#ffe4a6'],['#e2d3ff','#86dcd0','#f2d6e1']];
+  const [a,b,c]=palettes[index%palettes.length],petals=8+(index%7)*2,rings=3+index%4,rotation=(index*17)%360,parts=[];
+  parts.push(`<circle cx="128" cy="128" r="119" fill="#03191dcc" stroke="${b}" stroke-opacity=".42" stroke-width="1.4"/>`);
+  for(let ring=0;ring<rings;ring++){
+    const radius=25+ring*(80/rings),count=petals+(ring%2?petals:0),color=[a,b,c][ring%3],dash=ring%2?'1.2 3':'none';
+    parts.push(`<circle cx="128" cy="128" r="${radius.toFixed(1)}" fill="none" stroke="${color}" stroke-opacity="${(.22+ring*.045).toFixed(2)}" stroke-width="${ring===rings-1?1.5:1}" ${dash==='none'?'':`stroke-dasharray="${dash}"`}/>`);
+    for(let point=0;point<count;point++){
+      const angle=(Math.PI*2*point/count)+rotation*Math.PI/180+(ring%2)*Math.PI/count,x=128+Math.cos(angle)*radius,y=128+Math.sin(angle)*radius;
+      if(ring===0){const degrees=point*360/count+rotation;parts.push(`<ellipse cx="128" cy="${(128-radius/2).toFixed(2)}" rx="${(4+index%3).toFixed(1)}" ry="${(radius*.48).toFixed(1)}" transform="rotate(${degrees.toFixed(1)} 128 128)" fill="${color}" fill-opacity=".1" stroke="${color}" stroke-opacity=".58" stroke-width="1.1"/>`);}
+      parts.push(`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${ring===rings-1?1.9:1.25}" fill="${color}" fill-opacity=".78"/>`);
+    }
+  }
+  parts.push(`<circle cx="128" cy="128" r="18" fill="#0a2e36" fill-opacity=".85" stroke="${c}" stroke-opacity=".76" stroke-width="1.4"/><circle cx="128" cy="128" r="7" fill="${a}" fill-opacity=".82"/>`);
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">${parts.join('')}</svg>`)}`;
+}
 function chooseMime(){for(const type of ['audio/webm;codecs=opus','audio/mp4;codecs=mp4a.40.2','audio/webm','audio/mp4'])if(MediaRecorder?.isTypeSupported(type))return type;return '';}
 function recognizeChord(chroma,bassPc){
   const total=chroma.reduce((a,b)=>a+b,0)||1,normalized=chroma.map(value=>value/total);let best={score:-Infinity,root:0,quality:'maj'};
@@ -29,8 +70,9 @@ export function stepFromMidi(notes){
   return {id:crypto.randomUUID(),degree:label,label,rootPc:found.root,quality:found.quality,notes:[...notes],voicingNote,bassMidi,duration:0,audio:null,mimeType:'',bassOffset:(bassPc-found.root+12)%12,bassPc};
 }
 function builtInRoute(spec){
-  const steps=spec.chords.map(stepFromMidi),baseRoot=steps[0]?.rootPc??0;
-  return {...spec,builtin:true,created:'2000-01-01T00:00:00.000Z',baseTonic:baseRoot,sequence:steps.map(step=>({...step,offset:(step.rootPc-baseRoot+12)%12,bassOffset:(step.bassPc-baseRoot+12)%12})),distractors:[]};
+  const steps=spec.manualSteps?spec.manualSteps.map(([rootPc,quality,notes,label])=>{const bassMidi=Math.min(...notes),bassPc=(bassMidi%12+12)%12;return {degree:label,label,rootPc,quality,notes:[...notes],bassMidi,bassPc};}):spec.chords.map(stepFromMidi),baseRoot=spec.baseTonic??steps[0]?.rootPc??0;
+  const {manualSteps,...metadata}=spec;
+  return {...metadata,builtin:true,created:'2000-01-01T00:00:00.000Z',baseTonic:baseRoot,sequence:steps.map(step=>({...step,offset:(step.rootPc-baseRoot+12)%12,bassOffset:(step.bassPc-baseRoot+12)%12})),distractors:[]};
 }
 const chordLabel=(chroma,bassPc)=>recognizeChord(chroma,bassPc).label;
 const qualityIntervals=quality=>CHORDS.find(([name])=>name===quality)?.[1]??[0,4,7];
@@ -91,18 +133,23 @@ export function parseMidi(arrayBuffer){
   if(!chords.length)throw Error('не найдено одновременных групп нот');
   return {format,division,chords};
 }
-function openDatabase(){return new Promise((resolve,reject)=>{const request=indexedDB.open('echo-garden-studio',1);request.onupgradeneeded=()=>request.result.createObjectStore('routes',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
-async function databaseAction(mode,work){const db=await openDatabase();return new Promise((resolve,reject)=>{const tx=db.transaction('routes',mode),store=tx.objectStore('routes'),result=work(store);tx.oncomplete=()=>{db.close();resolve(result?.result)};tx.onerror=()=>{db.close();reject(tx.error);};});}
+function openDatabase(){return new Promise((resolve,reject)=>{const request=indexedDB.open('echo-garden-studio',2);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains('routes'))db.createObjectStore('routes',{keyPath:'id'});if(!db.objectStoreNames.contains('categories'))db.createObjectStore('categories',{keyPath:'id'});};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
+async function databaseAction(mode,work,storeName='routes'){const db=await openDatabase();return new Promise((resolve,reject)=>{const tx=db.transaction(storeName,mode),store=tx.objectStore(storeName),result=work(store);tx.oncomplete=()=>{db.close();resolve(result?.result)};tx.onerror=()=>{db.close();reject(tx.error);};});}
 
 export class GardenSequenceStudio{
-  constructor({onUse,onOpen,onClose}={}){
-    this.onUse=onUse;this.onOpen=onOpen;this.onClose=onClose;this.steps=[];this.routes=[];this.capture=null;
+  constructor({onUse,onOpen,onClose,onCategories}={}){
+    this.onUse=onUse;this.onOpen=onOpen;this.onClose=onClose;this.onCategories=onCategories;this.steps=[];this.routes=[];this.categories=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true}));this.capture=null;
+    $('studio-category-form')?.addEventListener('submit',event=>{event.preventDefault();this.addCategory();});
     $('studio-add-step')?.addEventListener('click',()=>this.addManualStep());
     $('studio-import-audio')?.addEventListener('change',event=>{for(const file of event.target.files||[])this.addManualStep(file);event.target.value='';});
     $('studio-import-route')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(file)this.importRouteFile(file);event.target.value='';});
     this.renderSteps();this.refresh();
   }
-  async refresh(){const saved=await databaseAction('readonly',store=>store.getAll()).catch(()=>[]);saved.sort((a,b)=>b.created.localeCompare(a.created));this.routes=[...BUILTIN_TOUR_ROUTES.map(builtInRoute),...saved];this.renderLibrary();}
+  async refresh(){const [saved,categories]=await Promise.all([databaseAction('readonly',store=>store.getAll()).catch(()=>[]),databaseAction('readonly',store=>store.getAll(),'categories').catch(()=>[])]);saved.sort((a,b)=>b.created.localeCompare(a.created));const defaults=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true}));this.categories=[...defaults,...categories.filter(category=>!defaults.some(item=>item.id===category.id))];this.routes=[...BUILTIN_TOUR_ROUTES.map(builtInRoute),...SAVED_CINEMATIC_ROUTES.map(builtInRoute),...saved.filter(route=>!SAVED_CINEMATIC_ROUTES.some(item=>item.name===route.name&&item.tour===route.tour))];this.renderCategoryOptions();this.renderLibrary();this.onCategories?.(this.categories);}
+  renderCategoryOptions(selected=$('studio-tour')?.value){const select=$('studio-tour');if(!select)return;select.replaceChildren(...this.categories.map(category=>{const option=document.createElement('option');option.value=category.id;option.textContent=category.name;option.selected=category.id===selected;return option;}));}
+  async addCategory(){const input=$('studio-category-name'),status=$('studio-category-status'),name=input?.value.trim();if(!name){status.textContent='Введи название категории.';input?.focus();return;}if(this.categories.some(category=>category.name.toLocaleLowerCase()===name.toLocaleLowerCase())){status.textContent='Такая категория уже есть.';return;}
+    const used=new Set(this.categories.map(category=>category.mandalaSeed).filter(Number.isInteger)),customCount=this.categories.filter(category=>!category.builtin).length,mandalaSeed=Array.from({length:MANDALA_COUNT},(_,index)=>index).find(index=>!used.has(index))??(customCount+1)%MANDALA_COUNT,id=`custom-${crypto.randomUUID()}`,category={id,name,mandalaSeed,created:new Date().toISOString()};
+    await databaseAction('readwrite',store=>store.put(category),'categories');input.value='';status.textContent=`«${name}» добавлена · мандала ${String(mandalaSeed+1).padStart(2,'0')} из ${MANDALA_COUNT}.`;await this.refresh();this.renderCategoryOptions(id);}
   open(){this.onOpen?.();$('sequence-studio').hidden=false;$('studio-name').focus();this.refresh(); }
   close(){if(this.capture)this.stopCapture();$('sequence-studio').hidden=true;this.onClose?.();}
   async startCapture(){
@@ -162,7 +209,7 @@ export class GardenSequenceStudio{
     // keyboard input before the seven-chord route begins on Fm7.
     const chordGroups=/^anime\s+3$/i.test(stem.trim())&&parsed.chords.length===9?parsed.chords.slice(2):parsed.chords;
     this.steps=chordGroups.map(stepFromMidi);
-    const match=stem.match(/^(.+?)\s+(\d+)$/);if(match){const folder=match[1].trim().toLowerCase().replace(/\s+tour$/,'');const option=[...$('studio-tour').options].find(item=>item.value===folder||item.textContent.toLowerCase()===`${folder} tour`);if(option)$('studio-tour').value=option.value;$('studio-number').value=String(Number(match[2])).padStart(2,'0');}
+    const match=stem.match(/^(.+?)\s+(\d+)$/);if(match){const folder=match[1].trim().toLowerCase().replace(/\s+tour$/,'');const option=[...$('studio-tour').options].find(item=>item.value===folder||item.textContent.toLowerCase()===folder||item.textContent.toLowerCase()===`${folder} tour`);if(option)$('studio-tour').value=option.value;$('studio-number').value=String(Number(match[2])).padStart(2,'0');}
     $('studio-name').value=stem;this.renderSteps();
   }
   async importMusicXml(file){
@@ -193,13 +240,13 @@ export class GardenSequenceStudio{
   async save(){
     const name=$('studio-name').value.trim()||`Маршрут ${this.routes.length+1}`,number=$('studio-number').value.trim()||String(this.routes.length+1).padStart(2,'0'),tour=$('studio-tour')?.value||'reharm';
     const baseRoot=this.steps[0].rootPc;
-    const route={id:`user-${crypto.randomUUID()}`,name,number,tour,created:new Date().toISOString(),source:`${TOURS.find(([id])=>id===tour)?.[1]||'Reharm Tour'} · маршрут ${number}`,baseTonic:baseRoot,sequence:this.steps.map(step=>({...step,degree:step.label,offset:(step.rootPc-baseRoot+12)%12})),distractors:[]};
+    const route={id:`user-${crypto.randomUUID()}`,name,number,tour,created:new Date().toISOString(),source:`${this.categories.find(category=>category.id===tour)?.name||'Reharm'} · маршрут ${number}`,baseTonic:baseRoot,sequence:this.steps.map(step=>({...step,degree:step.label,offset:(step.rootPc-baseRoot+12)%12})),distractors:[]};
     await databaseAction('readwrite',store=>store.put(route));this.steps=[];this.renderSteps();$('studio-name').value='';$('studio-number').value='';await this.refresh();$('studio-error').textContent=`«${name}» сохранён.`;return route;
   }
   renderLibrary(){
-    $('studio-library').replaceChildren(...TOURS.map(([tourId,tourName])=>{
-      const folder=document.createElement('section');folder.className='library-folder';const routes=this.routes.filter(route=>(route.tour||'reharm')===tourId);
-      const heading=document.createElement('header');heading.innerHTML=`<strong>${tourName}</strong><span>${routes.length}</span>`;folder.append(heading);
+    $('studio-library').replaceChildren(...this.categories.map(category=>{
+      const folder=document.createElement('section');folder.className='library-folder';const routes=this.routes.filter(route=>(route.tour||'reharm')===category.id);
+      const heading=document.createElement('header');if(Number.isInteger(category.mandalaSeed)){const icon=document.createElement('img');icon.className='library-mandala';icon.alt='';icon.src=gardenMandalaDataUri(category.mandalaSeed);heading.append(icon);}const title=document.createElement('strong');title.textContent=category.name;const count=document.createElement('span');count.textContent=String(routes.length);heading.append(title,count);folder.append(heading);
       for(const route of routes){
         const row=document.createElement('article');row.className='library-route';
         const text=document.createElement('div');text.innerHTML=`<small>МАРШРУТ ${route.number}</small><strong>${route.name}</strong><span>${route.sequence.length} аккордов</span>`;

@@ -55,7 +55,8 @@ const frequency=midi=>440*2**((midi-69)/12);
 
 export class GardenPad{
   constructor({deferSamplesUntilReady=false}={}){
-    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBuffers=[];this.generation=0;
+    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.eqLow=null;this.eqMid=null;this.eqHigh=null;this.limiter=null;this.master=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBuffers=[];this.generation=0;
+    this.masterVolume=1.2;this.equalizer={low:0,mid:0,high:0};
     const loadSamples=()=>Promise.all([
       ['assets/echo-garden/samples/felt-c3.wav',48],
       ['assets/echo-garden/samples/felt-e3.wav',52],
@@ -75,12 +76,20 @@ export class GardenPad{
       if(!Engine)throw Error('В этом браузере нет Web Audio.');
       const c=this.context=new Engine({latencyHint:'interactive'});
       this.output=c.createGain();this.output.gain.value=.46;
-      this.cleanOutput=c.createGain();this.cleanOutput.gain.value=.82;this.cleanOutput.connect(c.destination);
+      this.cleanOutput=c.createGain();this.cleanOutput.gain.value=.82;
+      this.eqLow=c.createBiquadFilter();this.eqLow.type='lowshelf';this.eqLow.frequency.value=160;
+      this.eqMid=c.createBiquadFilter();this.eqMid.type='peaking';this.eqMid.frequency.value=900;this.eqMid.Q.value=.8;
+      this.eqHigh=c.createBiquadFilter();this.eqHigh.type='highshelf';this.eqHigh.frequency.value=3800;
+      this.limiter=c.createDynamicsCompressor();this.limiter.threshold.value=-5;this.limiter.knee.value=5;this.limiter.ratio.value=8;this.limiter.attack.value=.004;this.limiter.release.value=.14;
+      this.master=c.createGain();this.master.gain.value=this.masterVolume;
+      this.eqLow.connect(this.eqMid);this.eqMid.connect(this.eqHigh);this.eqHigh.connect(this.limiter);this.limiter.connect(this.master);this.master.connect(c.destination);
+      this.cleanOutput.connect(this.eqLow);
       this.filter=c.createBiquadFilter();this.filter.type='lowpass';this.filter.Q.value=.72;
       this.delay=c.createDelay(1.4);this.delayFeedback=c.createGain();
       const wet=c.createGain();wet.gain.value=.24;
-      this.output.connect(this.filter);this.filter.connect(c.destination);
-      this.filter.connect(this.delay);this.delay.connect(this.delayFeedback);this.delayFeedback.connect(this.delay);this.delay.connect(wet);wet.connect(c.destination);
+      this.output.connect(this.filter);this.filter.connect(this.eqLow);
+      this.filter.connect(this.delay);this.delay.connect(this.delayFeedback);this.delayFeedback.connect(this.delay);this.delay.connect(wet);wet.connect(this.eqLow);
+      this.applyEqualizer();
       this.applyPreset(this.preset);
     }
     if(this.context.state!=='running')await this.context.resume();
@@ -91,6 +100,23 @@ export class GardenPad{
     if(!this.context)return;
     const p=PRESETS[this.preset],t=this.context.currentTime;
     this.filter.frequency.setTargetAtTime(p.cutoff,t,.18);this.delay.delayTime.setTargetAtTime(p.delay,t,.18);this.delayFeedback.gain.setTargetAtTime(p.feedback,t,.18);
+  }
+  setMasterVolume(value){
+    this.masterVolume=Math.min(1.8,Math.max(.8,Number(value)||1.2));
+    if(this.master&&this.context)this.master.gain.setTargetAtTime(this.masterVolume,this.context.currentTime,.04);
+  }
+  setEqualizer(band,value){
+    if(!Object.prototype.hasOwnProperty.call(this.equalizer,band))return;
+    this.equalizer[band]=Math.min(6,Math.max(-6,Number(value)||0));
+    this.applyEqualizer();
+  }
+  applyEqualizer(){
+    if(!this.context)return;
+    const now=this.context.currentTime;
+    for(const band of ['low','mid','high']){
+      const node=this[{low:'eqLow',mid:'eqMid',high:'eqHigh'}[band]];
+      if(node)node.gain.setTargetAtTime(this.equalizer[band],now,.04);
+    }
   }
   async play(chord,tonicPitchClass=5,{arpeggio=false,arrangement={},barSeconds=4}={}){
     const generation=++this.generation;
@@ -112,7 +138,11 @@ export class GardenPad{
     const exactNotes=Array.isArray(chord.notes)&&chord.notes.length;
     if(!exactNotes&&!GARDEN_INTERVALS[chord.quality])throw Error(`Неизвестный тип аккорда: ${chord.quality}. Воспроизведение остановлено, без подмены мажором.`);
     const notes=exactNotes?[...chord.notes]:[bass,...GARDEN_INTERVALS[chord.quality].map(interval=>root+interval)];
-    this.lastArrangement=gardenArrangementEvents(notes,chord.reference?{}:arrangement,barSeconds);
+    // Imported MIDI voicings may store only the mid-register chord stack in
+    // `notes`; their actual bass is represented separately by bassOffset.
+    // Keep the bass flower in the true low register instead of treating the
+    // stack's lowest note (often G3 or higher) as the bass.
+    this.lastArrangement=gardenArrangementEvents(notes,chord.reference?{}:arrangement,barSeconds,bass);
     // Sustained foundation stays identifiable underneath two quieter layers.
     // All future attacks belong to this voice group, so pause/route changes
     // cancel them together rather than leaving an accompaniment running.
@@ -234,16 +264,18 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     if(state.cursor>=exercise.sequence.length){state.cursor=0;state.round+=1;}
     accompaniment.next();sound();if(state.arpeggioRounds>0)state.arpeggioRounds-=1;schedule();
   }
-  const finish=()=>{state.complete=true;state.running=false;state.held=false;state.arpeggio=false;clearTimeout(state.timer);state.timer=0;state.deadline=0;};
+  const finish=()=>{state.complete=true;state.running=true;state.held=false;state.arpeggio=false;clearTimeout(state.timer);state.timer=0;state.deadline=0;};
   const settleAnswer=()=>{
-    if(state.progress.every(item=>item.degree&&item.quality)){finish();emit();return false;}
+    if(state.progress.every(item=>item.degree&&item.quality)){finish();state.feedback='Маршрут собран — слушаем его дальше';step();return true;}
     if(state.held){state.held=false;state.arpeggio=false;step();return true;}
     emit();return false;
   };
   return {
     start(){
       if(state.running)return;
-      state.running=true;state.complete=false;state.feedback='';
+      state.running=true;
+      if(state.complete){state.feedback='Продолжаем слушать собранный маршрут';step();return;}
+      state.feedback='';
       if(state.cursor<0&&state.basePlayed){step();return;}
       state.basePlayed=true;sound();schedule();
     },
@@ -275,7 +307,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     },
     advance(){step();},
     shift(delta,{consume}={}){
-      if(!state.running||state.complete||state.cursor<0||![-7,-5,-3,3,5,7].includes(delta)||typeof consume!=='function')return {ignored:true};
+      if(!state.running||state.complete||state.cursor<0||![-5,-3,-2,2,3,5].includes(delta)||typeof consume!=='function')return {ignored:true};
       const position=(state.cursor+delta%exercise.sequence.length+exercise.sequence.length)%exercise.sequence.length;
       if(position===state.cursor||!consume())return {ignored:true};
       return moveTo(position,`Мандала сместила маршрут на ${delta>0?'+':''}${delta}: позиция ${position+1}`);

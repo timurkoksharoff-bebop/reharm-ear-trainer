@@ -9,6 +9,12 @@ export const GARDEN_ARRANGEMENTS=Object.freeze({
   bassChill:{track:'bass',label:'Лунная ягода',detail:'Chill · мягкая синкопа',color:'#9dc5ec',symbol:'≈',petals:4},
   bassFunk:{track:'bass',label:'Пружинящий ирис',detail:'Полуфанк · короткий бас',color:'#e7a2c9',symbol:'ϟ',petals:5}
 });
+const COMMON_ARRANGEMENTS=Object.freeze(['arpWave','arpBroken','bassCanon']);
+const EXPERIMENTAL_ARRANGEMENTS=Object.freeze(['arpSpark','arpMist','bassChill','bassFunk']);
+export function chooseGardenArrangement(random=Math.random){
+  const pool=random()<.85?COMMON_ARRANGEMENTS:EXPERIMENTAL_ARRANGEMENTS;
+  return pool[Math.floor(random()*pool.length)];
+}
 
 export function createGardenArrangement(length){
   const bars=Math.max(2,Number(length)||2),tracks={arpeggio:null,bass:null};let current={};
@@ -23,9 +29,10 @@ export function createGardenArrangement(length){
   };
 }
 
-export function gardenArrangementEvents(notes,arrangement={},seconds=4){
+export function gardenArrangementEvents(notes,arrangement={},seconds=4,bassMidi=null){
   if(!Array.isArray(notes)||!notes.length||notes.some(note=>!Number.isFinite(note)))return [];
-  const sorted=[...new Set(notes)].sort((a,b)=>a-b),lowest=sorted[0],upper=sorted.length>1?sorted.slice(1):sorted;
+  const sorted=[...new Set(notes)].sort((a,b)=>a-b),lowest=Number.isFinite(bassMidi)?bassMidi:sorted[0],upper=sorted.filter(note=>note!==lowest);
+  if(!upper.length)upper.push(...sorted);
   const duration=Math.max(.4,Number(seconds)||4),events=[],arp=GARDEN_ARRANGEMENTS[arrangement.arpeggio],bass=GARDEN_ARRANGEMENTS[arrangement.bass];
   if(arp){
     const wave=upper.length<2?[0]:[...upper.map((_,i)=>i),...upper.slice(1,-1).map((_,i)=>upper.length-2-i)],broken=upper.map((_,i)=>(i%2?upper.length-1-Math.floor(i/2):Math.floor(i/2)));

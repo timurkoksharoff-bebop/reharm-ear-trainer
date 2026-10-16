@@ -1,9 +1,10 @@
-# EAR YOGA 1.20
+# EAR YOGA 1.21
 
 Mobile PWA release for Space Music College. Public entry point: https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/.
 
 - Conventional outline home and menu icons on the gameplay screen. Home retains flight-exit confirmation. Flight guide and RU/EN labels match the controls.
 - Approved orbital cover art and phone composition retained. Narrow phones fit all difficulty labels; portrait tablets keep the title clear of the difficulty row.
+- Space Music College is anchored to the Ear Yoga wordmark size and lower descender band, with a smaller caption stretched from the left E toward the g. Its distance from the wordmark stays constant when phone height changes.
 - Russian/English player interface, scrollable illustrated flight map and mobile route paging.
 - Five sampled sounds: Felt Piano, Hybrid Keys, Hybrid Orchestra, String Orchestra and Piano N. Sampled arpeggios retain distinct MIDI pitches while using one source recording per phrase.
 - 50 Jazz Standards, four saved Cinematic routes and 11 additional Route Lab routes across Anime, Cinematic, Deep House, Funk and Disco. Saved MIDI pitches and tonic centers are retained.

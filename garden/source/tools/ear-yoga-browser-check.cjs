@@ -52,19 +52,26 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8778/';
   await page.locator('#tutorial-settings-open').click();assert.match(await page.locator('#tutorial-title').innerText(),/Your flight map/);
   await page.locator('#tutorial-close').click();
   await page.reload();await page.waitForFunction(()=>window.gardenFlight?.snapshot().ready);assert.equal(await page.locator('html').getAttribute('lang'),'en');
-  for(const width of [320,390,430,768,1440]){
-   await page.setViewportSize({width,height:width>1000?900:844});
+  let shortPhoneBrandGap;
+  for(const [width,height] of [[320,568],[390,692],[390,844],[414,896],[430,932],[768,1024],[1440,900]]){
+   await page.setViewportSize({width,height});
    assert(await page.locator('#start-menu').isVisible());
    await page.locator('#start-tutorial').click();
    assert(await page.locator('#flight-tutorial').evaluate(e=>e.scrollWidth<=e.clientWidth),'guide fits '+width);
    await page.locator('#tutorial-close').click();
    const boxes=await page.evaluate(()=>['.start-college','.ear-yoga-wordmark','.difficulty-picker'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom};}));
    assert(boxes[1].bottom<boxes[2].y,'wordmark clears difficulty at '+width);assert(boxes.every(b=>b.x>=-1&&b.right<=width),'brand fits viewport '+width);
+   if(width<height){
+    assert(boxes[0].y>boxes[1].y+(boxes[1].bottom-boxes[1].y)*.75&&boxes[0].bottom<=boxes[1].bottom+1,'college stays inside the lower wordmark band');
+    if(width===390){const gap=boxes[0].y-boxes[1].y;if(shortPhoneBrandGap===undefined)shortPhoneBrandGap=gap;else assert(Math.abs(gap-shortPhoneBrandGap)<1,'changing phone height cannot detach the college endorsement');}
+   }
+   if(width===414)await page.screenshot({path:'/private/tmp/ear-yoga-1.21-xs-max.png'});
   }
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:'/private/tmp/ear-yoga-start.png'});
   await page.locator('#start-tutorial').click();await page.screenshot({path:'/private/tmp/ear-yoga-guide.png'});
   await page.locator('#tutorial-close').click();
   await page.locator('#start-random').click();
+  await page.waitForFunction(()=>earYoga.guide().active||gardenFlight.snapshot().mission.running);
   if(await page.locator('#flight-tutorial').isVisible())await page.locator('#tutorial-close').click();
   assert(await page.locator('#garden-home svg').isVisible());
   assert(await page.locator('#world-controls svg').isVisible());
@@ -87,6 +94,6 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8778/';
   await p.locator('#start-random').click();await p.waitForFunction(()=>earYoga.guide().active);
   assert.equal((await p.evaluate(()=>gardenFlight.snapshot())).mission.running,false,'first flight waits for guide');
   await p.locator('#tutorial-close').click();await p.waitForFunction(()=>gardenFlight.snapshot().mission.running);
-  console.log('EAR YOGA browser: 34 illustrated cards, guide isolation, RU/EN persistence, menu, five sampled instruments, paging, 5 viewports, expiry and first-flight guide passed.');
+  console.log('EAR YOGA browser: 34 illustrated cards, guide isolation, RU/EN persistence, menu, five sampled instruments, paging, 7 viewports, anchored college endorsement, expiry and first-flight guide passed.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

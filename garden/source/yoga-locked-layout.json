@@ -2,7 +2,8 @@
   "referenceViewport":{"width":390,"height":692},
   "titleText":"Ear Yoga","subtitleText":"SPACE MUSIC COLLEGE",
   "title":22,"titleX":7,"titleY":17,"titleFont":"sans","titleWeight":200,"titleTracking":-0.055,
-  "subtitle":2.8,"subtitleX":-0.167,"subtitleY":29,"subtitleFont":"sans","tracking":0.35,"align":"center",
+  "subtitle":2.31,"subtitleX":7.66,"subtitleY":27.91,"subtitleFont":"sans","tracking":0.48,"align":"justify",
+  "subtitleAnchor":"wordmark","subtitleOffsetEm":0.88,"subtitleSizeEm":0.105,"subtitleWidthEm":2.12,
   "screen":"compact","levelsY":33.5,"actionsY":48,"levelsScale":0.9,"actionsScale":0.875,
   "levelsX":3,"actionsX":8,"levelsText":1.15,"actionsText":1.15,
   "interfaceFont":"Inter Variable","checkpoint":"2026-10-16"

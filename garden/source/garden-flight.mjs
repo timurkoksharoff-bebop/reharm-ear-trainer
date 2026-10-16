@@ -10,6 +10,11 @@ import {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS} fr
 import {createGardenRewards} from './garden-rewards.mjs';
 import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
+function setPlaybackIcon(button,running){
+  const state=running?'pause':'play';if(button.dataset.playbackState===state)return;
+  button.dataset.playbackState=state;
+  button.innerHTML=`<svg class="playback-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${running?'M8 5v14M16 5v14':'M7 4.5 19 12 7 19.5Z'}"/></svg>`;
+}
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const requestedPalette=new URLSearchParams(location.search).get('palette');
 document.body.dataset.paletteLayout=['compact','expanded','layered'].includes(requestedPalette)?requestedPalette:'layered';
@@ -68,7 +73,7 @@ function ui(){
   $('state-number').textContent=`ЖИВОЙ ЦИКЛ · 0${active+1} / 04`;
   $('world-cycle-name').textContent=item.name;$('world-cycle-progress').style.width=`${Math.round(progress*100)}%`;
   for(const [attribute,value] of [['ship',s.ship],['light',s.lightMode]])for(const b of document.querySelectorAll(`[data-${attribute}]`)){const selected=String(b.dataset[attribute])===String(value);b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));}
-  $('pause').setAttribute('aria-pressed',String(s.paused));$('pause').textContent=s.paused?'▶':'Ⅱ';$('pause').setAttribute('aria-label',s.paused?'Продолжить':'Пауза');
+  $('pause').setAttribute('aria-pressed',String(s.paused));setPlaybackIcon($('pause'),!s.paused);$('pause').setAttribute('aria-label',s.paused?'Продолжить':'Пауза');
   $('lantern').setAttribute('aria-pressed',String(s.lantern));$('lantern').disabled=s.ship===2;
   $('flight-status').textContent=s.paused?'Полёт на паузе':s.night>.6?(s.lantern&&s.ship!==2?'Ночь · свет ведёт нас':'Ночь · естественное свечение'):s.night>.2?'Сумерки · сад продолжает расти':'День · живой цикл';
 }
@@ -148,7 +153,7 @@ function renderMission(model){
   $('answer-feedback').textContent=model.complete?'Маршрут собран · слушаем найденную гармонию дальше.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?'Бас и аккорд — два независимых ответа':model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
   const referenceName=String(model.reference.degree).replace(/^БАЗА\s*/, '');
   $('mission-prompt').textContent=model.complete?`Все ${total} аккордов найдены. Подсвечены звучащий аккорд и его ступень.`:model.running?(model.cursor<0?`Тоника ${referenceName} звучит один раз перед фигурой.`:waitingForFinal?`Ждём позицию ${finalMissing.index+1} — там остался ${finalMissing.kind}.`:solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':currentParts.degree?'Бас есть. Найди аккорд.':currentParts.quality?'Аккорд есть. Найди бас.':'Определи две части текущего аккорда.'):'Тоника известна. Запусти последовательность.';
-  $('mission-toggle').textContent=model.running?'Ⅱ':'▶';$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Продолжить полёт и музыку');$('mission-restart').hidden=true;
+  setPlaybackIcon($('mission-toggle'),model.running);$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Продолжить полёт и музыку');$('mission-restart').hidden=true;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
 function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}

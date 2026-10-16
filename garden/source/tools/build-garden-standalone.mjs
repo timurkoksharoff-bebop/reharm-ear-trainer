@@ -11,7 +11,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const assetRoot=fs.existsSync(path.join(root,'assets/echo-garden'))?path.join(root,'assets/echo-garden'):path.resolve(root,'../assets/echo-garden');
 const output=process.argv[2];
 if(!output||!path.isAbsolute(output))throw Error('Provide an absolute destination directory for the standalone Garden.');
-const version='1.21';
+const version='1.22';
 const jazzTitles=['All of Me','All the Things You Are','Autumn Leaves','Blue Bossa','Fly Me to the Moon','Summertime','Take the A Train','Satin Doll','There Will Never Be Another You','On the Sunny Side of the Street','Misty','My Funny Valentine','Body and Soul','Night and Day','My Foolish Heart','In a Sentimental Mood','Georgia on My Mind','Stardust','The Nearness of You','Someone to Watch Over Me','A Night in Tunisia','Caravan','Giant Steps','Black Orpheus','Corcovado','Wave','Desafinado','Recorda Me','St. Thomas','Footprints','So What','Blue Monk','C Jam Blues',"Bag's Groove","Billie's Bounce",'Straight, No Chaser','Watermelon Man','Cantaloupe Island','Doxy','Oleo','Stella by Starlight','Days of Wine and Roses','On Green Dolphin Street','Have You Met Miss Jones?','How High the Moon','Just Friends','Solar','Confirmation','Softly, as in a Morning Sunrise','What Is This Thing Called Love?'];
 const norm=value=>String(value).toLocaleLowerCase().replace(/[^a-z0-9]/g,'');
 const jazzRecords=jazzTitles.map((title,index)=>{

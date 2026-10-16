@@ -1,4 +1,4 @@
-# EAR YOGA 1.21 — mobile PWA release
+# EAR YOGA 1.22 — mobile PWA release
 
 Space Music College. Includes the approved orbital cover, 50 Jazz Standards, 11 additional saved Route Lab routes and the custom Disco category, plus five sound samples. Existing local browser data is not deleted.
 

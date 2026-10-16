@@ -456,6 +456,7 @@ body.bright-garden #harmony-hud[data-variant=minimal] .quality-option:not(.selec
 .enrollment[hidden]{display:none}.enrollment-card{width:min(330px,100%);padding:28px 22px;border:1px solid #c3dac259;border-radius:26px;background:linear-gradient(145deg,#15333bdd,#0b1f32ee);box-shadow:0 20px 70px #00101a66;text-align:center;color:#e9f3ec}
 .enrollment-college{font:10px/1.5 Georgia,serif;letter-spacing:.15em;color:#dcca9e}.enrollment-flower{display:block;margin:16px 0;color:#bbdbcf;font:52px/1 Georgia;text-shadow:0 0 24px #9be9d22b}.enrollment-card h2{font:29px/1.15 Georgia,serif;margin:12px 0}.enrollment-card p{font:12px/1.8 system-ui;color:#c7dbd7;margin:0 0 22px}.enrollment-card button{display:block;width:100%;min-height:42px;border:1px solid #c9dec463;border-radius:15px;background:#b3d7c016;color:#edf5e7;font-size:12px}.enrollment-card #enrollment-close{margin-top:8px;background:transparent;border-color:transparent;color:#a9c3c3;font-size:10px}
 #harmony-hud[data-variant=minimal] #mission-toggle{width:44px;min-height:40px;padding:0;font-size:21px;color:#c5f3eb;background:#0c2e330d;border-color:#b7e4dd50;text-shadow:0 0 10px #72dfd16b}
+.playback-icon{display:block;width:24px;height:24px;margin:auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 4px #72dfd144)}
 .infinity-continue{width:66px;justify-content:center;padding:5px;gap:10px;background:#0c2e330d;text-shadow:0 0 9px #72dfd150}
 .infinity-continue>span:last-child{font:18px Arial;color:#c5f3eb}
 @media(orientation:portrait){

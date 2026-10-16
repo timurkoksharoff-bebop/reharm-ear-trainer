@@ -10,6 +10,7 @@ const pad=new GardenPad();globalThis.fetch=savedFetch;pad.unlock=async()=>{};
 let starts=[];
 const parameter=()=>({value:0,setValueAtTime(){},exponentialRampToValueAtTime(){},cancelScheduledValues(){},setTargetAtTime(){}});
 pad.cleanOutput={};pad.sampleBuffers=[48,52,55].map(midi=>({midi,buffer:{midi}}));
+pad.loadSampleBank=async()=>pad.sampleBuffers;
 pad.context={currentTime:10,createGain:()=>({gain:parameter(),connect(){},disconnect(){}}),
   createBufferSource:()=>{const voice={playbackRate:parameter(),connect(){},stop(){},start(at){starts.push({track:'chord',midi:Math.round(voice.buffer.midi+12*Math.log2(voice.playbackRate.value)),at});}};return voice;},
   createOscillator:()=>{const voice={frequency:parameter(),connect(){},stop(){},start(at){starts.push({track:'layer',at});}};return voice;}};

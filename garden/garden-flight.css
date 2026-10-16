@@ -457,6 +457,7 @@ body.bright-garden #harmony-hud[data-variant=minimal] .quality-option:not(.selec
 .enrollment-college{font:10px/1.5 Georgia,serif;letter-spacing:.15em;color:#dcca9e}.enrollment-flower{display:block;margin:16px 0;color:#bbdbcf;font:52px/1 Georgia;text-shadow:0 0 24px #9be9d22b}.enrollment-card h2{font:29px/1.15 Georgia,serif;margin:12px 0}.enrollment-card p{font:12px/1.8 system-ui;color:#c7dbd7;margin:0 0 22px}.enrollment-card button{display:block;width:100%;min-height:42px;border:1px solid #c9dec463;border-radius:15px;background:#b3d7c016;color:#edf5e7;font-size:12px}.enrollment-card #enrollment-close{margin-top:8px;background:transparent;border-color:transparent;color:#a9c3c3;font-size:10px}
 #harmony-hud[data-variant=minimal] #mission-toggle{width:44px;min-height:40px;padding:0;font-size:21px;color:#c5f3eb;background:#0c2e330d;border-color:#b7e4dd50;text-shadow:0 0 10px #72dfd16b}
 .playback-icon{display:block;width:24px;height:24px;margin:auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 4px #72dfd144)}
+.menu-home-icon{display:none}
 .infinity-continue{width:66px;justify-content:center;padding:5px;gap:10px;background:#0c2e330d;text-shadow:0 0 9px #72dfd150}
 .infinity-continue>span:last-child{font:18px Arial;color:#c5f3eb}
 @media(orientation:portrait){
@@ -485,8 +486,75 @@ body.bright-garden #harmony-hud[data-variant=minimal] .quality-option:not(.selec
 .mission-complete[hidden]{display:none}.mission-complete>.overline{font-size:8px;letter-spacing:.16em;color:#b7e9d1}.mission-complete p{margin:5px 0 8px;color:#c2ded5;font-size:10px;line-height:1.4}.mission-complete>div{display:flex;justify-content:center;gap:8px}.mission-complete button{min-height:34px;padding:0 11px;border:1px solid #9ce9d966;border-radius:10px;background:linear-gradient(120deg,#4c90745c,#36948955);color:#eaffef;font-size:10px;pointer-events:auto}.mission-complete button:hover,.mission-complete button:focus-visible{border-color:#e8d990;box-shadow:0 0 18px #9bedc322}.mission-complete button:last-child{background:transparent;border-color:#9ce9d92b;color:#a6c9bd}
 .studio-category-form{margin:14px 0 18px;padding:12px;border:1px solid #8fffe426;border-radius:12px;background:#00182075}.studio-category-form>label{display:block;margin-bottom:8px;color:#d4eee4;font:14px Georgia,serif}.studio-category-form>div{display:flex;gap:7px}.studio-category-form input{min-width:0;flex:1;min-height:38px;border:1px solid #8fffe43a;border-radius:8px;background:#00151d9c;color:#e6fff8;padding:0 10px}.studio-category-form button{flex:0 0 auto;padding:0 10px;border:1px solid #8fffe451;border-radius:8px;background:#0d4a5570;color:#e6fff8;font-size:10px}.studio-category-form small{display:block;margin-top:8px;color:#86aaa3;font-size:9px;line-height:1.4}.studio-category-form p{min-height:12px;margin:6px 0 0;color:#b7e9d1;font-size:10px}.library-folder>header{display:flex;align-items:center;gap:9px}.library-folder>header>strong{flex:1}.library-mandala{width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 0 6px #9ef0d944)}
 .audio-tuning{width:100%;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 14px;margin:2px 0 0;padding:8px 10px 10px;border:1px solid #8fffe426;border-radius:10px;background:#00182055}.audio-tuning legend{padding:0 5px;color:#bdd8d0;font-size:9px;letter-spacing:.08em}.audio-tuning label{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 6px;min-width:0;color:#c3ded3;font-size:10px}.audio-tuning input{grid-column:1/-1;width:100%!important;height:22px;accent-color:#9cebd4}.audio-tuning output{min-width:36px;text-align:right;color:#dff7ea;font-size:9px;font-variant-numeric:tabular-nums}
-@media(max-width:760px){.mission-complete{top:50%;left:calc(50% - 36px);transform:translate(-50%,-50%);width:max(68px,min(320px,calc(100vw - 254px)));padding:7px;border-radius:12px}.mission-complete>.overline,.mission-complete p{display:none}.mission-complete>div{gap:4px}.mission-complete button{flex:1;min-width:0;padding:0 4px!important;font-size:0!important}.mission-complete button:first-child::after{content:"→";font-size:18px}.mission-complete button:last-child::after{content:"⌂";font-size:16px}.studio-category-form>div{display:grid;grid-template-columns:minmax(0,1fr) auto}.studio-category-form button{padding:0 8px}}
+@media(max-width:760px){.mission-complete{top:50%;left:calc(50% - 36px);transform:translate(-50%,-50%);width:max(68px,min(320px,calc(100vw - 254px)));padding:7px;border-radius:12px}.mission-complete>.overline,.mission-complete p{display:none}.mission-complete>div{gap:4px}.mission-complete button{flex:1;min-width:0;padding:0 4px!important;font-size:0!important}.mission-complete button:first-child::after{content:"→";font-size:18px}.mission-complete button:last-child::after{content:none}.mission-complete .menu-home-icon{display:block;width:18px;height:18px;margin:auto;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.studio-category-form>div{display:grid;grid-template-columns:minmax(0,1fr) auto}.studio-category-form button{padding:0 8px}}
 @media(max-width:340px){.mission-complete{width:80px;left:calc(50% - 36px)}.mission-complete button:last-child{display:none}}
+/* Teacher experiment: transparent note rail; no filled card over the world. */
+.bass-panel{position:fixed;left:12px;top:42%;width:126px;background:transparent!important;border:0;box-shadow:none;backdrop-filter:none;pointer-events:auto}
+.bass-panel[hidden],.teacher-key[hidden]{display:none}
+.bass-heading,.teacher-key{display:block;color:#d5ede7;font:11px/1.4 system-ui;text-align:center;text-shadow:0 1px 4px #001719}
+.bass-heading{margin-bottom:5px;letter-spacing:.16em}
+#bass-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+#bass-options button{min-width:0;min-height:34px;padding:3px 0;border:1px solid #a8d9ce80;border-radius:18px;background:transparent;backdrop-filter:none;color:#e9fff5;font:15px/1.2 Georgia,serif;text-shadow:0 1px 4px #001719}
+#bass-options button.selected{border-color:#ddfff4;background:#8cdbc624;box-shadow:0 0 10px #9be8d42b}
+#bass-options button:disabled:not(.selected){opacity:.55}
+.teacher-key{margin-bottom:5px}
+.map-teacher-bass{position:absolute;left:9px;top:50%;color:#d3eee1;font:12px/1.8 Georgia,serif}
+.map-teacher-bass b{display:block;font:10px/1.4 system-ui}
+.route-node .node-bass-ring{inset:-5px!important;width:auto!important;height:auto!important;border:1px dashed #d8d2a777;border-radius:50%;background:transparent!important;transition:border-color .3s}
+.route-node .node-bass-ring.found{border:2px solid #a4f3d9;box-shadow:0 0 5px #aff4dc66!important}
+.route-node .node-bass-ring:after{display:none!important}
+body.teacher-mode .route-copy b{font-size:12px;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:760px){
+ .bass-panel{left:8px;top:max(300px,43dvh);width:94px}
+ #bass-options{gap:4px}#bass-options button{min-height:29px;font-size:12px}
+ body.teacher-mode .arrangement-status{flex-direction:row;width:94px}
+ body.teacher-mode.infinity-active .arrangement-status{top:240px}
+ body.teacher-mode .mission-complete{left:calc(50% - 8px);width:74px}
+ body.teacher-mode .mission-complete button:last-child{display:none}
+}
+/* Teacher listening desk: one note column, one quality column, open centre. */
+body.teacher-mode .bass-panel{left:9px;top:max(166px,24dvh);bottom:164px;width:58px;max-height:450px;display:flex;flex-direction:column}
+body.teacher-mode .bass-panel[hidden]{display:none}
+body.teacher-mode #bass-options{flex:1;min-height:0;grid-template-columns:1fr;grid-template-rows:repeat(12,minmax(0,1fr));gap:3px}
+body.teacher-mode #bass-options button{width:58px;min-height:0;font-size:13px;padding:1px 0}
+body.teacher-mode.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{width:58px;max-width:58px}
+body.teacher-mode.student-palette #harmony-hud[data-variant=minimal] .quality-option{width:58px}
+body.teacher-mode.student-palette .quality-advanced{right:64px;width:58px}
+body.teacher-mode #harmony-hud[data-variant=minimal] .answers-panel #mission-toggle{left:auto;right:118px;top:max(9px,env(safe-area-inset-top));width:38px;min-width:38px;height:38px;min-height:38px;border-radius:50%}
+body.teacher-mode #harmony-hud[data-variant=minimal] .route-heading{margin-right:155px}
+body.teacher-mode .arrangement-status,body.teacher-mode.infinity-active .arrangement-status{left:78px;top:150px;bottom:auto;width:auto;flex-direction:row;gap:4px}
+body.teacher-mode .arrangement-status button{width:32px;height:32px;min-height:32px}
+body.teacher-mode .arrangement-status canvas{width:28px;height:28px}
+body.teacher-mode .flight-tools,body.teacher-mode.infinity-active .flight-tools{left:10px;top:auto;bottom:106px}
+body.teacher-mode .flight-tools-body{position:absolute;left:64px;top:auto;bottom:48px;height:auto;min-height:90px;margin:0;width:min(230px,calc(100vw - 152px));max-height:calc(100dvh - 330px);overflow-y:auto;background:transparent}
+body.teacher-mode .flight-tools[open] .flight-tools-body{left:64px}
+body.teacher-mode .infinity-continue{left:76px;top:auto;bottom:108px}
+@media(min-width:761px){body.teacher-mode .flight-tools{bottom:76px}body.teacher-mode .bass-panel{bottom:132px}body.teacher-mode .flight-tools-body{width:230px}}
+body.teacher-mode .bass-panel{width:38px}
+body.teacher-mode #bass-options button{width:min(30px,calc((100dvh - 350px)/12));height:min(30px,calc((100dvh - 350px)/12));min-height:0;padding:0;border-radius:50%;justify-self:center;align-self:center;font-size:12px}
+.degree-option,.quality-option{position:relative;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.degree-option::before,.quality-option::before{content:"";position:absolute;inset:-2px;border-radius:inherit}
+.chain-pager{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px;pointer-events:auto;color:#d2e8df;font:10px/1.2 ui-monospace,monospace;text-shadow:0 1px 3px #001719}
+.chain-pager[hidden]{display:none}
+.chain-pager button{width:30px;min-height:24px;padding:0;border:1px solid #b1dbce55;border-radius:12px;background:transparent;color:inherit;font:19px/1 system-ui}
+.chain-pager button:disabled{opacity:.25}
+#harmony-hud[data-variant=minimal] .chord-route.route-paged{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(44px,auto));gap:5px 8px!important;overflow:visible!important;padding-top:29px}
+#harmony-hud[data-variant=minimal] .chord-route.route-paged .chord-slot[hidden]{display:none!important}
+#harmony-hud[data-variant=minimal] .route-paged .route-copy b{display:block;max-width:100%;font-size:11px!important;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+#harmony-hud[data-variant=minimal] .route-paged .route-node{width:24px;height:24px}
+#harmony-hud[data-variant=minimal] .route-paged .route-node em{font-size:10px}
+body.teacher-mode.paged-chain .arrangement-status{top:216px;left:76px}
+body.paged-chain.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{top:224px}
+body.paged-chain #harmony-hud[data-variant=minimal] .answers-panel #mission-toggle{left:auto;right:118px;top:max(9px,env(safe-area-inset-top));width:38px;min-width:38px;height:38px;min-height:38px;border-radius:50%}
+body.paged-chain #harmony-hud[data-variant=minimal] .route-heading{margin-right:155px}
+body.paged-chain .flight-tools,body.paged-chain.infinity-active .flight-tools{top:auto;bottom:106px}
+body.paged-chain .flight-tools-body{top:auto;bottom:48px;height:auto;min-height:90px;left:64px;max-height:calc(100dvh - 330px)}
+body.paged-chain .arrangement-status,body.paged-chain.infinity-active .arrangement-status{top:192px;left:76px;width:auto;flex-direction:row;gap:4px}
+body.paged-chain .arrangement-status button{width:28px;height:28px;min-height:28px}
+body.paged-chain .arrangement-status canvas{width:24px;height:24px}
+body.paged-chain .infinity-continue{left:76px;top:auto;bottom:108px}
+#bass-options .degree-option::before{inset:-1px}
+#harmony-hud[data-variant=minimal] .degree-option,#harmony-hud[data-variant=minimal] .quality-option,#bass-options button{text-shadow:0 1px 2px #001719,0 0 4px #001719}
 @media(max-width:760px){.audio-tuning{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding:8px}.audio-tuning label{font-size:10px}}
 /* EAR YOGA: one restrained publisher line and an orbital lotus / inner ear. */
 .garden-start .start-copy>.start-college{position:absolute;top:calc(24px + env(safe-area-inset-top));left:4vw;width:auto;font:11px/1.4 Georgia,serif;letter-spacing:.22em;text-align:left;color:#e7dece}

@@ -1,5 +1,7 @@
 // One continuous garden map. Additional paintings provide material/color
 // references, while geography always comes from the same master texture.
+export const GARDEN_SHIP_SCALE=.85;
+export function gardenShipSize(width,ship=1){return Math.min(190,Math.max(110,width*.22))*(ship===1?1.35:1)*GARDEN_SHIP_SCALE;}
 const VERTEX = `attribute vec2 a_position;
 varying vec2 v_uv;
 void main(){v_uv=vec2(a_position.x*.5+.5,.5-a_position.y*.5);gl_Position=vec4(a_position,0.,1.);}`;
@@ -70,6 +72,10 @@ void main(){
   vec3 night=mix(dark,c*vec3(1.05,1.02,.86),lamp);
   vec3 dusk=c*vec3(1.01,.86,.88);
   vec3 color=mix(mix(c,dusk,sin(u_night*3.14159)*.48),night,u_night);
+  // Tone down bright daytime terrain only; dusk/night keep their approved look.
+  float day=1.-smoothstep(.0,.42,u_night);
+  float bright=smoothstep(.20,.75,dot(c,vec3(.2126,.7152,.0722)));
+  color*=1.-day*(.06+.12*bright);
   gl_FragColor=vec4(color,1.);
 }`;
 
@@ -150,7 +156,7 @@ export function createGardenRenderer(groundCanvas,shipCanvas,images) {
       if(s.ship===2)return;
       gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);vessel.use();vessel.texture('u_ship',s.ship,0);
       vessel.v('u_resolution',s.width,s.height);vessel.v('u_pilot',s.x/s.width,s.y/s.height);
-      const size=Math.min(190,Math.max(110,s.width*.22))*(s.ship===1?1.35:1);
+      const size=gardenShipSize(s.width,s.ship);
       vessel.f('u_shipSize',size);vessel.f('u_angle',s.angle);vessel.f('u_time',s.time);vessel.f('u_night',s.night);
       vessel.f('u_thrust',s.thrust??.45);vessel.f('u_brake',s.brake??0);vessel.f('u_lateral',Math.max(-1,Math.min(1,(s.motionX??0)*4)));
       vessel.f('u_shadow',1);gl.drawArrays(gl.TRIANGLES,0,6);vessel.f('u_shadow',0);gl.drawArrays(gl.TRIANGLES,0,6);

@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8778/';
+const locked=require('../yoga-locked-layout.json');
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
@@ -52,7 +53,6 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8778/';
   await page.locator('#tutorial-settings-open').click();assert.match(await page.locator('#tutorial-title').innerText(),/Your flight map/);
   await page.locator('#tutorial-close').click();
   await page.reload();await page.waitForFunction(()=>window.gardenFlight?.snapshot().ready);assert.equal(await page.locator('html').getAttribute('lang'),'en');
-  let shortPhoneBrandGap;
   for(const [width,height] of [[320,568],[390,692],[390,844],[414,896],[430,932],[768,1024],[1440,900]]){
    await page.setViewportSize({width,height});
    assert(await page.locator('#start-menu').isVisible());
@@ -61,9 +61,10 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8778/';
    await page.locator('#tutorial-close').click();
    const boxes=await page.evaluate(()=>['.start-college','.ear-yoga-wordmark','.difficulty-picker'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom};}));
    assert(boxes[1].bottom<boxes[2].y,'wordmark clears difficulty at '+width);assert(boxes.every(b=>b.x>=-1&&b.right<=width),'brand fits viewport '+width);
-   if(width<height){
-    assert(boxes[0].y>boxes[1].y+(boxes[1].bottom-boxes[1].y)*.75&&boxes[0].bottom<=boxes[1].bottom+1,'college stays inside the lower wordmark band');
-    if(width===390){const gap=boxes[0].y-boxes[1].y;if(shortPhoneBrandGap===undefined)shortPhoneBrandGap=gap;else assert(Math.abs(gap-shortPhoneBrandGap)<1,'changing phone height cannot detach the college endorsement');}
+   if(width<height&&width<600){
+    assert(Math.abs(boxes[0].y-height*locked.subtitleY/100)<1,'College uses the user-exported vertical coordinate');
+    assert(Math.abs(boxes[1].y-height*locked.titleY/100)<1,'Ear Yoga uses the user-exported vertical coordinate');
+    assert(Math.abs(boxes[0].x-width*locked.subtitleX/100)<1,'College uses the user-exported horizontal coordinate');
    }
    if(width===414)await page.screenshot({path:'/private/tmp/ear-yoga-1.21-xs-max.png'});
   }

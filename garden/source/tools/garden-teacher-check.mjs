@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import {createGardenMission,gardenAvailableAnswers,gardenAnswerState,gardenFilteredChoices,gardenJazzLabel,gardenQualityAnswer} from '../garden-harmony.mjs';
+import {difficultyProfile} from '../garden-difficulty.mjs';
+
+const exercise={id:'teacher-test',baseTonic:5,sequence:[
+ {degree:'I',offset:0,quality:'maj',bassOffset:null},
+ {degree:'V7/II/5',offset:9,quality:'7',bassOffset:4}
+]};
+const teacher=createGardenMission({exercise,separateBass:true,barSeconds:999});
+teacher.start();teacher.advance();
+assert.equal(teacher.snapshot().totalParts,6);
+assert.equal(teacher.answerPart('degree',0).correct,true);
+assert.deepEqual(teacher.snapshot().currentParts,{degree:true,quality:false,bass:true},'root-position bass is revealed automatically');
+assert.equal(teacher.answerPart('quality','maj').positionComplete,true);
+teacher.advance();
+assert.equal(teacher.answerPart('degree',4).correct,false,'bass is not a valid root answer');
+assert.equal(teacher.answerPart('degree',9).correct,true);
+assert.equal(teacher.answerPart('quality','7').correct,true);
+assert.equal(teacher.snapshot().complete,false,'root and quality do not complete an inversion');
+assert.equal(teacher.snapshot().solved.length,1);
+assert.equal(teacher.answerPart('bass',7).correct,false);
+assert.deepEqual(teacher.snapshot().currentParts,{degree:true,quality:true,bass:false});
+assert(gardenAnswerState(teacher.snapshot(),'degree',9).selected);
+assert(gardenAnswerState(teacher.snapshot(),'quality','7').selected);
+assert(!gardenAnswerState(teacher.snapshot(),'bass',4).selected);
+assert.equal(teacher.answerPart('bass',4).complete,true);
+teacher.pause();teacher.restart();
+assert.deepEqual(teacher.snapshot().progress[0],{degree:false,quality:false,bass:false});
+teacher.start();teacher.advance();teacher.advance();
+let charges=1;
+assert(teacher.assist({answerKind:'both',reveal:true},{consume:()=>charges-- >0}).positionComplete);
+assert.equal(charges,0);
+teacher.pause();
+assert.equal(gardenJazzLabel(exercise.sequence[1],5),'D7/A');
+assert.equal(gardenJazzLabel({offset:0,quality:'m7',bassOffset:7},0),'C−7/G');
+assert.equal(gardenJazzLabel({offset:2,quality:'m7b5'},0),'Dø7');
+assert.equal(gardenJazzLabel({offset:0,quality:'maj7'},0),'C△7');
+assert.equal(gardenJazzLabel(exercise.sequence[1],5,{root:true,quality:true,bass:false}),'D7','unanswered bass is never revealed');
+const filtered=gardenFilteredChoices('degree',exercise.sequence[1],{remaining:1,divisor:2},undefined,{rootMode:true});
+assert(filtered.has(9));
+assert(gardenAvailableAnswers(exercise,{rootMode:true}).includes('7'));
+assert(!gardenAvailableAnswers(exercise,{rootMode:true}).includes('9:7'));
+const student=createGardenMission({exercise,barSeconds:999});
+student.start();student.advance();student.advance();
+assert.equal(student.snapshot().totalParts,4);
+assert.equal(student.answerPart('bass',4).ignored,true);
+assert.equal(student.answerPart('degree',9).correct,false,'legacy student behavior is unchanged');
+assert.equal(student.answerPart('degree',4).correct,true);
+assert.equal(student.answerPart('quality',gardenQualityAnswer(exercise.sequence[1])).correct,true);
+student.pause();
+assert.deepEqual(difficultyProfile('hard'),difficultyProfile('medium'),'teacher differs only by answer mechanics');
+const imported={baseTonic:5,sequence:[{offset:9,rootPc:2,bassPc:9,bassOffset:7,quality:'7',notes:[45,62,66,69,72]},{offset:0,rootPc:5,bassPc:5,bassOffset:0,quality:'maj',notes:[41,53,57,60]}]};
+const copy=JSON.stringify(imported),m=createGardenMission({exercise:imported,separateBass:true});
+assert.equal(m.snapshot().exercise.sequence[0].bassOffset,4);
+assert.equal(JSON.stringify(imported),copy,'teacher normalization never mutates saved routes or MIDI');
+console.log('Teacher passed: separate root/quality/note bass, automatic root-position bass, pending inversions, ring state, hints, notation, unchanged Student and MIDI.');

@@ -1,4 +1,5 @@
 import {GARDEN_ARRANGEMENTS,chooseGardenArrangement,drawGardenArrangementFlower} from './garden-arrangement.mjs';
+import {GARDEN_SHIP_SCALE,gardenShipSize} from './garden-flight-renderer.mjs';
 const clamp=(value,min=0,max=100)=>Math.min(max,Math.max(min,value));
 const modulo=(value,period)=>((value%period)+period)%period;
 
@@ -142,7 +143,7 @@ export class GardenLife{
   setResource(name,value){if(name in this.resources)this.resources[name]=clamp(value);}
   wrongAnswer(kind,value,qualityOrder=[]){
     if(this.gameOver)return;
-    const resource=kind==='degree'?(Number(value)<6?'fuel':'water'):(qualityOrder.indexOf(value)%2===0?'crew':'hull');
+    const resource=(kind==='degree'||kind==='bass')?(Number(value)<6?'fuel':'water'):(qualityOrder.indexOf(value)%2===0?'crew':'hull');
     this.resources[resource]=Math.max(this.difficulty?.minResource||0,clamp(this.resources[resource]-(this.difficulty?.wrongDamage??3)));
     announce(this,{kind:'wrongAnswer',item:{resource,label:`Ошибка · ${GARDEN_RESOURCES[resource].label} −3`,harmful:true,color:GARDEN_RESOURCES[resource].color},x:.5,y:.55});
     this.updateCritical(0);
@@ -289,7 +290,7 @@ export class GardenLife{
         entity.baseY+=(entity.vy+speed*.012)*dt;entity.x+=entity.vx*dt;
         entity.y=entity.baseY+Math.sin(entity.age*.58+entity.phase)*.085+Math.sin(entity.age*.19+entity.phase*1.7)*.03;entity.angle+=entity.spin*dt;
         const dx=entity.x*w-sx,dy=entity.y*h-sy,distance=Math.hypot(dx,dy)||1,influence=entity.item.size*entity.scale*1.05+105;
-        if(view.active&&view.ship!==2&&distance<influence){const strength=(1-distance/influence)**1.45;this.flightForce.x+=dx/distance*strength*.075;this.flightForce.y+=dy/distance*strength*.06;this.flightForce.intensity=Math.max(this.flightForce.intensity,strength*.5);this.resources.fuel=clamp(this.resources.fuel-dt*strength*.22);if(distance<entity.item.size*entity.scale*.2+22&&this.time-entity.lastDamage>2.5)this.applyDamage(entity,{repeat:true});}
+        if(view.active&&view.ship!==2&&distance<influence){const strength=(1-distance/influence)**1.45;this.flightForce.x+=dx/distance*strength*.075;this.flightForce.y+=dy/distance*strength*.06;this.flightForce.intensity=Math.max(this.flightForce.intensity,strength*.5);this.resources.fuel=clamp(this.resources.fuel-dt*strength*.22);if(distance<entity.item.size*entity.scale*.2+22*GARDEN_SHIP_SCALE&&this.time-entity.lastDamage>2.5)this.applyDamage(entity,{repeat:true});}
         continue;
       }
       if(entity.item.ground){entity.vy+=(.05+speed*.06-entity.vy)*(1-Math.exp(-dt*.9));entity.y+=entity.vy*dt;entity.angle+=Math.sin(entity.phase)*dt*.012;continue;}
@@ -300,7 +301,7 @@ export class GardenLife{
     }
     const floaters=this.entities.filter(entity=>!entity.item.ground&&!entity.item.storm);
     for(let i=0;i<floaters.length;i++)for(let j=i+1;j<floaters.length;j++){const a=floaters[i],b=floaters[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=.095;if(d<min){const force=(min-d)*.26/d;a.vx-=dx*force;b.vx+=dx*force;a.vy-=dy*force*.28;b.vy+=dy*force*.28;if(a.item.asteroid&&b.item.asteroid&&this.time-(a.lastCollision??-99)>1.1){a.lastCollision=b.lastCollision=this.time;for(let chip=0;chip<5;chip++){const angle=this.random()*Math.PI*2;this.chips.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2,vx:Math.cos(angle)*(.025+this.random()*.05),vy:Math.sin(angle)*(.025+this.random()*.05),age:0,life:.35+this.random()*.45,size:1+this.random()*2,color:'#c7c1a8'});}}}}
-    if((view.active||view.flying)&&view.ship!==2)for(const entity of this.entities){if(entity.item.storm)continue;const dx=entity.x*w-sx,dy=entity.y*h-sy,distance=Math.hypot(dx,dy),radius=entity.item.size*entity.scale*(entity.item.ground?.38:entity.item.asteroid?.38:.44)+(entity.item.ground?24:entity.item.asteroid?25:34);if(distance<radius){if(entity.item.asteroid||entity.item.ground)this.asteroidImpact(entity,view,w,h);else this.collect(entity);}else if((entity.item.asteroid||entity.item.ground)&&distance>radius+25)entity.impactArmed=true;}
+    if((view.active||view.flying)&&view.ship!==2)for(const entity of this.entities){if(entity.item.storm)continue;const dx=entity.x*w-sx,dy=entity.y*h-sy,distance=Math.hypot(dx,dy),radius=entity.item.size*entity.scale*(entity.item.ground?.38:entity.item.asteroid?.38:.44)+(entity.item.ground?24:entity.item.asteroid?25:34)*GARDEN_SHIP_SCALE;if(distance<radius){if(entity.item.asteroid||entity.item.ground)this.asteroidImpact(entity,view,w,h);else this.collect(entity);}else if((entity.item.asteroid||entity.item.ground)&&distance>radius+25)entity.impactArmed=true;}
     this.entities=this.entities.filter(entity=>!entity.collected&&entity.y<1.18&&entity.x>-.24&&entity.x<1.24);
     for(const effect of this.effects)effect.age+=dt;this.effects=this.effects.filter(effect=>effect.age<1.15);
     for(const chip of this.chips){chip.age+=dt;chip.x+=chip.vx*dt;chip.y+=chip.vy*dt;chip.vy+=.045*dt;}this.chips=this.chips.filter(chip=>chip.age<chip.life);
@@ -337,7 +338,7 @@ export class GardenLife{
       // Keep the active protection as a restrained halo around the ship. The
       // collectible is the small bubble below; this field must never dominate
       // the flight scene or grow with the desktop viewport.
-      const x=view.x??w*.5,y=view.y??h*.56,r=Math.min(190,Math.max(110,w*.22))*(view.ship===1?1.35:1)*.59,pulse=1+Math.sin(this.time*1.2)*.012;
+      const x=view.x??w*.5,y=view.y??h*.56,r=gardenShipSize(w,view.ship)*.59,pulse=1+Math.sin(this.time*1.2)*.012;
       ctx.save();ctx.translate(x,y);ctx.scale(pulse,pulse*1.12);ctx.globalAlpha=this.shieldFade;
       // No shell fill at all: only a hairline contour, so scenery and ship stay
       // completely unobscured while the shield is active.

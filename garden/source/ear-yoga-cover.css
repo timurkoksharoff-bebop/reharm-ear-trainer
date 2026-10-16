@@ -69,13 +69,13 @@ html[data-wordmark=sans] .ear-yoga-wordmark em{font-weight:200}
 .garden-start :is(button,strong,small,summary){font-family:'Yoga Inter','Helvetica Neue',Arial,sans-serif!important;font-style:normal}
 .garden-start .start-choice strong{font-weight:450}
 @media(orientation:portrait){
-/* Approved lettering snapshot, 2026-10-15. Reference viewport: 390 × 692.
+/* User-exported lettering snapshot, 2026-10-17. Reference viewport: 390 × 692.
    Keep these rules shared by the application and the composition editor. */
-#garden-start{--wordmark-size:22vw;--wordmark-top:17dvh}
-#garden-start .start-copy h2.ear-yoga-wordmark{position:absolute!important;top:var(--wordmark-top)!important;left:7vw!important;width:66.667vw!important;margin:0!important;text-align:center!important;font-family:'Helvetica Neue',Arial,sans-serif!important;font-size:var(--wordmark-size)!important;font-style:normal!important;font-weight:200!important;letter-spacing:-.055em!important;line-height:1.05!important}
+#garden-start{--wordmark-size:25.8vw;--wordmark-top:16dvh}
+#garden-start .start-copy h2.ear-yoga-wordmark{position:absolute!important;top:var(--wordmark-top)!important;left:7.3vw!important;width:66.667vw!important;margin:0!important;text-align:center!important;font-family:'Helvetica Neue',Arial,sans-serif!important;font-size:var(--wordmark-size)!important;font-style:normal!important;font-weight:200!important;letter-spacing:-.055em!important;line-height:1.05!important}
 #garden-start .ear-yoga-wordmark em{font-weight:inherit!important;font-style:normal!important}
-/* Endorsement sits in the wordmark's descender band, independent of screen height. */
-#garden-start .start-copy>.start-college{position:absolute!important;top:calc(var(--wordmark-top) + var(--wordmark-size)*.88)!important;left:calc(7vw + var(--wordmark-size)*.03)!important;width:calc(var(--wordmark-size)*2.12)!important;margin:0!important;text-align:justify!important;text-align-last:justify!important;border:0!important;border-radius:0!important;padding:0!important;background:none!important;font:300 calc(var(--wordmark-size)*.105)/1.4 'Helvetica Neue',Arial,sans-serif!important;letter-spacing:.48em!important;color:#fff!important}
+/* Exact exported coordinates: do not derive or re-anchor the subtitle. */
+#garden-start .start-copy>.start-college{position:absolute!important;top:29.8dvh!important;left:8.7vw!important;width:46.64vw!important;margin:0!important;text-align:justify!important;text-align-last:justify!important;border:0!important;border-radius:0!important;padding:0!important;background:none!important;font:300 3.15vw/1.4 'Helvetica Neue',Arial,sans-serif!important;letter-spacing:.4em!important;color:#fff!important}
 #garden-start :where(.difficulty-picker){top:33.5dvh;left:3vw;transform:scale(.9);transform-origin:center top}
 #garden-start :where(.difficulty-picker) button{font-size:calc(clamp(11px,2.9vw,16px) * 1.15)}
 #garden-start :where(.start-controls){top:48dvh;right:8vw;transform:scale(.875);transform-origin:right top}
@@ -90,7 +90,7 @@ html[data-wordmark=sans] .ear-yoga-wordmark em{font-weight:200}
  #garden-start .difficulty-picker button{font-size:10.5px!important;white-space:nowrap}
 }
 @media(orientation:portrait) and (min-width:600px){
- #garden-start{--wordmark-size:min(22vw,10dvh)}
+#garden-start{--wordmark-size:min(25.8vw,10dvh)}
 }
 @media(orientation:landscape){
  .garden-start .start-copy>.start-college{position:static;font:300 11px/1.4 'Helvetica Neue',Arial,sans-serif;letter-spacing:.22em}

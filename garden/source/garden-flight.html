@@ -16,7 +16,7 @@
   <div class="vignette" aria-hidden="true"></div>
   <header class="hud site-header">
     <div class="brand"><span class="mark" aria-hidden="true">✳</span><div><span class="overline">SPACE MUSIC COLLEGE / 02</span><h1>EAR YOGA</h1></div></div>
-    <div class="header-actions"><button id="garden-home" class="quiet garden-home" aria-label="Вернуться в главное меню" title="Вернуться в меню"><svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9"/></svg></button><a class="quiet back-to-planets" href="./">← Планеты</a><button id="world-controls" class="quiet mandala-trigger" aria-label="Открыть меню маршрутов и настроек" title="Маршруты и настройки" aria-expanded="false"><svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button id="language-toggle" class="quiet language-toggle" type="button" aria-label="Switch to English" title="Switch to English">EN</button></div>
+    <div class="header-actions"><button id="garden-home" class="quiet garden-home" aria-label="Вернуться в главное меню" title="Вернуться в меню"><svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10 12 3 20 10v11H4Z"/></svg></button><a class="quiet back-to-planets" href="./">← Планеты</a><button id="world-controls" class="quiet mandala-trigger" aria-label="Открыть меню маршрутов и настроек" title="Маршруты и настройки" aria-expanded="false"><svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button id="language-toggle" class="quiet language-toggle" type="button" aria-label="Switch to English" title="Switch to English">EN</button></div>
   </header>
   <main class="caption hud" aria-live="polite">
     <span class="overline" id="state-number">01 / 04 · СОСТОЯНИЕ ПЛАНЕТЫ</span>
@@ -52,7 +52,7 @@
       <div class="start-copy">
         <span class="overline start-college">SPACE MUSIC COLLEGE</span>
         <h2 id="start-title" class="ear-yoga-wordmark" translate="no">Ear <em>Yoga</em><i aria-hidden="true"></i></h2>
-        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false" disabled title="Режим преподавателя скоро появится">Преподаватель</button></div>
+        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
       </div>
       <button id="start-menu" class="start-menu" type="button">☰ <span>Меню</span></button>
       <div class="start-controls">
@@ -93,6 +93,7 @@
       <div class="panel-kicker"><span class="signal-dot"></span> МАРШРУТ</div>
       <div class="route-heading"><img id="mission-mandala" src="assets/echo-garden/tours/reharm.webp" alt=""><span class="route-identity"><strong id="mission-title">Reharmonization+</strong><small id="mission-source">Chapter 1 · Fig. 1.6</small><em id="mission-code">01F01</em></span><button id="route-favorite" type="button" aria-label="Добавить маршрут в избранное" aria-pressed="false">♡</button><span id="route-progress">1 / 4</span></div>
       <ol id="chord-route" class="chord-route" aria-label="Цепочка аккордов"></ol>
+      <nav id="chain-pager" class="chain-pager" aria-label="Страницы цепочки аккордов" hidden><button id="chain-back" type="button" aria-label="Предыдущая часть цепочки">‹</button><span id="chain-range" aria-live="polite"></span><button id="chain-forward" type="button" aria-label="Следующая часть цепочки">›</button></nav>
       <div class="route-practice"><button id="infinity-toggle" type="button" aria-label="Повторять текущий аккорд" aria-pressed="false">∞</button><button id="flower-guide-toggle" aria-label="Цветы аранжировки" aria-expanded="false">✿</button><span id="infinity-status"></span></div>
       <div class="round-line"><span>КРУГ <b id="round-number">01</b></span><span id="bar-countdown">4.0 сек</span></div>
     </aside>
@@ -111,8 +112,12 @@
       <p id="answer-feedback" class="answer-feedback" aria-live="polite">Нажми аккорд, пока он звучит</p>
     </aside>
 
+    <aside id="bass-panel" class="bass-panel" aria-label="Нота баса" hidden>
+      <span class="bass-heading">BASS</span><div id="bass-options"></div>
+    </aside>
     <section class="degrees-panel glass-panel" aria-label="Бас относительно тоники">
       <div class="panel-kicker" hidden></div>
+      <span id="teacher-key" class="teacher-key" hidden></span>
       <div id="degree-options" class="degree-options"></div>
     </section>
   </section>
@@ -168,7 +173,7 @@
       <div class="flight-sliders"><label>Скорость <input id="speed" type="range" min="0" max="2" step="0.1" value="2"><output id="speed-value">2.0×</output></label><label>Высота <input id="altitude" type="range" min="0.55" max="1.25" step="0.05" value="1.25"><output id="altitude-value">1.25</output></label></div>
     </div>
   </section>
-  <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite"><span class="overline">МАРШРУТ ЗАВЕРШЁН · СЛУШАЕМ ДАЛЬШЕ</span><p id="mission-complete-copy">Все аккорды найдены. Последовательность продолжает звучать по кругу.</p><div><button id="mission-next-route" aria-label="Следующий маршрут">✓ Завершено · следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню">Меню</button></div></section>
+  <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite"><span class="overline">МАРШРУТ ЗАВЕРШЁН · СЛУШАЕМ ДАЛЬШЕ</span><p id="mission-complete-copy">Все аккорды найдены. Последовательность продолжает звучать по кругу.</p><div><button id="mission-next-route" aria-label="Следующий маршрут">✓ Завершено · следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню"><svg class="menu-home-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10 12 3 20 10v11H4Z"/></svg><span>Меню</span></button></div></section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
   <script src="garden-flight.bundle.js?v=0.94" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>

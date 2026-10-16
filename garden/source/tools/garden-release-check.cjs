@@ -160,7 +160,7 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
    await page.setViewportSize({width,height});
    assert(await page.locator('#start-random').isVisible());
    assert.deepEqual(await page.locator('.difficulty-picker button').allTextContents(),['Абитуриент','Студент','Преподаватель']);
-   assert(await page.locator('[data-difficulty="hard"]').isDisabled(),'Teacher mode is reserved, not playable');
+   assert(await page.locator('[data-difficulty="hard"]').isEnabled(),'Teacher mode is available for testing');
    const modes=await page.locator('.difficulty-picker button').evaluateAll(buttons=>buttons.map(button=>({y:button.getBoundingClientRect().y,overflow:button.scrollWidth>button.clientWidth})));
    assert(modes.every(mode=>Math.abs(mode.y-modes[0].y)<1&&!mode.overflow),`three mode names fit one row at ${width}`);
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert(!overflow,`overflow ${width}`);

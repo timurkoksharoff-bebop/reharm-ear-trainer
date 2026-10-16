@@ -1,10 +1,29 @@
 {
-  "referenceViewport":{"width":390,"height":692},
-  "titleText":"Ear Yoga","subtitleText":"SPACE MUSIC COLLEGE",
-  "title":22,"titleX":7,"titleY":17,"titleFont":"sans","titleWeight":200,"titleTracking":-0.055,
-  "subtitle":2.31,"subtitleX":7.66,"subtitleY":27.91,"subtitleFont":"sans","tracking":0.48,"align":"justify",
-  "subtitleAnchor":"wordmark","subtitleOffsetEm":0.88,"subtitleSizeEm":0.105,"subtitleWidthEm":2.12,
-  "screen":"compact","levelsY":33.5,"actionsY":48,"levelsScale":0.9,"actionsScale":0.875,
-  "levelsX":3,"actionsX":8,"levelsText":1.15,"actionsText":1.15,
-  "interfaceFont":"Inter Variable","checkpoint":"2026-10-16"
+  "title": 25.8,
+  "titleX": 7.3,
+  "titleY": 16,
+  "titleWidth": 66.667,
+  "titleWeight": 200,
+  "titleTracking": -0.055,
+  "subtitle": 3.15,
+  "subtitleX": 8.7,
+  "subtitleY": 29.8,
+  "subtitleWidth": 46.64,
+  "tracking": 0.4,
+  "levelsY": 33.5,
+  "levelsX": 3,
+  "levelsScale": 0.9,
+  "levelsText": 1.15,
+  "actionsY": 48,
+  "actionsX": 8,
+  "actionsScale": 0.875,
+  "actionsText": 1.15,
+  "screen": "390x692",
+  "referenceViewport": {
+    "width": 390,
+    "height": 692
+  },
+  "titleText": "Ear Yoga",
+  "subtitleText": "SPACE MUSIC COLLEGE",
+  "exportedAt": "2026-10-16T18:39:51.452Z"
 }

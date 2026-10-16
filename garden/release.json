@@ -1,9 +1,9 @@
 {
-  "version": "1.22",
+  "version": "1.23",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile PWA release. Includes 50 Jazz Standards routes, 11 additional routes saved in Route Lab (Anime, Cinematic, Deep House, Funk and Disco), the Disco category, five sound samples, first-chord degree inference and the approved orbital cover. Exact saved MIDI voicings are retained."
+  "notes": "Test mobile release 1.23. User-exported cover layout, experimental Teacher mode with root/quality/note bass and automatic root-position bass, readable paginated long routes with original harmony retained, synchronous sample attacks, contact-first answer buttons, dimmer daytime terrain, smaller flight ship, corrected Deep House 3 registers, category-prefixed numeric route names. Includes 50 Jazz Standards and all saved embedded routes. Student mechanics and the 60-day trial storage are preserved."
 }

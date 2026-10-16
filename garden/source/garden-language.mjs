@@ -1,5 +1,15 @@
 // Presentation-only translations. Never translate catalog values or editable data.
 const EN={
+ 'Страницы цепочки аккордов':'Chord sequence pages','Предыдущая часть цепочки':'Previous sequence page','Следующая часть цепочки':'Next sequence page',
+ 'БАС':'BASS','Нота баса':'Bass note','Корень аккорда относительно тоники':'Chord root relative to the tonic',
+ 'Корень внизу · бас слева · тип справа':'Root below · bass left · quality right',
+ 'Корень и тип найдены — найди бас слева':'Root and quality found — find the bass on the left',
+ 'Все части аккорда найдены':'All chord parts found','Все части сигнала встроены в маршрут':'All signal parts added to the route',
+ 'Корень найден — найди тип аккорда':'Root found — find the chord quality','Тип найден — найди корень внизу':'Quality found — find the root below',
+ 'Бас найден — остальные ответы сохранены':'Bass found — other answers kept',
+ 'Корень не совпал — найденные ответы сохранены':'Wrong root — found answers kept','Бас не совпал — найденные ответы сохранены':'Wrong bass — found answers kept','Тип не совпал — найденные ответы сохранены':'Wrong quality — found answers kept',
+ 'Найди бас слева.':'Find the bass on the left.','Корень есть. Найди тип аккорда.':'Root found. Find the chord quality.',
+ 'Определи корень внизу, тип справа и бас слева.':'Find the root below, quality on the right, and bass on the left.',
  'Сад Эха':'Echo Garden','Абитуриент':'Applicant','Студент':'Student','Преподаватель':'Teacher',
  'Введи название категории.':'Enter a collection name.','Такая категория уже есть.':'This collection already exists.',
  '■ Зафиксировать аккорд':'■ Capture chord','● Записать следующий аккорд':'● Record next chord','ГОТОВ К НОВОМУ ШАГУ':'READY FOR NEXT STEP',
@@ -60,6 +70,9 @@ const EN={
  'Нажми аккорд, пока он звучит':'Choose the chord while it is playing','База известна. Запусти последовательность.':'Listen to the tonic, then start the sequence.'
 };
 const PATTERNS=[
+ [/^Тоника: (.+)$/,(_,note)=>'Tonic: '+note],
+ [/^Бас (.+)$/,(_,note)=>'Bass '+note],
+ [/^Позиция (\d+): корень (найден|не найден), тип (найден|не найден), бас (найден|не найден)$/,(_,n,r,q,b)=>'Position '+n+': root '+(r==='найден'?'found':'missing')+', quality '+(q==='найден'?'found':'missing')+', bass '+(b==='найден'?'found':'missing')],
  [/^«(.+)» сохранён\.$/,(_,name)=>'“'+name+'” saved.'],
  [/^МАРШРУТ (.+)$/,(_,n)=>'ROUTE '+n],
  [/^бас (.+)$/,(_,n)=>'bass '+n],

@@ -1,6 +1,10 @@
 import {BUILTIN_TOUR_ROUTES} from './garden-tour-routes.mjs';
 import {JAZZ_STANDARD_ROUTES} from './garden-jazz-routes.mjs';
 const NOTE_NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+export function gardenRouteDisplayName(route,collectionName=''){
+  const name=String(route?.name??'').trim();
+  return /^\d+$/.test(name)&&collectionName?`${collectionName} ${name}`:name;
+}
 const CHORDS=[
   ['1',[0]],
   ['maj',[0,4,7]],['m',[0,3,7]],['6',[0,4,7,9]],['m6',[0,3,7,9]],
@@ -252,7 +256,7 @@ export class GardenSequenceStudio{
       const heading=document.createElement('header');if(Number.isInteger(category.mandalaSeed)){const icon=document.createElement('img');icon.className='library-mandala';icon.alt='';icon.src=gardenMandalaDataUri(category.mandalaSeed);heading.append(icon);}const title=document.createElement('strong');title.textContent=category.name;const count=document.createElement('span');count.textContent=String(routes.length);heading.append(title,count);folder.append(heading);
       for(const route of routes){
         const row=document.createElement('article');row.className='library-route';
-        const text=document.createElement('div');text.innerHTML=`<small>МАРШРУТ ${route.number}</small><strong>${route.name}</strong><span>${route.sequence.length} аккордов</span>`;
+        const text=document.createElement('div');text.innerHTML=`<small>МАРШРУТ ${route.number}</small><strong data-user-content></strong><span>${route.sequence.length} аккордов</span>`;text.querySelector('strong').textContent=gardenRouteDisplayName(route,category.name);
         const use=document.createElement('button');use.textContent='В полёт';use.addEventListener('click',()=>{this.onUse?.(route);this.close();});
         row.append(text,use);if(!route.builtin){const remove=document.createElement('button');remove.textContent='×';remove.title='Удалить маршрут';remove.addEventListener('click',async()=>{await databaseAction('readwrite',store=>store.delete(route.id));this.refresh();});row.append(remove);}folder.append(row);
       }

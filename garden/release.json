@@ -1,6 +1,9 @@
 {
-  "version": "1.14",
-  "name": "Сад Эха",
+  "version": "1.20",
+  "name": "EAR YOGA",
+  "publisher": "Space Music College",
   "standalone": true,
-  "notes": "Includes four saved Cinematic routes (Journeying, Triumph, Cinematic Suspense 4, Cinematic epic), retaining their tonic centers, first-degree functions and MIDI voicings. After all answers, the solved sequence keeps playing in order with the current chord and degree highlighted; the next-route action chooses a different route and never restarts the current one."
+  "previewDays": 60,
+  "trialStarts": "first launch on device; countdown preserved across updates",
+  "notes": "Mobile PWA release. Includes 50 Jazz Standards routes, 11 additional routes saved in Route Lab (Anime, Cinematic, Deep House, Funk and Disco), the Disco category, five sound samples, first-chord degree inference and the approved orbital cover. Exact saved MIDI voicings are retained."
 }

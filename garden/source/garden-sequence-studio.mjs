@@ -1,4 +1,5 @@
 import {BUILTIN_TOUR_ROUTES} from './garden-tour-routes.mjs';
+import {JAZZ_STANDARD_ROUTES} from './garden-jazz-routes.mjs';
 const NOTE_NAMES=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const CHORDS=[
   ['1',[0]],
@@ -10,6 +11,7 @@ const DEFAULT_TOURS=Object.freeze([
   ['reharm','Reharm'],['anime','Anime'],['chill','Chill'],['ambient','Ambient'],['cinematic','Cinematic'],
   ['deep-house','Deep House'],['funk','Funk'],['gospel','Gospel'],['drum-bass','Drum & Bass'],['jazz-standards','Jazz Standards']
 ]);
+const STARTING_DEGREES=Object.freeze([[0,'I'],[1,'♭II'],[2,'II'],[3,'♭III'],[4,'III'],[5,'IV'],[6,'♯IV'],[7,'V'],[8,'♭VI'],[9,'VI'],[10,'♭VII'],[11,'VII']]);
 // Routes already saved in the author's local Sound & Route Lab. Keep these in
 // the standalone catalog too: browser IndexedDB is origin-local and is not
 // copied by the release builder.
@@ -138,14 +140,15 @@ async function databaseAction(mode,work,storeName='routes'){const db=await openD
 
 export class GardenSequenceStudio{
   constructor({onUse,onOpen,onClose,onCategories}={}){
-    this.onUse=onUse;this.onOpen=onOpen;this.onClose=onClose;this.onCategories=onCategories;this.steps=[];this.routes=[];this.categories=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true}));this.capture=null;
+    this.onUse=onUse;this.onOpen=onOpen;this.onClose=onClose;this.onCategories=onCategories;this.steps=[];this.routes=[];this.categories=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true}));this.capture=null;this.firstDegree=0;
+    const firstDegree=$('studio-first-degree');if(firstDegree){firstDegree.replaceChildren(...STARTING_DEGREES.map(([offset,label])=>new Option(label,String(offset))));firstDegree.addEventListener('change',()=>{this.firstDegree=Number(firstDegree.value)||0;});}
     $('studio-category-form')?.addEventListener('submit',event=>{event.preventDefault();this.addCategory();});
     $('studio-add-step')?.addEventListener('click',()=>this.addManualStep());
     $('studio-import-audio')?.addEventListener('change',event=>{for(const file of event.target.files||[])this.addManualStep(file);event.target.value='';});
     $('studio-import-route')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(file)this.importRouteFile(file);event.target.value='';});
     this.renderSteps();this.refresh();
   }
-  async refresh(){const [saved,categories]=await Promise.all([databaseAction('readonly',store=>store.getAll()).catch(()=>[]),databaseAction('readonly',store=>store.getAll(),'categories').catch(()=>[])]);saved.sort((a,b)=>b.created.localeCompare(a.created));const defaults=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true}));this.categories=[...defaults,...categories.filter(category=>!defaults.some(item=>item.id===category.id))];this.routes=[...BUILTIN_TOUR_ROUTES.map(builtInRoute),...SAVED_CINEMATIC_ROUTES.map(builtInRoute),...saved.filter(route=>!SAVED_CINEMATIC_ROUTES.some(item=>item.name===route.name&&item.tour===route.tour))];this.renderCategoryOptions();this.renderLibrary();this.onCategories?.(this.categories);}
+  async refresh(){const [saved,categories]=await Promise.all([databaseAction('readonly',store=>store.getAll()).catch(()=>[]),databaseAction('readonly',store=>store.getAll(),'categories').catch(()=>[])]);saved.sort((a,b)=>b.created.localeCompare(a.created));const defaults=DEFAULT_TOURS.map(([id,name])=>({id,name,mandalaSeed:id==='jazz-standards'?0:null,builtin:true})),embeddedCategories=window.GARDEN_EMBEDDED_CATEGORIES||[],embeddedRoutes=window.GARDEN_EMBEDDED_ROUTES||[];this.categories=[...defaults,...embeddedCategories.filter(category=>!defaults.some(item=>item.id===category.id)),...categories.filter(category=>!defaults.some(item=>item.id===category.id)&&!embeddedCategories.some(item=>item.id===category.id))];const seededIds=new Set(embeddedRoutes.map(route=>route.id));this.routes=[...JAZZ_STANDARD_ROUTES,...BUILTIN_TOUR_ROUTES.map(builtInRoute),...SAVED_CINEMATIC_ROUTES.map(builtInRoute),...embeddedRoutes,...saved.filter(route=>!seededIds.has(route.id)&&!SAVED_CINEMATIC_ROUTES.some(item=>item.name===route.name&&item.tour===route.tour))];this.renderCategoryOptions();this.renderLibrary();this.onCategories?.(this.categories);}
   renderCategoryOptions(selected=$('studio-tour')?.value){const select=$('studio-tour');if(!select)return;select.replaceChildren(...this.categories.map(category=>{const option=document.createElement('option');option.value=category.id;option.textContent=category.name;option.selected=category.id===selected;return option;}));}
   async addCategory(){const input=$('studio-category-name'),status=$('studio-category-status'),name=input?.value.trim();if(!name){status.textContent='Введи название категории.';input?.focus();return;}if(this.categories.some(category=>category.name.toLocaleLowerCase()===name.toLocaleLowerCase())){status.textContent='Такая категория уже есть.';return;}
     const used=new Set(this.categories.map(category=>category.mandalaSeed).filter(Number.isInteger)),customCount=this.categories.filter(category=>!category.builtin).length,mandalaSeed=Array.from({length:MANDALA_COUNT},(_,index)=>index).find(index=>!used.has(index))??(customCount+1)%MANDALA_COUNT,id=`custom-${crypto.randomUUID()}`,category={id,name,mandalaSeed,created:new Date().toISOString()};
@@ -239,7 +242,7 @@ export class GardenSequenceStudio{
   }
   async save(){
     const name=$('studio-name').value.trim()||`Маршрут ${this.routes.length+1}`,number=$('studio-number').value.trim()||String(this.routes.length+1).padStart(2,'0'),tour=$('studio-tour')?.value||'reharm';
-    const baseRoot=this.steps[0].rootPc;
+    const baseRoot=(this.steps[0].rootPc-this.firstDegree+12)%12;
     const route={id:`user-${crypto.randomUUID()}`,name,number,tour,created:new Date().toISOString(),source:`${this.categories.find(category=>category.id===tour)?.name||'Reharm'} · маршрут ${number}`,baseTonic:baseRoot,sequence:this.steps.map(step=>({...step,degree:step.label,offset:(step.rootPc-baseRoot+12)%12})),distractors:[]};
     await databaseAction('readwrite',store=>store.put(route));this.steps=[];this.renderSteps();$('studio-name').value='';$('studio-number').value='';await this.refresh();$('studio-error').textContent=`«${name}» сохранён.`;return route;
   }

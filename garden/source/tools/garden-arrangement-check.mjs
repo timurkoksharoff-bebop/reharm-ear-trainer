@@ -40,7 +40,7 @@ const seed=life.forceSpawn('arrangementBoost');life.collect(seed);assert.equal(l
 
 const oldFetch=globalThis.fetch;globalThis.fetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(0)});const pad=new GardenPad();globalThis.fetch=oldFetch;
 const starts=[],stops=[],parameter=()=>({value:0,setValueAtTime(){},exponentialRampToValueAtTime(){},cancelScheduledValues(){},setTargetAtTime(){}});
-pad.unlock=async()=>{};pad.context={currentTime:10,createGain:()=>({gain:parameter(),connect(){},disconnect(){}}),createBufferSource:()=>({playbackRate:parameter(),connect(){},start(at){starts.push(['sample',at]);},stop(){stops.push('sample');}}),createOscillator:()=>({frequency:parameter(),connect(){},disconnect(){},start(at){starts.push(['layer',at]);},stop(at){stops.push(at);}})};pad.cleanOutput={};pad.sampleBuffers=[{midi:48,buffer:{}}];
+pad.unlock=async()=>{};pad.context={currentTime:10,createGain:()=>({gain:parameter(),connect(){},disconnect(){}}),createBufferSource:()=>({playbackRate:parameter(),connect(){},start(at){starts.push(['sample',at]);},stop(){stops.push('sample');}}),createOscillator:()=>({frequency:parameter(),connect(){},disconnect(){},start(at){starts.push(['layer',at]);},stop(at){stops.push(at);}})};pad.cleanOutput={};pad.sampleBanks.felt=[{midi:48,buffer:{}}];
 await pad.play({offset:0,quality:'6'},0,{arrangement:{arpeggio:'arpSpark',bass:'bassFunk'},barSeconds:4});
 assert.equal(pad.lastArrangement.length,21);assert.equal(pad.voices.length,2,'layers and foundation are both cancellable voice groups');assert.equal(starts.filter(([kind])=>kind==='layer').length,21);
 const beforeStop=stops.length;pad.stop(true);assert(stops.length>=beforeStop+21,'stop cancels all future scheduled layer attacks');
@@ -48,6 +48,18 @@ await pad.play({offset:0,quality:'m7',notes:[55,57,59,60,64]},7,{arrangement:{ba
 assert.deepEqual(pad.lastArrangement.map(event=>event.midi),[43,55],'three-petal bass flower uses G2, not the chord stack low G3');
 await pad.play({offset:0,quality:'m7',notes:[55,57,59,60,64]},7,{arrangement:{arpeggio:'arpWave'},barSeconds:4});
 assert.deepEqual([...new Set(pad.lastArrangement.map(event=>event.midi))],[55,57,59,60,64],'arpeggio keeps every exact imported chord tone in its original register');
+for(const [preset,sampleSet,bank,notes,expected] of [
+  ['hybrid','hybrid',[{midi:60,buffer:{id:'C4'}},{midi:62,buffer:{id:'D4'}}],[60,64,67],'D4'],
+  ['felt','felt',[{midi:48,buffer:{id:'C3'}},{midi:52,buffer:{id:'E3'}},{midi:55,buffer:{id:'G3'}}],[53,57,60],'G3'],
+  ...[['hybridOrchestra',60],['stringOrchestra',72],['pianoN',72]].map(([preset,midi])=>[preset,preset,[{midi,buffer:{id:preset}}],[midi,midi+4,midi+7],preset])
+]){
+  const heardBuffers=[],heardPitches=[],samplePad=new GardenPad();samplePad.preset=preset;samplePad.unlock=async()=>{};samplePad.cleanOutput={};samplePad.sampleBanks[sampleSet]=bank;
+  samplePad.context={currentTime:0,createGain:()=>({gain:parameter(),connect(){},disconnect(){}}),createBufferSource(){return {playbackRate:parameter(),connect(){},start(){heardBuffers.push(this.buffer);heardPitches.push(this.playbackRate.value);},stop(){}};}};
+  await samplePad.play({offset:0,quality:'maj',notes},0,{arpeggio:true});
+  assert(heardBuffers.length===notes.length&&heardBuffers.every(buffer=>buffer.id===expected),`${preset} arpeggio anchors every note to the same source sample, avoiding attack/timbre jumps`);samplePad.stop(true);
+  const sampleMidi=bank.find(item=>item.buffer.id===expected).midi;
+  assert.deepEqual(heardPitches,notes.map(midi=>2**((midi-sampleMidi)/12)),`${preset} keeps the distinct MIDI pitch of every arpeggio note`);
+}
 await pad.play({offset:0,quality:'6',reference:true},0,{arrangement:{arpeggio:'arpSpark',bass:'bassFunk'}});assert.equal(pad.lastArrangement.length,0,'reference stays a plain chord');pad.stop(true);
 const ctx=new Proxy({},{get:(target,key)=>target[key]??(()=>{})});for(const spec of Object.values(GARDEN_ARRANGEMENTS))drawGardenArrangementFlower(ctx,spec,72,3);
 console.log('Garden arrangements passed: 7 styles, exact 1–3 rounds, chord/slash-bass pitches, combination/boost/expiry, no replay, duplicate catch, cancellation and reference.');

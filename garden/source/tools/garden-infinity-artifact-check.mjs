@@ -45,8 +45,8 @@ try{
   assert.equal(fullMission.snapshot().cursor,1);assert(!fullMission.snapshot().held);
   assert.equal(revealCharges,0);assert.equal(timers.size,1);fullMission.pause();
 
-  // Completing the very last missing part finishes normally, even if infinity
-  // is active; there must be no extra attack or live timer after completion.
+  // Solving the final part releases infinity and continues the solved sequence.
+  // This is the post-flight listening contract (not the retired stop-on-win).
   for(const missing of ['degree','quality']){
     const heard=[],finalMission=createGardenMission({exercise,onChord:(_,state)=>heard.push(state.cursor)});
     finalMission.start();tick();
@@ -57,10 +57,11 @@ try{
     }
     finalMission.hold();const count=heard.length,chord=exercise.sequence.at(-1);
     const result=finalMission.answerPart(missing,missing==='degree'?gardenBassOffset(chord):gardenQualityAnswer(chord));
-    assert(result.correct&&result.complete&&!result.advanced);
-    assert(finalMission.snapshot().complete&&!finalMission.snapshot().running&&!finalMission.snapshot().held);
-    assert.equal(finalMission.snapshot().cursor,exercise.sequence.length-1);assert.equal(finalMission.snapshot().deadline,0);
-    assert.equal(heard.length,count,'completing the route does not sound an extra chord');assert.equal(timers.size,0);
+    assert(result.correct&&result.complete&&result.advanced);
+    assert(finalMission.snapshot().complete&&finalMission.snapshot().running&&!finalMission.snapshot().held);
+    assert.equal(finalMission.snapshot().cursor,0);assert(finalMission.snapshot().deadline>0);
+    assert.equal(heard.length,count+1,'completion continues once at the first solved chord');assert.equal(timers.size,1);
+    finalMission.pause();assert.equal(timers.size,0);
   }
-  console.log('Infinity ARTIFACT passed: real pickup → consume → 20 same-chord attacks → immediate zero-charge exit; paused inventory safe; correct part auto exit; atomic full reveal; either final missing part completes without extra playback.');
+  console.log('Infinity ARTIFACT passed: pickup, consumption, repeats, answer exit, full reveal and continuous post-flight listening.');
 }finally{globalThis.setTimeout=realSet;globalThis.clearTimeout=realClear;}

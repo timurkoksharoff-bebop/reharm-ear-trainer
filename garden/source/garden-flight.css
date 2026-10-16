@@ -14,6 +14,18 @@
 @media(max-height:520px){.caption{top:105px}.caption p,.flight-status,.gesture{display:none}.caption h2{font-size:24px}.deck{width:min(800px,calc(100% - 24px));bottom:8px}.landscape{height:46px}.toolbar{display:flex}.toolbar .group{grid-column:auto}.toolbar button{min-height:34px}.brand .overline{display:none}header{padding-top:8px}.caption .overline{font-size:8px}#settings-panel{max-height:120px;overflow:auto}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}.loading-mark{animation:none}}
 
+/* Bilingual controls, accessible mobile route paging, and the local trial gate. */
+.language-toggle{min-width:42px;padding:0 8px!important;border-radius:999px!important;font:600 10px/1 ui-monospace,monospace;letter-spacing:.08em;color:#e3d69d!important}
+.route-list-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0 0;padding:6px 8px;border:1px solid rgba(157,225,199,.13);border-radius:12px;background:rgba(1,18,23,.24);color:#aacbc0;font:10px/1 ui-monospace,monospace}
+.route-list-pager[hidden]{display:none!important}.route-list-pager button{min-width:40px;min-height:36px;border:1px solid rgba(157,225,199,.25);border-radius:11px;background:#0a3034;color:#e4f8eb;font-size:17px}
+.garden-route-list{overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#87c5ad55 transparent;scroll-behavior:smooth}
+.garden-route-choice{scroll-margin-block:12px}
+.trial-expired{position:fixed;z-index:100;inset:0;display:grid;place-items:center;padding:20px;background:rgba(2,13,18,.92);backdrop-filter:blur(14px);color:#edf4e8}
+.trial-expired[hidden]{display:none!important}.trial-expired>div{width:min(520px,100%);padding:clamp(24px,6vw,42px);border:1px solid #a5d8c45c;border-radius:26px;background:linear-gradient(145deg,#12393a,#091c24);box-shadow:0 22px 80px #0008;text-align:center}
+.trial-expired .overline{color:#d9d19f;font-size:9px;letter-spacing:.22em}.trial-expired h2{margin:20px 0 12px;font-size:clamp(28px,7vw,42px)}.trial-expired p{color:#bfd7ce;font-size:14px;line-height:1.7}.trial-expired small{display:block;margin:18px 0;color:#8eb2a8;font:11px/1.6 ui-monospace,monospace}.trial-expired button{min-height:40px;padding:0 16px;border:1px solid #b2e2d366;border-radius:999px;background:#c7e8d112;color:#e8f5e9}
+body.trial-locked{overflow:hidden;touch-action:none}body.trial-locked #trial-expired{pointer-events:auto}
+@media(max-width:760px){.route-list-pager{position:sticky;z-index:4;bottom:0;margin-inline:-3px;padding:7px;background:rgba(5,27,31,.97);backdrop-filter:blur(10px)}.garden-route-list{max-height:min(42dvh,390px);padding-bottom:8px}.garden-route-choice{min-height:68px;scroll-snap-align:start}.route-list-pager button{min-width:48px;min-height:40px;font-size:19px}}
+
 /* Harmonic flight HUD */
 .training .caption,.training .gesture{opacity:0;pointer-events:none}.training:not(.world-open) .deck{opacity:0;pointer-events:none;transform:translate(-50%,24px);visibility:hidden}.world-open .harmony-hud{opacity:.16;pointer-events:none}.world-open .deck{z-index:5}.world-open #world-controls{background:#bdeedf20;border-color:#bdeedf55}
 .harmony-hud{--hud:#8fffe4;--hud-strong:#d9fff2;inset:0;z-index:2;pointer-events:none;color:var(--hud-strong);font-family:Arial,sans-serif;text-shadow:0 0 12px #29e7c866}.harmony-hud button{pointer-events:auto}.hud-grid{position:absolute;inset:78px 18px 36px;border:1px solid #8fffe41f;border-radius:26px;background:linear-gradient(#8fffe40d 1px,transparent 1px),linear-gradient(90deg,#8fffe40d 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(90deg,#000,transparent 34%,transparent 66%,#000);opacity:.55}.glass-panel{position:absolute;top:18%;width:min(270px,24vw);padding:18px;border:1px solid #90ffe540;background:linear-gradient(140deg,#072c36c7,#071e2985);backdrop-filter:blur(16px) saturate(1.2);box-shadow:inset 0 0 28px #76ffe50a,0 18px 60px #00161c66;pointer-events:auto}.route-panel{left:28px;border-radius:8px 28px 8px 8px}.answers-panel{right:28px;border-radius:28px 8px 8px 8px}.panel-kicker{font-size:9px;letter-spacing:.16em;color:#a7ded4;display:flex;align-items:center;min-height:16px}.signal-dot{display:inline-block;width:5px;height:5px;margin-right:7px;border-radius:50%;background:var(--hud);box-shadow:0 0 10px var(--hud)}.route-heading{display:flex;justify-content:space-between;align-items:flex-end;margin:14px 0 8px}.route-heading strong{font-size:12px;letter-spacing:.11em}.route-heading span{font-size:10px;color:#add8d0}.chord-route{list-style:none;margin:0;padding:0;display:grid;gap:6px}.chord-slot{min-height:46px;display:grid;grid-template-columns:24px 1fr auto;align-items:center;gap:8px;padding:6px 9px;border:1px solid #8fffe41c;background:#001b2370;position:relative;overflow:hidden}.chord-slot:before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:#8fffe424}.chord-slot .slot-index{font:10px/1 monospace;color:#80b5ad}.chord-slot strong{font-family:Georgia,serif;font-size:18px;font-weight:400}.chord-slot small{font-size:8px;letter-spacing:.08em;color:#7fa59f}.chord-slot.unresolved strong{color:transparent;text-shadow:none}.chord-slot.unresolved strong:after{content:"?";color:#9edbd0}.chord-slot.current{border-color:#a8ffea99;background:#0c4a527d;box-shadow:0 0 22px #40fbd326}.chord-slot.current:before{width:4px;background:var(--hud);box-shadow:0 0 12px var(--hud)}.chord-slot.solved small{color:#bffff0}.chord-slot.base{background:#0b3a427d}.round-line{display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid #8fffe424;font:9px/1 monospace;letter-spacing:.1em;color:#9fc7c0}.round-line b{color:var(--hud-strong)}
@@ -120,6 +132,7 @@
 
 /* Sound & Route Lab: sequential chord entry, tour folders and per-step audio. */
 .studio-fields{grid-template-columns:minmax(155px,.8fr) 90px minmax(210px,1.5fr)}
+.studio-first-degree{display:grid;grid-template-columns:1fr;gap:5px;max-width:260px;margin:8px 0;color:#a9d4ca;font-size:11px}
 .studio-fields input,.studio-fields select,.studio-step input,.studio-step select{background:#00151d9c;border:1px solid #8fffe436;color:#e6fff8;border-radius:7px;min-height:40px;padding:0 9px;font:13px Arial,sans-serif}
 .studio-add-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0}.studio-add-row button,.studio-import{display:flex;align-items:center;justify-content:center;min-height:42px;border:1px solid #8fffe436;border-radius:8px;background:#07333c78;color:#dffff5;font-size:10px;text-align:center;cursor:pointer}.studio-import input,.studio-step-audio input{display:none}.studio-import-route{border-color:#d8c6ff54;background:#25254b52}.studio-help{margin:4px 0 12px;color:#8db8b0;font-size:10px;line-height:1.45}
 .studio-step{grid-template-columns:27px 66px 72px minmax(100px,1fr) 54px 36px 36px}.studio-step small{grid-column:2/-1}.studio-step-audio{display:flex;align-items:center;justify-content:center;min-height:36px;border:1px dashed #8fffe448;border-radius:7px;color:#9dc8c0;font-size:9px;cursor:pointer}.studio-step-audio.attached{border-style:solid;color:#e5fff8;background:#19766d42}
@@ -372,6 +385,7 @@ body.start-open .hud,body.start-open .flight-tools{visibility:hidden}
 }
 /* Standalone Garden: unobtrusive exits and two explicitly separate answers. */
 body.training .site-header #garden-home{display:grid;place-items:center;position:fixed;left:auto;right:72px;top:max(9px,env(safe-area-inset-top));width:38px;height:38px;min-height:38px;padding:0;border:1px solid #bedcd536;background:#09272b18;color:#dcece6;font:26px Georgia;border-radius:50%}
+.header-actions .navigation-icon{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px #83f1ca55)}
 /* Reserve the header strip for navigation; neither icon covers chain dots. */
 #harmony-hud[data-variant=minimal] .route-heading{margin-right:100px}
 #harmony-hud[data-variant=minimal] .chord-route.chord-route{padding-top:29px}
@@ -473,3 +487,100 @@ body.bright-garden #harmony-hud[data-variant=minimal] .quality-option:not(.selec
 @media(max-width:760px){.mission-complete{top:50%;left:calc(50% - 36px);transform:translate(-50%,-50%);width:max(68px,min(320px,calc(100vw - 254px)));padding:7px;border-radius:12px}.mission-complete>.overline,.mission-complete p{display:none}.mission-complete>div{gap:4px}.mission-complete button{flex:1;min-width:0;padding:0 4px!important;font-size:0!important}.mission-complete button:first-child::after{content:"→";font-size:18px}.mission-complete button:last-child::after{content:"⌂";font-size:16px}.studio-category-form>div{display:grid;grid-template-columns:minmax(0,1fr) auto}.studio-category-form button{padding:0 8px}}
 @media(max-width:340px){.mission-complete{width:80px;left:calc(50% - 36px)}.mission-complete button:last-child{display:none}}
 @media(max-width:760px){.audio-tuning{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding:8px}.audio-tuning label{font-size:10px}}
+/* EAR YOGA: one restrained publisher line and an orbital lotus / inner ear. */
+.garden-start .start-copy>.start-college{position:absolute;top:calc(24px + env(safe-area-inset-top));left:4vw;width:auto;font:11px/1.4 Georgia,serif;letter-spacing:.22em;text-align:left;color:#e7dece}
+.ear-yoga-brand{position:absolute;left:4vw;top:70px;display:grid;grid-template-columns:72px auto;align-items:center;column-gap:14px;color:#f1e7d2}
+.ear-yoga-brand>img{width:72px;height:72px;grid-row:1/3;filter:drop-shadow(0 1px 8px #0b243a66)}
+.garden-start .ear-yoga-brand h2{position:static;margin:0;font:normal clamp(34px,4.2vw,62px)/1.1 Georgia,serif;letter-spacing:.1em;white-space:nowrap;text-align:left;color:#f3e9d5;text-shadow:0 2px 14px #142e4355}
+.ear-yoga-tagline{font:11px/1.5 Georgia,serif;letter-spacing:.22em;color:#dbe6df;margin-top:5px}
+.garden-start .difficulty-picker{position:absolute;left:4vw;top:180px;width:min(440px,55vw)}
+.start-menu{position:absolute;top:calc(20px + env(safe-area-inset-top));right:22px;display:flex;gap:8px;align-items:center;min-height:40px;border:1px solid #e1e8dc66;border-radius:20px;background:#0c283833;color:#eff6e7;padding:0 14px;backdrop-filter:blur(6px);font:12px system-ui}
+#language-toggle{position:fixed;z-index:55;right:19px;bottom:calc(12px + env(safe-area-inset-bottom));top:auto;min-width:42px;min-height:36px;background:#082730a6;border:1px solid #c0e3d05c;border-radius:20px;font:11px system-ui;color:#e6f3e8;pointer-events:auto}
+body.start-open .site-header{display:block!important;visibility:visible!important;pointer-events:none}
+body.start-open .site-header .brand,body.start-open #garden-home,body.start-open #world-controls{display:none!important}
+body:not(.start-open) #language-toggle{display:none}
+#flight-tutorial #guide-language{margin-left:auto;margin-right:6px;min-height:36px;font:11px system-ui}
+#trial-status{font:11px/1.6 system-ui;color:#a9c9c1}
+.tour-orbit button{display:flex;flex-direction:column;justify-content:center;gap:4px}
+.tour-orbit button img{height:70%;min-height:0;max-height:80px}
+.tour-orbit button small{font:10px/1.2 system-ui;color:#e2eee3;max-width:100%;overflow-wrap:anywhere}
+.garden-route-list{scroll-behavior:smooth;touch-action:pan-y;overscroll-behavior:contain}
+.garden-route-choice{touch-action:pan-y}
+.route-list-pager{display:flex;justify-content:center;gap:18px;align-items:center;padding:8px;position:static}
+.route-list-pager[hidden]{display:none}
+.route-list-pager button{min-width:48px;min-height:42px;border:1px solid #afddcc60;border-radius:15px;background:#a5dccb0d;color:#e1f7ea}
+.route-list-pager button:disabled{opacity:.3}.route-list-pager span{font:12px system-ui;color:#b6d4c8}
+@media(orientation:portrait){
+ .garden-start .start-copy>.start-college{left:5vw;top:calc(20px + env(safe-area-inset-top));font-size:clamp(8px,2.2vw,12px);letter-spacing:.17em}
+ .ear-yoga-brand{left:4vw;top:calc(7dvh + env(safe-area-inset-top));grid-template-columns:clamp(38px,11vw,64px) auto;column-gap:9px}
+ .ear-yoga-brand>img{width:clamp(38px,11vw,64px);height:clamp(38px,11vw,64px)}
+ .garden-start .ear-yoga-brand h2{font-size:clamp(25px,7.8vw,49px);letter-spacing:.07em}
+ .ear-yoga-tagline{font-size:10px;margin-top:2px}
+ .garden-start .difficulty-picker{left:5vw;top:calc(17dvh + env(safe-area-inset-top));width:90vw}
+ .start-menu{top:calc(12px + env(safe-area-inset-top));right:12px;padding:0 10px;min-height:34px;font-size:10px}
+}
+@media(max-width:760px){
+ .garden-route-list{max-height:42dvh;min-height:80px}
+ .garden-route-choice{min-height:68px}
+ .tour-orbit{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .tour-orbit button{min-height:82px;aspect-ratio:auto;padding:6px 3px}
+ .tour-orbit button img{height:44px}
+ .tour-orbit button small{font-size:9px}
+ .chapter-orbit{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .chapter-orbit button{height:40px;font-size:12px}
+}
+/* One scrollable field guide; illustration positions match the flight HUD. */
+body.tutorial-open:after{content:"";position:fixed;inset:0;background:#02101bd9;z-index:70}
+#flight-tutorial{position:fixed;inset:16px auto 16px 50%;transform:translateX(-50%);z-index:80;width:min(780px,calc(100vw - 24px));max-height:none;overflow:auto;padding:0;border:1px solid #b6d8cd50;border-radius:24px;background:#0b222b;box-shadow:0 24px 100px #0008;font:14px/1.65 system-ui;color:#c9dfdc;overscroll-behavior:contain;touch-action:pan-y;scroll-padding-top:78px}
+#flight-tutorial .field-header{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;padding:12px 20px;background:#0b222bf7;border-bottom:1px solid #b6d8cd30}
+.field-header>span{flex:1;font:10px/1.5 system-ui;letter-spacing:.17em;color:#b5d3ca}
+#flight-tutorial #tutorial-close{margin:0;display:block;min-width:44px;min-height:44px;padding:0;border:1px solid #a5cebe44;border-radius:50%;font:24px system-ui;color:#dfeee5}
+#flight-tutorial #guide-language{min-height:44px;margin:0;font-size:12px}
+.field-content{padding:20px 28px 28px}
+#flight-tutorial #tutorial-title{font:42px/1.1 Georgia,serif;color:#f1e6c8;margin:12px 0}
+#flight-tutorial .field-lead{font:18px Georgia,serif;color:#98d7ce;margin-bottom:20px}
+#flight-tutorial p{margin:0 0 14px}
+.field-nav{display:flex;flex-wrap:wrap;gap:7px;padding:10px 0 20px}
+#flight-tutorial a{color:#c0e3d7;text-decoration:none}
+.field-nav a{border:1px solid #b3dbca33;border-radius:20px;padding:7px 11px;font-size:12px}
+#flight-tutorial section{padding-top:18px;margin-top:20px;border-top:1px solid #accabb30}
+#flight-tutorial h2{font:25px/1.3 Georgia,serif;color:#ecdfbd;margin:10px 0 20px}
+#flight-tutorial h3{font:21px/1.25 Georgia,serif;color:#e6ebe0;margin:4px 0 10px}
+.field-rules{padding-left:22px}.field-rules li{padding:0 0 12px 6px}.field-rules li::marker{color:#e0c98b}
+.field-diagram{position:relative;max-width:350px;height:390px;margin:20px auto 10px;border:1px solid #9bcbb755;border-radius:24px;overflow:hidden;background:radial-gradient(ellipse at 45% 55%,#1a454e,#071b28);color:#d8eee4;font:14px Georgia,serif}
+.map-route{position:absolute;left:20px;top:45px;letter-spacing:2px;color:#cbb8ee}
+.map-menu{position:absolute;right:18px;top:12px;color:#b7d6ca}
+.map-pause{position:absolute;left:16px;top:85px;border:1px solid #b0dacc70;border-radius:20px;padding:6px 12px}
+.map-lotus{position:absolute;left:16px;top:135px;display:flex;align-items:center;gap:7px;color:#b5ead8}
+.map-lotus svg{width:42px;height:42px}.map-lotus span{font:12px system-ui}
+.map-chords{position:absolute;right:14px;top:82px;display:grid;gap:6px;text-align:center;width:65px}
+.map-chords span{border:1px solid #b1d5d077;border-radius:18px;padding:5px}
+.map-chords b,.map-bass b{font:11px system-ui;color:#d5c2f2}
+.map-ship{position:absolute;width:54px;height:102px;object-fit:contain;left:43%;top:175px}
+.map-vials{position:absolute;right:14px;bottom:92px;font:25px system-ui;letter-spacing:2px;color:#a8d9c8}
+.map-bass{position:absolute;bottom:15px;left:12px;right:12px;display:grid;text-align:center;gap:8px}
+.map-bass span{border:1px solid #99d4d176;border-radius:16px;padding:5px;font-size:13px}.map-bass b{color:#8dd6e6}
+#flight-tutorial .field-caption{font-size:12px;color:#9cb9bb}
+.field-lotus-note{display:flex;gap:14px;align-items:flex-start;margin-top:22px;border:1px solid #b2ddca45;border-radius:18px;padding:18px;background:#b3e8cd06}
+.field-lotus-note>svg{width:48px;min-width:48px;height:48px;color:#b5ead8}
+.field-card{display:grid;grid-template-columns:106px minmax(0,1fr);align-items:center;gap:18px;padding:20px 0;border-bottom:1px solid #abc9c21a}
+.field-card canvas{width:106px;height:106px;border-radius:50%;background:radial-gradient(circle,#1a3647,#0b222b 72%);pointer-events:none}
+#flight-tutorial canvas{touch-action:pan-y}
+.field-action{font:9px/1.5 system-ui;letter-spacing:.07em;color:#95d9c1}.field-action.danger{color:#eba398}
+#flight-tutorial .field-card p{font-size:13px;margin:0}
+.field-footer{margin-top:28px;padding-top:20px;border-top:1px solid #b6d8cd30}
+#flight-tutorial #guide-done{min-height:44px;margin-right:15px;padding:8px 18px;background:#aed8c51a}
+body.world-open .flight-tools{visibility:hidden}
+@media(max-width:520px){
+ #flight-tutorial{inset:8px auto 8px 50%;width:calc(100vw - 16px);border-radius:19px;font-size:13px}
+ #flight-tutorial .field-header{padding:8px 12px;gap:7px}
+ .field-content{padding:14px 16px 24px}
+ #flight-tutorial #tutorial-title{font-size:34px}
+ #flight-tutorial h2{font-size:23px}
+ #flight-tutorial h3{font-size:19px}
+ .field-card{grid-template-columns:78px minmax(0,1fr);gap:10px;padding:18px 0}
+ .field-card canvas{width:78px;height:78px}
+ .field-lotus-note{padding:12px;gap:10px}
+ .field-lotus-note>svg{width:36px;min-width:36px;height:36px}
+ .field-action{font-size:8px;letter-spacing:.02em}
+}

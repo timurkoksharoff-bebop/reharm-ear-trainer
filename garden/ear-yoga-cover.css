@@ -1,0 +1,98 @@
+/* Snapshot of the user-approved cover from the layout studio, 2026-10-16.
+   This file is intentionally isolated from gameplay and the guide. */
+@font-face{font-family:'Yoga Inter';src:url('assets/echo-garden/fonts/InterVariable.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+.garden-start:before{background-image:url('assets/echo-garden/start-garden-orbital-v4.jpg')}
+@media(orientation:portrait){
+ .garden-start{background-image:url('assets/echo-garden/start-garden-orbital-v4.jpg')}
+ .garden-start .start-copy{position:static}
+}
+/* Portrait composition: 12 columns, 6px spacing, phi-based type scale. */
+.garden-start{--menu-unit:6px;--menu-text:12px;--menu-subtitle:calc(var(--menu-text)*1.618);--menu-heading:calc(var(--menu-subtitle)*1.618);--menu-glass:#1630380b}
+.garden-start .difficulty-picker button,.garden-start .start-choice,.garden-start .start-tutorial,.start-route-details>summary{border:1px solid rgba(255,255,255,.68);border-radius:12px;background:var(--menu-glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff;box-shadow:0 2px 12px #06162226;font-family:Arial,sans-serif;text-shadow:none}
+.garden-start .difficulty-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.garden-start .difficulty-picker button,.garden-start .difficulty-picker button[aria-pressed=true],.garden-start .difficulty-picker button:disabled{opacity:1;filter:none;color:#fff;border-color:rgba(255,255,255,.68);background:var(--menu-glass);font-size:var(--menu-text);min-height:42px}
+.garden-start .difficulty-picker button[aria-pressed=true]{box-shadow:inset 0 -3px 0 #fff}
+.garden-start .start-choice strong,.garden-start .start-tutorial strong,.start-route-details>summary{font:400 var(--menu-subtitle)/1.25 Arial,sans-serif;color:#fff}
+.garden-start .start-choice small,.garden-start .start-tutorial small{font:400 var(--menu-text)/1.45 Arial,sans-serif;color:#fff}
+.garden-start .start-choice,.garden-start .start-tutorial{padding:12px;gap:6px}
+.start-route-details{border:0}.start-route-details>summary{padding:12px;min-height:44px;box-sizing:border-box}
+.start-route-info{position:fixed;z-index:5;top:50%;left:50%;transform:translate(-50%,-50%);width:min(340px,calc(100vw - 48px));box-sizing:border-box;max-height:none;overflow:visible;padding:48px 24px 24px;border:1px solid #ffffffad;border-radius:18px;background:#152733df;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 18px 70px #0006;text-shadow:none}
+.start-route-info p,.start-route-info .difficulty-note,.start-route-info .garden-progress>small,.start-route-info .garden-progress>span{color:#fff;font:14px/1.618 Arial,sans-serif}
+.start-route-info .garden-progress>span b{color:#fff}.start-info-close{position:absolute;right:6px;top:6px;width:36px;height:36px;padding:0;border:0;background:transparent;color:#fff;font:26px Arial,sans-serif}
+@media(orientation:portrait){
+ .garden-start{--menu-text:clamp(10px,2.8vw,13px);--menu-subtitle:calc(var(--menu-text)*1.618);--grid-column:calc(100vw / 12)}
+ .start-copy>.start-college{top:calc(2.5dvh + env(safe-area-inset-top));left:calc(var(--grid-column)*1.5);width:calc(var(--grid-column)*5.5);text-align:center}
+ .start-college>span{font-size:clamp(14px,4.2vw,20px)}
+ .start-college>strong{font-size:clamp(28px,8.4vw,40px)}
+ .start-college>i{width:100%;margin:12px auto 0}
+ .start-copy h2{top:calc(2.5dvh + env(safe-area-inset-top) + clamp(70px,20vw,94px));left:calc(var(--grid-column)*1.5);width:calc(var(--grid-column)*5.5);text-align:center;font-size:clamp(26px,7.4vw,35px)}
+ .garden-start .difficulty-picker{top:26dvh;left:3vw;width:94vw}
+ .start-controls{top:43dvh;right:3vw;width:25vw;gap:var(--menu-unit)}
+ .start-actions{gap:var(--menu-unit)}
+ .garden-start .start-choice,.garden-start .start-tutorial{min-height:58px;padding:8px 6px}
+ .start-route-details>summary{padding:8px 6px;font-size:var(--menu-text)}
+ .start-route-info{max-height:none}
+}
+/* Optional review overlay shares the composition grid; hidden in normal play. */
+.garden-start[data-grid]:after{content:"";position:absolute;inset:0;z-index:10;pointer-events:none;background-image:linear-gradient(90deg,#ffc96a55 1px,transparent 1px),linear-gradient(#ffc96a44 1px,transparent 1px);background-size:calc(100% / 12) 100%,100% calc(100% / 24)}
+
+/* Ear Yoga wordmark and the original, lightly frosted menu glass. */
+.start-copy>.start-college{display:table;width:auto;max-width:100%;padding:5px 9px;border:1px solid #eadcc340;border-radius:5px;background:#14253618;color:#eadcc3;font:9px/1.4 Arial,sans-serif;letter-spacing:.15em;white-space:nowrap}
+.start-copy h2.ear-yoga-wordmark{font:400 58px/1.05 Georgia,serif;letter-spacing:-.045em;color:#fff8e9;text-shadow:0 2px 18px #06142266;margin:18px 0 24px}
+.ear-yoga-wordmark em{font-weight:400;font-style:italic}
+.ear-yoga-wordmark>i{display:block;width:100%;height:5px;margin:15px auto 0;background:linear-gradient(90deg,transparent,#d9c393 20% 80%,transparent);clip-path:polygon(0 45%,44% 45%,50% 0,56% 45%,100% 45%,100% 55%,56% 55%,50% 100%,44% 55%,0 55%)}
+.garden-start .start-choice,.garden-start .start-tutorial,.start-route-details>summary,.garden-start .difficulty-picker button,.garden-start .difficulty-picker button[aria-pressed=true],.garden-start .difficulty-picker button:disabled{border:1px solid #c2dbd570;border-radius:10px;background:#1630380b;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);box-shadow:none;text-shadow:0 1px 5px #05132180;color:#fff;opacity:1;filter:none}
+.garden-start .difficulty-picker button[aria-pressed=true]{border-color:#ede5cbb3;background:#d3dec916}
+.garden-start .start-choice{min-height:48px;padding:6px 5px;gap:2px}
+.garden-start .start-choice strong{font:400 16px/1.25 Georgia,serif;color:#fff}
+.garden-start .start-choice small{font:10px/1.4 Arial,sans-serif;color:#fff}
+.garden-start .start-tutorial strong,.start-route-details>summary{font:12px/1.3 Arial,sans-serif}
+.garden-start .start-tutorial small{font:10px/1.4 Arial,sans-serif}
+.garden-start .start-tutorial{min-height:48px;padding:8px 6px}
+@media(orientation:portrait){
+ .start-copy>.start-college{top:calc(4dvh + env(safe-area-inset-top));left:12.5vw;width:auto;font-size:clamp(7px,2vw,11px)}
+ .start-copy h2.ear-yoga-wordmark{top:calc(19dvh + env(safe-area-inset-top));left:8.333vw;width:66.667vw;margin:0;text-align:center;font-size:clamp(48px,14vw,100px);white-space:nowrap}
+ .garden-start .difficulty-picker{top:31dvh;gap:6px}
+ .garden-start .difficulty-picker button{min-height:38px;font:clamp(11px,2.9vw,16px)/1.3 Arial,sans-serif;padding:6px 3px}
+ .start-controls{width:25vw;top:45dvh;gap:8px}
+ .start-actions{gap:8px}
+ .garden-start .start-choice strong{font-size:clamp(13px,3.3vw,20px)}
+ .garden-start .start-choice small{font-size:clamp(9px,2.3vw,13px)}
+}
+.ear-yoga-wordmark>i{display:none}
+.start-copy h2.ear-yoga-wordmark{font-family:Palatino,'Palatino Linotype',Georgia,serif;letter-spacing:-.04em;text-shadow:0 2px 14px #06142299}
+.ear-yoga-wordmark em{font-style:normal}
+html[data-wordmark=italic] .start-copy h2.ear-yoga-wordmark{font-family:Baskerville,'Times New Roman',serif;font-style:italic;letter-spacing:-.035em}
+html[data-wordmark=sans] .start-copy h2.ear-yoga-wordmark{font-family:'Helvetica Neue',Arial,sans-serif;font-weight:200;letter-spacing:-.055em}
+html[data-wordmark=sans] .ear-yoga-wordmark em{font-weight:200}
+
+.garden-start :is(button,strong,small,summary){font-family:'Yoga Inter','Helvetica Neue',Arial,sans-serif!important;font-style:normal}
+.garden-start .start-choice strong{font-weight:450}
+@media(orientation:portrait){
+/* Approved lettering snapshot, 2026-10-15. Reference viewport: 390 × 692.
+   Keep these rules shared by the application and the composition editor. */
+#garden-start .start-copy h2.ear-yoga-wordmark{position:absolute!important;top:17dvh!important;left:7vw!important;width:66.667vw!important;margin:0!important;text-align:center!important;font-family:'Helvetica Neue',Arial,sans-serif!important;font-size:22vw!important;font-style:normal!important;font-weight:200!important;letter-spacing:-.055em!important;line-height:1.05!important}
+#garden-start .ear-yoga-wordmark em{font-weight:inherit!important;font-style:normal!important}
+#garden-start .start-copy>.start-college{position:absolute!important;top:29dvh!important;left:-.167vw!important;width:66.667vw!important;margin:0!important;text-align:center!important;border:0!important;border-radius:0!important;padding:0!important;background:none!important;font:300 2.8vw/1.4 'Helvetica Neue',Arial,sans-serif!important;letter-spacing:.35em!important;color:#fff!important}
+#garden-start :where(.difficulty-picker){top:33.5dvh;left:3vw;transform:scale(.9);transform-origin:center top}
+#garden-start :where(.difficulty-picker) button{font-size:calc(clamp(11px,2.9vw,16px) * 1.15)}
+#garden-start :where(.start-controls){top:48dvh;right:8vw;transform:scale(.875);transform-origin:right top}
+#garden-start :where(.start-choice) strong{font-size:calc(clamp(13px,3.3vw,20px) * 1.15)}
+#garden-start :where(.start-choice) small{font-size:calc(clamp(9px,2.3vw,13px) * 1.15)}
+#garden-start :where(.start-tutorial) strong,#garden-start :where(.start-route-details)>summary{font-size:calc(12px * 1.15)}
+#garden-start :where(.start-tutorial) small{font-size:calc(10px * 1.15)}
+
+}
+/* The approved portrait metrics are not enlarged to desktop viewport widths. */
+@media(orientation:portrait) and (max-width:360px){
+ #garden-start .difficulty-picker button{font-size:10.5px!important;white-space:nowrap}
+}
+@media(orientation:portrait) and (min-width:600px){
+ #garden-start .start-copy h2.ear-yoga-wordmark{font-size:min(22vw,10dvh)!important}
+ #garden-start .start-copy>.start-college{left:0!important}
+}
+@media(orientation:landscape){
+ .garden-start .start-copy>.start-college{position:static;font:300 11px/1.4 'Helvetica Neue',Arial,sans-serif;letter-spacing:.22em}
+ .garden-start .start-copy h2.ear-yoga-wordmark{position:static;width:auto;font-family:'Helvetica Neue',Arial,sans-serif;font-size:58px;font-weight:200}
+ .garden-start .difficulty-picker{position:static;width:100%}
+}

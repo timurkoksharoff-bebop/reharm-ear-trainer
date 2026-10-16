@@ -4,18 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
-  <title>Сад Эха · первый полёт</title>
+  <title>EAR YOGA · Space Music College</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="garden-flight.css?v=0.94">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=0.94">
 </head>
 <body class="training">
-  <canvas id="world" aria-label="Полёт над Садом Эха. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
+  <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
   <canvas id="life" aria-hidden="true"></canvas>
   <canvas id="ship-layer" aria-hidden="true"></canvas>
   <div class="vignette" aria-hidden="true"></div>
   <header class="hud site-header">
-    <div class="brand"><span class="mark" aria-hidden="true">✳</span><div><span class="overline">SPACE MUSIC COLLEGE / 02</span><h1>Сад Эха</h1></div></div>
-    <div class="header-actions"><button id="garden-home" class="quiet garden-home" aria-label="Вернуться в главное меню" title="Вернуться в меню"><span aria-hidden="true">←</span></button><a class="quiet back-to-planets" href="./">← Планеты</a><button id="world-controls" class="quiet mandala-trigger" aria-label="Открыть выбор маршрута" title="Выбор маршрута" aria-expanded="false"><span aria-hidden="true">✺</span></button></div>
+    <div class="brand"><span class="mark" aria-hidden="true">✳</span><div><span class="overline">SPACE MUSIC COLLEGE / 02</span><h1>EAR YOGA</h1></div></div>
+    <div class="header-actions"><button id="garden-home" class="quiet garden-home" aria-label="Вернуться в главное меню" title="Вернуться в меню"><svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9"/></svg></button><a class="quiet back-to-planets" href="./">← Планеты</a><button id="world-controls" class="quiet mandala-trigger" aria-label="Открыть меню маршрутов и настроек" title="Маршруты и настройки" aria-expanded="false"><svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><button id="language-toggle" class="quiet language-toggle" type="button" aria-label="Switch to English" title="Switch to English">EN</button></div>
   </header>
   <main class="caption hud" aria-live="polite">
     <span class="overline" id="state-number">01 / 04 · СОСТОЯНИЕ ПЛАНЕТЫ</span>
@@ -44,14 +45,16 @@
 
   <button id="infinity-continue" class="infinity-continue hud" hidden aria-label="Выключить бесконечный повтор и продолжить" title="Продолжить последовательность"><span aria-hidden="true">∞</span><span aria-hidden="true">▶</span></button>
   <section id="exit-confirm" class="exit-confirm" hidden role="dialog" aria-modal="true" aria-labelledby="exit-title"><strong id="exit-title">Вернуться в меню?</strong><p>Текущий полёт завершится.</p><div><button id="exit-cancel">Остаться</button><button id="exit-accept">В меню →</button></div></section>
+  <section id="trial-expired" class="trial-expired" hidden role="dialog" aria-modal="true" aria-labelledby="trial-title"><div><span class="overline">SPACE MUSIC COLLEGE</span><h2 id="trial-title">Ознакомительный период завершён</h2><p id="trial-copy">Спасибо, что играли в EAR YOGA. Обратитесь к автору приложения, чтобы получить актуальную сборку.</p><small id="trial-dates"></small><button id="trial-language" type="button">English</button></div></section>
   <aside id="flight-tutorial" hidden aria-live="polite"><span class="tutorial-eyebrow">ПУТЕВОДИТЕЛЬ ПО САДУ</span><div id="tutorial-progress" aria-hidden="true"></div><strong id="tutorial-title"></strong><p id="tutorial-copy"></p><button id="tutorial-back">← Назад</button><button id="tutorial-next">Дальше →</button><button id="tutorial-close">Пропустить тур</button></aside>
-  <section id="garden-start" class="garden-start" hidden aria-label="Главное меню Сада Эха">
+  <section id="garden-start" class="garden-start" hidden aria-label="Главное меню EAR YOGA">
     <div class="garden-start-shell">
       <div class="start-copy">
-        <span class="overline start-college"><span>SPACE MUSIC</span><strong>COLLEGE</strong><i aria-hidden="true"></i></span>
-        <h2 id="start-title">Сад Эха</h2>
+        <span class="overline start-college">SPACE MUSIC COLLEGE</span>
+        <h2 id="start-title" class="ear-yoga-wordmark" translate="no">Ear <em>Yoga</em><i aria-hidden="true"></i></h2>
         <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false" disabled title="Режим преподавателя скоро появится">Преподаватель</button></div>
       </div>
+      <button id="start-menu" class="start-menu" type="button">☰ <span>Меню</span></button>
       <div class="start-controls">
         <div class="start-actions">
           <button id="start-random" class="start-choice random-choice" type="button"><span aria-hidden="true">✦</span><strong>Начать полёт</strong><small>Случайный маршрут</small></button>
@@ -124,6 +127,7 @@
             <label>Номер<input id="studio-number" inputmode="numeric" placeholder="01"></label>
             <label>Название<input id="studio-name" placeholder="Например: Тихая орбита"></label>
           </div>
+          <label class="studio-first-degree">Ступень первого аккорда<select id="studio-first-degree" aria-label="Ступень первого аккорда"></select><small>Тоника рассчитывается по корню и выбранной ступени.</small></label>
           <div class="capture-card"><span id="studio-state" class="panel-kicker">ГОТОВ К ПЕРВОМУ ШАГУ</span><strong id="studio-detected">Один аккорд — одна фиксация</strong><small id="studio-capture-time">0.0 с</small><button id="studio-capture">● Записать первый аккорд</button><p id="studio-error" aria-live="polite"></p></div>
           <div class="studio-step-head"><h3>Цепочка</h3><span id="studio-count">0 аккордов</span></div>
           <div class="studio-add-row"><button id="studio-add-step" type="button">＋ Добавить аккорд</button><label class="studio-import">＋ Звуки по шагам<input id="studio-import-audio" type="file" accept="audio/*" multiple></label><label class="studio-import studio-import-route">◎ Один файл / MIDI / XML<input id="studio-import-route" type="file" accept="audio/*,.mid,.midi,.xml,.musicxml,audio/midi,audio/x-midi,application/vnd.recordare.musicxml+xml"></label></div>
@@ -140,14 +144,14 @@
     <header class="garden-menu-header"><div><span class="overline">КАРТА САДА</span><h2>Выбор маршрута</h2><p>Сначала выбери мандалу тура, затем конкретную последовательность.</p></div><button id="menu-close" class="mandala-close" aria-label="Закрыть меню">×</button></header>
     <div class="garden-route-layout">
       <section class="tour-picker"><span class="panel-kicker">МАНДАЛА ТУРА</span><div id="tour-orbit" class="tour-orbit" role="group" aria-label="Выбор тура"></div></section>
-      <section class="route-picker"><div class="route-picker-heading"><div><span class="panel-kicker">ПОСЛЕДОВАТЕЛЬНОСТИ</span><strong id="mandala-tour-name">Reharm</strong></div><div class="mode-switch" role="group" aria-label="Режим прохождения"><button data-mode="quest" class="selected" aria-pressed="true">Квест</button><button data-mode="free" aria-pressed="false">Свободный</button></div></div><div id="reharm-chapters" class="reharm-chapters"><span>ГЛАВА <b id="mandala-chapter">01</b></span><div id="chapter-orbit" class="chapter-orbit" role="group" aria-label="16 уровней Reharmonization+"></div></div><div id="garden-route-list" class="garden-route-list"></div></section>
+      <section class="route-picker"><div class="route-picker-heading"><div><span class="panel-kicker" data-i18n="routes">ПОСЛЕДОВАТЕЛЬНОСТИ</span><strong id="mandala-tour-name">Reharm</strong></div><div class="mode-switch" role="group" aria-label="Режим прохождения"><button data-mode="quest" class="selected" aria-pressed="true">Квест</button><button data-mode="free" aria-pressed="false">Свободный</button></div></div><div id="reharm-chapters" class="reharm-chapters"><span>ГЛАВА <b id="mandala-chapter">01</b></span><div id="chapter-orbit" class="chapter-orbit" role="group" aria-label="16 уровней Reharmonization+"></div></div><div id="garden-route-list" class="garden-route-list"></div><div id="route-list-pager" class="route-list-pager" hidden><button id="route-list-back" type="button" aria-label="Предыдущие маршруты">↑</button><span id="route-list-position">01 / 01</span><button id="route-list-forward" type="button" aria-label="Следующие маршруты">↓</button></div></section>
     </div>
-    <div id="settings-panel" class="mandala-controls">
-      <button id="tutorial-settings-open" type="button">ⓘ Пройти приветственный тур снова</button>
+    <div id="settings-panel" class="mandala-controls"><button id="settings-language" type="button">RU / EN</button><p id="trial-status"></p>
+      <button id="tutorial-settings-open" type="button">ⓘ Карта полёта и артефакты</button>
       <div class="world-cycle" aria-label="Непрерывный живой цикл планеты"><span><small>ЕДИНЫЙ МИР</small><strong id="world-cycle-name">Синие сады</strong></span><i aria-hidden="true"><b id="world-cycle-progress"></b></i><em>единая карта · живой цикл</em></div>
       <div class="music-settings">
         <label class="exercise-picker"><span>Фигура</span><select id="exercise-select" aria-label="Фигура выбранной главы"></select></label>
-        <fieldset class="sound-switch"><legend>Тембр</legend><div role="group" aria-label="Тембр синтезатора"><button data-pad="felt" aria-pressed="true">Фетровое пиано</button><button data-pad="deep" aria-pressed="false">Глубокий хор</button><button data-pad="air" aria-pressed="false">Воздушное стекло</button></div></fieldset>
+        <fieldset class="sound-switch"><legend>Тембр</legend><div role="group" aria-label="Тембр синтезатора"><button data-pad="felt" aria-pressed="true" translate="no">Felt Piano</button><button data-pad="hybrid" aria-pressed="false" translate="no">Hybrid Keys</button><button data-pad="hybridOrchestra" aria-pressed="false" translate="no">Hybrid Orchestra</button><button data-pad="stringOrchestra" aria-pressed="false" translate="no">String Orchestra</button><button data-pad="pianoN" aria-pressed="false" translate="no">Piano N</button></div></fieldset>
         <fieldset class="audio-tuning"><legend>Звук · подстройка под устройство</legend>
           <label><span>Громкость</span><input id="garden-volume" type="range" min="80" max="180" step="5" value="120"><output for="garden-volume">120%</output></label>
           <label><span>Басы</span><input id="garden-eq-low" type="range" min="-6" max="6" step="1" value="0"><output for="garden-eq-low">0 dB</output></label>
@@ -166,7 +170,7 @@
   </section>
   <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite"><span class="overline">МАРШРУТ ЗАВЕРШЁН · СЛУШАЕМ ДАЛЬШЕ</span><p id="mission-complete-copy">Все аккорды найдены. Последовательность продолжает звучать по кругу.</p><div><button id="mission-next-route" aria-label="Следующий маршрут">✓ Завершено · следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню">Меню</button></div></section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
-  <div id="loading" role="status"><span class="loading-mark">✳</span><p>Приближаемся к Саду Эха…</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden>Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=0.94" onerror="document.getElementById('load-progress').textContent='Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
+  <script src="garden-flight.bundle.js?v=0.94" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 </body>
 </html>

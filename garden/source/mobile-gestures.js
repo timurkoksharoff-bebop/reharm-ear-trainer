@@ -7,10 +7,12 @@
   document.addEventListener('contextmenu', cancel);
   document.addEventListener('dragstart', cancel);
   document.addEventListener('touchmove', event => { if (event.touches.length > 1) cancel(event); }, {passive:false});
-  let previousTap = 0;
+  let previousTap = 0, touchStart=null, swiped=false;
+  document.addEventListener('touchstart',e=>{touchStart=e.touches[0];swiped=false;},{passive:true});
+  document.addEventListener('touchmove',e=>{if(touchStart&&e.touches[0]&&Math.hypot(e.touches[0].clientX-touchStart.clientX,e.touches[0].clientY-touchStart.clientY)>8)swiped=true;},{passive:true});
   document.addEventListener('touchend', event => {
     const now = performance.now();
-    if (previousTap>0 && event.changedTouches.length === 1 && now - previousTap < 300 && !editable(event.target)) {
+    if (!swiped && previousTap>0 && event.changedTouches.length === 1 && now - previousTap < 300 && !editable(event.target)) {
       cancel(event);
       // Preserve quick taps on all native game controls, including the lotus
       // summary. Cancelling zoom without restoring its click swallowed rapid
@@ -18,10 +20,10 @@
       const control=event.target.closest?.('button,summary,a[href]');
       if(control&&!control.disabled&&control.getAttribute('aria-disabled')!=='true')control.click();
     }
-    previousTap = now;
+    previousTap = swiped ? 0 : now;
   }, {passive:false});
   const style = document.createElement('style');
-  style.textContent = 'html,body{overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}button,a,summary,canvas{touch-action:none}input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;touch-action:auto}input[type="text"],input[type="search"],textarea,select{font-size:max(16px,1em)}.overlay,.menu-panel,.flower-guide,.flight-tools-body,.answers-panel,.route-list,.studio,.library-panel,[role="dialog"]{touch-action:pan-y}';
+  style.textContent = 'html,body{overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}button,a,summary,canvas{touch-action:manipulation}canvas{touch-action:none}#garden-menu,#garden-menu button,#garden-menu summary,#sequence-studio,#sequence-studio button,#flight-tutorial,#flight-tutorial button{touch-action:pan-y}input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text;touch-action:auto}input[type="text"],input[type="search"],textarea,select{font-size:max(16px,1em)}.overlay,.menu-panel,.flower-guide,.flight-tools-body,.answers-panel,.route-list,.studio,.library-panel,[role="dialog"]{touch-action:pan-y}';
   document.head.append(style);
   // A manifest preference is not a lock. Request the real API only when supported.
   const lockPortrait = () => {

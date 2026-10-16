@@ -1,1 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#102e37"/><g fill="none" stroke="#b1d6cc" stroke-width="8"><path d="M256 382C116 317 116 185 256 85C396 185 396 317 256 382Z"/><path d="M256 382C100 382 43 268 62 170C182 190 256 278 256 382ZM256 382C412 382 469 268 450 170C330 190 256 278 256 382Z"/><path d="M256 382C142 454 40 368 32 306C140 290 212 326 256 382ZM256 382C370 454 472 368 480 306C372 290 300 326 256 382Z"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs><linearGradient id="a" x1="20" y1="12" x2="107" y2="110" gradientUnits="userSpaceOnUse"><stop stop-color="#f2dfb7"/><stop offset=".5" stop-color="#d6f2e8"/><stop offset="1" stop-color="#9cbfdc"/></linearGradient></defs>
+  <rect width="128" height="128" rx="28" fill="#102e37"/><g stroke="url(#a)" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="64" cy="64" r="45" stroke-width=".8" opacity=".4"/>
+    <ellipse cx="64" cy="68" rx="57" ry="22" transform="rotate(-25 64 68)" stroke-width="1" opacity=".7"/>
+    <path d="M64 95C42 78 45 52 64 31C83 52 86 78 64 95Z" stroke-width="1.6"/>
+    <path d="M64 95C38 95 27 73 28 56C48 59 61 74 64 95ZM64 95C90 95 101 73 100 56C80 59 67 74 64 95Z" stroke-width="1.2"/>
+    <path d="M64 95C46 106 29 98 21 86C40 82 54 87 64 95ZM64 95C82 106 99 98 107 86C88 82 74 87 64 95Z" stroke-width="1"/>
+    <path d="M55 71C55 55 74 55 74 67C74 77 62 73 62 84" stroke-width="2"/>
+    <path d="M58 68C58 59 69 59 69 67" stroke-width=".8" opacity=".8"/>
+  </g>
+  <circle cx="104" cy="39" r="2.5" fill="#e7e5ca"/>
+  <path d="M64 12v10M59 17h10" stroke="#f2dfb7" stroke-width="1" stroke-linecap="round"/>
+</svg>

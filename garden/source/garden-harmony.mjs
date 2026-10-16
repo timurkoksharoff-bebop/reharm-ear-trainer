@@ -45,30 +45,31 @@ export function gardenAnswerState(model,kind,value){
   return {selected:found&&matches,disabled:!model.running||model.cursor<0||model.complete||found};
 }
 const PRESETS={
-  felt:{name:'Фетровое пиано',engine:'sample',cutoff:1450,delay:0,feedback:0,drift:0},
+  felt:{name:'Felt Piano',engine:'sample',sampleSet:'felt',cutoff:1450,delay:0,feedback:0,drift:0},
+  hybrid:{name:'Hybrid Keys',engine:'sample',sampleSet:'hybrid',cutoff:7000,delay:0,feedback:0,drift:0},
+  hybridOrchestra:{name:'Hybrid Orchestra',engine:'sample',sampleSet:'hybridOrchestra',cutoff:9000,delay:.12,feedback:.08,drift:0},
+  stringOrchestra:{name:'String Orchestra',engine:'sample',sampleSet:'stringOrchestra',cutoff:9000,delay:.16,feedback:.1,drift:0},
+  pianoN:{name:'Piano N',engine:'sample',sampleSet:'pianoN',cutoff:6000,delay:0,feedback:0,drift:0},
   deep:{name:'Глубокий хор',engine:'deep',cutoff:620,delay:.67,feedback:.56,drift:4},
   air:{name:'Воздушное стекло',engine:'air',cutoff:2350,delay:.46,feedback:.42,drift:7}
 };
 
 const keyOf=chord=>`${chord.offset}:${chord.quality}:${chord.bassOffset??'root'}`;
 const frequency=midi=>440*2**((midi-69)/12);
+const nearestSample=(bank,midi)=>bank.reduce((best,item)=>Math.abs(item.midi-midi)<Math.abs(best.midi-midi)?item:best,bank[0]);
 
 export class GardenPad{
   constructor({deferSamplesUntilReady=false}={}){
-    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.eqLow=null;this.eqMid=null;this.eqHigh=null;this.limiter=null;this.master=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBuffers=[];this.generation=0;
+    this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.eqLow=null;this.eqMid=null;this.eqHigh=null;this.limiter=null;this.master=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBanks={};this.generation=0;
     this.masterVolume=1.2;this.equalizer={low:0,mid:0,high:0};
-    const loadSamples=()=>Promise.all([
-      ['assets/echo-garden/samples/felt-c3.wav',48],
-      ['assets/echo-garden/samples/felt-e3.wav',52],
-      ['assets/echo-garden/samples/felt-g3.wav',55]
-    ].map(async([url,midi])=>{
-      const embedded=globalThis.GARDEN_SAMPLE_DATA?.[url];
-      if(embedded)return {midi,data:Uint8Array.from(atob(embedded),c=>c.charCodeAt(0)).buffer};
-      const response=await fetch(url,{priority:'low'});if(!response.ok)throw Error(`Не загрузился семпл ${url}`);return {midi,data:await response.arrayBuffer()};
-    }));
-    this.sampleData=deferSamplesUntilReady?new Promise(resolve=>addEventListener('garden-ready',()=>resolve(loadSamples()),{once:true})):loadSamples();
-    // Handle early failure without an unhandled rejection, then report it on play.
-    this.sampleData.catch(()=>{});
+    this.sampleSources={
+      felt:[['felt-c3.wav',48],['felt-e3.wav',52],['felt-g3.wav',55]],
+      hybrid:[['hybrid-c4.wav',60],['hybrid-d4.wav',62]],
+      hybridOrchestra:[['hybrid-orchestra-c4.wav',60]],
+      stringOrchestra:[['string-orchestra-c5.wav',72]],
+      pianoN:[['piano-n-c5.wav',72]]
+    };
+    this.samplesReady=deferSamplesUntilReady?new Promise(resolve=>addEventListener('garden-ready',()=>resolve(),{once:true})):Promise.resolve();
   }
   async unlock(){
     if(!this.context){
@@ -93,7 +94,18 @@ export class GardenPad{
       this.applyPreset(this.preset);
     }
     if(this.context.state!=='running')await this.context.resume();
-    if(!this.sampleBuffers.length){const data=await this.sampleData;this.sampleBuffers=await Promise.all(data.map(async sample=>({midi:sample.midi,buffer:await this.context.decodeAudioData(sample.data.slice(0))})));}
+  }
+  async loadSampleBank(sampleSet){
+    if(!this.sampleBanks[sampleSet])this.sampleBanks[sampleSet]=(async()=>{
+      await this.samplesReady;
+      const samples=await Promise.all((this.sampleSources[sampleSet]||[]).map(async([file,midi])=>{
+        const url=`assets/echo-garden/samples/${file}`,embedded=globalThis.GARDEN_SAMPLE_DATA?.[url];
+        if(embedded)return {midi,data:Uint8Array.from(atob(embedded),c=>c.charCodeAt(0)).buffer};
+        const response=await fetch(url,{priority:'low'});if(!response.ok)throw Error(`Не загрузился семпл ${url}`);return {midi,data:await response.arrayBuffer()};
+      }));
+      return Promise.all(samples.map(async sample=>({midi:sample.midi,buffer:await this.context.decodeAudioData(sample.data.slice(0))})));
+    })();
+    return this.sampleBanks[sampleSet];
   }
   applyPreset(name){
     this.preset=PRESETS[name]?name:'felt';
@@ -123,6 +135,8 @@ export class GardenPad{
     await this.unlock();
     if(generation!==this.generation)return;
     const c=this.context,p=PRESETS[this.preset],now=c.currentTime;this.lastArrangement=[];
+    const sampleBank=p.engine==='sample'?await this.loadSampleBank(p.sampleSet):null;
+    if(generation!==this.generation)return;
     for(const voice of this.voices){voice.gain.gain.cancelScheduledValues(now);voice.gain.gain.setTargetAtTime(.0001,now,.035);setTimeout(()=>voice.stop(),180);}
     this.voices=[];
     if(chord.audio instanceof Blob){
@@ -159,8 +173,13 @@ export class GardenPad{
     }
     if(p.engine==='sample'){
       const group=c.createGain(),sources=[];group.gain.setValueAtTime(.68/Math.sqrt(notes.length),now);group.connect(this.cleanOutput);
+      // Keep each sampled arpeggio on one source recording. Switching source
+      // samples from tone to tone creates little attack/timbre jumps (most
+      // noticeable on Felt Piano), which can sound like grace notes.
+      const orderedNotes=[...notes].sort((a,b)=>a-b),middleNote=orderedNotes[Math.floor(orderedNotes.length/2)];
+      const phraseSample=arpeggio?nearestSample(sampleBank,middleNote):null;
       notes.forEach((midi,index)=>{
-        const sample=this.sampleBuffers.reduce((best,item)=>Math.abs(item.midi-midi)<Math.abs(best.midi-midi)?item:best,this.sampleBuffers[0]);
+        const sample=phraseSample||nearestSample(sampleBank,midi);
         const voice=c.createBufferSource(),voiceGain=c.createGain();voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi)/12);voiceGain.gain.value=index===0?.62:1;voice.connect(voiceGain);voiceGain.connect(group);voice.start(now+(arpeggio?index*.18:0));sources.push(voice);
       });
       const voice={gain:group,stop:()=>{for(const item of sources){try{item.stop();}catch{}}try{group.disconnect();}catch{}}};this.voices.push(voice);return;

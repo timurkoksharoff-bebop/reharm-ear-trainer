@@ -1,0 +1,111 @@
+import {GARDEN_ITEMS,createGardenLife} from './garden-life.mjs';
+import {GARDEN_ARRANGEMENTS} from './garden-arrangement.mjs';
+
+const NAMES={
+ fuel:['Энергетическое семя','Energy seed'],water:['Водяная жемчужина','Water pearl'],crew:['Спелые ягоды','Ripe berries'],hull:['Смола лотоса','Lotus resin'],
+ restoration:['Колесо жизни','Wheel of Life'],shield:['Защитный кокон','Protective cocoon'],degreeReveal:['Лунный цветок','Moon flower'],hold:['Бесконечность','Infinity'],
+ qualityFocus:['Жемчужный бутон','Pearl bud'],holdArpeggio:['Корневая спираль','Root spiral'],arrangementBoost:['Аметист баса','Bass amethyst'],midpoint:['Янтарный бутон','Amber bud'],focusRare:['Солнечный бутон','Solar bud'],
+ poison:['Ядовитое семя','Poison seed'],crater:['Кратер','Crater'],stoneAsteroid:['Каменный астероид','Stone asteroid'],porousAsteroid:['Пористый астероид','Porous asteroid'],crystalAsteroid:['Кристаллический астероид','Crystal asteroid'],lavaAsteroid:['Лавовое ядро','Lava core'],campSpore:['Споры застоя','Stagnation spores'],storm:['Смерч','Vortex'],
+ arpWave:['Лотос волны','Wave lotus'],arpBroken:['Орхидея излома','Broken orchid'],arpSpark:['Искристый папоротник','Spark fern'],arpMist:['Звёздная россыпь','Star mist'],bassCanon:['Янтарный корень','Amber root'],bassChill:['Лунная ягода','Moon berry'],bassFunk:['Пружинящий ирис','Spring iris']
+};
+
+export const GUIDE_ITEM_KINDS=Object.keys(GARDEN_ITEMS);
+export const GUIDE_GROUPS=[
+ {id:'supplies',ru:'Запасы и защита',en:'Supplies & protection',kinds:['fuel','water','crew','hull','shield','restoration']},
+ {id:'helpers',ru:'Подсказки из лотоса',en:'Help from the lotus',kinds:['degreeReveal','hold','holdArpeggio','arrangementBoost','qualityFocus','midpoint','focusRare']},
+ {id:'jumps',ru:'Прыжки по последовательности',en:'Jump through the sequence',kinds:GUIDE_ITEM_KINDS.filter(k=>GARDEN_ITEMS[k].navigationDelta)},
+ {id:'flowers',ru:'Музыкальные цветы',en:'Musical flowers',kinds:Object.keys(GARDEN_ARRANGEMENTS)},
+ {id:'hazards',ru:'Что нужно облетать',en:'What to avoid',kinds:['stoneAsteroid','porousAsteroid','crystalAsteroid','crater','poison','lavaAsteroid','storm','campSpore']}
+];
+export function guideLessons(){return GUIDE_GROUPS.flatMap(group=>group.kinds.map(kind=>({id:kind,kind})));}
+export function guideItemName(kind,en=false){
+ const spec=GARDEN_ITEMS[kind];
+ return NAMES[kind]?.[en?1:0]||(en?'Jump ':'Прыжок ')+(spec.navigationDelta>0?'+':'−')+Math.abs(spec.navigationDelta);
+}
+export function guideItemCopy(kind,en=false){
+ const s=GARDEN_ITEMS[kind],n=s.navigationDelta;
+ if(s.restoration)return en?'Restores all four supplies to 100% immediately. A rare rescue: catch it with the ship.':'Сразу восстанавливает все четыре запаса до 100%. Редкое спасение — поймай колесо кораблём.';
+ if(s.shield)return en?'Protects against three ordinary rock hits immediately. Lava, wrong answers and normal supply drain bypass the cocoon.':'Сразу защищает от трёх обычных ударов камней. Не спасает от лавы, неверных ответов и обычного расхода запасов.';
+ if(s.repeat)return en?'Activate in the lotus: the current chord repeats. A correct bass OR chord answer ends the repeat; ▶ also continues. The ship keeps flying.':'Включи в лотосе: текущий аккорд повторяется. Угадай бас ИЛИ аккорд — повтор закончится; ▶ тоже продолжает. Корабль не останавливается.';
+ if(s.assist?.reveal)return en?'Activate in the lotus to reveal the current bass and chord. A fully solved position does not use a charge.':'Нажми в лотосе — откроются бас и аккорд текущей позиции. Если всё уже угадано, заряд сохранится.';
+ if(s.assist){
+  const a=s.assist,part=en?(a.answerKind==='degree'?'bass':'chord'):(a.answerKind==='degree'?'баса':'аккорда');
+  const duration=a.rounds?(en?a.rounds+' full '+(a.rounds===1?'lap':'laps'):(a.rounds===1?'один полный круг':'два полных круга')):(en?a.steps+' chord changes':a.steps+(a.steps===3?' смены аккорда':' смен аккорда'));
+  return en?'Activate in the lotus. Keeps about 1/'+a.divisor+' of the '+part+' choices for '+duration+'. The correct answer stays in place.':'Включи в лотосе. Оставляет '+(a.divisor===2?'половину':'четверть')+' вариантов '+part+' на '+duration+'. Правильный ответ остаётся на месте.';
+ }
+ if(n)return en?'Activate in the lotus to jump '+Math.abs(n)+' positions '+(n<0?'back':'forward')+' around the sequence. Two charges; one per tap. Not available in Applicant mode.':'Нажми в лотосе: переход на '+Math.abs(n)+(Math.abs(n)===5?' позиций ':' позиции ')+(n<0?'назад':'вперёд')+' по кругу. Два заряда, по одному за нажатие. В «Абитуриенте» недоступен.';
+ if(s.arrangement){
+  const details={arpWave:'Up-and-down eighth notes',arpBroken:'Broken eighth-note arpeggio',arpSpark:'Faster sixteenth notes',arpMist:'Quiet, fast thirty-second notes',bassCanon:'A calm, pulsing bass',bassChill:'Soft, syncopated chill bass',bassFunk:'Short, springy funk bass'};
+  return en?details[kind]+'. Starts on the next chord. Tap its miniature on the left to turn it off.':GARDEN_ARRANGEMENTS[kind].detail+'. Вступает на следующем аккорде. Чтобы выключить, нажми мини-копию цветка слева.';
+ }
+ if(s.fatal)return en?'Fatal collision, even with a cocoon. Steer away from the glowing red core.':'Столкновение завершает полёт даже с коконом. Уводи корабль от красного раскалённого ядра.';
+ if(s.storm)return en?'Linger near its centre and it starts pulling the ship. Keep moving away from the vortex.':'Если задержаться рядом с центром, начинает уносить корабль. Продолжай двигаться и выходи из смерча.';
+ if(s.pressure)return en?'Violet rings appear after about 15 seconds of staying still. They drain crew and water: move away to clear them.':'Фиолетовые круги появляются примерно после 15 секунд стояния. Расходуют экипаж и воду — отлети в сторону.';
+ if(kind==='poison')return en?'Reduces crew by 8 and hull by 3. Do not collect: move the ship away.':'Отнимает 8 единиц экипажа и 3 единицы корпуса. Не собирай — облетай.';
+ if(s.harmful)return en?(s.asteroid?'Damages supplies and pushes the ship. Colour shows the affected supply. Avoid it; a cocoon absorbs ordinary rock hits.':'Contact damages the hull. Steer around the crater.'):(s.asteroid?'Отнимает запас и толкает корабль; цвет показывает пострадавшую пробирку. Облетай — от обычного камня спасает кокон.':'При касании повреждает корпус. Облетай кратер.');
+ const labels={fuel:['Топливо (FUEL)','Fuel (FUEL)'],water:['Вода (H₂O)','Water (H₂O)'],crew:['Экипаж (CREW)','Crew (CREW)'],hull:['Корпус (HULL)','Hull (HULL)']};
+ return labels[s.resource][en?1:0]+' +'+s.amount+(en?'. Catch with the ship. Works instantly; the maximum is 100.':'. Поймай кораблём. Действует сразу, максимум — 100.');
+}
+
+const LOTUS='<svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 31C9 26 9 15 20 7C31 15 31 26 20 31Z"/><path d="M20 31C8 31 3 22 5 14C14 15 20 22 20 31ZM20 31C32 31 37 22 35 14C26 15 20 22 20 31Z"/><path d="M20 31C10 36 3 29 2 24C10 23 16 25 20 31ZM20 31C30 36 37 29 38 24C30 23 24 25 20 31Z"/></g></svg>';
+
+// A single illustrated document. No timers, practice mission, movement or audio.
+export function createGuide({language,onEnter,onExit}){
+ const panel=document.getElementById('flight-tutorial'),pick=(ru,en)=>language.pick(ru,en);
+ panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','tutorial-title');panel.removeAttribute('aria-live');
+ let active=false,returnState,inertBefore=new Map(),previousFocus;
+ const sprites={},pending=new Map();
+ function drawIcons(){
+  if(!active)return;
+  for(const canvas of panel.querySelectorAll('[data-guide-icon]')){
+   const kind=canvas.dataset.guideIcon,spec=GARDEN_ITEMS[kind],life=createGardenLife({random:()=>.5});
+   life.ambient=[];life.time=2;life.setImages(sprites);
+   const entity=life.forceSpawn(kind,{x:.5,y:.5,age:2,angle:0,phase:0,scale:76/spec.size,rounds:1});
+   if(spec.pressure){entity.scale=0;life.campPressure={x:.5,y:.5,age:3};}
+   const ctx=canvas.getContext('2d');ctx.clearRect(0,0,240,240);ctx.save();ctx.scale(2,2);
+   life.draw(ctx,{width:120,height:120,ship:2,night:.5});ctx.restore();
+   if(!spec.sprite||sprites[spec.sprite])canvas.dataset.ready='true';
+  }
+ }
+ function loadSprites(){
+  for(const sprite of new Set(Object.values(GARDEN_ITEMS).map(s=>s.sprite).filter(Boolean))){
+   if(sprites[sprite]||pending.has(sprite))continue;
+   const image=new Image();pending.set(sprite,image);
+   image.onload=()=>{sprites[sprite]=image;pending.delete(sprite);drawIcons();};
+   image.onerror=()=>pending.delete(sprite);
+   image.src='assets/echo-garden/collectibles/'+sprite+'.webp';
+  }
+ }
+ function render(){
+  if(!active)return;
+  const scroll=panel.scrollTop,en=language.get()==='en';
+  const card=(kind)=>{const spec=GARDEN_ITEMS[kind],action=spec.harmful?pick('ОБЛЕТАЙ','AVOID'):spec.artifact?pick('ПОЙМАЙ → ЛОТОС → НАЖМИ','CATCH → LOTUS → TAP'):spec.arrangement?pick('ПОЙМАЙ → СЛУШАЙ','CATCH → LISTEN'):pick('ПОЙМАЙ · ДЕЙСТВУЕТ СРАЗУ','CATCH · WORKS INSTANTLY');
+   return '<article class="field-card" data-guide-kind="'+kind+'"><canvas width="240" height="240" data-guide-icon="'+kind+'" role="img" aria-label="'+guideItemName(kind,en)+'"></canvas><div><small class="field-action'+(spec.harmful?' danger':'')+'">'+action+'</small><h3>'+guideItemName(kind,en)+'</h3><p>'+guideItemCopy(kind,en)+'</p></div></article>';};
+  panel.innerHTML='<header class="field-header"><span>EAR YOGA · '+pick('ПАМЯТКА','FIELD GUIDE')+'</span><button id="guide-language" type="button">'+pick('English','Русский')+'</button><button id="tutorial-close" type="button" aria-label="'+pick('Закрыть памятку','Close guide')+'">×</button></header>'+
+   '<div class="field-content"><h1 id="tutorial-title">'+pick('Карта полёта','Your flight map')+'</h1><p class="field-lead">'+pick('Слушай. Узнавай. Исследуй.','Listen. Recognise. Explore.')+'</p><p>'+pick('Всё на одной странице: управление, лотос и каждый артефакт. Листай вниз. Пока памятка открыта, полёт на паузе.','One page: controls, the lotus and every artifact. Scroll down. Your flight is paused while this guide is open.')+'</p>'+
+   '<nav class="field-nav" aria-label="'+pick('Разделы памятки','Guide sections')+'"><a href="#field-controls">'+pick('Управление','Controls')+'</a>'+GUIDE_GROUPS.map(g=>'<a href="#field-'+g.id+'">'+(en?g.en:g.ru)+'</a>').join('')+'</nav>'+
+   '<section id="field-controls"><h2>01 · '+pick('Как устроен полёт','How the flight works')+'</h2>'+
+   '<ol class="field-rules"><li>'+pick('Сначала звучит тоника — музыкальный «дом». Затем идёт последовательность аккордов: несколько нот, звучащих вместе.','First you hear the tonic — your musical “home”. Then comes a sequence of chords: several notes sounding together.')+'</li><li>'+pick('Слушай самую низкую ноту и выбирай её ступень внизу. I — тоника, V — пятая ступень; ♭ понижает ступень на полтона.','Listen for the lowest note and choose its degree at the bottom. I is the tonic, V the fifth degree; ♭ lowers a degree by a semitone.')+'</li><li>'+pick('Тип аккорда выбирай справа: maj — мажор, m — минор, 7 — доминантсептаккорд, maj7 — мажорный септаккорд. Дополнительные варианты бывают левее основного столбца.','Choose the chord quality on the right: maj = major, m = minor, 7 = dominant seventh, maj7 = major seventh. Extra choices can appear to the left of the main column.')+'</li><li>'+pick('Угаданный бас заполняет низ шарика, аккорд — верх. Разгадай обе части каждой позиции. После завершения музыка продолжит звучать; следующий маршрут выбираешь ты.','A correct bass fills the bottom of an orb; a correct chord fills the top. Solve both parts of each position. Music continues after completion until you choose the next route.')+'</li></ol>'+
+   '<div class="field-diagram" role="img" aria-label="'+pick('Схема экрана: цепочка сверху, лотос слева, аккорды справа, бас внизу','Screen map: sequence at top, lotus on left, chords on right, bass at bottom')+'"><div class="map-route">① ─ ② ─ ③ ─ ④</div><div class="map-menu">⌂ &nbsp; ☰</div><div class="map-pause">Ⅱ / ▶</div><div class="map-lotus">'+LOTUS+'<span>→ '+pick('Склад','Inventory')+'</span></div><div class="map-chords"><span>maj</span><span>m</span><span>7</span><span>maj7</span><b>'+pick('Аккорд','Chord')+'</b></div><img class="map-ship" src="assets/echo-garden/lotus.webp" alt=""><div class="map-vials">▯ ▯ ▯ ▯</div><div class="map-bass"><span>I &nbsp; ♭II &nbsp; II &nbsp; ♭III &nbsp; III &nbsp; IV</span><span>♯IV &nbsp; V &nbsp; ♭VI &nbsp; VI &nbsp; ♭VII &nbsp; VII</span><b>'+pick('Бас — ступень','Bass — degree')+'</b></div></div>'+
+   '<p class="field-caption">'+pick('Схема, не игровой экран. Веди корабль пальцем или мышью; на компьютере — стрелками. Ⅱ — пауза, ▶ — продолжить. ☰ сверху справа открывает меню.','Diagram, not a game screen. Drag the ship, or use arrow keys on a computer. Ⅱ pauses; ▶ resumes. ☰ at the top right opens the menu.')+'</p>'+
+   '<div class="field-lotus-note">'+LOTUS+'<div><h3>'+pick('Лотос = склад артефактов','Lotus = artifact inventory')+'</h3><p>'+pick('Он слева, под паузой. Поймай подсказку → нажми лотос → нажми собранный предмет. Цифра показывает оставшиеся заряды. Запасы, защитный пузырь и колесо жизни действуют сразу — в склад заходить не нужно.','It is on the left, below pause. Catch a hint → tap the lotus → tap the collected item. The number shows charges left. Supplies, the protective bubble and the Wheel of Life work instantly — no inventory activation needed.')+'</p></div></div></section>'+
+   GUIDE_GROUPS.map((g,i)=>'<section id="field-'+g.id+'"><h2>'+String(i+2).padStart(2,'0')+' · '+(en?g.en:g.ru)+'</h2>'+ (g.id==='flowers'?'<p>'+pick('Цветок добавляет музыкальную партию, а не открывает ответ. Мини-копии пойманных цветов появляются слева.','A flower adds a musical layer; it does not reveal an answer. Miniatures of caught flowers appear on the left.')+'</p>':'')+g.kinds.map(card).join('')+'</section>').join('')+
+   '<footer class="field-footer"><p>'+pick('Памятка всегда доступна: «Как играть» на обложке или «Карта полёта и артефакты» в меню.','Return anytime: How to play on the cover, or Flight map & artifacts in the menu.')+'</p><button id="guide-done" type="button">'+pick('Понятно · закрыть','Got it · close')+'</button><a href="#tutorial-title">'+pick('↑ Наверх','↑ Back to top')+'</a></footer></div>';
+  panel.querySelector('#guide-language').onclick=()=>language.toggle();
+  panel.querySelector('#tutorial-close').onclick=close;panel.querySelector('#guide-done').onclick=close;
+  for(const link of panel.querySelectorAll('a[href^="#"]'))link.onclick=e=>{e.preventDefault();panel.querySelector(link.getAttribute('href'))?.scrollIntoView({block:'start'});};
+  panel.scrollTop=scroll;drawIcons();loadSprites();
+ }
+ function close(){
+  if(!active)return;active=false;panel.hidden=true;document.body.classList.remove('tutorial-open');
+  for(const [el,value] of inertBefore)el.inert=value;inertBefore.clear();onExit(returnState);
+  try{localStorage.setItem('ear-yoga-guide.v2','1');}catch{}
+  if(previousFocus?.isConnected&&!previousFocus.closest('[hidden]')&&!previousFocus.inert)previousFocus.focus({preventScroll:true});
+ }
+ panel.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}
+  if(e.key==='Tab'){const items=[...panel.querySelectorAll('button,a')],first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+ });
+ language.onChange(render);
+ return {open(state){if(active)return;previousFocus=document.activeElement;returnState=onEnter(state);inertBefore=new Map([...document.body.children].filter(el=>el!==panel&&el.tagName!=='SCRIPT').map(el=>[el,el.inert]));for(const el of inertBefore.keys())el.inert=true;active=true;panel.hidden=false;document.body.classList.add('tutorial-open');render();panel.scrollTop=0;panel.querySelector('#tutorial-close').focus({preventScroll:true});},close,active:()=>active,snapshot:()=>({active,mode:'field-guide',items:GUIDE_ITEM_KINDS.length}),refresh:render};
+}

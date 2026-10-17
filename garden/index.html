@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.24">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.24">
+  <link rel="icon" href="icon.svg?v=1.25"><link rel="apple-touch-icon" href="icon-192-v1.25.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.25">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.25">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -48,6 +48,7 @@
   <section id="trial-expired" class="trial-expired" hidden role="dialog" aria-modal="true" aria-labelledby="trial-title"><div><span class="overline">SPACE MUSIC COLLEGE</span><h2 id="trial-title">Ознакомительный период завершён</h2><p id="trial-copy">Спасибо, что играли в EAR YOGA. Обратитесь к автору приложения, чтобы получить актуальную сборку.</p><small id="trial-dates"></small><button id="trial-language" type="button">English</button></div></section>
   <aside id="flight-tutorial" hidden aria-live="polite"><span class="tutorial-eyebrow">ПУТЕВОДИТЕЛЬ ПО САДУ</span><div id="tutorial-progress" aria-hidden="true"></div><strong id="tutorial-title"></strong><p id="tutorial-copy"></p><button id="tutorial-back">← Назад</button><button id="tutorial-next">Дальше →</button><button id="tutorial-close">Пропустить тур</button></aside>
   <section id="garden-start" class="garden-start" hidden aria-label="Главное меню EAR YOGA">
+    <small id="build-version" class="build-version" translate="no"></small>
     <div class="garden-start-shell">
       <div class="start-copy">
         <span class="overline start-college">SPACE MUSIC COLLEGE</span>
@@ -176,6 +177,6 @@
   <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite"><span class="overline">МАРШРУТ ЗАВЕРШЁН · СЛУШАЕМ ДАЛЬШЕ</span><p id="mission-complete-copy">Все аккорды найдены. Последовательность продолжает звучать по кругу.</p><div><button id="mission-next-route" aria-label="Следующий маршрут">✓ Завершено · следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню"><svg class="menu-home-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10 12 3 20 10v11H4Z"/></svg><span>Меню</span></button></div></section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.24" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.25" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

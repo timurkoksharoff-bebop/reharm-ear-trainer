@@ -560,6 +560,22 @@ body.teacher-mode .bass-panel{bottom:148px;max-height:480px}
 body.teacher-mode #bass-options{gap:6px}
 body.teacher-mode #harmony-hud[data-variant=minimal] #bass-options .degree-option{width:auto;height:100%;min-width:0;min-height:0;max-width:30px;max-height:30px;aspect-ratio:1;padding:0;box-sizing:border-box;justify-self:center;align-self:center;font-size:clamp(9px,1.5dvh,12px);border-radius:50%}
 #harmony-hud[data-variant=minimal] .degree-option,#harmony-hud[data-variant=minimal] .quality-option,#bass-options button{text-shadow:0 1px 2px #001719,0 0 4px #001719}
+/* Keep the bottom steering area open even while the inventory is expanded. */
+.flight-tools-body{pointer-events:none}
+.flight-tools-body button,.flight-tools summary{pointer-events:auto}
+body.teacher-mode .flight-tools,body.teacher-mode.infinity-active .flight-tools,body.paged-chain .flight-tools,body.paged-chain.infinity-active .flight-tools{left:10px;top:184px;bottom:auto}
+body.teacher-mode .flight-tools-body,body.paged-chain .flight-tools-body{left:48px;top:0;bottom:auto;max-height:calc(100dvh - 320px);pointer-events:none}
+body.teacher-mode .flight-tools[open] .flight-tools-body{left:48px}
+body.teacher-mode .arrangement-status,body.teacher-mode.infinity-active .arrangement-status,body.paged-chain .arrangement-status,body.paged-chain.infinity-active .arrangement-status{left:62px;top:136px;bottom:auto;flex-direction:row}
+body.paged-chain .flight-tools,body.paged-chain.infinity-active .flight-tools{top:216px}
+body.paged-chain .arrangement-status,body.paged-chain.infinity-active .arrangement-status{top:184px}
+body.teacher-mode .bass-panel{top:auto;bottom:116px;height:min(480px,calc(100dvh - 352px));max-height:none;pointer-events:none}
+body.teacher-mode.paged-chain .bass-panel{height:min(480px,calc(100dvh - 384px))}
+#bass-options{pointer-events:none}
+#bass-options button{pointer-events:auto}
+body.teacher-mode .infinity-continue,body.paged-chain .infinity-continue{left:58px;top:230px;bottom:auto}
+body.teacher-mode.paged-chain .infinity-continue{top:260px}
+.build-version{position:absolute;z-index:3;left:16px;bottom:max(14px,env(safe-area-inset-bottom));font:9px/1.2 ui-monospace,monospace;letter-spacing:.08em;color:#d3e5dd99;text-shadow:0 1px 4px #001719;pointer-events:none}
 @media(max-width:760px){.audio-tuning{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding:8px}.audio-tuning label{font-size:10px}}
 /* EAR YOGA: one restrained publisher line and an orbital lotus / inner ear. */
 .garden-start .start-copy>.start-college{position:absolute;top:calc(24px + env(safe-area-inset-top));left:4vw;width:auto;font:11px/1.4 Georgia,serif;letter-spacing:.22em;text-align:left;color:#e7dece}

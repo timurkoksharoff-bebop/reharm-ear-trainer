@@ -10,6 +10,7 @@ import {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS} fr
 import {createGardenRewards} from './garden-rewards.mjs';
 import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
+$('build-version').textContent='v'+(globalThis.GARDEN_VERSION||'dev');
 function setPlaybackIcon(button,running){
   const state=running?'pause':'play';if(button.dataset.playbackState===state)return;
   button.dataset.playbackState=state;

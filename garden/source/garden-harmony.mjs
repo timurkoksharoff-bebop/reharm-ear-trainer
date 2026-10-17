@@ -81,6 +81,25 @@ export function gardenSampleStart(buffer){
   for(let frame=0;frame<buffer.length;frame++)if(channels.some(data=>Math.abs(data[frame])>threshold))return Math.max(0,frame/buffer.sampleRate-.002);
   return 0;
 }
+export function gardenSampleBankLevel(bank){
+  // Compare the same musical registers and listening duration, not file peaks
+  // or recording pitch: a C5 sample transposed down decays much more slowly.
+  const pitches=[43,48,55,60,64,67];let energy=0;
+  for(const midi of pitches){
+    const sample=nearestSample(bank,midi),buffer=sample.buffer,rate=2**((midi-sample.midi)/12);
+    const first=Math.floor((sample.startOffset||0)*buffer.sampleRate),last=Math.min(buffer.length,first+Math.floor(3*rate*buffer.sampleRate));
+    let sum=0,count=0;
+    for(let channel=0;channel<buffer.numberOfChannels;channel++){const data=buffer.getChannelData(channel);for(let i=first;i<last;i++){sum+=data[i]*data[i];count++;}}
+    energy+=count?sum/count:0;
+  }
+  return Math.sqrt(energy/pitches.length);
+}
+export function gardenSampleBankGain(bank,reference){
+  const level=gardenSampleBankLevel(bank),target=gardenSampleBankLevel(reference);
+  if(!level||!target)return 1;
+  let peak=0;for(const sample of bank)for(let c=0;c<sample.buffer.numberOfChannels;c++)for(const value of sample.buffer.getChannelData(c))peak=Math.max(peak,Math.abs(value));
+  return Math.min(6,peak?.85/peak:6,Math.max(.25,target/level));
+}
 
 export class GardenPad{
   constructor({deferSamplesUntilReady=false}={}){
@@ -127,7 +146,9 @@ export class GardenPad{
         if(embedded)return {midi,data:Uint8Array.from(atob(embedded),c=>c.charCodeAt(0)).buffer};
         const response=await fetch(url,{priority:'low'});if(!response.ok)throw Error(`Не загрузился семпл ${url}`);return {midi,data:await response.arrayBuffer()};
       }));
-      return Promise.all(samples.map(async sample=>{const buffer=await this.context.decodeAudioData(sample.data.slice(0));return {midi:sample.midi,buffer,startOffset:gardenSampleStart(buffer)};}));
+      const bank=await Promise.all(samples.map(async sample=>{const buffer=await this.context.decodeAudioData(sample.data.slice(0));return {midi:sample.midi,buffer,startOffset:gardenSampleStart(buffer)};}));
+      const levelGain=sampleSet==='felt'?1:gardenSampleBankGain(bank,await this.loadSampleBank('felt'));
+      return bank.map(sample=>({...sample,levelGain}));
     })();
     return this.sampleBanks[sampleSet];
   }
@@ -205,7 +226,7 @@ export class GardenPad{
       const phraseSample=arpeggio?nearestSample(sampleBank,middleNote):null;
       notes.forEach((midi,index)=>{
         const sample=phraseSample||nearestSample(sampleBank,midi);
-        const voice=c.createBufferSource(),voiceGain=c.createGain();voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi)/12);voiceGain.gain.value=index===0?.62:1;voice.connect(voiceGain);voiceGain.connect(group);voice.start(now+(arpeggio?index*.18:0),sample.startOffset||0);sources.push(voice);
+        const voice=c.createBufferSource(),voiceGain=c.createGain();voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi)/12);voiceGain.gain.value=(index===0?.62:1)*(sample.levelGain??1);voice.connect(voiceGain);voiceGain.connect(group);voice.start(now+(arpeggio?index*.18:0),sample.startOffset||0);sources.push(voice);
       });
       const voice={gain:group,stop:()=>{for(const item of sources){try{item.stop();}catch{}}try{group.disconnect();}catch{}}};this.voices.push(voice);return;
     }

@@ -50,12 +50,14 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8783/';
   assert.equal(await page.locator('#mission-toggle').getAttribute('data-playback-state'),'play');
   const boxes=async()=>page.evaluate(()=>{
    const rect=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
-   return {bass:rect('#bass-panel'),root:rect('.degrees-panel'),quality:rect('#quality-options'),pause:rect('#mission-toggle'),home:rect('#garden-home'),lotus:rect('.flight-tools summary'),notes:[...document.querySelectorAll('#bass-options button')].map(e=>({y:e.getBoundingClientRect().y,x:e.getBoundingClientRect().x})),background:getComputedStyle(document.querySelector('#bass-options button')).backgroundColor};
+   return {bass:rect('#bass-panel'),root:rect('.degrees-panel'),quality:rect('#quality-options'),pause:rect('#mission-toggle'),home:rect('#garden-home'),lotus:rect('.flight-tools summary'),notes:[...document.querySelectorAll('#bass-options button')].map(e=>({y:e.getBoundingClientRect().y,x:e.getBoundingClientRect().x,bottom:e.getBoundingClientRect().bottom,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height})),background:getComputedStyle(document.querySelector('#bass-options button')).backgroundColor};
   });
-  for(const [width,height] of [[1440,900],[768,1024],[390,844],[320,568]]){
+  for(const [width,height] of [[1440,900],[768,1024],[430,932],[414,896],[390,844],[390,692],[320,568]]){
    await page.setViewportSize({width,height});const b=await boxes();
    assert.equal(new Set(b.notes.map(n=>Math.round(n.x))).size,1,'one vertical note column at '+width);
    assert(b.notes.every((n,i)=>!i||n.y>b.notes[i-1].y),'notes descend vertically');
+   assert(b.notes.every((n,i)=>!i||n.y-b.notes[i-1].bottom>=5),'bass circles have a real gap at '+width+'x'+height);
+   assert(b.notes.every(n=>Math.abs(n.width-n.height)<1),'bass buttons stay circular at '+width);
    assert(b.bass.bottom<b.lotus.y,'bass clears inventory at '+width);
    assert(b.lotus.bottom<b.root.y,'inventory clears roots at '+width);
    assert(b.pause.right<b.home.x,'pause clears home');

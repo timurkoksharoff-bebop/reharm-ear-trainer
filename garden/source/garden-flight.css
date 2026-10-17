@@ -554,6 +554,11 @@ body.paged-chain .arrangement-status button{width:28px;height:28px;min-height:28
 body.paged-chain .arrangement-status canvas{width:24px;height:24px}
 body.paged-chain .infinity-continue{left:76px;top:auto;bottom:108px}
 #bass-options .degree-option::before{inset:-1px}
+/* Let each circle fit its actual grid row: older generic min-heights made
+   neighbouring bass buttons overlap on compact phone screens. */
+body.teacher-mode .bass-panel{bottom:148px;max-height:480px}
+body.teacher-mode #bass-options{gap:6px}
+body.teacher-mode #harmony-hud[data-variant=minimal] #bass-options .degree-option{width:auto;height:100%;min-width:0;min-height:0;max-width:30px;max-height:30px;aspect-ratio:1;padding:0;box-sizing:border-box;justify-self:center;align-self:center;font-size:clamp(9px,1.5dvh,12px);border-radius:50%}
 #harmony-hud[data-variant=minimal] .degree-option,#harmony-hud[data-variant=minimal] .quality-option,#bass-options button{text-shadow:0 1px 2px #001719,0 0 4px #001719}
 @media(max-width:760px){.audio-tuning{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding:8px}.audio-tuning label{font-size:10px}}
 /* EAR YOGA: one restrained publisher line and an orbital lotus / inner ear. */

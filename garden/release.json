@@ -1,9 +1,9 @@
 {
-  "version": "1.23",
+  "version": "1.24",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Test mobile release 1.23. User-exported cover layout, experimental Teacher mode with root/quality/note bass and automatic root-position bass, readable paginated long routes with original harmony retained, synchronous sample attacks, contact-first answer buttons, dimmer daytime terrain, smaller flight ship, corrected Deep House 3 registers, category-prefixed numeric route names. Includes 50 Jazz Standards and all saved embedded routes. Student mechanics and the 60-day trial storage are preserved."
+  "notes": "Test mobile release 1.24: separate circular bass buttons with guaranteed spacing; brighter passing cocoon collectible, with the active ship shield unchanged. User-exported cover layout, experimental Teacher mode with root/quality/note bass and automatic root-position bass, readable paginated long routes with original harmony retained, synchronous sample attacks, contact-first answer buttons, dimmer daytime terrain, smaller flight ship, corrected Deep House 3 registers, category-prefixed numeric route names. Includes 50 Jazz Standards and all saved embedded routes. Student mechanics and the 60-day trial storage are preserved."
 }

@@ -67,15 +67,15 @@ export function drawGardenShieldBubble(ctx,size,time,phase=0,flash=0,hits=3){
   const alpha=ctx.globalAlpha,r=size*.46,pulse=1+Math.sin(time*1.4+phase)*.025;
   ctx.save();ctx.scale(pulse,pulse);ctx.lineCap='round';ctx.lineJoin='round';
   const shell=ctx.createRadialGradient(-r*.3,-r*.36,r*.06,0,0,r);
-  shell.addColorStop(0,'rgba(222,250,255,.16)');shell.addColorStop(.44,'rgba(137,219,235,.045)');shell.addColorStop(.84,'rgba(122,178,229,.018)');shell.addColorStop(1,'rgba(194,237,241,.11)');
+  shell.addColorStop(0,'rgba(232,255,255,.20)');shell.addColorStop(.44,'rgba(137,229,239,.065)');shell.addColorStop(.84,'rgba(142,198,239,.025)');shell.addColorStop(1,'rgba(208,250,250,.16)');
   ctx.globalAlpha=alpha*(.72+flash*.16);ctx.fillStyle=shell;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
-  const rim=ctx.createLinearGradient(-r,-r,r,r);rim.addColorStop(0,'rgba(224,250,255,.67)');rim.addColorStop(.24,'rgba(122,236,232,.38)');rim.addColorStop(.56,'rgba(169,171,238,.32)');rim.addColorStop(.82,'rgba(210,244,247,.55)');rim.addColorStop(1,'rgba(146,217,230,.26)');
-  ctx.strokeStyle=rim;ctx.globalAlpha=alpha*(.76+flash*.2);ctx.lineWidth=Math.max(.8,size*.012)+flash*.8;ctx.shadowColor='#83e8ef';ctx.shadowBlur=size*.13;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+  const rim=ctx.createLinearGradient(-r,-r,r,r);rim.addColorStop(0,'rgba(240,255,255,.95)');rim.addColorStop(.24,'rgba(143,255,245,.68)');rim.addColorStop(.56,'rgba(193,197,255,.58)');rim.addColorStop(.82,'rgba(226,255,255,.82)');rim.addColorStop(1,'rgba(165,240,247,.62)');
+  ctx.strokeStyle=rim;ctx.globalAlpha=alpha*(.96+flash*.04);ctx.lineWidth=Math.max(1.05,size*.015)+flash*.8;ctx.shadowColor='#9bfff2';ctx.shadowBlur=size*.18;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
   // A fine cosmic wake wraps the sphere; dotted motes make it feel in motion
   // without reading as a heavy ring or a soap-film highlight.
   for(let stream=0;stream<3;stream++){
     const rotation=time*(stream===1?-.31:.22)+(stream-1)*2.1+phase;
-    ctx.save();ctx.rotate(rotation);ctx.strokeStyle=stream===1?'rgba(188,179,246,.46)':'rgba(127,238,228,.48)';ctx.lineWidth=Math.max(.55,size*.008);ctx.globalAlpha=alpha*(.46+flash*.2);
+    ctx.save();ctx.rotate(rotation);ctx.strokeStyle=stream===1?'rgba(211,200,255,.62)':'rgba(153,255,238,.66)';ctx.lineWidth=Math.max(.65,size*.009);ctx.globalAlpha=alpha*(.64+flash*.2);
     ctx.beginPath();ctx.ellipse(0,0,r*(.78+stream*.055),r*(.31+stream*.04),stream*.08,-.95,.97);ctx.stroke();
     for(let mote=0;mote<4;mote++){const a=-.92+mote*.48+((time*.42+phase+stream*.19)%(Math.PI*.15)),x=Math.cos(a)*r*(.78+stream*.055),y=Math.sin(a)*r*(.31+stream*.04);ctx.globalAlpha=alpha*(.30+.48*Math.sin(time*2+mote+stream)**2);ctx.fillStyle=stream===1?'#dfd5ff':'#c8fff2';ctx.beginPath();ctx.arc(x,y,Math.max(.7,size*.014),0,Math.PI*2);ctx.fill();}
     ctx.restore();
@@ -355,7 +355,7 @@ export class GardenLife{
       if(entity.item.restoration){
         ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*1.8)*.84;drawGardenLifeWheel(ctx,size,entity.age,entity.phase);ctx.restore();continue;
       }
-      if(entity.item.shield){ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*2.4)*.88;drawGardenShieldBubble(ctx,size,entity.age,entity.phase,0,3);ctx.restore();continue;}
+      if(entity.item.shield){ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*2.4);drawGardenShieldBubble(ctx,size,entity.age,entity.phase,0,3);ctx.restore();continue;}
       if(entity.item.assist&&!entity.item.assist.reveal&&!entity.item.sprite){ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(1,entity.age*2.4);drawGardenAssistGlyph(ctx,entity.item,size);ctx.restore();continue;}
       const image=this.images[entity.item.sprite],filterArtifact=entity.item.assist&&!entity.item.assist.reveal;ctx.save();ctx.translate(x,y);ctx.rotate(entity.item.navigationDelta?0:entity.item.assist?Math.sin(entity.age*.6+entity.phase)*.035:entity.angle);ctx.globalAlpha=Math.min(1,entity.age*2.4)*(filterArtifact?(entity.item.assist.divisor===4?.64:.50):entity.item.ground?.84:.92+night*.08);ctx.shadowColor=entity.item.color;ctx.shadowBlur=filterArtifact?2:entity.item.ground?4:(entity.item.harmful?8:13)+night*9;if(entity.item.visualFilter)ctx.filter=entity.item.visualFilter;if(entity.item.navigationDelta){const delta=entity.item.navigationDelta;ctx.fillStyle='#bde8da';ctx.font=`${Math.round(size*.44)}px Georgia`;ctx.textAlign='center';ctx.fillText(`${delta>0?'+':'−'}${Math.abs(delta)}`,0,size*.12);}else if(entity.item.arrangement)drawGardenArrangementFlower(ctx,entity.item,size,entity.rounds);else if(entity.item.asteroid&&image){if(entity.kind==='crystalAsteroid')ctx.filter='hue-rotate(100deg) saturate(1.3)';if(entity.kind==='lavaAsteroid'){ctx.filter='sepia(1) saturate(4) hue-rotate(-28deg)';ctx.shadowBlur=size*.34;}ctx.drawImage(image,-size/2,-size/2,size,size);}else if(entity.item.asteroid)this.drawAsteroid(ctx,entity,size);else if(image)ctx.drawImage(image,-size/2,-size/2,size,size);else{ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(0,0,size*.22,size*.34,0,0,Math.PI*2);ctx.fill();}ctx.restore();
       if(entity.item.asteroid&&!entity.item.fatal){ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=entity.item.color;ctx.beginPath();ctx.ellipse(x,y,size*.36,size*.30,entity.angle,0,Math.PI*2);ctx.fill();ctx.restore();}

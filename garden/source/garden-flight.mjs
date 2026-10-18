@@ -9,6 +9,9 @@ import {JAZZ_STANDARD_ROUTES} from './garden-jazz-routes.mjs';
 import {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS} from './garden-life.mjs';
 import {createGardenRewards} from './garden-rewards.mjs';
 import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
+import {GardenResonance} from './garden-resonance.mjs';
+import {GardenRun} from './garden-run.mjs';
+import {mountGardenRecording} from './garden-recording.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
 $('build-version').textContent='v'+(globalThis.GARDEN_VERSION||'dev');
 function setPlaybackIcon(button,running){
@@ -37,7 +40,9 @@ let renderScale=mobileGraphics?1.3:1.5,slowFrameAverage=16,graphicsSamples=0;
 const s={ready:false,lowCostGraphics:mobileGraphics,from:0,to:0,transition:1,pending:null,growth:0,ship:1,time:0,travel:0,scroll:0,pan:0,night:0,lightMode:'cycle',cycle:0,lantern:true,paused:reduced,speed:2,altitude:1.25,visit:0,clean:false,angle:0,motionX:0,motionY:0,thrust:.45,brake:0,x:0,y:0,width:1,height:1,worldSize:1,tour:'reharm',chapter:1,mode:'quest',gameOver:false};
 let renderer,images,last=0,raf=0,dpr=1,dragId=null,tx=.5,ty=.56,keys=new Set(),loaded=0;
 const pad=new GardenPad({deferSamplesUntilReady:true});
-const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrange(style,rounds)});
+const run=new GardenRun();
+const resonance=new GardenResonance({onTone:(midi,detail)=>{run.tone(detail,mission?.snapshot().cursor??-1);pad.tensionNote(midi,detail);}});
+const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrange(style,rounds),onRestoration:()=>resonance.restore()});
 const gardenRewards=createGardenRewards({reduced});
 let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,lastCollisionEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false;
 let chainView={route:null,position:null,page:null};
@@ -87,6 +92,9 @@ function ui(){
 }
 function renderVitals(){
   const model=gardenLife.snapshot();
+  const res=resonance.snapshot(),resElement=document.querySelector('.vital[data-resource="resonance"]');
+  resElement.hidden=!res.enabled;resElement.style.setProperty('--level',String(res.energy/100));resElement.classList.toggle('low',res.energy<24);
+  resElement.setAttribute('aria-label',`O₂: ${Math.round(res.energy)}%`);$('vital-resonance').textContent=String(Math.round(res.energy));
   const repeatState=mission?.snapshot();$('infinity-toggle').disabled=!repeatState?.running||repeatState.complete||(!repeatState.held&&(model.inventory.hold||0)<1);$('infinity-toggle').title=repeatState?.held?'Выключить повтор и продолжить':`Повторить аккорд · зарядов лотоса: ${model.inventory.hold||0}`;
   for(const [name,definition] of Object.entries(GARDEN_RESOURCES)){
     const element=document.querySelector(`.vital[data-resource="${name}"]`),value=Math.round(model.resources[name]);
@@ -102,7 +110,7 @@ function renderVitals(){
   const callout=$('vital-event');
   if(event&&model.eventAge<2.4){callout.textContent=`${event.harmful?'−':'+'} ${event.label}`;callout.classList.toggle('harmful',event.harmful);callout.classList.add('visible');}
   else callout.classList.remove('visible');
-  for(const button of document.querySelectorAll('[data-use-artifact]')){const kind=button.dataset.useArtifact,count=model.inventory[kind]||0,spec=GARDEN_ITEMS[kind],state=mission?.snapshot(),repeating=Boolean(spec.repeat&&state?.held);button.querySelector('b').textContent=count?String(count):'';button.classList.toggle('ready',count>0||repeating);button.classList.toggle('repeating',repeating);button.setAttribute('aria-pressed',String(repeating));if(spec.repeat){button.title=repeating?'∞ Повтор включён · нажми, чтобы продолжить':`${spec.label} · зарядов: ${count}`;button.setAttribute('aria-label',button.title);}button.hidden=!spec.navigationDelta&&count<1&&!repeating;button.disabled=(!repeating&&count<1)||(spec.shield&&model.shieldHits>0)||s.paused||!state?.running||state.cursor<0||(spec.assist?.reveal&&(spec.assist.answerKind==='both'?state.answerKinds.every(kind=>state.currentParts[kind]):state.currentParts[spec.assist.answerKind]));}
+  for(const button of document.querySelectorAll('[data-use-artifact]')){const kind=button.dataset.useArtifact,count=model.inventory[kind]||0,spec=GARDEN_ITEMS[kind],state=mission?.snapshot(),repeating=Boolean(spec.repeat&&state?.held);button.querySelector('b').textContent=count?String(count):'';button.classList.toggle('ready',count>0||repeating);button.classList.toggle('repeating',repeating);button.setAttribute('aria-pressed',String(repeating));if(spec.repeat){button.title=repeating?'∞ Повтор включён · нажми, чтобы продолжить':`${spec.label} · зарядов: ${count}`;button.setAttribute('aria-label',button.title);}button.hidden=Boolean(spec.teacherOnly&&!state?.separateBass)||(!spec.navigationDelta&&count<1&&!repeating);button.disabled=(!repeating&&count<1)||(spec.shield&&model.shieldHits>0)||s.paused||!state?.running||state.cursor<0||(spec.assist?.reveal&&(spec.assist.answerKind==='both'?state.answerKinds.every(kind=>state.currentParts[kind]):state.currentParts[spec.assist.answerKind]));}
 }
 function collisionThud(){
   const audio=pad.context;if(!audio||audio.state!=='running')return;
@@ -113,6 +121,7 @@ function collisionThud(){
   oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
 }
 function renderMission(model){
+  run.observe(model);renderRun();
   renderTutorial(model);
   const chainPosition=`${model.round}:${model.cursor}`;
   if(chainView.route!==model.exercise.id||chainView.position!==chainPosition)chainView={route:model.exercise.id,position:chainPosition,page:null};
@@ -122,7 +131,7 @@ function renderMission(model){
   const progress=model.progress??model.parts??model.exercise.sequence.map((_,index)=>({degree:model.solved.includes(index),quality:model.solved.includes(index)}));
   const solved=new Set(model.solved),total=model.exercise.sequence.length,solvedParts=model.solvedParts??progress.reduce((sum,part)=>sum+Number(part.degree)+Number(part.quality),0),totalParts=model.totalParts??total*2,percent=Math.round(solvedParts/totalParts*100);
   const missing=progress.flatMap((part,index)=>[
-    ...(!part.degree?[{index,kind:model.separateBass?'корень':'бас'}]:[]),
+    ...(!part.degree?[{index,kind:model.rootMode?'корень':'бас'}]:[]),
     ...(model.separateBass&&!part.bass?[{index,kind:'бас'}]:[]),
     ...(!part.quality?[{index,kind:'тип аккорда'}]:[])
   ]);
@@ -148,40 +157,44 @@ function renderMission(model){
     const li=document.createElement('li'),current=model.running&&index===model.cursor,target=model.exercise.sequence[index];
     li.hidden=index<windowed.start||index>=windowed.end;
     li.className=`chord-slot${solved.has(index)?' solved':''}${current?' current':''}`;
-    li.setAttribute('aria-label',`Позиция ${index+1}: ${model.separateBass?'корень':'бас'} ${part.degree?'найден':'не найден'}, тип ${part.quality?'найден':'не найден'}${model.separateBass?`, бас ${part.bass?'найден':'не найден'}`:''}`);
-    const degreeOnly=gardenDegreeLabel(model.separateBass?gardenRootOffset(target):gardenBassOffset(target));
-    const label=model.separateBass?(part.degree||part.quality||part.bass?gardenJazzLabel(target,model.exercise.baseTonic??5,{root:part.degree,quality:part.quality,bass:part.bass})+(part.degree&&part.quality&&!part.bass?' / ?':''):''):part.degree&&part.quality?gardenChordLabel(target):part.degree?degreeOnly:part.quality?gardenQualityAnswerLabel(gardenQualityAnswer(target)):'';
+    li.setAttribute('aria-label',`Позиция ${index+1}: ${model.rootMode?'корень':'бас'} ${part.degree?'найден':'не найден'}, тип ${part.quality?'найден':'не найден'}${model.separateBass?`, бас ${part.bass?'найден':'не найден'}`:''}`);
+    const degreeOnly=gardenDegreeLabel(model.rootMode?gardenRootOffset(target):gardenBassOffset(target));
+    const label=model.rootMode?(part.degree||part.quality||part.bass?gardenJazzLabel(target,model.exercise.baseTonic??5,{root:part.degree,quality:part.quality,bass:part.bass,compact:model.separateBass})+(model.separateBass&&part.degree&&part.quality&&!part.bass?' / ?':''):''):part.degree&&part.quality?gardenChordLabel(target):part.degree?degreeOnly:part.quality?gardenQualityAnswerLabel(gardenQualityAnswer(target)):'';
     if(part.degree&&part.quality)li.title=`${gardenChordLabel(target)}${target.notes?.length?` · MIDI: ${target.notes.join(', ')}`:''}`;
     li.innerHTML=`<button type="button" class="route-node" aria-label="Позиция ${index+1}" disabled><i class="node-degree${part.degree?' found':''}"></i><i class="node-quality${part.quality?' found':''}"></i>${model.separateBass?`<i class="node-bass-ring${part.bass?' found':''}"></i>`:''}<em>${index+1}</em></button><span class="route-copy" aria-hidden="true"><small>${String(index+1).padStart(2,'0')}</small><b class="${label?'visible':''}">${label||'·'}</b></span>`;
     return li;
   }));
   const currentParts=model.currentParts??(model.cursor>=0?progress[model.cursor]:{degree:true,quality:true});
-  const mayAnswer=model.running&&model.cursor>=0&&!solved.has(model.cursor),prototypePalette=['expanded','compact'].includes(document.body.dataset.paletteLayout),qualities=gardenAvailableAnswers(model.exercise,{expanded:prototypePalette,rootMode:model.separateBass});
+  const mayAnswer=model.running&&model.cursor>=0&&!solved.has(model.cursor),prototypePalette=['expanded','compact'].includes(document.body.dataset.paletteLayout),qualities=gardenAvailableAnswers(model.exercise,{expanded:prototypePalette,rootMode:model.rootMode});
   document.body.classList.toggle('student-palette',!prototypePalette);
-  const visibleDegrees=gardenFilteredChoices('degree',model.current,model.filters?.degree,undefined,{rootMode:model.separateBass}),visibleQualities=gardenFilteredChoices('quality',model.current,model.filters?.quality,qualities,{rootMode:model.separateBass});
-  const answerPart=(kind,value)=>{const result=mission.answerPart(kind,value);if(!result.ignored){if(!result.correct){gardenLife.wrongAnswer(kind,value,qualities);renderVitals();}gardenRewards.answer(result,kind,{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});}};
+  const visibleDegrees=gardenFilteredChoices('degree',model.current,model.filters?.degree,undefined,{rootMode:model.rootMode}),visibleQualities=gardenFilteredChoices('quality',model.current,model.filters?.quality,qualities,{rootMode:model.rootMode});
+  const answerPart=(kind,value)=>{const result=mission.answerPart(kind,value);if(!result.ignored){if(!result.correct){run.misses++;gardenLife.wrongAnswer(kind,value,qualities);renderVitals();}gardenRewards.answer(result,kind,{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});}};
   document.body.classList.toggle('teacher-mode',Boolean(model.separateBass));
-  document.querySelector('.degrees-panel').setAttribute('aria-label',model.separateBass?'Корень аккорда относительно тоники':'Бас относительно тоники');
-  $('bass-panel').hidden=!model.separateBass;
-  $('bass-options').replaceChildren(...(model.separateBass?Array.from({length:12},(_,pitch)=>{const name=gardenNoteName(pitch),offset=(pitch-(model.exercise.baseTonic??5)+12)%12,button=document.createElement('button'),answer=gardenAnswerState(model,'bass',offset);button.className=`degree-option${answer.selected?' selected locked':''}`;button.textContent=name;button.dataset.bass=String(pitch);button.setAttribute('aria-label',`Бас ${name}`);button.setAttribute('aria-pressed',String(answer.selected));button.disabled=answer.disabled;bindAnswerPress(button,()=>answerPart('bass',offset));return button;}):[]));
-  $('teacher-key').hidden=!model.separateBass;
+  document.querySelector('.degrees-panel').setAttribute('aria-label',model.rootMode?'Корень аккорда относительно тоники':'Бас относительно тоники');
+  $('bass-panel').hidden=!model.bassPanelNeeded;
+  const visibleBasses=gardenFilteredChoices('bass',model.current,model.filters?.bass);
+  $('bass-options').replaceChildren(...(model.separateBass?DEGREE_NAMES.map((name,offset)=>{const pitch=((model.exercise.baseTonic??5)+offset)%12,button=document.createElement('button'),answer=gardenAnswerState(model,'bass',offset);button.className=`degree-option${answer.selected?' selected locked':''}${visibleBasses.has(offset)?'':' filtered'}`;button.textContent=name;button.dataset.bass=String(pitch);button.dataset.bassDegree=String(offset);button.setAttribute('aria-label',`Бас ${name}`);button.setAttribute('aria-pressed',String(answer.selected));button.disabled=answer.disabled||!visibleBasses.has(offset);bindAnswerPress(button,()=>answerPart('bass',offset));return button;}):[]));
+  $('teacher-key').hidden=!model.rootMode;
   $('teacher-key').textContent=`ROOT · KEY: ${gardenNoteName(model.exercise.baseTonic??5)}`;
   $('degree-options').replaceChildren(...DEGREE_NAMES.map((name,offset)=>{const button=document.createElement('button'),answer=gardenAnswerState(model,'degree',offset);button.className=`degree-option${answer.selected?' selected locked':''}${visibleDegrees.has(offset)?'':' filtered'}`;button.setAttribute('aria-pressed',String(answer.selected));button.textContent=name;button.dataset.degree=String(offset);button.disabled=answer.disabled||!visibleDegrees.has(offset);bindAnswerPress(button,()=>answerPart('degree',offset));return button;}));
-  const makeQuality=quality=>{const button=document.createElement('button'),answer=gardenAnswerState(model,'quality',quality);button.className=`quality-option${answer.selected?' selected locked':''}${visibleQualities.has(quality)?'':' filtered'}`;button.setAttribute('aria-pressed',String(answer.selected));button.textContent=model.separateBass?(gardenJazzQuality(quality)||'△'):gardenQualityAnswerLabel(quality);button.title=quality.includes(':')?'Ступень и тип верхнего аккорда; бас выбери внизу':`Тип аккорда: ${gardenQualityLabel(quality)}`;button.dataset.quality=quality;button.disabled=answer.disabled||!visibleQualities.has(quality);bindAnswerPress(button,()=>answerPart('quality',quality));return button;};
+  const makeQuality=quality=>{const button=document.createElement('button'),answer=gardenAnswerState(model,'quality',quality);button.className=`quality-option${answer.selected?' selected locked':''}${visibleQualities.has(quality)?'':' filtered'}`;button.setAttribute('aria-pressed',String(answer.selected));button.textContent=model.separateBass?(gardenJazzQuality(quality)||'△'):gardenQualityAnswerLabel(quality);button.title=/^\d+:/.test(quality)?'Ступень и тип верхнего аккорда; бас выбери внизу':`Тип аккорда: ${gardenQualityLabel(quality)}`;button.dataset.quality=quality;button.disabled=answer.disabled||!visibleQualities.has(quality);bindAnswerPress(button,()=>answerPart('quality',quality));return button;};
   $('quality-options').replaceChildren(...GARDEN_CORE_QUALITIES.map(makeQuality));
   $('quality-advanced-options').replaceChildren(...qualities.filter(q=>!GARDEN_CORE_QUALITIES.includes(q)).map(makeQuality));
   const advanced=qualities.filter(q=>!GARDEN_CORE_QUALITIES.includes(q));$('quality-advanced').hidden=advanced.length===0;$('quality-advanced').open=!prototypePalette||document.body.dataset.paletteLayout==='expanded';
-  $('assist-status').textContent=Object.entries(model.filters||{}).filter(([,filter])=>filter).map(([kind,filter])=>`${kind==='degree'?(model.separateBass?'Корень':'Бас'):'Аккорды'} ×${filter.divisor} · ${filter.remaining} ходов`).join(' / ');
+  $('assist-status').textContent=Object.entries(model.filters||{}).filter(([,filter])=>filter).map(([kind,filter])=>`${kind==='degree'?(model.rootMode?'ROOT':'Бас'):kind==='bass'?'BASS':'Аккорды'} ${filter.maxChoices?'· '+filter.maxChoices:'×'+filter.divisor} · ${filter.remaining} ходов`).join(' / ');
   document.body.classList.toggle('infinity-active',Boolean(model.held));$('infinity-continue').hidden=!model.held||model.complete;$('infinity-continue').disabled=!model.running||s.paused;
   $('infinity-toggle').disabled=!model.running||model.complete||(!model.held&&(gardenLife.inventory.hold||0)<1);$('infinity-toggle').setAttribute('aria-pressed',String(model.held));$('infinity-status').textContent=model.held?`∞ Позиция ${model.cursor+1} · повтор до ответа`:'';const toolsSummary=document.querySelector('.flight-tools summary');if(toolsSummary){toolsSummary.classList.toggle('repeating',model.held);toolsSummary.setAttribute('aria-label',model.held?'Лотос: повтор включён — открыть управление':'Лотос: прыжки, повтор и подсказки');}
   const waitingForFinal=finalMissing&&model.running&&model.cursor>=0&&model.cursor!==finalMissing.index;
-  $('answer-feedback').textContent=model.complete?'Маршрут собран · слушаем найденную гармонию дальше.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?(model.separateBass?'Корень внизу · бас слева · тип справа':'Бас и аккорд — два независимых ответа'):model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
+  $('answer-feedback').textContent=model.complete?'Маршрут собран · слушаем найденную гармонию дальше.':model.feedback||(waitingForFinal?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Дождись её подсветки слева.`:mayAnswer?(model.bassPanelNeeded?'Корень внизу · бас слева · тип справа':model.rootMode?'Корень внизу · тип справа · бас автоматически':'Бас и аккорд — два независимых ответа'):model.running&&model.cursor<0?'Слушаем базу':model.running?'Обе части этой позиции уже найдены':finalMissing?`Осталась позиция ${finalMissing.index+1}: ${finalMissing.kind}. Запусти последовательность.`:'Запусти последовательность');
   const referenceName=String(model.reference.degree).replace(/^БАЗА\s*/, '');
-  $('mission-prompt').textContent=model.complete?`Все ${total} аккордов найдены. Подсвечены звучащий аккорд и его ступень.`:model.running?(model.cursor<0?`Тоника ${referenceName} звучит один раз перед фигурой.`:waitingForFinal?`Ждём позицию ${finalMissing.index+1} — там остался ${finalMissing.kind}.`:solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':model.separateBass?(currentParts.degree&&currentParts.quality?'Найди бас слева.':currentParts.degree?'Корень есть. Найди тип аккорда.':'Определи корень внизу, тип справа и бас слева.'):(currentParts.degree?'Бас есть. Найди аккорд.':currentParts.quality?'Аккорд есть. Найди бас.':'Определи две части текущего аккорда.')):'Тоника известна. Запусти последовательность.';
+  $('mission-prompt').textContent=model.complete?`Все ${total} аккордов найдены. Подсвечены звучащий аккорд и его ступень.`:model.running?(model.cursor<0?`Тоника ${referenceName} звучит один раз перед фигурой.`:waitingForFinal?`Ждём позицию ${finalMissing.index+1} — там остался ${finalMissing.kind}.`:solved.has(model.cursor)?'Позиция заполнена — слушаем контекст.':model.bassPanelNeeded?(currentParts.degree&&currentParts.quality?'Найди бас слева.':currentParts.degree?'Корень есть. Найди тип аккорда.':'Определи корень внизу, тип справа и бас слева.'):model.rootMode?(currentParts.degree?'Корень есть. Найди тип аккорда.':'Корень внизу · тип справа · бас автоматически'):(currentParts.degree?'Бас есть. Найди аккорд.':currentParts.quality?'Аккорд есть. Найди бас.':'Определи две части текущего аккорда.')):'Тоника известна. Запусти последовательность.';
   setPlaybackIcon($('mission-toggle'),model.running);$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Продолжить полёт и музыку');$('mission-restart').hidden=true;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
-function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,separateBass:difficulty==='hard',barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());}
+function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();run.reset();resonance.reset(difficulty==='hard');currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,rootMode:['medium','hard'].includes(difficulty),separateBass:difficulty==='hard',barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());renderVitals();}
+function renderRun(){
+  const r=run.snapshot(),seconds=Math.floor(r.seconds);$('run-time').textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;$('run-score').textContent=String(r.score);if(!r.finished)$('run-record').textContent='';
+}
 let activeExercises=[];
 function routeTitle(route,index=0){const name=gardenRouteDisplayName(route,TOUR_NAMES[routeTour(route)]||routeTour(route));return name&&name!==route.id?name:exerciseCode(route,index);}
 function renderGardenRouteList(){
@@ -290,6 +303,8 @@ async function launchRoute(route){
 }
 function completeGardenLevel(){
   completionHandled=true;s.paused=false;
+  const result=run.snapshot();
+  try{const key='ear-yoga-local-records.v1',records=JSON.parse(localStorage.getItem(key)||'{}'),id=routeIdentity(currentRoute)+':'+difficulty+':'+(currentRoute.baseTonic??5),previous=records[id],best=!previous||result.score>previous.score;records[id]={score:Math.max(result.score,Number(previous?.score)||0),seconds:Math.min(result.seconds,Number(previous?.seconds)||Infinity)};localStorage.setItem(key,JSON.stringify(records));$('run-record').textContent=best?'★ PB':'✓';}catch{$('run-record').textContent='✓';}
   const id=currentRoute?.id||`${currentRoute?.source||'route'}:${currentRoute?.name||''}`;
   const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
@@ -307,7 +322,6 @@ function chooseState(index){
 function pause(){if(trialExpired||tutorialActive)return;s.paused=!s.paused;keys.clear();if(s.paused){mission?.pause();pad.stop(true);}else mission?.start();ui();}
 function clean(value){s.clean=value;document.body.classList.toggle('clean',value);$('restore').hidden=!value;(value?$('restore'):$('clean')).focus();}
 function light(mode){s.lightMode=mode;if(mode==='cycle')s.cycle=Math.acos(clamp(1-2*s.night,-1,1))*180/Math.PI;if(s.paused||reduced)s.night=mode==='night'?1:mode==='dusk'?.48:mode==='day'?0:s.night;ui();}
-for(const b of document.querySelectorAll('[data-ship]'))b.addEventListener('click',()=>{s.ship=Number(b.dataset.ship);ui();});
 for(const b of document.querySelectorAll('[data-light]'))b.addEventListener('click',()=>light(b.dataset.light));
 $('pause').addEventListener('click',pause);$('lantern').addEventListener('click',()=>{s.lantern=!s.lantern;ui();});
 $('clean').addEventListener('click',()=>clean(true));$('restore').addEventListener('click',()=>clean(false));
@@ -333,7 +347,7 @@ $('mission-to-menu').addEventListener('click',()=>showGardenStart());
 $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){s.paused=true;keys.clear();mission.pause({preserveHold:true});pad.stop(true);ui();return;}try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
-$('mission-restart').addEventListener('click',()=>{gardenRewards.reset();mission.restart();s.paused=false;ui();});
+$('mission-restart').addEventListener('click',()=>{gardenRewards.reset();run.reset();resonance.reset(difficulty==='hard');mission.restart();s.paused=false;ui();});
 for(const [kind,spec] of Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact)){
   const button=document.createElement('button'),badge=document.createElement('b');
   button.dataset.useArtifact=kind;button.title=spec.label;button.setAttribute('aria-label',spec.label);
@@ -360,14 +374,12 @@ $('artifact-belt').addEventListener('click',event=>{if(event.target.closest('[da
 for(const button of document.querySelectorAll('[data-pad]'))button.addEventListener('click',()=>{pad.applyPreset(button.dataset.pad);for(const item of document.querySelectorAll('[data-pad]'))item.setAttribute('aria-pressed',String(item===button));});
 const audioTuning=[['garden-volume','smc-garden-volume',value=>{pad.setMasterVolume(value/100);return `${value}%`;},120],['garden-eq-low','smc-garden-eq-low',value=>{pad.setEqualizer('low',value);return `${value} dB`;},0],['garden-eq-mid','smc-garden-eq-mid',value=>{pad.setEqualizer('mid',value);return `${value} dB`;},0],['garden-eq-high','smc-garden-eq-high',value=>{pad.setEqualizer('high',value);return `${value} dB`;},0]];
 for(const [id,key,apply,fallback] of audioTuning){const control=$(id),output=document.querySelector(`output[for="${id}"]`);let saved=Number(localStorage.getItem(key));if(!Number.isFinite(saved)||saved<Number(control.min)||saved>Number(control.max))saved=fallback;control.value=String(saved);const update=()=>{const value=Number(control.value);output.textContent=apply(value);localStorage.setItem(key,String(value));};control.addEventListener('input',update);update();}
-$('speed').addEventListener('input',e=>{s.speed=Number(e.target.value);$('speed-value').value=s.speed.toFixed(1)+'×';});
-$('altitude').addEventListener('input',e=>{s.altitude=Number(e.target.value);$('altitude-value').value=s.altitude.toFixed(2);s.worldSize=Math.max(s.width*.86,s.height*.95)/s.altitude;});
 function move(x,y){tx=clamp(x/s.width,.1,.9);ty=clamp(y/s.height,.2,.78);$('gesture').classList.add('dismissed');}
 world.addEventListener('pointerdown',e=>{if(e.button!==0||dragId!==null)return;dragId=e.pointerId;world.setPointerCapture(dragId);move(e.clientX,e.clientY);world.focus({preventScroll:true});});
 world.addEventListener('pointermove',e=>{if(e.pointerId===dragId)move(e.clientX,e.clientY);});
 for(const name of ['pointerup','pointercancel','lostpointercapture'])world.addEventListener(name,e=>{if(e.pointerId===dragId)dragId=null;});
 addEventListener('keydown',e=>{
-  if(e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,select,textarea,[contenteditable="true"]')||e.repeat&&['Space','KeyH'].includes(e.code))return;
+  if($('recording-result').open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,select,textarea,[contenteditable="true"]')||e.repeat&&['Space','KeyH'].includes(e.code))return;
   if(e.code==='Escape'&&!$('exit-confirm').hidden){e.preventDefault();closeExitConfirmation(true);return;}
   const cockpit=$('garden-start').hidden&&!document.body.classList.contains('world-open')&&!tutorialActive&&$('exit-confirm').hidden;
   if(!cockpit){if(e.code==='Escape'&&document.body.classList.contains('world-open'))setGardenMenu(false);return;}
@@ -377,7 +389,7 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();dragId=null;});
 document.addEventListener('visibilitychange',()=>{last=0;keys.clear();if(document.hidden){mission?.pause();pad.stop(true);s.paused=true;cancelAnimationFrame(raf);raf=0;}else{ui();if(!raf)raf=requestAnimationFrame(frame);}});
 addEventListener('pagehide',()=>{mission?.pause();pad.stop(true);});
-function update(dt){
+function update(dt,clockDt=dt){
   if(s.paused)return;
   s.time=mod(s.time+dt,Math.PI*2000);s.visit+=dt;
   s.travel=mod(s.travel+dt*s.speed*18,100000);
@@ -395,9 +407,11 @@ function update(dt){
   s.angle+=(clamp(dx/s.width,-.3,.3)-s.angle)*(1-Math.exp(-dt*4));
   s.pan+=((s.x/s.width-.5)*.13-s.pan)*(1-Math.exp(-dt));
   const missionState=mission?.snapshot();
-  if(!missionState?.complete)gardenLife.update(dt,{...s,routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
+  run.tick(clockDt,Boolean(missionState?.running&&missionState.cursor>=0&&!s.gameOver));renderRun();
+  if(!missionState?.complete)gardenLife.update(dt,{...s,clockDt,barSeconds:missionState?.barSeconds,separateBass:Boolean(missionState?.bassPanelNeeded),routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality||(missionState.separateBass&&!part.bass)).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
   const lifeState=gardenLife.snapshot();
-  if(lifeState.gameOver&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').hidden=false;}
+  resonance.update(dt,{clockDt,width:s.width,height:s.height,x:s.x,y:s.y,ship:s.ship,barSeconds:missionState?.barSeconds,active:Boolean(missionState?.running),paused:s.paused,complete:missionState?.complete,solvedChords:missionState?.solved.length??0,totalChords:missionState?.exercise.sequence.length??0,sounding:pad.sounding,audioTime:pad.context?.currentTime,chapter:missionState?.exercise.chapter,tensionMode:missionState?.exercise.tensionMode});
+  if((lifeState.gameOver||resonance.gameOver)&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').querySelector('span').textContent=resonance.gameOver?'O₂ · 0':'КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ';$('game-over').hidden=false;}
   const shake=lifeState.impact||0,shakeX=Math.sin(s.time*83)*shake*7,shakeY=Math.cos(s.time*71)*shake*5;
   document.documentElement.style.setProperty('--impact-x',`${shakeX.toFixed(2)}px`);document.documentElement.style.setProperty('--impact-y',`${shakeY.toFixed(2)}px`);
   document.body.classList.toggle('garden-impact',shake>.05);
@@ -426,13 +440,14 @@ function atmosphere(){
   gardenRewards.draw(ctx,s.width,s.height);
   if(new URLSearchParams(location.search).has('qa')){life.dataset.rewards=JSON.stringify(gardenRewards.snapshot());life.dataset.arrangement=JSON.stringify({status:mission?.snapshot().arrangementStatus||{},events:pad.lastArrangement||[],pickups:gardenLife.snapshot().entities.filter(item=>GARDEN_ITEMS[item.kind]?.arrangement)});}
   gardenLife.draw(ctx,s);
+  resonance.draw(ctx,s.width,s.height);
 }
 let uiTick=0;
 function frame(now){
   raf=0;if(document.hidden)return;
   const frameMs=last?now-last:0,dt=Math.min(.05,frameMs/1000);last=now;
   if(mobileGraphics&&frameMs>0&&frameMs<250){slowFrameAverage=slowFrameAverage*.98+frameMs*.02;if(++graphicsSamples>180&&slowFrameAverage>27&&renderScale>1.1){renderScale=1.1;resize();}}
-  if(s.ready&&!document.body.classList.contains('start-open')){update(dt);renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
+  if(s.ready&&!document.body.classList.contains('start-open')){update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
   raf=requestAnimationFrame(frame);
 }
 async function load(){
@@ -461,7 +476,7 @@ function error(e){s.ready=false;$('loading').hidden=false;$('load-progress').tex
 $('retry').addEventListener('click',()=>location.reload());
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();s.ready=false;last=0;$('loading').hidden=false;$('load-progress').textContent='Восстанавливаем изображение…';});
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextrestored',()=>{try{renderer?.dispose();renderer=createGardenRenderer(world,shipLayer,images.slice(0,6));s.ready=true;last=0;$('loading').hidden=true;}catch(e){error(e);}});
-window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),mission:mission.snapshot(),life:gardenLife.snapshot(),progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
+window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),lastTension:pad.lastTension&&{...pad.lastTension},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
 if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','localhost'].includes(location.hostname)){
  const probe=document.createElement('button');probe.id='qa-repeat-pickup';probe.textContent='Проверка: выпустить лотос ∞';probe.style.cssText='position:fixed;left:12px;bottom:180px;z-index:60;color:#d9edcd;background:#102922;border:1px solid #799e84;padding:8px';
  probe.addEventListener('click',()=>{if(!mission.snapshot().running)return;gardenLife.forceSpawn('hold',{x:s.x/s.width,y:s.y/s.height-.12,vx:0});});document.body.append(probe);
@@ -469,6 +484,7 @@ if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','lo
 
 document.body.append($('language-toggle'));
 language=createLanguage();
+mountGardenRecording({pad,language,onStart:()=>setGardenMenu(false),onReady:()=>{mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();ui();}});
 $('settings-language').onclick=()=>language.toggle();
 language.add(Object.fromEntries(Object.entries(GARDEN_ITEMS).map(([kind,spec])=>[spec.label,guideItemName(kind,true)])));
 language.add(Object.fromEntries(Object.entries(GARDEN_ARRANGEMENTS).map(([kind,spec])=>[spec.label+' — '+spec.detail,guideItemName(kind,true)+' — '+guideItemCopy(kind,true)])));

@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg?v=1.25"><link rel="apple-touch-icon" href="icon-192-v1.25.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.25">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.25">
+  <link rel="icon" href="icon.svg?v=1.34"><link rel="apple-touch-icon" href="icon-192-v1.34.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.34">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.34">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -38,6 +38,9 @@
     </article>
     <article class="vital" data-resource="hull" style="--vital:#d8c4f5;--level:.84">
       <img class="vital-pickup" src="assets/echo-garden/collectibles/repair-lotus.webp" alt="" aria-hidden="true"><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>HULL</strong><small id="vital-hull">84</small>
+    </article>
+    <article class="vital" data-resource="resonance" style="--vital:#c2e5ff;--level:.8" title="O₂ · Кислород / Oxygen" hidden>
+      <span class="vital-pickup resonance-symbol" aria-hidden="true">O₂</span><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>O₂</strong><small id="vital-resonance">80</small>
     </article>
     <p id="vital-event" class="vital-event" aria-live="polite"></p>
   </section>
@@ -93,6 +96,7 @@
     <aside class="route-panel glass-panel">
       <div class="panel-kicker"><span class="signal-dot"></span> МАРШРУТ</div>
       <div class="route-heading"><img id="mission-mandala" src="assets/echo-garden/tours/reharm.webp" alt=""><span class="route-identity"><strong id="mission-title">Reharmonization+</strong><small id="mission-source">Chapter 1 · Fig. 1.6</small><em id="mission-code">01F01</em></span><button id="route-favorite" type="button" aria-label="Добавить маршрут в избранное" aria-pressed="false">♡</button><span id="route-progress">1 / 4</span></div>
+      <div class="run-readout" aria-label="Время и очки · Time and score"><span><i aria-hidden="true">◷</i> <b id="run-time">00:00</b></span><span><i aria-hidden="true">✧</i> <b id="run-score">0</b></span><small id="run-record" title="Личный рекорд / Personal best"></small></div>
       <ol id="chord-route" class="chord-route" aria-label="Цепочка аккордов"></ol>
       <nav id="chain-pager" class="chain-pager" aria-label="Страницы цепочки аккордов" hidden><button id="chain-back" type="button" aria-label="Предыдущая часть цепочки">‹</button><span id="chain-range" aria-live="polite"></span><button id="chain-forward" type="button" aria-label="Следующая часть цепочки">›</button></nav>
       <div class="route-practice"><button id="infinity-toggle" type="button" aria-label="Повторять текущий аккорд" aria-pressed="false">∞</button><button id="flower-guide-toggle" aria-label="Цветы аранжировки" aria-expanded="false">✿</button><span id="infinity-status"></span></div>
@@ -113,7 +117,7 @@
       <p id="answer-feedback" class="answer-feedback" aria-live="polite">Нажми аккорд, пока он звучит</p>
     </aside>
 
-    <aside id="bass-panel" class="bass-panel" aria-label="Нота баса" hidden>
+    <aside id="bass-panel" class="bass-panel" aria-label="Бас относительно тоники" hidden>
       <span class="bass-heading">BASS</span><div id="bass-options"></div>
     </aside>
     <section class="degrees-panel glass-panel" aria-label="Бас относительно тоники">
@@ -165,18 +169,23 @@
           <label><span>Верхи</span><input id="garden-eq-high" type="range" min="-6" max="6" step="1" value="0"><output for="garden-eq-high">0 dB</output></label>
         </fieldset>
         <button id="library-open" class="library-open">＋ Sound &amp; Route Lab</button>
+        <section id="game-recording" class="game-recording" data-user-content hidden aria-label="Запись полёта">
+          <button id="recording-start" type="button">● Записать полёт</button>
+          <a id="recording-download" hidden>Сохранить видео</a>
+          <p id="recording-status" role="status"></p>
+        </section>
       </div>
       <div class="toolbar">
-        <div class="group ships" role="group" aria-label="Корабль"><button data-ship="0" aria-pressed="false">Манта</button><button data-ship="1" aria-pressed="true" class="selected">Лотос</button><button data-ship="2" aria-pressed="false">Без корабля</button></div>
         <div class="group daylight" role="group" aria-label="Освещение"><button data-light="day" aria-pressed="false">День</button><button data-light="dusk" aria-pressed="false">Сумерки</button><button data-light="night" aria-pressed="false">Ночь</button><button data-light="cycle" aria-pressed="true" class="selected">Цикл</button></div>
         <button id="lantern" aria-pressed="true">◈ Свет</button><button id="pause" aria-pressed="false">Ⅱ Пауза</button><button id="clean" aria-label="Скрыть управление">Чистый вид ↗</button>
       </div>
-      <div class="flight-sliders"><label>Скорость <input id="speed" type="range" min="0" max="2" step="0.1" value="2"><output id="speed-value">2.0×</output></label><label>Высота <input id="altitude" type="range" min="0.55" max="1.25" step="0.05" value="1.25"><output id="altitude-value">1.25</output></label></div>
     </div>
   </section>
   <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite"><span class="overline">МАРШРУТ ЗАВЕРШЁН · СЛУШАЕМ ДАЛЬШЕ</span><p id="mission-complete-copy">Все аккорды найдены. Последовательность продолжает звучать по кругу.</p><div><button id="mission-next-route" aria-label="Следующий маршрут">✓ Завершено · следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню"><svg class="menu-home-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10 12 3 20 10v11H4Z"/></svg><span>Меню</span></button></div></section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
+  <div id="recording-bar" class="recording-bar" data-user-content hidden><span><i aria-hidden="true"></i> REC <b id="recording-clock">00:00</b></span><button id="recording-stop" type="button">■ Стоп</button></div>
+  <dialog id="recording-result" class="recording-result" data-user-content aria-labelledby="recording-title"><h2 id="recording-title">Запись полёта</h2><video id="recording-video" controls playsinline preload="metadata"></video><p id="recording-note"></p><div><a id="recording-save">Сохранить видео</a><button id="recording-close" type="button">Закрыть</button></div></dialog>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.25" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.34" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

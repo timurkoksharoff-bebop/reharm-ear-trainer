@@ -3,6 +3,34 @@ import {createGardenLife} from '../garden-life.mjs';
 
 const fixed=()=>.5;
 const view={width:400,height:600,x:200,y:300,speed:2,ship:0,active:true,answering:true};
+{
+ const lagging=createGardenLife({random:fixed});lagging.spawnClock=lagging.craterClock=lagging.asteroidClock=lagging.stormClock=lagging.assistClock=lagging.arrangementClock=999;
+ for(let i=0;i<14;i++)lagging.update(.01,{...view,separateBass:true,clockDt:1});
+ assert(lagging.entities.some(e=>e.kind==='bassClef'),'first bass key timing does not slow down with capped physics frames');
+}
+
+// Real clock-driven appearance, not a forced test pickup.
+for(const separateBass of [false,true]){
+ const life=createGardenLife({random:fixed});
+ life.spawnClock=life.craterClock=life.asteroidClock=life.stormClock=life.assistClock=life.arrangementClock=999;
+ const flight={...view,separateBass,x:350,y:570};
+ for(let i=0;i<130;i++)life.update(.1,flight);
+ assert(!life.snapshot().entities.some(e=>e.kind==='bassClef'),'no premature bass key');
+ life.update(20,{...flight,paused:true});
+ for(let i=0;i<20;i++)life.update(.1,flight);
+ const key=life.entities.find(e=>e.kind==='bassClef');
+ assert.equal(Boolean(key),separateBass,'first key appears after 14 active seconds, Teacher only');
+ if(key){
+  assert(key.y>=0&&key.y<.3,'first key enters the visible top of the scene');
+  life.bassHelpClock=0;life.update(.1,flight);
+  assert.equal(life.entities.filter(e=>e.kind==='bassClef'&&!e.collected).length,1,'no duplicate while a key is flying');
+  life.collect(key);life.entities=life.entities.filter(e=>e!==key);
+  life.update(.1,flight);assert(!life.entities.some(e=>e.kind==='bassClef'),'no duplicate while a key is in inventory');
+  life.consumeArtifact('bassClef');life.update(.1,flight);
+  assert(life.entities.some(e=>e.kind==='bassClef'),'a later due key becomes available once the stored one is used');
+ }
+ life.reset();assert.equal(life.bassHelpClock,14,'each new flight resets the first-key guarantee');
+}
 
 {
   const life=createGardenLife({random:fixed});

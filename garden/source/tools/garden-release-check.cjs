@@ -1,6 +1,8 @@
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
-const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
+const releaseUrl=new URL(process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/');
+if(['localhost','127.0.0.1'].includes(releaseUrl.hostname))releaseUrl.searchParams.set('offline-test','1');
+const base=releaseUrl.href;
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
@@ -9,8 +11,8 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   await page.goto(base);await page.waitForFunction(()=>window.gardenFlight?.snapshot().ready);
   await page.locator('#start-tutorial').click();
   assert(await page.locator('#flight-tutorial').isVisible());await page.screenshot({path:'/private/tmp/garden-095-guide.png'});
-  assert.match(await page.locator('#tutorial-title').innerText(),/Карта полёта/);assert.match(await page.locator('.field-rules').innerText(),/самую низкую ноту/);
-  assert.equal(await page.locator('[data-guide-kind]').count(),34);
+  assert.match(await page.locator('#tutorial-title').innerText(),/Карта полёта/);assert.match(await page.locator('.field-rules').innerText(),/ROOT/);
+  assert.equal(await page.locator('[data-guide-kind]').count(),35);
   await page.locator('#tutorial-close').click();
   assert(await page.locator('#garden-start').isVisible());
   await page.locator('#start-choose').click();
@@ -54,8 +56,8 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   for(let i=0;i<route.length;i++){
    if((await snap()).mission.cursor!==i)await page.evaluate(()=>gardenFlight.advanceChord());
    assert.equal((await snap()).mission.cursor,i,'answer the exact sounding position');
-   const chord=route[i],bass=chord.bassOffset??chord.offset,q=({m:'min',m9:'m7natural9','m7♭5':'m7b5'})[chord.quality]??chord.quality,answer=bass!==chord.offset?`${chord.offset}:${q}`:q;
-   const bassButton=page.locator(`[data-degree="${bass}"]`),chordButton=page.locator(`[data-quality="${answer}"]`);
+   const chord=route[i],rootMode=(await snap()).mission.rootMode,bass=chord.bassOffset??chord.offset,q=({m:'min',m9:'m7natural9','m7♭5':'m7b5'})[chord.quality]??chord.quality,answer=!rootMode&&bass!==chord.offset?`${chord.offset}:${q}`:q;
+   const bassButton=page.locator(`[data-degree="${rootMode?chord.offset:bass}"]`),chordButton=page.locator(`[data-quality="${answer}"]`);
    assert(await chordButton.isVisible(),`slot ${i+1}: ${answer} visible`);
    await bassButton.click();assert.equal(await bassButton.getAttribute('aria-pressed'),'true');
    if(i===6){assert.equal(answer,'sus4');assert.equal(await page.locator('#quality-options [data-quality="sus4"]').count(),1);await page.screenshot({path:'/private/tmp/garden-095-chill-sus4.png'});}
@@ -86,8 +88,8 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   for(const kind of ['degree','quality']){
    await pickup('hold');await page.locator('.flight-tools summary').click();await page.locator('[data-use-artifact="hold"]').click();
    const model=(await snap()).mission,position=model.cursor,target=model.current,bass=target.bassOffset??target.offset,q=({m:'min',m9:'m7natural9','m7♭5':'m7b5'})[target.quality]??target.quality;
-   const answer=kind==='degree'?bass:bass!==target.offset?`${target.offset}:${q}`:q;
-   const wrong=kind==='degree'?(bass+1)%12:q==='maj'?'min':'maj';
+   const degree=model.rootMode?target.offset:bass,answer=kind==='degree'?degree:!model.rootMode&&bass!==target.offset?`${target.offset}:${q}`:q;
+   const wrong=kind==='degree'?(degree+1)%12:q==='maj'?'min':'maj';
    await page.locator(kind==='degree'?`[data-degree="${wrong}"]`:`[data-quality="${wrong}"]`).click();
    assert((await snap()).mission.held);assert.equal((await snap()).mission.cursor,position,'wrong answer preserves held position');
    await page.locator(kind==='degree'?`[data-degree="${answer}"]`:`[data-quality="${answer}"]`).click();
@@ -97,7 +99,7 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   await pickup('hold');await page.locator('.flight-tools summary').click();await page.locator('[data-use-artifact="hold"]').click();
   await pickup('degreeReveal');const position=(await snap()).mission.cursor;
   await page.locator('.flight-tools summary').click();await page.locator('[data-use-artifact="degreeReveal"]').click();
-  const revealed=await snap();assert.deepEqual(revealed.mission.progress[position],{degree:true,quality:true},JSON.stringify({position,cursor:revealed.mission.cursor,progress:revealed.mission.progress,held:revealed.mission.held,feedback:revealed.mission.feedback,inventory:revealed.life.inventory}));assert.equal(revealed.life.inventory.degreeReveal,0);
+  const revealed=await snap();assert.deepEqual(revealed.mission.progress[position],{degree:true,quality:true,...(revealed.mission.rootMode?{bass:true}:{})},JSON.stringify({position,cursor:revealed.mission.cursor,progress:revealed.mission.progress,held:revealed.mission.held,feedback:revealed.mission.feedback,inventory:revealed.life.inventory}));assert.equal(revealed.life.inventory.degreeReveal,0);
   await page.evaluate(()=>gardenFlight.advanceChord());await pickup('qualityFocus');
   await page.locator('.flight-tools summary').click();await page.locator('[data-use-artifact="qualityFocus"]').click();
   assert((await snap()).mission.filters.quality);assert.equal(await page.locator('.flight-tools').getAttribute('open'),null);
@@ -105,10 +107,10 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   const qualityFilter=(await snap()).mission.filters.quality;
   for(const kind of ['holdArpeggio','arrangementBoost']){
    await pickup(kind);await page.locator('.flight-tools summary').tap();await page.locator(`[data-use-artifact="${kind}"]`).tap();
-   const filtered=await snap(),divisor=kind==='holdArpeggio'?2:4;
+   const filtered=await snap(),divisor=kind==='holdArpeggio'?3:4;
    assert.equal(filtered.life.inventory[kind],0);assert.equal(filtered.mission.filters.degree.divisor,divisor);
-   assert.equal(await page.locator('.degree-option:visible').count(),1+Math.ceil(11/divisor),'root hides wrong basses in the actual lower rail');
-   assert(await page.locator(`[data-degree="${filtered.mission.current.bassOffset??filtered.mission.current.offset}"]`).isVisible(),'correct bass remains available');
+   assert.equal(await page.locator('.degree-option:visible').count(),4,'root hides wrong degrees in the actual lower rail');
+   assert(await page.locator(`[data-degree="${filtered.mission.rootMode?filtered.mission.current.offset:filtered.mission.current.bassOffset??filtered.mission.current.offset}"]`).isVisible(),'correct degree remains available');
    assert.deepEqual(filtered.mission.filters.quality,qualityFilter,'root never changes the chord filter');
    assert.equal(await page.locator('.flight-tools').getAttribute('open'),null);
   }
@@ -146,7 +148,7 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
   await page.locator('.garden-route-choice').filter({hasText:'Gospel 5'}).click();
   const long=await snap();assert.equal(long.mission.exercise.sequence.length,18);
   await page.evaluate(()=>gardenFlight.advanceChord());
-  const target=(await snap()).mission.current;await page.locator(`[data-degree="${target.bassOffset??target.offset}"]`).click();
+  const current=(await snap()).mission,target=current.current;await page.locator(`[data-degree="${current.rootMode?target.offset:target.bassOffset??target.offset}"]`).click();
   const liquid=await page.locator('.chord-slot.current .route-node').evaluate(el=>{const d=el.querySelector('.node-degree').getBoundingClientRect(),q=el.querySelector('.node-quality').getBoundingClientRect();return {lower:d.y>=q.y+q.height-1,overlap:Math.max(0,q.y+q.height-d.y)};});
   assert(liquid.lower);assert(liquid.overlap<1.1);
   const chain=await page.locator('#chord-route').boundingBox(),rail=await page.locator('#quality-options').boundingBox();
@@ -171,7 +173,7 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8152/';
    await page.locator('#tutorial-close').click();
   }
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:'/private/tmp/garden-095-start.png'});
-  await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
+  await page.evaluate(async()=>{await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Offline cache did not become ready')),20000))]);});
   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.gardenFlight?.snapshot().ready);
   assert(await page.locator('#garden-start').isVisible());await page.locator('#start-random').click();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);assert(!(await page.locator('#flight-tutorial').isVisible()),'skip persisted across restart and offline load');
   assert.deepEqual(errors,[]);

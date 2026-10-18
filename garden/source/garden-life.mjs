@@ -2,6 +2,12 @@ import {GARDEN_ARRANGEMENTS,chooseGardenArrangement,drawGardenArrangementFlower}
 import {GARDEN_SHIP_SCALE,gardenShipSize} from './garden-flight-renderer.mjs';
 const clamp=(value,min=0,max=100)=>Math.min(max,Math.max(min,value));
 const modulo=(value,period)=>((value%period)+period)%period;
+// Short routes retain their existing pacing. Long routes share a 100-second
+// passive-drain budget per lap; collision and answer damage are never discounted.
+export function gardenRouteDrainScale(length,barSeconds=4){
+  const n=Number(length),bar=Number(barSeconds);
+  return n>0&&bar>0?Math.min(1,100/((n+1)*bar)):1;
+}
 
 export const GARDEN_RESOURCES=Object.freeze({
   fuel:{label:'FUEL',color:'#e8b85d'},water:{label:'H₂O',color:'#75e9ed'},
@@ -21,7 +27,8 @@ export const GARDEN_ITEMS=Object.freeze({
   degreeReveal:{resource:'inventory',amount:1,assist:{answerKind:'both',reveal:true},sprite:'arpeggio-flower',label:'Лунный цветок · открыть ступень и аккорд текущей позиции',color:'#a9b6ec',size:72,artifact:true,rare:true},
   hold:{resource:'inventory',amount:1,repeat:true,sprite:'hold-flower',label:'Лотос бесконечности · удержать аккорд',color:'#b7ef86',size:33,artifact:true},
   qualityFocus:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:2,steps:5},sprite:'root-flower',visualFilter:'saturate(.55) brightness(.94)',label:'Жемчужный бутон · половина вариантов аккорда · 5 ходов',color:'#d9c4a2',size:66,artifact:true,rare:true},
-  holdArpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:2,steps:3},sprite:'hold-arpeggio-flower',visualFilter:'hue-rotate(54deg) saturate(.50) brightness(.94)',label:'Сиреневая лоза · половина вариантов баса · 3 хода',color:'#d1b9ee',size:66,artifact:true,rare:true},
+  holdArpeggio:{resource:'inventory',amount:1,assist:{answerKind:'degree',divisor:3,maxChoices:4,steps:3},sprite:'hold-arpeggio-flower',visualFilter:'hue-rotate(54deg) saturate(.50) brightness(.94)',label:'Корневая спираль · ROOT: оставить 4 ступени · 3 хода',color:'#d1b9ee',size:66,artifact:true,rare:true},
+  bassClef:{resource:'inventory',amount:1,assist:{answerKind:'bass',divisor:3,maxChoices:4,steps:3},teacherOnly:true,sprite:null,label:'Жемчужный басовый ключ · BASS: оставить 4 ступени · 3 хода',color:'#85eadb',size:66,artifact:true,rare:true},
   midpoint:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:1},sprite:'root-flower',visualFilter:'saturate(.84) brightness(1.03)',label:'Янтарный бутон · оставить четверть вариантов аккорда · круг',color:'#d9ad72',size:66,artifact:true,rare:true},
   focusRare:{resource:'inventory',amount:1,assist:{answerKind:'quality',divisor:4,rounds:2},sprite:'root-flower',visualFilter:'saturate(.94) brightness(1.10)',label:'Солнечный бутон · четверть вариантов аккорда · 2 круга',color:'#ecc285',size:68,artifact:true,rare:true},
   ...Object.fromEntries([-5,-3,-2,2,3,5].map(delta=>[`jump${delta<0?'Back':'Forward'}${Math.abs(delta)}`,{resource:'inventory',amount:2,navigationDelta:delta,spawnWeight:Math.abs(delta)===2?2.2:Math.abs(delta)===3?1.8:.7,sprite:null,label:`Прыжок ${delta>0?'+':'−'}${Math.abs(delta)} · два заряда`,color:'#abe5d4',size:48,artifact:true}])),
@@ -33,6 +40,8 @@ export const GARDEN_ITEMS=Object.freeze({
   campSpore:{resource:'crew',amount:-1,waterAmount:-1,sprite:null,label:'Споры застоя',color:'#d49aff',size:92,harmful:true,pressure:true},
   storm:{resource:'hull',amount:-2,crewAmount:-1,sprite:null,label:'Ядро смерча',color:'#8fe7dd',size:164,harmful:true,storm:true}
 });
+
+export const gardenAssistKinds=({separateBass=false}={})=>Object.keys(GARDEN_ITEMS).filter(kind=>GARDEN_ITEMS[kind].assist&&!GARDEN_ITEMS[kind].assist.reveal&&kind!=='focusRare'&&(!GARDEN_ITEMS[kind].teacherOnly||separateBass));
 
 // Shared botanical diagram in the sky, inventory and guide. A branching sprig
 // marks bass choices; a radial corolla marks chord choices. Veins and nodes
@@ -86,6 +95,19 @@ export function drawGardenShieldBubble(ctx,size,time,phase=0,flash=0,hits=3){
   ctx.restore();
 }
 export function drawGardenAssistGlyph(ctx,item,size){
+  if(item.assist.answerKind==='bass'){
+    // Hand-drawn F clef: one open spiral and its two identifying pearl dots.
+    // The fine botanical orbit is transparent, never a solid medallion.
+    ctx.save();ctx.scale(size/100,size/100);ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle=item.color;ctx.fillStyle=item.color;ctx.shadowColor=item.color;ctx.shadowBlur=7;ctx.lineWidth=2.1;
+    ctx.beginPath();ctx.moveTo(-19,-9);ctx.bezierCurveTo(-30,-26,-1,-39,9,-20);ctx.bezierCurveTo(21,3,-8,25,-25,31);ctx.stroke();
+    ctx.beginPath();ctx.arc(-19,-9,3.6,0,Math.PI*2);ctx.fill();
+    for(const y of [-22,-4]){ctx.fillStyle='#e6fff4';ctx.beginPath();ctx.arc(24,y,3.1,0,Math.PI*2);ctx.fill();}
+    ctx.shadowBlur=0;ctx.globalAlpha*=.42;ctx.lineWidth=.8;ctx.strokeStyle='#b7c8f0';
+    ctx.beginPath();ctx.ellipse(0,0,40,34,-.4,.3,5.5);ctx.stroke();
+    for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*8,36);ctx.bezierCurveTo(side*34,33,side*43,17,side*35,9);ctx.bezierCurveTo(side*24,16,side*20,29,side*8,36);ctx.stroke();}
+    ctx.restore();return;
+  }
   const bass=item.assist.answerKind==='degree',strong=item.assist.divisor===4,alpha=ctx.globalAlpha;
   ctx.save();ctx.strokeStyle=item.color;ctx.fillStyle=item.color;ctx.shadowColor=item.color;ctx.shadowBlur=Math.min(2,size*.025);ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=Math.max(.65,size*.012);ctx.globalAlpha=alpha*(strong?.64:.48);
   const leaf=(x,y,angle,length,width)=>{
@@ -122,19 +144,21 @@ const weightedItem=(resources,random)=>{
 const announce=(owner,entity)=>{
   const item=entity.item;
   owner.event={id:++owner.eventCounter,kind:entity.kind,label:item.arrangement?`${item.label} · ${entity.rounds} кр.`:item.label,harmful:Boolean(item.harmful),resource:item.artifact?'artifact':item.resource};
-  owner.eventAge=0;owner.effects.push({x:entity.x,y:entity.y,age:0,color:item.color,harmful:Boolean(item.harmful)});
+  const changes=entity.beforeResources?Object.entries(owner.resources).flatMap(([key,value])=>{const delta=value-entity.beforeResources[key];return Math.abs(delta)>.05?[{label:GARDEN_RESOURCES[key].label,delta}]:[];}):[];
+  if(item.artifact&&!item.shield&&item.amount>0)changes.push({label:'×',delta:item.amount});
+  owner.eventAge=0;owner.effects.push({x:entity.x,y:entity.y,age:0,color:item.color,harmful:Boolean(item.harmful),changes});
 };
 
 export class GardenLife{
-  constructor({random=Math.random,onArrangement}={}){
-    this.random=random;this.onArrangement=onArrangement;this.images={};this.reset();
+  constructor({random=Math.random,onArrangement,onRestoration}={}){
+    this.random=random;this.onArrangement=onArrangement;this.onRestoration=onRestoration;this.images={};this.reset();
     this.ambient=Array.from({length:22},(_,index)=>({x:random(),y:random(),phase:random()*Math.PI*2,size:3+random()*8,speed:.012+random()*.026,spin:(random()-.5)*.42,tint:index%4}));
   }
   reset(){
     this.restorationAppeared=false;this.restorationRescueChecked=false;
     this.shieldHits=0;this.shieldFlash=0;this.shieldFade=0;
     this.time=0;this.spawnClock=1.4;this.craterClock=3.4;this.asteroidClock=6.5;this.stormClock=8.5;this.gameOver=false;
-    this.arrangementClock=5;this.assistClock=30+this.random()*25;
+    this.arrangementClock=5;this.assistClock=30+this.random()*25;this.bassHelpClock=14;
     this.entities=[];this.effects=[];this.chips=[];this.event=null;this.eventAge=99;this.eventCounter=0;this.flightForce={x:0,y:0,intensity:0};this.impact=0;
     this.campIdle=0;this.campPressure=null;this.lastShip=null;this.critical=null;this.failureResource=null;
     this.resources={fuel:86,water:78,crew:92,hull:84};this.inventory=Object.fromEntries(Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact).map(([kind])=>[kind,0]));
@@ -143,9 +167,10 @@ export class GardenLife{
   setResource(name,value){if(name in this.resources)this.resources[name]=clamp(value);}
   wrongAnswer(kind,value,qualityOrder=[]){
     if(this.gameOver)return;
+    const beforeResources={...this.resources};
     const resource=(kind==='degree'||kind==='bass')?(Number(value)<6?'fuel':'water'):(qualityOrder.indexOf(value)%2===0?'crew':'hull');
     this.resources[resource]=Math.max(this.difficulty?.minResource||0,clamp(this.resources[resource]-(this.difficulty?.wrongDamage??3)));
-    announce(this,{kind:'wrongAnswer',item:{resource,label:`Ошибка · ${GARDEN_RESOURCES[resource].label} −3`,harmful:true,color:GARDEN_RESOURCES[resource].color},x:.5,y:.55});
+    announce(this,{kind:'wrongAnswer',beforeResources,item:{resource,label:`Ошибка · ${GARDEN_RESOURCES[resource].label} −3`,harmful:true,color:GARDEN_RESOURCES[resource].color},x:.5,y:.55});
     this.updateCritical(0);
   }
   getFlightForce(){return {...this.flightForce};}
@@ -185,30 +210,30 @@ export class GardenLife{
   }
   applyDamage(entity,{repeat=false}={}){
     if(!entity||entity.collected||(!repeat&&entity.triggered))return false;
-    entity.triggered=true;entity.lastDamage=this.time;const item=entity.item;
+    entity.triggered=true;entity.lastDamage=this.time;const item=entity.item,beforeResources={...this.resources};
     this.resources[item.resource]=clamp(this.resources[item.resource]+item.amount);
     if(item.hullAmount)this.resources.hull=clamp(this.resources.hull+item.hullAmount);
     if(item.crewAmount)this.resources.crew=clamp(this.resources.crew+item.crewAmount);
-    announce(this,entity);return true;
+    announce(this,{...entity,beforeResources});return true;
   }
   collect(entity){
     if(!entity||entity.collected)return false;
     if(entity.item.restoration&&this.gameOver)return false;
     if(entity.item.ground||entity.item.storm)return this.applyDamage(entity,{repeat:entity.item.storm});
-    entity.collected=true;const item=entity.item;
+    entity.collected=true;const item=entity.item,beforeResources={...this.resources};
     if(item.fatal)this.gameOver=true;
-    if(item.restoration){for(const resource of Object.keys(this.resources))this.resources[resource]=100;this.critical=null;this.failureResource=null;}
+    if(item.restoration){for(const resource of Object.keys(this.resources))this.resources[resource]=100;this.critical=null;this.failureResource=null;this.onRestoration?.();}
     else if(item.arrangement)this.onArrangement?.(entity.kind,entity.rounds);
     else if(item.shield){this.shieldHits=3;this.shieldFlash=.15;this.shieldFade=1;}
     else if(item.artifact)this.inventory[entity.kind]=Math.min(99,(this.inventory[entity.kind]||0)+item.amount);
     else{this.resources[item.resource]=clamp(this.resources[item.resource]+item.amount);if(item.hullAmount)this.resources.hull=clamp(this.resources.hull+item.hullAmount);}
-    announce(this,item.shield?{...entity,item:{...item,resource:'artifact',label:'Космический кокон активирован · защита от трёх ударов',color:item.color}}:entity);return true;
+    announce(this,{...entity,beforeResources,item:item.shield?{...item,resource:'artifact',label:'Космический кокон активирован · защита от трёх ударов',color:item.color}:item});return true;
   }
   asteroidImpact(entity,view,w,h){
     if(!entity||!entity.impactArmed||this.time-entity.lastDamage<2.5)return false;
     const sx=Number(view.x)||w*.5,sy=Number(view.y)||h*.56,dx=entity.x*w-sx,dy=entity.y*h-sy,distance=Math.hypot(dx,dy)||1,item=entity.item;
     entity.triggered=true;entity.impactArmed=false;entity.lastDamage=this.time;
-    const protectedHit=!item.fatal&&this.shieldHits>0;
+    const protectedHit=!item.fatal&&this.shieldHits>0,beforeResources={...this.resources};
     if(protectedHit){this.shieldHits-=1;this.shieldFlash=1;}
     if(item.fatal){this.resources.hull=0;this.gameOver=true;this.failureResource='lava';}
     else if(!protectedHit){
@@ -221,7 +246,7 @@ export class GardenLife{
     entity.vx-=awayX*(.08+severity*.06);entity.vy-=awayY*(.06+severity*.05);entity.spin+=(this.random()-.5)*(2.2+severity*3);
     this.impact=Math.max(this.impact,Math.max(.68,severity));
     for(let i=0;i<8+Math.round(severity*10);i++){const angle=Math.PI*2*this.random();this.chips.push({x:entity.x,y:entity.y,vx:Math.cos(angle)*(.035+this.random()*.09),vy:Math.sin(angle)*(.035+this.random()*.09),age:0,life:.42+this.random()*.58,size:1+this.random()*3,color:item.color});}
-    announce(this,protectedHit?{...entity,item:{...item,resource:'artifact',label:'Кокон погасил удар',harmful:false,color:'#cbded8'}}:entity);return true;
+    announce(this,{...entity,beforeResources,item:protectedHit?{...item,resource:'artifact',label:'Кокон погасил удар',harmful:false,color:'#cbded8'}:item});return true;
   }
   updateCampPressure(dt,view,w,h,sx,sy){
     const current={x:sx/w,y:sy/h},moving=this.lastShip&&Math.hypot(current.x-this.lastShip.x,current.y-this.lastShip.y)>.0035;
@@ -232,7 +257,7 @@ export class GardenLife{
     const pressure=this.campPressure;if(!pressure)return;
     pressure.age+=dt;const distance=Math.hypot((current.x-pressure.x)*w,(current.y-pressure.y)*h);
     if(distance>78){this.campPressure=null;this.campIdle=0;return;}
-    if(pressure.age>3&&this.time-pressure.lastDamage>7){pressure.lastDamage=this.time;const item=GARDEN_ITEMS.campSpore;this.resources.crew=clamp(this.resources.crew+item.amount);this.resources.water=clamp(this.resources.water+item.waterAmount);announce(this,{kind:'campSpore',item,x:pressure.x,y:pressure.y});}
+    if(pressure.age>3&&this.time-pressure.lastDamage>7){pressure.lastDamage=this.time;const item=GARDEN_ITEMS.campSpore,beforeResources={...this.resources};this.resources.crew=clamp(this.resources.crew+item.amount);this.resources.water=clamp(this.resources.water+item.waterAmount);announce(this,{kind:'campSpore',item,beforeResources,x:pressure.x,y:pressure.y});}
   }
   updateCritical(dt){
     const empty=Object.keys(this.resources).find(name=>this.resources[name]<=0);
@@ -263,14 +288,24 @@ export class GardenLife{
     this.impact=Math.max(0,this.impact-dt*2.8);
     this.time+=dt;this.eventAge+=dt;const speed=Number(view.speed)||0,profile=this.difficulty||{drain:1,spawnRate:1,minResource:0};
     this.maybeSpawnRestoration(dt,view);
-    for(const resource of ['fuel','water','crew','hull'])this.resources[resource]=Math.max(profile.minResource,clamp(this.resources[resource]-dt*({fuel:.32,water:.22,crew:.14,hull:.1}[resource])*profile.drain));
+    const drainDt=dt*gardenRouteDrainScale(view.routeLength,view.barSeconds??4);
+    for(const resource of ['fuel','water','crew','hull'])this.resources[resource]=Math.max(profile.minResource,clamp(this.resources[resource]-drainDt*({fuel:.32,water:.22,crew:.14,hull:.1}[resource])*profile.drain));
     dt*=profile.spawnRate;
-    if(view.active){this.resources.fuel=clamp(this.resources.fuel-dt*(.06+speed*.04));this.resources.water=clamp(this.resources.water-dt*(.03+speed*.01));this.resources.crew=clamp(this.resources.crew-dt*(.008+Math.max(0,18-this.resources.water)*.002));if(this.resources.fuel<6)this.resources.hull=clamp(this.resources.hull-dt*(6-this.resources.fuel)*.01);}
+    if(view.active){this.resources.fuel=clamp(this.resources.fuel-drainDt*profile.spawnRate*(.06+speed*.04));this.resources.water=clamp(this.resources.water-drainDt*profile.spawnRate*(.03+speed*.01));this.resources.crew=clamp(this.resources.crew-drainDt*profile.spawnRate*(.008+Math.max(0,18-this.resources.water)*.002));if(this.resources.fuel<6)this.resources.hull=clamp(this.resources.hull-drainDt*profile.spawnRate*(6-this.resources.fuel)*.01);}
     this.spawnClock-=dt;this.craterClock-=dt;this.asteroidClock-=dt;this.stormClock-=dt;this.assistClock-=dt;
     if(view.active)this.arrangementClock-=dt;
     const pickupCount=this.entities.filter(entity=>!entity.item.ground&&!entity.item.storm&&!entity.item.asteroid).length;
+    // BASS is a regular teaching tool, not a rare draw from the mixed pool.
+    // Only count active Teacher flight time; never duplicate an unused key.
+    if(view.separateBass&&!profile.minResource){
+      this.bassHelpClock-=Number.isFinite(view.clockDt)?view.clockDt:dt;
+      if(this.bassHelpClock<=0&&pickupCount<6&&!this.inventory.bassClef&&!this.entities.some(e=>e.kind==='bassClef'&&!e.collected)){
+        const x=.25+this.random()*.5,key=this.forceSpawn('bassClef',{x,y:-.06,scale:.85,vy:.075,vx:0});
+        key.x=x;key.y=-.06;this.bassHelpClock=45+this.random()*15;
+      }
+    }
     if(this.assistClock<=0&&pickupCount<6){
-      const roll=this.random(),kinds=Object.keys(GARDEN_ITEMS).filter(kind=>GARDEN_ITEMS[kind].assist&&!GARDEN_ITEMS[kind].assist.reveal&&kind!=='focusRare');
+      const roll=this.random(),kinds=gardenAssistKinds(view).filter(kind=>kind!=='bassClef');
       const kind=roll<.03?'focusRare':roll<.1?'shield':roll<.28&&view.routeLength>=8?'degreeReveal':kinds[Math.floor(this.random()*kinds.length)];
       const x=.22+this.random()*.56,y=-.10;
       this.forceSpawn(this.random()<.28?'lavaAsteroid':'stoneAsteroid',{x:x-.075,y:y+.03,scale:.6,vy:.085,vx:0});
@@ -303,7 +338,7 @@ export class GardenLife{
     for(let i=0;i<floaters.length;i++)for(let j=i+1;j<floaters.length;j++){const a=floaters[i],b=floaters[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.001,min=.095;if(d<min){const force=(min-d)*.26/d;a.vx-=dx*force;b.vx+=dx*force;a.vy-=dy*force*.28;b.vy+=dy*force*.28;if(a.item.asteroid&&b.item.asteroid&&this.time-(a.lastCollision??-99)>1.1){a.lastCollision=b.lastCollision=this.time;for(let chip=0;chip<5;chip++){const angle=this.random()*Math.PI*2;this.chips.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2,vx:Math.cos(angle)*(.025+this.random()*.05),vy:Math.sin(angle)*(.025+this.random()*.05),age:0,life:.35+this.random()*.45,size:1+this.random()*2,color:'#c7c1a8'});}}}}
     if((view.active||view.flying)&&view.ship!==2)for(const entity of this.entities){if(entity.item.storm)continue;const dx=entity.x*w-sx,dy=entity.y*h-sy,distance=Math.hypot(dx,dy),radius=entity.item.size*entity.scale*(entity.item.ground?.38:entity.item.asteroid?.38:.44)+(entity.item.ground?24:entity.item.asteroid?25:34)*GARDEN_SHIP_SCALE;if(distance<radius){if(entity.item.asteroid||entity.item.ground)this.asteroidImpact(entity,view,w,h);else this.collect(entity);}else if((entity.item.asteroid||entity.item.ground)&&distance>radius+25)entity.impactArmed=true;}
     this.entities=this.entities.filter(entity=>!entity.collected&&entity.y<1.18&&entity.x>-.24&&entity.x<1.24);
-    for(const effect of this.effects)effect.age+=dt;this.effects=this.effects.filter(effect=>effect.age<1.15);
+    for(const effect of this.effects)effect.age+=dt;this.effects=this.effects.filter(effect=>effect.age<1.8);
     for(const chip of this.chips){chip.age+=dt;chip.x+=chip.vx*dt;chip.y+=chip.vy*dt;chip.vy+=.045*dt;}this.chips=this.chips.filter(chip=>chip.age<chip.life);
     for(const petal of this.ambient){const flow=Math.sin(this.time*.18+petal.phase+petal.y*9)*.008;petal.x+=flow*dt;petal.y+=(petal.speed+speed*.015)*dt;petal.phase+=petal.spin*dt;if(petal.y>1.08){petal.y=-.06;petal.x=this.random();}if(petal.x<-.05)petal.x=1.05;if(petal.x>1.05)petal.x=-.05;}
     if(profile.minResource){for(const key of Object.keys(this.resources))this.resources[key]=Math.max(profile.minResource,this.resources[key]);this.gameOver=false;this.critical=null;}
@@ -367,7 +402,12 @@ export class GardenLife{
     }
 if(this.campPressure){const pressure=this.campPressure,x=pressure.x*w,y=pressure.y*h,charge=clamp((pressure.age-1.1)/1.5,0,1);ctx.save();ctx.translate(x,y);ctx.strokeStyle=`rgba(214,151,255,${.12+charge*.20})`;ctx.fillStyle=`rgba(88,35,104,${.03+charge*.06})`;for(let ring=0;ring<3;ring++){const radius=25+ring*16+Math.sin(this.time*3+ring)*5;ctx.lineWidth=.55+charge*.50;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();}for(let i=0;i<12;i++){const angle=i*Math.PI*2/12+this.time*.35,radius=18+(i%3)*13;ctx.beginPath();ctx.arc(Math.cos(angle)*radius,Math.sin(angle)*radius,1.5+charge*2,0,Math.PI*2);ctx.fill();}ctx.restore();}
     for(const chip of this.chips){ctx.save();ctx.globalAlpha=1-chip.age/chip.life;ctx.fillStyle=chip.color;ctx.translate(chip.x*w,chip.y*h);ctx.rotate(chip.age*7);ctx.fillRect(-chip.size,-chip.size*.45,chip.size*2,chip.size*.9);ctx.restore();}
-    for(const effect of this.effects){const t=effect.age/1.15,x=effect.x*w,y=effect.y*h,r=18+t*64;ctx.save();ctx.globalAlpha=(1-t)*.38;ctx.strokeStyle=effect.color;ctx.lineWidth=effect.harmful?1.2:.8;ctx.setLineDash([2+t*8,5+t*5]);ctx.beginPath();ctx.ellipse(x,y,r,r*(.62+Math.sin(t*9)*.05),t*.7,0,Math.PI*2);ctx.stroke();ctx.restore();}
+    for(const effect of this.effects){const t=Math.min(1,effect.age/1.15),x=effect.x*w,y=effect.y*h,r=18+t*64;ctx.save();ctx.globalAlpha=(1-t)*.38;ctx.strokeStyle=effect.color;ctx.lineWidth=effect.harmful?1.2:.8;ctx.setLineDash([2+t*8,5+t*5]);ctx.beginPath();ctx.ellipse(x,y,r,r*(.62+Math.sin(t*9)*.05),t*.7,0,Math.PI*2);ctx.stroke();ctx.restore();}
+    for(const effect of this.effects){
+      const x=Math.max(70,Math.min(w-70,effect.x*w)),y=Math.max(75,Math.min(h-100,effect.y*h))-effect.age*24;
+      ctx.save();ctx.globalAlpha=Math.min(.9,(1.8-effect.age)*1.2);ctx.textAlign='center';ctx.font='bold 17px system-ui';ctx.shadowColor='#081c22';ctx.shadowBlur=6;
+      (effect.changes??[]).forEach((change,i)=>{ctx.fillStyle=change.delta<0?'#ff9690':'#b9ffdb';const n=Math.round(Math.abs(change.delta)*10)/10;ctx.fillText(`${change.delta<0?'−':'+'}${n} ${change.label}`,x,y+i*21);});ctx.restore();
+    }
     ctx.restore();
   }
   snapshot(){return {shieldHits:this.shieldHits,shieldFade:this.shieldFade,resources:{...this.resources},inventory:{...this.inventory},entities:this.entities.map(({id,kind,x,y,vx,vy,triggered})=>({id,kind,x,y,vx,vy,triggered})),event:this.event,eventAge:this.eventAge,flightForce:{...this.flightForce},impact:this.impact,chips:this.chips.length,campPressure:this.campPressure&&{x:this.campPressure.x,y:this.campPressure.y,age:this.campPressure.age},critical:this.critical&&{...this.critical},failureResource:this.failureResource,gameOver:this.gameOver};}

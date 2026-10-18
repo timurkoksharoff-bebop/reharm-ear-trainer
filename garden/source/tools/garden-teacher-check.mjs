@@ -1,11 +1,16 @@
 import assert from 'node:assert/strict';
-import {createGardenMission,gardenAvailableAnswers,gardenAnswerState,gardenFilteredChoices,gardenJazzLabel,gardenQualityAnswer} from '../garden-harmony.mjs';
+import {createGardenMission,gardenAvailableAnswers,gardenAnswerState,gardenFilteredChoices,gardenJazzLabel,gardenJazzQuality,gardenQualityAnswer,gardenQualityAnswerLabel} from '../garden-harmony.mjs';
 import {difficultyProfile} from '../garden-difficulty.mjs';
+import {GARDEN_ITEMS,GardenLife,gardenAssistKinds} from '../garden-life.mjs';
 
 const exercise={id:'teacher-test',baseTonic:5,sequence:[
  {degree:'I',offset:0,quality:'maj',bassOffset:null},
  {degree:'V7/II/5',offset:9,quality:'7',bassOffset:4}
 ]};
+assert.equal(gardenJazzQuality('ireal:7b13'),'7(♭13)');
+assert.equal(gardenJazzQuality('ireal:mMaj7'),'−△7');
+assert.equal(gardenQualityAnswerLabel('ireal:mMaj7'),'m(maj7)');
+assert.equal(gardenQualityAnswerLabel('7:ireal:7b13'),'V 7(♭13)');
 const teacher=createGardenMission({exercise,separateBass:true,barSeconds:999});
 teacher.start();teacher.advance();
 assert.equal(teacher.snapshot().totalParts,6);
@@ -40,17 +45,52 @@ const filtered=gardenFilteredChoices('degree',exercise.sequence[1],{remaining:1,
 assert(filtered.has(9));
 assert(gardenAvailableAnswers(exercise,{rootMode:true}).includes('7'));
 assert(!gardenAvailableAnswers(exercise,{rootMode:true}).includes('9:7'));
-const student=createGardenMission({exercise,barSeconds:999});
+const student=createGardenMission({exercise,rootMode:true,barSeconds:999});
 student.start();student.advance();student.advance();
 assert.equal(student.snapshot().totalParts,4);
 assert.equal(student.answerPart('bass',4).ignored,true);
-assert.equal(student.answerPart('degree',9).correct,false,'legacy student behavior is unchanged');
-assert.equal(student.answerPart('degree',4).correct,true);
-assert.equal(student.answerPart('quality',gardenQualityAnswer(exercise.sequence[1])).correct,true);
+assert.equal(student.answerPart('degree',4).correct,false,'Student answers the root, not the independent bass');
+assert.equal(student.answerPart('degree',9).correct,true);
+assert.equal(student.snapshot().currentParts.bass,true,'independent bass is supplied automatically with the root');
+assert(gardenAnswerState(student.snapshot(),'degree',9).selected);
+assert.equal(student.answerPart('quality','7').positionComplete,true,'only root and quality are required');
+assert.equal(gardenJazzLabel(exercise.sequence[1],5,{compact:false}),'D7/A');
+assert.equal(gardenJazzLabel({offset:0,quality:'maj7'},0,{compact:false}),'Cmaj7');
+student.restart();student.start();student.advance();student.advance();
+assert(student.assist({answerKind:'degree',reveal:true},{consume:()=>true}).correct,'root hint reveals the actual root');
+assert.equal(student.snapshot().currentParts.bass,true);
 student.pause();
+const applicant=createGardenMission({exercise,barSeconds:999});
+applicant.start();applicant.advance();applicant.advance();
+assert.equal(applicant.answerPart('degree',4).correct,true,'Applicant legacy grading is unchanged');
+applicant.pause();
 assert.deepEqual(difficultyProfile('hard'),difficultyProfile('medium'),'teacher differs only by answer mechanics');
 const imported={baseTonic:5,sequence:[{offset:9,rootPc:2,bassPc:9,bassOffset:7,quality:'7',notes:[45,62,66,69,72]},{offset:0,rootPc:5,bassPc:5,bassOffset:0,quality:'maj',notes:[41,53,57,60]}]};
 const copy=JSON.stringify(imported),m=createGardenMission({exercise:imported,separateBass:true});
 assert.equal(m.snapshot().exercise.sequence[0].bassOffset,4);
 assert.equal(JSON.stringify(imported),copy,'teacher normalization never mutates saved routes or MIDI');
-console.log('Teacher passed: separate root/quality/note bass, automatic root-position bass, pending inversions, ring state, hints, notation, unchanged Student and MIDI.');
+assert(gardenAssistKinds({separateBass:true}).includes('bassClef'));
+assert(!gardenAssistKinds({separateBass:false}).includes('bassClef'),'bass clef never spawns in Student or Applicant');
+for(let bass=0;bass<12;bass++){
+ const route={baseTonic:5,sequence:[{offset:(bass+5)%12,bassOffset:bass,quality:'7'},{offset:0,quality:'maj'}]};
+ const target=createGardenMission({exercise:route,separateBass:true,barSeconds:999}),life=new GardenLife();
+ target.start();target.advance();
+ life.collect(life.forceSpawn('bassClef'));assert(life.useAssist(target,'bassClef').assisted);
+ let state=target.snapshot(),choices=gardenFilteredChoices('bass',state.current,state.filters.bass);
+ assert.equal(choices.size,4);assert(choices.has(bass));assert.equal(state.filters.degree,null);assert.equal(state.filters.quality,null);
+ assert.deepEqual(state.currentParts,{degree:false,quality:false,bass:false},'filter does not reveal or answer bass');
+ life.collect(life.forceSpawn('holdArpeggio'));assert(life.useAssist(target,'holdArpeggio').assisted);
+ state=target.snapshot();choices=gardenFilteredChoices('degree',state.current,state.filters.degree,undefined,{rootMode:true});
+ assert.equal(choices.size,4);assert(choices.has(route.sequence[0].offset));assert.equal(state.filters.bass.maxChoices,4);
+ for(let i=0;i<3;i++)target.advance();
+ assert.equal(target.snapshot().filters.bass,null);assert.equal(target.snapshot().filters.degree,null);target.pause();
+}
+const noBass=createGardenMission({exercise,rootMode:true,barSeconds:999}),noBassLife=new GardenLife();
+noBass.start();noBass.advance();noBassLife.collect(noBassLife.forceSpawn('bassClef'));
+assert(noBassLife.useAssist(noBass,'bassClef').ignored);assert.equal(noBassLife.inventory.bassClef,1,'outside Teacher, no bass charge is spent');noBass.pause();
+const rootOnly=createGardenMission({exercise:{baseTonic:0,sequence:[{offset:0,quality:'maj7'},{offset:7,quality:'7',bassOffset:7}]},separateBass:true,barSeconds:999});
+assert.equal(rootOnly.snapshot().bassPanelNeeded,false,'extensions alone do not require a bass panel');
+rootOnly.start();rootOnly.advance();
+let spent=false;assert(rootOnly.assist(GARDEN_ITEMS.bassClef.assist,{consume:()=>{spent=true;return true;}}).ignored);assert.equal(spent,false);rootOnly.pause();
+assert.equal(teacher.snapshot().bassPanelNeeded,true,'one independent bass anywhere keeps the route-wide column');
+console.log('Teacher and Student passed: shared root/quality grading, Student automatic slash bass, Teacher independent bass, hints, notation, unchanged Applicant and MIDI.');

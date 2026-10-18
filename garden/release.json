@@ -1,9 +1,9 @@
 {
-  "version": "1.25",
+  "version": "1.34",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Test mobile release 1.25: upper lotus inventory with click-through empty space, lower non-overlapping bass column, sample levels balanced against unchanged Felt Piano, restored lotus app icons with versioned PNGs, discreet visible build number. Includes separated circular bass buttons and the brighter shield pickup. User-exported cover layout, experimental Teacher mode with root/quality/note bass and automatic root-position bass, readable paginated long routes with original harmony retained, synchronous sample attacks, contact-first answer buttons, dimmer daytime terrain, smaller flight ship, corrected Deep House 3 registers, category-prefixed numeric route names. Includes 50 Jazz Standards and all saved embedded routes. Student mechanics and the 60-day trial storage are preserved."
+  "notes": "Release 1.34: Opt-in desktop video recording with game audio only, local download, no microphone; mobile controls hidden. Only the Lotus ship; speed/altitude selectors removed, volume and EQ retained. Teacher-only translucent O2 fifth vial, separate H2O; 12 chord-relative tones, palette-normalized correct rewards (42 / valid tone count), scaled by route duration / -20 avoid, neutral uncertain cases and 180ms boundary grace. All 184 release routes audited with actual random side-lane medallions; imported m11/9/13/7#9/7#11/o families recognized without changing harmony. Unsupported neutral-only chords do not spend uncollectable O2. Smaller sparse side-lane bubbles unlock after two solved chords. O2 drains from the first chord at 0.45 per second, scaled by duration on long routes; positive O2 income scales too, unchanged collision and answer damage. Floating actual resource deltas. Click-through upper time/score frames, capped one-time bubble bonuses, completion time bonus and device-local PB. Test score, not online tournament validation. Original route notes, sounds, speed, cover and trial countdown preserved. Imported chord codes display as readable symbols. Mobile PWA release."
 }

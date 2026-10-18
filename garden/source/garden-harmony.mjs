@@ -4,7 +4,8 @@ import {createGardenArrangement,gardenArrangementEvents} from './garden-arrangem
 
 const GARDEN_INTERVALS={...INTERVALS,'1':[0],m:INTERVALS.min,'m7♭5':INTERVALS.m7b5,sus2:[0,2,7],sus4:[0,5,7],add9:[0,4,7,14],m9:INTERVALS.m7natural9};
 export const gardenDegreeLabel=offset=>DEGREES[Number(offset)]?.glyph??'?';
-export const gardenQualityLabel=quality=>quality==='1'?'1 / 8':QUALITIES[quality]?.glyph??quality;
+const IMPORTED_QUALITY_LABELS={'ireal:7b13':'7(♭13)','ireal:mMaj7':'m(maj7)'};
+export const gardenQualityLabel=quality=>quality==='1'?'1 / 8':IMPORTED_QUALITY_LABELS[quality]??QUALITIES[quality]?.glyph??quality;
 export const gardenCanonicalQuality=quality=>({m:'min','m7♭5':'m7b5',m9:'m7natural9'})[quality]??quality;
 // Both degrees are relative to the route tonic, never to one another.
 export const gardenRootOffset=chord=>Number(chord.offset);
@@ -18,15 +19,15 @@ export const gardenHasIndependentBass=chord=>gardenBassOffset(chord)!==Number(ch
 export const gardenQualityAnswer=(chord,{rootMode=false}={})=>!rootMode&&gardenHasIndependentBass(chord)?`${Number(chord.offset)}:${gardenCanonicalQuality(chord.quality)}`:gardenCanonicalQuality(chord.quality);
 export const gardenNoteName=pitch=>['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'][((Number(pitch)%12)+12)%12];
 const JAZZ_QUALITIES={maj:'',min:'−',maj7:'△7',maj7sharp11:'△7(♯11)',m7:'−7',m6:'−6',m7b5:'ø7',m7natural9:'−9',m7b5natural9:'ø9',dim7:'°7',aug:'+',augMaj7:'+△7',m7b9:'−7(♭9)',minSharp5:'−(♯5)'};
-export const gardenJazzQuality=quality=>JAZZ_QUALITIES[gardenCanonicalQuality(quality)]??gardenQualityLabel(quality);
-export function gardenJazzLabel(chord,tonic=0,{root=true,quality=true,bass=true}={}){
+export const gardenJazzQuality=quality=>quality==='ireal:mMaj7'?'−△7':JAZZ_QUALITIES[gardenCanonicalQuality(quality)]??gardenQualityLabel(quality);
+export function gardenJazzLabel(chord,tonic=0,{root=true,quality=true,bass=true,compact=true}={}){
   const r=root?gardenNoteName(tonic+gardenRootOffset(chord)):'?';
-  const q=quality?gardenJazzQuality(chord.quality):'?';
+  const q=quality?(compact?gardenJazzQuality(chord.quality):gardenQualityLabel(chord.quality)):'?';
   return r+q+(bass&&gardenHasIndependentBass(chord)?'/'+gardenNoteName(tonic+gardenBassOffset(chord)):'');
 }
 export function gardenQualityAnswerLabel(value){
-  const parts=String(value).split(':');
-  return parts.length===2?`${gardenDegreeLabel(parts[0])} ${gardenQualityLabel(parts[1])}`:gardenQualityLabel(value);
+  const match=String(value).match(/^(\d+):(.+)$/);
+  return match?`${gardenDegreeLabel(match[1])} ${gardenQualityLabel(match[2])}`:gardenQualityLabel(value);
 }
 export function gardenAvailableAnswers(exercise,{expanded=false,rootMode=false}={}){
   const required=exercise.sequence.map(chord=>gardenQualityAnswer(chord,{rootMode}));
@@ -36,12 +37,12 @@ export function gardenAvailableAnswers(exercise,{expanded=false,rootMode=false}=
 export const GARDEN_QUALITY_PALETTE=Object.freeze(['maj','min','6','m6','7','maj7','m7','m7b5','dim7','7sus4','sus2','sus4','aug','add9','m7natural9','m7b5natural9','maj7sharp11','7b9','7b9b13','7b5','7sharp5','7alt','m7b9','minSharp5','augMaj7','1']);
 export const GARDEN_CORE_QUALITIES=Object.freeze(['maj','min','6','7','maj7','m7','m7b5','dim7','7sus4','sus4']);
 export function gardenFilteredChoices(kind,target,filter,available,{rootMode=false}={}){
-  const values=available??(kind==='degree'?Array.from({length:12},(_,i)=>i):GARDEN_QUALITY_PALETTE);
+  const values=available??(['degree','bass'].includes(kind)?Array.from({length:12},(_,i)=>i):GARDEN_QUALITY_PALETTE);
   if(!filter?.remaining)return new Set(values);
   const correct=kind==='degree'?(rootMode?gardenRootOffset(target):gardenBassOffset(target)):kind==='bass'?gardenBassOffset(target):gardenQualityAnswer(target,{rootMode});
   const wrong=values.filter(value=>value!==correct);
   // Suppression masks slots; it never changes the button geometry or order.
-  const keep=Math.ceil(wrong.length/(filter.divisor||2));
+  const keep=filter.maxChoices?Math.max(0,Math.min(wrong.length,filter.maxChoices-1)):Math.ceil(wrong.length/(filter.divisor||2));
   const start=kind==='degree'?(rootMode?gardenRootOffset(target):gardenBassOffset(target))%wrong.length:Math.max(0,values.indexOf(correct))%wrong.length;
   return new Set([correct,...Array.from({length:keep},(_,i)=>wrong[(start+i+wrong.length)%wrong.length])]);
 }
@@ -55,7 +56,7 @@ export function gardenChordLabel(chord){
 export function gardenAnswerState(model,kind,value){
   const parts=model.currentParts??model.progress?.[model.cursor]??{};
   const found=model.cursor>=0&&Boolean(parts[kind]);
-  const matches=kind==='degree'?(model.separateBass?gardenRootOffset(model.current):gardenBassOffset(model.current))===Number(value):kind==='bass'?gardenBassOffset(model.current)===Number(value):gardenQualityAnswer(model.current,{rootMode:model.separateBass})===gardenCanonicalQuality(value);
+  const matches=kind==='degree'?(model.rootMode?gardenRootOffset(model.current):gardenBassOffset(model.current))===Number(value):kind==='bass'?gardenBassOffset(model.current)===Number(value):gardenQualityAnswer(model.current,{rootMode:model.rootMode})===gardenCanonicalQuality(value);
   return {selected:found&&matches,disabled:!model.running||model.cursor<0||model.complete||found};
 }
 const PRESETS={
@@ -112,6 +113,7 @@ export class GardenPad{
       stringOrchestra:[['string-orchestra-c5.wav',72]],
       pianoN:[['piano-n-c5.wav',72]]
     };
+    this.transients=new Set();this.sounding=null;
     this.samplesReady=deferSamplesUntilReady?new Promise(resolve=>addEventListener('garden-ready',()=>resolve(),{once:true})):Promise.resolve();
   }
   async unlock(){
@@ -189,6 +191,7 @@ export class GardenPad{
       const buffer=await c.decodeAudioData(await chord.audio.arrayBuffer()),source=c.createBufferSource(),group=c.createGain();now=c.currentTime;
       source.buffer=buffer;source.loop=buffer.duration>1;source.loopStart=Math.min(.45,buffer.duration*.2);source.loopEnd=Math.max(source.loopStart+.12,buffer.duration-.12);
       group.gain.setValueAtTime(.0001,now);group.gain.exponentialRampToValueAtTime(.34,now+.65);source.connect(group);group.connect(this.output);source.start(now);
+      this.sounding={chord:{...chord},tonic:tonicPitchClass,at:now,barSeconds};
       const voice={gain:group,stop:()=>{try{source.stop();}catch{}try{group.disconnect();}catch{}}};this.voices=[voice];return;
     }
     const root=48+tonicPitchClass+chord.offset;
@@ -198,6 +201,7 @@ export class GardenPad{
     const exactNotes=Array.isArray(chord.notes)&&chord.notes.length;
     if(!exactNotes&&!GARDEN_INTERVALS[chord.quality])throw Error(`Неизвестный тип аккорда: ${chord.quality}. Воспроизведение остановлено, без подмены мажором.`);
     const notes=exactNotes?[...chord.notes]:[bass,...GARDEN_INTERVALS[chord.quality].map(interval=>root+interval)];
+    this.sounding={chord:{...chord},tonic:tonicPitchClass,at:now,barSeconds};
     // Imported MIDI voicings may store only the mid-register chord stack in
     // `notes`; their actual bass is represented separately by bassOffset.
     // Keep the bass flower in the true low register instead of treating the
@@ -283,8 +287,22 @@ export class GardenPad{
     setTimeout(()=>{try{group.disconnect();}catch{}},Math.ceil((duration+.08)*1000));
     return oscillators.length;
   }
+  tensionNote(midi,detail={}){
+    const c=this.context;if(!c||c.state!=='running'||!Number.isFinite(midi))return 0;
+    const at=c.currentTime+.004,group=c.createGain(),sources=[];
+    group.gain.setValueAtTime(.0001,at);group.gain.exponentialRampToValueAtTime(.075,at+.008);group.gain.exponentialRampToValueAtTime(.0001,at+.82);group.connect(this.cleanOutput);
+    const stop=()=>{for(const source of sources){try{source.stop();source.disconnect();}catch{}}try{group.disconnect();}catch{}this.transients.delete(stop);};
+    let ended=0;
+    for(const [ratio,amplitude] of [[1,1],[2.76,.18],[5.4,.055]]){
+      const source=c.createOscillator(),level=c.createGain();source.type='sine';source.frequency.value=frequency(midi)*ratio;level.gain.value=amplitude;
+      source.connect(level);level.connect(group);source.start(at);source.stop(at+.85);sources.push(source);
+      source.onended=()=>{try{source.disconnect();level.disconnect();}catch{}if(++ended===3){try{group.disconnect();}catch{}this.transients.delete(stop);}};
+    }
+    this.transients.add(stop);this.lastTension={...detail,midi,at,loop:false,character:'soft-vibraphone'};return sources.length;
+  }
   stop(immediate=false){
     this.generation+=1;
+    this.sounding=null;for(const stop of this.transients)stop();this.transients.clear();
     if(!this.context){this.voices=[];return;}
     const now=this.context.currentTime;
     for(const voice of this.voices){voice.gain.gain.cancelScheduledValues(now);if(immediate){voice.gain.gain.setValueAtTime(.0001,now);voice.stop();}else{voice.gain.gain.setTargetAtTime(.0001,now,.035);setTimeout(()=>voice.stop(),180);}}
@@ -292,7 +310,7 @@ export class GardenPad{
   }
 }
 
-export function createGardenMission({onChange,onChord,barSeconds=4,exercise:providedExercise,separateBass=false}={}){
+export function createGardenMission({onChange,onChord,barSeconds=4,exercise:providedExercise,separateBass=false,rootMode=separateBass}={}){
   const sourceExercise=providedExercise??BOOK_CATALOG.find(item=>item.id==='fig-1-6');
   if(!sourceExercise)throw Error('В каталоге не найдена Fig. 1.6.');
   if(sourceExercise.sequence.length<2)throw Error('Для маршрута нужны база и хотя бы один следующий аккорд.');
@@ -303,27 +321,28 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     ??{degree:'I',offset:0,quality:'maj',bassOffset:null};
   const reference={...tonic,degree:`БАЗА ${tonic.degree}`,offset:0,bassOffset:null,reference:true};
   // Legacy imported seeds store bassOffset relative to the root. Normalize
-  // only the experimental teacher copy; never rewrite saved routes or MIDI.
-  const exercise=separateBass?{...sourceExercise,sequence:sourceExercise.sequence.map(chord=>chord.rootPc!=null?{...chord,bassOffset:((Number(chord.bassPc??chord.bassMidi??chord.rootPc)-(sourceExercise.baseTonic??0))%12+12)%12}:{...chord})}:sourceExercise;
+  // only the root-answer copy; never rewrite saved routes or MIDI.
+  const exercise=rootMode?{...sourceExercise,sequence:sourceExercise.sequence.map(chord=>chord.rootPc!=null?{...chord,bassOffset:((Number(chord.bassPc??chord.bassMidi??chord.rootPc)-(sourceExercise.baseTonic??0))%12+12)%12}:{...chord})}:sourceExercise;
+  const bassPanelNeeded=separateBass&&exercise.sequence.some(gardenHasIndependentBass);
   const answerKinds=separateBass?['degree','quality','bass']:['degree','quality'];
   const emptyParts=()=>Object.fromEntries(answerKinds.map(kind=>[kind,false]));
   const positionSolved=part=>answerKinds.every(kind=>part[kind]);
   const accompaniment=createGardenArrangement(exercise.sequence.length);
-  const state={exercise,cursor:-1,round:1,basePlayed:false,progress:exercise.sequence.map(emptyParts),running:false,complete:false,feedback:'',barSeconds,timer:0,deadline:0,held:false,arpeggio:false,arpeggioRounds:0,navigation:{enabled:true,revealedPosition:-1,teleportCharges:0},filters:{degree:null,quality:null}};
+  const state={exercise,cursor:-1,round:1,basePlayed:false,progress:exercise.sequence.map(emptyParts),running:false,complete:false,feedback:'',barSeconds,timer:0,deadline:0,held:false,arpeggio:false,arpeggioRounds:0,navigation:{enabled:true,revealedPosition:-1,teleportCharges:0},filters:{degree:null,quality:null,bass:null}};
   const choices=[...exercise.sequence,...(exercise.distractors??[])]
     .filter((chord,index,list)=>list.findIndex(item=>keyOf(item)===keyOf(chord))===index);
   const solvedIndexes=()=>state.progress.flatMap((part,index)=>positionSolved(part)?[index]:[]);
   const snapshot=()=>({
     exercise,cursor:state.cursor,round:state.round,progress:state.progress.map(part=>({...part})),parts:state.progress.map(part=>({...part})),solved:solvedIndexes(),
-    separateBass,answerKinds:[...answerKinds],solvedParts:state.progress.reduce((sum,part)=>sum+answerKinds.reduce((n,kind)=>n+Number(part[kind]),0),0),totalParts:exercise.sequence.length*answerKinds.length,
+    separateBass,rootMode,bassPanelNeeded,answerKinds:[...answerKinds],solvedParts:state.progress.reduce((sum,part)=>sum+answerKinds.reduce((n,kind)=>n+Number(part[kind]),0),0),totalParts:exercise.sequence.length*answerKinds.length,
     running:state.running,complete:state.complete,basePlayed:state.basePlayed,feedback:state.feedback,barSeconds:state.barSeconds,deadline:state.deadline,choices,reference,held:state.held,arpeggio:state.arpeggio||state.arpeggioRounds>0,arrangement:state.cursor<0?{}:accompaniment.current(),arrangementStatus:accompaniment.snapshot(),navigation:{...state.navigation},
-    current:state.cursor<0?reference:exercise.sequence[state.cursor],currentParts:state.cursor<0?{degree:true,quality:true}:{...state.progress[state.cursor]},filters:{degree:state.filters.degree&&{...state.filters.degree},quality:state.filters.quality&&{...state.filters.quality}}
+    current:state.cursor<0?reference:exercise.sequence[state.cursor],currentParts:state.cursor<0?{degree:true,quality:true}:{...state.progress[state.cursor]},filters:Object.fromEntries(Object.entries(state.filters).map(([kind,filter])=>[kind,filter&&{...filter}]))
   });
   const emit=()=>onChange?.(snapshot());
   const schedule=()=>{clearTimeout(state.timer);state.deadline=performance.now()+state.barSeconds*1000;state.timer=setTimeout(()=>{if(!state.running)return;if(state.held&&state.cursor>=0){sound();schedule();}else step();},state.barSeconds*1000);emit();};
   const sound=()=>onChord?.(state.cursor<0?reference:exercise.sequence[state.cursor],snapshot());
   const validPosition=position=>Number.isInteger(position)&&position>=0&&position<exercise.sequence.length;
-  const spendFilterStep=()=>{for(const kind of ['degree','quality']){const filter=state.filters[kind];if(filter&&--filter.remaining<=0)state.filters[kind]=null;}};
+  const spendFilterStep=()=>{for(const kind of ['degree','quality','bass']){const filter=state.filters[kind];if(filter&&--filter.remaining<=0)state.filters[kind]=null;}};
   const moveTo=(position,feedback)=>{
     if(!state.navigation.enabled||!state.running||state.complete||!validPosition(position))return {ignored:true};
     clearTimeout(state.timer);spendFilterStep();state.held=false;state.arpeggio=false;state.cursor=position;state.feedback=feedback;state.navigation.revealedPosition=-1;sound();schedule();return {position};
@@ -350,21 +369,21 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
       state.basePlayed=true;sound();schedule();
     },
     pause({preserveHold=false}={}){state.running=false;if(!preserveHold)state.held=false;clearTimeout(state.timer);state.timer=0;state.deadline=0;emit();},
-    restart(){clearTimeout(state.timer);accompaniment.reset();state.cursor=-1;state.round=1;state.basePlayed=false;state.progress=exercise.sequence.map(emptyParts);state.running=false;state.complete=false;state.feedback='';state.deadline=0;state.filters={degree:null,quality:null};state.navigation.revealedPosition=-1;emit();},
+    restart(){clearTimeout(state.timer);accompaniment.reset();state.cursor=-1;state.round=1;state.basePlayed=false;state.progress=exercise.sequence.map(emptyParts);state.running=false;state.complete=false;state.feedback='';state.deadline=0;state.filters={degree:null,quality:null,bass:null};state.navigation.revealedPosition=-1;emit();},
     answerPart(kind,value){
       if(!state.running||state.cursor<0||state.complete||!answerKinds.includes(kind))return {ignored:true};
       const position=state.cursor,part=state.progress[position];
       if(part[kind])return {ignored:true,correct:true,position,positionComplete:positionSolved(part),complete:state.complete};
       const target=exercise.sequence[state.cursor];
-      const correct=kind==='degree'?Number(value)===(separateBass?gardenRootOffset(target):gardenBassOffset(target)):kind==='bass'?Number(value)===gardenBassOffset(target):gardenCanonicalQuality(value)===gardenQualityAnswer(target,{rootMode:separateBass});
+      const correct=kind==='degree'?Number(value)===(rootMode?gardenRootOffset(target):gardenBassOffset(target)):kind==='bass'?Number(value)===gardenBassOffset(target):gardenCanonicalQuality(value)===gardenQualityAnswer(target,{rootMode});
       if(correct){
         part[kind]=true;
-        if(separateBass&&kind==='degree'&&gardenRootOffset(target)===gardenBassOffset(target))part.bass=true;
+        if(rootMode&&kind==='degree'&&(!separateBass||gardenRootOffset(target)===gardenBassOffset(target)))part.bass=true;
         const positionComplete=positionSolved(part);
-        state.feedback=!separateBass?(positionComplete?'Бас и аккорд найдены':kind==='degree'?'Бас найден — теперь аккорд':'Аккорд найден — теперь бас'):positionComplete?'Все части аккорда найдены':part.degree&&part.quality?'Корень и тип найдены — найди бас слева':kind==='degree'?'Корень найден — найди тип аккорда':kind==='bass'?'Бас найден — остальные ответы сохранены':'Тип найден — найди корень внизу';
+        state.feedback=rootMode?(positionComplete?'Все части аккорда найдены':separateBass&&part.degree&&part.quality?'Корень и тип найдены — найди бас слева':kind==='degree'?'Корень найден — найди тип аккорда':kind==='bass'?'Бас найден — остальные ответы сохранены':'Тип найден — найди корень внизу'):(positionComplete?'Бас и аккорд найдены':kind==='degree'?'Бас найден — теперь аккорд':'Аккорд найден — теперь бас');
         const advanced=settleAnswer();
         return {correct,kind,position,positionComplete,complete:state.complete,advanced};
-      }else state.feedback=!separateBass?(kind==='degree'?'Бас не совпал — найденный аккорд сохранён':'Аккорд не совпал — найденный бас сохранён'):kind==='degree'?'Корень не совпал — найденные ответы сохранены':kind==='bass'?'Бас не совпал — найденные ответы сохранены':'Тип не совпал — найденные ответы сохранены';
+      }else state.feedback=!rootMode?(kind==='degree'?'Бас не совпал — найденный аккорд сохранён':'Аккорд не совпал — найденный бас сохранён'):kind==='degree'?'Корень не совпал — найденные ответы сохранены':kind==='bass'?'Бас не совпал — найденные ответы сохранены':'Тип не совпал — найденные ответы сохранены';
       emit();return {correct,kind,position,positionComplete:positionSolved(part),complete:state.complete,advanced:false};
     },
     answer(chord){
@@ -372,7 +391,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
       const position=state.cursor,target=exercise.sequence[position],part=state.progress[position];
       if(positionSolved(part))return {ignored:true,correct:true,position,positionComplete:true,complete:state.complete};
       const correct=gardenBassOffset(chord)===gardenBassOffset(target)&&Number(chord.offset)===Number(target.offset)&&gardenCanonicalQuality(chord.quality)===gardenCanonicalQuality(target.quality);
-      if(correct){for(const kind of answerKinds)part[kind]=true;state.feedback=separateBass?'Все части сигнала встроены в маршрут':'Обе части сигнала встроены в маршрут';const advanced=settleAnswer();return {correct,position,positionComplete:true,complete:state.complete,advanced};}
+      if(correct){for(const kind of answerKinds)part[kind]=true;if(rootMode)part.bass=true;state.feedback=separateBass?'Все части сигнала встроены в маршрут':'Обе части сигнала встроены в маршрут';const advanced=settleAnswer();return {correct,position,positionComplete:true,complete:state.complete,advanced};}
       else state.feedback='Не совпало — найденные раньше части сохранены';
       emit();return {correct,position,positionComplete:positionSolved(part),complete:state.complete,advanced:false};
     },
@@ -386,7 +405,7 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
     revealPosition(){return {ignored:true};},
     teleportTo(){return {ignored:true};},
     assist(spec,{consume}={}){
-      if(!state.running||state.complete||state.cursor<0||typeof consume!=='function'||!['degree','quality','both'].includes(spec?.answerKind))return {ignored:true};
+      if(!state.running||state.complete||state.cursor<0||typeof consume!=='function'||!['degree','quality','bass','both'].includes(spec?.answerKind)||(spec.answerKind==='bass'&&!bassPanelNeeded))return {ignored:true};
       const kind=spec.answerKind;
       if(spec.reveal){
         const part=state.progress[state.cursor];
@@ -395,12 +414,12 @@ export function createGardenMission({onChange,onChord,barSeconds=4,exercise:prov
         const target=exercise.sequence[state.cursor];
         // Reveal both atomically: one inventory charge, one render, no route
         // advance between the bass and upper-chord answers.
-        const result=kind==='both'?this.answer(target):this.answerPart(kind,kind==='degree'?(separateBass?gardenRootOffset(target):gardenBassOffset(target)):gardenQualityAnswer(target,{rootMode:separateBass}));
+        const result=kind==='both'?this.answer(target):this.answerPart(kind,kind==='degree'?(rootMode?gardenRootOffset(target):gardenBassOffset(target)):gardenQualityAnswer(target,{rootMode}));
         return {...result,assisted:true};
       }
-      if(kind==='both'||![2,4].includes(spec.divisor)||!consume())return {ignored:true};
-      state.filters[kind]={divisor:spec.divisor,remaining:spec.rounds?exercise.sequence.length*spec.rounds:spec.steps};
-      state.feedback=`Подсказка: ${kind==='degree'?(separateBass?'корень':'бас'):'аккорды'} ×${spec.divisor}, ${state.filters[kind].remaining} ходов`;
+      if(kind==='both'||![2,3,4].includes(spec.divisor)||!consume())return {ignored:true};
+      state.filters[kind]={divisor:spec.divisor,...(spec.maxChoices?{maxChoices:spec.maxChoices}:{}),remaining:spec.rounds?exercise.sequence.length*spec.rounds:spec.steps};
+      state.feedback=`Подсказка: ${kind==='degree'?(rootMode?'ROOT':'бас'):kind==='bass'?'BASS':'аккорды'} ${spec.maxChoices?'· '+spec.maxChoices+' варианта':'×'+spec.divisor}, ${state.filters[kind].remaining} ходов`;
       emit();return {assisted:true,kind};
     },
     arrange(style,rounds=1){if(!accompaniment.activate(style,rounds))return false;state.feedback='Цветок добавит слой со следующего аккорда';emit();return true;},

@@ -199,6 +199,16 @@ body.world-open>.hud:not(.mandala-menu){opacity:0;pointer-events:none;visibility
 body.garden-impact #world,body.garden-impact #life,body.garden-impact #ship-layer{transform:translate(var(--impact-x,0px),var(--impact-y,0px))}
 body.garden-impact .vignette{box-shadow:inset 0 0 75px #ffac6859}
 .vital-pickup{display:block;width:18px;height:18px;object-fit:contain;filter:drop-shadow(0 0 5px var(--vital))}
+.vital[hidden]{display:none}
+.resonance-symbol{box-sizing:border-box;border:1px solid #c2e5ff99;border-radius:50%;text-align:center;font:12px/16px Georgia,serif;color:#e6f7ff;background:transparent}
+.vital[data-resource="resonance"] .vital-column{background:linear-gradient(90deg,#c2e5ff05,#e8f8ff0c 48%,#c2e5ff05);box-shadow:inset 0 0 5px #dff4ff0a,0 0 6px #c2e5ff12;border-color:#c2e5ff80}
+.vital[data-resource="resonance"] .vital-column i{background:linear-gradient(90deg,#c2e5ff10,#e8f8ff35 48%,#c2e5ff18);box-shadow:inset 1px 0 2px #ecfaff44,0 0 5px #c2e5ff1a}
+.vital[data-resource="resonance"] .vital-column em{background:#eaf8ff;box-shadow:0 0 4px #c2e5ff66;opacity:.85}
+.vital[data-resource="resonance"].low .vital-column{border-color:#ffb2a0b0}
+.resonance-guide-symbols{display:flex;flex-wrap:wrap;gap:6px}.resonance-guide-symbols canvas{width:64px;height:64px;touch-action:pan-y}
+.run-readout{display:flex;align-items:center;gap:7px;height:26px;margin:0 105px 3px 0;pointer-events:none!important;user-select:none;color:#d7eee7cf;text-shadow:0 1px 4px #001719}
+.run-readout>span{min-width:52px;padding:3px 6px;border:1px solid #a4dcd55e;border-radius:5px;background:transparent;font:11px/16px ui-monospace,monospace;white-space:nowrap}
+.run-readout b{font-weight:400;font-variant-numeric:tabular-nums}.run-readout i{font-style:normal;opacity:.7}.run-readout small{font:9px/1 ui-monospace,monospace;color:#e8d58f}
 @media(max-width:760px){.vital-pickup{width:16px;height:16px}.vital-event{top:71px}}
 
 /* Compact flight controls: no permanent navigation slab over the ship. */
@@ -388,7 +398,9 @@ body.training .site-header #garden-home{display:grid;place-items:center;position
 .header-actions .navigation-icon{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px #83f1ca55)}
 /* Reserve the header strip for navigation; neither icon covers chain dots. */
 #harmony-hud[data-variant=minimal] .route-heading{margin-right:100px}
-#harmony-hud[data-variant=minimal] .chord-route.chord-route{padding-top:29px}
+/* The timer rail now occupies this former spacer. Keeping both moved the
+   non-paged, two-row chain down onto the accompaniment flowers. */
+#harmony-hud[data-variant=minimal] .chord-route.chord-route{padding-top:0}
 body.start-open .site-header #garden-home{display:none}
 #harmony-hud[data-variant=minimal] .answers-panel .mission-toggle{top:140px}
 .flight-tools{top:184px}
@@ -530,15 +542,15 @@ body.teacher-mode .flight-tools-body{position:absolute;left:64px;top:auto;bottom
 body.teacher-mode .flight-tools[open] .flight-tools-body{left:64px}
 body.teacher-mode .infinity-continue{left:76px;top:auto;bottom:108px}
 @media(min-width:761px){body.teacher-mode .flight-tools{bottom:76px}body.teacher-mode .bass-panel{bottom:132px}body.teacher-mode .flight-tools-body{width:230px}}
-body.teacher-mode .bass-panel{width:38px}
-body.teacher-mode #bass-options button{width:min(30px,calc((100dvh - 350px)/12));height:min(30px,calc((100dvh - 350px)/12));min-height:0;padding:0;border-radius:50%;justify-self:center;align-self:center;font-size:12px}
+body.teacher-mode .bass-panel{width:46px}
+body.teacher-mode #bass-options button{width:46px;height:min(30px,calc((100dvh - 350px)/12));min-height:0;padding:0;border-radius:999px;justify-self:center;align-self:center;font-size:12px}
 .degree-option,.quality-option{position:relative;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .degree-option::before,.quality-option::before{content:"";position:absolute;inset:-2px;border-radius:inherit}
 .chain-pager{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px;pointer-events:auto;color:#d2e8df;font:10px/1.2 ui-monospace,monospace;text-shadow:0 1px 3px #001719}
 .chain-pager[hidden]{display:none}
 .chain-pager button{width:30px;min-height:24px;padding:0;border:1px solid #b1dbce55;border-radius:12px;background:transparent;color:inherit;font:19px/1 system-ui}
 .chain-pager button:disabled{opacity:.25}
-#harmony-hud[data-variant=minimal] .chord-route.route-paged{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(44px,auto));gap:5px 8px!important;overflow:visible!important;padding-top:29px}
+#harmony-hud[data-variant=minimal] .chord-route.route-paged{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(44px,auto));gap:5px 8px!important;overflow:visible!important;padding-top:0}
 #harmony-hud[data-variant=minimal] .chord-route.route-paged .chord-slot[hidden]{display:none!important}
 #harmony-hud[data-variant=minimal] .route-paged .route-copy b{display:block;max-width:100%;font-size:11px!important;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
 #harmony-hud[data-variant=minimal] .route-paged .route-node{width:24px;height:24px}
@@ -558,7 +570,7 @@ body.paged-chain .infinity-continue{left:76px;top:auto;bottom:108px}
    neighbouring bass buttons overlap on compact phone screens. */
 body.teacher-mode .bass-panel{bottom:148px;max-height:480px}
 body.teacher-mode #bass-options{gap:6px}
-body.teacher-mode #harmony-hud[data-variant=minimal] #bass-options .degree-option{width:auto;height:100%;min-width:0;min-height:0;max-width:30px;max-height:30px;aspect-ratio:1;padding:0;box-sizing:border-box;justify-self:center;align-self:center;font-size:clamp(9px,1.5dvh,12px);border-radius:50%}
+body.teacher-mode #harmony-hud[data-variant=minimal] #bass-options .degree-option{width:46px;height:100%;min-width:0;min-height:0;max-width:46px;max-height:30px;aspect-ratio:auto;padding:0 3px;box-sizing:border-box;justify-self:center;align-self:center;font-size:clamp(7px,calc((100dvh - 480px)/12),12px);line-height:1;white-space:nowrap;border-radius:999px}
 #harmony-hud[data-variant=minimal] .degree-option,#harmony-hud[data-variant=minimal] .quality-option,#bass-options button{text-shadow:0 1px 2px #001719,0 0 4px #001719}
 /* Keep the bottom steering area open even while the inventory is expanded. */
 .flight-tools-body{pointer-events:none}
@@ -674,3 +686,15 @@ body.world-open .flight-tools{visibility:hidden}
  .field-lotus-note>svg{width:36px;min-width:36px;height:36px}
  .field-action{font-size:8px;letter-spacing:.02em}
 }
+.game-recording{display:grid;gap:8px;border-top:1px solid #b7e4dd30;padding-top:12px}
+.game-recording[hidden],.recording-bar[hidden]{display:none!important}
+.game-recording p{margin:0;color:#b4cec8;font:12px/1.5 system-ui,sans-serif}
+.game-recording a,.recording-result a{display:inline-block;color:#d7eee7;border:1px solid #a4dcd56e;border-radius:8px;padding:9px 14px;text-align:center;text-decoration:none;font:14px/1.3 system-ui,sans-serif}
+.recording-bar{position:fixed;left:50%;top:max(8px,env(safe-area-inset-top));transform:translateX(-50%);z-index:170;display:flex;align-items:center;gap:10px;padding:4px 5px 4px 10px;border:1px solid #d6b0a75e;border-radius:8px;background:#142923d9;color:#e9f6ef;font:11px/1.2 ui-monospace,monospace;pointer-events:auto}
+.recording-bar span{display:flex;align-items:center;gap:5px}.recording-bar i{width:6px;height:6px;border-radius:50%;background:#f38b82}.recording-bar b{font-weight:400;font-variant-numeric:tabular-nums}
+.recording-bar button{padding:6px 9px;min-height:30px;font:12px/1.1 system-ui,sans-serif;border:1px solid #b7e4dd50;border-radius:5px;color:#d7eee7;background:transparent}
+.recording-result{max-width:min(760px,90vw);max-height:90vh;box-sizing:border-box;padding:20px;border:1px solid #a4dcd578;border-radius:16px;background:#0b2928;color:#d7eee7;overflow:auto}
+.recording-result::backdrop{background:#031717ba}.recording-result h2{margin:0 0 12px;font:24px/1.2 Georgia,serif}
+.recording-result video{display:block;width:100%;max-height:65vh;background:#031717;border-radius:8px}
+.recording-result p{font:13px/1.5 system-ui,sans-serif;color:#b4cec8}.recording-result>div{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.recording-result button{padding:9px 14px;min-height:38px;border-radius:8px;color:#d7eee7;background:transparent;border:1px solid #a4dcd56e}

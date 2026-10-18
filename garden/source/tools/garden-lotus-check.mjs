@@ -22,7 +22,7 @@ try{
   mission.start();assert(life.useAssist(mission,'degreeReveal').ignored);mission.advance();
   assert.equal(mission.answerPart('degree',5).correct,false,'root is NOT the bass');
   assert.equal(mission.answerPart('quality','maj').correct,false,'bare quality cannot identify a different-root upper chord');
-  for(const spec of Object.values(GARDEN_ITEMS).filter(i=>i.assist&&!i.assist.reveal)){
+  for(const spec of Object.values(GARDEN_ITEMS).filter(i=>i.assist&&!i.assist.reveal&&!i.teacherOnly)){
     mission.assist(spec.assist,{consume:()=>true});const state=mission.snapshot(),kind=spec.assist.answerKind;
     const choices=gardenFilteredChoices(kind,state.current,state.filters[kind],kind==='quality'?gardenAvailableAnswers(exercise):undefined);
     assert(choices.has(kind==='degree'?gardenBassOffset(state.current):gardenQualityAnswer(state.current)));
@@ -32,7 +32,7 @@ try{
 assert.equal(GARDEN_ITEMS.degreeReveal.sprite,'arpeggio-flower','The approved pinwheel is restored with its exact existing sprite');
 assert.equal(GARDEN_ITEMS.degreeReveal.assist.answerKind,'both');
 assert.equal(GARDEN_ITEMS.arpeggio,undefined,'The extra blue full-answer artifact is removed from active play');
-for(const item of Object.values(GARDEN_ITEMS).filter(i=>i.assist&&!i.assist.reveal))assert.equal(item.sprite,item.assist.answerKind==='degree'?'hold-arpeggio-flower':'root-flower','Filters reuse the approved spiral and seed sprites');
+for(const item of Object.values(GARDEN_ITEMS).filter(i=>i.assist&&!i.assist.reveal))assert.equal(item.sprite,item.assist.answerKind==='bass'?null:item.assist.answerKind==='degree'?'hold-arpeggio-flower':'root-flower','Existing filters reuse approved sprites; bass uses its own drawn clef');
 for(const routeLength of [4,8]){
   const spawned=new GardenLife({random:()=>.17});spawned.spawnClock=spawned.craterClock=spawned.asteroidClock=spawned.stormClock=spawned.arrangementClock=999;spawned.assistClock=0;
   spawned.update(.01,{width:400,height:600,x:200,y:500,active:true,flying:true,answering:false,routeLength});
@@ -52,7 +52,7 @@ for(const kind of ['holdArpeggio','arrangementBoost'])for(let bass=0;bass<12;bas
     assert(result.assisted);assert.equal(spiralLife.inventory[kind],0);
     assert.deepEqual(after.currentParts,before.currentParts);assert.deepEqual(after.filters.quality,before.filters.quality);
     const choices=gardenFilteredChoices('degree',after.current,after.filters.degree);
-    assert.equal(choices.size,1+Math.ceil(11/divisor));assert(choices.has(bass));
+    assert.equal(choices.size,GARDEN_ITEMS[kind].assist.maxChoices??1+Math.ceil(11/divisor));assert(choices.has(bass));
     assert(spiralLife.useAssist(spiralMission,kind).ignored,'empty charge is not reused');
     spiralLife.collect(spiralLife.forceSpawn(kind));spiralMission.pause();
     assert(spiralLife.useAssist(spiralMission,kind).ignored);assert.equal(spiralLife.inventory[kind],1);

@@ -3,6 +3,8 @@ const EN={
  'Страницы цепочки аккордов':'Chord sequence pages','Предыдущая часть цепочки':'Previous sequence page','Следующая часть цепочки':'Next sequence page',
  'БАС':'BASS','Нота баса':'Bass note','Корень аккорда относительно тоники':'Chord root relative to the tonic',
  'Корень внизу · бас слева · тип справа':'Root below · bass left · quality right',
+ 'Корень внизу · тип справа · бас автоматически':'Root below · quality right · automatic bass',
+ 'Резонанс · надстройки':'Resonance · tensions',
  'Корень и тип найдены — найди бас слева':'Root and quality found — find the bass on the left',
  'Все части аккорда найдены':'All chord parts found','Все части сигнала встроены в маршрут':'All signal parts added to the route',
  'Корень найден — найди тип аккорда':'Root found — find the chord quality','Тип найден — найди корень внизу':'Quality found — find the root below',

@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import {GardenResonance,GARDEN_TENSIONS,gardenTensionVerdict,gardenTensionMidi,gardenOxygenProfile} from '../garden-resonance.mjs';
+import {GardenPad} from '../garden-harmony.mjs';
+const chord={offset:7,bassOffset:2,quality:'7',notes:[38,60,64,67,70]},original=JSON.stringify(chord);
+for(let tonic=0;tonic<12;tonic++)for(const t of GARDEN_TENSIONS){
+ assert.equal(gardenTensionMidi(chord,tonic,t.label),60+(tonic+7)%12+t.interval,'extension is relative to ROOT, never slash bass');
+ assert.equal(gardenTensionVerdict(chord,t.label),['11','7'].includes(t.label)?'invalid':'valid');
+}
+assert.equal(gardenTensionVerdict({offset:0,quality:'7sus4'},'11'),'valid','suspension is already a chord tone');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7b5'},'9'),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7b5natural9'},'9'),'valid','explicitly written natural ninth is recognised');
+assert.equal(gardenTensionVerdict({offset:0,quality:'7b9'},'9'),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'maj7'},'11'),'invalid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'7',voicingNote:'no-third'},'11'),'neutral','no invented major-third clash in an omitted-third voicing');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7',notes:[60,63,67,70]},'11',{tonic:0}),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7'},'13'),'neutral');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7',tensionMode:'dorian'},'13'),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7',tensionMode:'phrygian'},'♭9'),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'maj7'},'♯11'),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'maj7sharp11'},'♯11'),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'maj7'},'11',{chapter:13}),'invalid','chapter does not silently change the vertical drill');
+for(const q of ['maj','maj7','m7','7','m7b5'])assert.equal(gardenTensionVerdict({offset:0,quality:q},'♭3'),gardenTensionVerdict({offset:0,quality:q},'♯9'),'enharmonic labels always share a verdict');
+assert.equal(gardenTensionVerdict({offset:0,quality:'maj7'},'♭3'),'neutral');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7'},'♭3'),'valid');
+assert.equal(gardenTensionVerdict({offset:0,quality:'7sus4'},'♭9'),'neutral');
+assert.equal(gardenTensionVerdict({offset:0,quality:'m7b5'},'♭13'),'valid');
+assert.equal(new Set(GARDEN_TENSIONS.map(t=>t.interval%12)).size,12);
+assert.equal(gardenTensionVerdict({offset:0,quality:'unknown'},'11'),'neutral');
+for(const [imported,family] of [['ireal:m11','m7natural9'],['ireal:9','7'],['ireal:13','7'],['ireal:7#9','7'],['ireal:7#11','7']])for(const tone of GARDEN_TENSIONS)assert.equal(gardenTensionVerdict({offset:0,quality:imported},tone.label),gardenTensionVerdict({offset:0,quality:family},tone.label),'imported extension keeps its existing harmonic family');
+for(const quality of ['maj','maj7','m7','7','m7b5','dim7','aug','ireal:o','1']){
+ const profile=gardenOxygenProfile({offset:0,quality});
+ assert(profile.available>0);assert(Math.abs(profile.reward*profile.available/12-3.5)<1e-9,'equal expected income across chord palettes');
+}
+assert.equal(gardenOxygenProfile({quality:'unknown'}).drain,0,'unsupported neutral-only harmony cannot spend uncollectable oxygen');
+const calls=[],res=new GardenResonance({random:()=>.5,onTone:(midi,event)=>calls.push({midi,event})});
+assert.equal(res.spawn('9'),null,'Student and Applicant have no tokens');
+res.reset(true);
+const sounding={chord,tonic:5,at:10,barSeconds:4},context={audioTime:11};
+let token=res.spawn('9'),result=res.collect(token,sounding,context);
+assert.equal(result.verdict,'valid');assert.equal(res.energy,84.2);assert.equal(calls.length,1);assert.equal(calls[0].midi,74);
+assert(res.collect(token,sounding,context).ignored);assert.equal(calls.length,1,'each token is single-use');
+token=res.spawn('11');result=res.collect(token,sounding,context);
+assert.equal(result.verdict,'invalid');assert.equal(res.energy,64.2);assert.equal(calls[1].midi,77,'wrong tension still sounds its own note, not an error beep');
+for(const audioTime of [10.05,13.95]){result=res.collect(res.spawn('11'),sounding,{audioTime});assert.equal(result.verdict,'neutral');assert(result.boundary);assert.equal(res.energy,64.2);}
+res.reset(true);res.collect(res.spawn('13'),{...sounding,chord:{offset:0,quality:'m7'}},context);assert.equal(res.energy,80,'ambiguous tension has no penalty');
+const view={active:true,paused:false,width:400,height:844,x:390,y:800,sounding,audioTime:11,solvedChords:2,totalChords:8};
+res.reset(true);for(let i=0;i<200;i++)res.update(.1,{...view,solvedChords:1});
+assert.equal(res.entities.length,0,'no automatic tensions before two fully solved chords');assert(Math.abs(res.energy-71)<1e-8,'oxygen is spent even before two solved chords');
+for(let i=0;i<60;i++)res.update(.1,view);
+assert(res.entities.length>0,'tokens appear naturally');
+assert(res.entities.every(e=>(e.x>=.22&&e.x<=.30)||(e.x>=.70&&e.x<=.78)),'side lanes leave the centre clear');
+assert(Math.abs(res.energy-68.3)<1e-8,'oxygen drains 27 per active minute on short routes');
+const early=new GardenResonance({random:()=>.5}),late=new GardenResonance({random:()=>.5});early.reset(true);late.reset(true);
+early.update(3,view);late.update(3,{...view,solvedChords:7});assert(early.clock>late.clock&&late.clock>=4.2,'frequency increases gently with solved fraction');
+const snapshot=JSON.stringify(res.snapshot());res.update(30,{...view,paused:true});assert.equal(JSON.stringify(res.snapshot()),snapshot,'pause freezes tokens and energy');
+const beforePassing=res.energy;res.entities=[{id:999,label:'11',x:0,y:1.2,vy:0,age:0,collected:false}];res.update(.01,view);assert(Math.abs(res.energy-(beforePassing-.0045))<1e-8,'passing costs nothing beyond background drain');
+res.energy=0;for(let i=0;i<34;i++)res.update(.1,{active:true});assert(!res.gameOver);res.restore();assert.equal(res.energy,100);assert(!res.gameOver);
+res.energy=0;for(let i=0;i<36;i++)res.update(.1,{active:true});assert(res.gameOver,'RES has a recoverable 3.5-second zero window');
+res.reset(false);res.update(30,view);assert.equal(res.entities.length,0);assert.equal(res.energy,80);
+assert.equal(JSON.stringify(chord),original,'catalog and MIDI are untouched');
+const pad=new GardenPad(),tones=[];
+pad.context={state:'running',currentTime:4,createGain:()=>({gain:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}}),createOscillator:()=>{const t={frequency:{value:0},connect(){},disconnect(){},start(at){this.at=at;},stop(at){this.until=at;}};tones.push(t);return t;}};pad.cleanOutput={};
+assert.equal(pad.tensionNote(74),3);assert(tones.every(t=>Math.abs(t.at-4.004)<1e-9&&Math.abs(t.until-4.854)<1e-9),'all partials attack together, ring once and stop');
+assert.equal(pad.lastTension.loop,false);assert.equal(pad.lastTension.midi,74);assert.equal(pad.transients.size,1);pad.stop(true);assert.equal(pad.transients.size,0);assert.equal(pad.sounding,null);
+console.log('Resonance passed: 12 keys, ROOT-relative notes, conservative rules, modal/half-diminished safety, 180ms boundary grace, one-shot metallic notes, pause, passing, restoration, zero rescue and Teacher isolation.');

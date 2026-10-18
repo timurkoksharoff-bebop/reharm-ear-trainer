@@ -39,7 +39,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    await ac.close();return {size:blob.size,type:blob.type,peak,width:video.videoWidth,height:video.videoHeight,ended:__recordProbe.stream.getTracks().every(t=>t.readyState==='ended')};
   });
   assert(result.size>5000);assert(result.peak>.001,'file contains audible game output');assert.equal(result.width,640);assert.equal(result.height,360);assert(result.ended);
-  const saved=page.waitForEvent('download');await page.locator('#recording-save').click();const download=await saved;assert.match(download.suggestedFilename(),/^EAR-YOGA-v1\.34-.*\.(webm|mp4)$/);
+  const saved=page.waitForEvent('download');await page.locator('#recording-save').click();const download=await saved;assert(download.suggestedFilename().startsWith('EAR-YOGA-v'+await page.evaluate(()=>window.GARDEN_VERSION)+'-'));assert.match(download.suggestedFilename(),/\.(webm|mp4)$/);
   await page.locator('#recording-result').screenshot({path:'/private/tmp/ear-yoga-recording-result.png'});
   await page.locator('#recording-close').click();await page.locator('#world-controls').click();
   await page.evaluate(()=>{__recordProbe.cancel=true;});await page.locator('#recording-start').click();

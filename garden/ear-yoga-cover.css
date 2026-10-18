@@ -74,8 +74,6 @@ html[data-wordmark=sans] .ear-yoga-wordmark em{font-weight:200}
 #garden-start{--wordmark-size:25.8vw;--wordmark-top:16dvh}
 #garden-start .start-copy h2.ear-yoga-wordmark{position:absolute!important;top:var(--wordmark-top)!important;left:7.3vw!important;width:66.667vw!important;margin:0!important;text-align:center!important;font-family:'Helvetica Neue',Arial,sans-serif!important;font-size:var(--wordmark-size)!important;font-style:normal!important;font-weight:200!important;letter-spacing:-.055em!important;line-height:1.05!important}
 #garden-start .ear-yoga-wordmark em{font-weight:inherit!important;font-style:normal!important}
-/* Exact exported coordinates: do not derive or re-anchor the subtitle. */
-#garden-start .start-copy>.start-college{position:absolute!important;top:29.8dvh!important;left:8.7vw!important;width:46.64vw!important;margin:0!important;text-align:justify!important;text-align-last:justify!important;border:0!important;border-radius:0!important;padding:0!important;background:none!important;font:300 3.15vw/1.4 'Helvetica Neue',Arial,sans-serif!important;letter-spacing:.4em!important;color:#fff!important}
 #garden-start :where(.difficulty-picker){top:33.5dvh;left:3vw;transform:scale(.9);transform-origin:center top}
 #garden-start :where(.difficulty-picker) button{font-size:calc(clamp(11px,2.9vw,16px) * 1.15)}
 #garden-start :where(.start-controls){top:48dvh;right:8vw;transform:scale(.875);transform-origin:right top}
@@ -96,4 +94,13 @@ html[data-wordmark=sans] .ear-yoga-wordmark em{font-weight:200}
  .garden-start .start-copy>.start-college{position:static;font:300 11px/1.4 'Helvetica Neue',Arial,sans-serif;letter-spacing:.22em}
  .garden-start .start-copy h2.ear-yoga-wordmark{position:static;width:auto;font-family:'Helvetica Neue',Arial,sans-serif;font-size:58px;font-weight:200}
  .garden-start .difficulty-picker{position:static;width:100%}
+}
+/* Atomic brand lockup. Only this parent has viewport coordinates. The small
+   endorsement lives inside it, between the E's left edge and g's descender. */
+#garden-start .ear-yoga-lockup{position:relative;display:block;width:max-content;max-width:100%;font-size:58px;margin:18px 0 24px;line-height:1.05}
+#garden-start .ear-yoga-lockup h2.ear-yoga-wordmark{position:relative!important;top:auto!important;left:auto!important;width:100%!important;margin:0!important;font:200 1em/1.05 'Helvetica Neue',Arial,sans-serif!important;letter-spacing:-.055em!important;white-space:nowrap;text-align:center!important}
+#garden-start .ear-yoga-lockup .start-college{position:absolute!important;top:.89em;left:0;display:block;width:max-content;max-width:none;margin:0;padding:0;border:0;border-radius:0;background:none;color:#fff;font:300 .122093em/1 'Helvetica Neue',Arial,sans-serif;letter-spacing:.4em;white-space:nowrap;text-align:left;text-shadow:0 1px 5px #05132180}
+#garden-start .ear-yoga-lockup .brand-baseline{display:inline-block;width:0;height:0;margin:0;padding:0;border:0;vertical-align:baseline;font:inherit;letter-spacing:0}
+@media(orientation:portrait){
+ #garden-start .ear-yoga-lockup{position:absolute;top:var(--wordmark-top);left:7.3vw;width:66.667vw;max-width:none;margin:0;font-size:var(--wordmark-size)}
 }

@@ -1,21 +1,24 @@
 const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const layout=require('../yoga-locked-layout.json');
+const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8788/';
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
   const context=await browser.newContext({viewport:{width:1440,height:950},serviceWorkers:'block'}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:8783/yoga-layout-studio.html');
+  await page.goto(new URL('yoga-layout-studio.html',base).href);
   const preview=page.frameLocator('iframe');await preview.locator('#garden-start').waitFor({state:'visible'});
-  assert.equal(await page.locator('#controls input').count(),19);
+  assert.equal(await page.locator('#controls input').count(),14);
   const before=await preview.locator('#start-title').evaluate(e=>e.getBoundingClientRect().top);
+  const collegeBefore=await preview.locator('.start-college').evaluate(e=>e.getBoundingClientRect().top);
   await page.locator('[data-key="titleY"]').press('ArrowRight');
+  await page.waitForTimeout(60);
   const after=await preview.locator('#start-title').evaluate(e=>e.getBoundingClientRect().top);
   assert(after>before,'title is unlocked and moves');
-  const collegeBefore=await preview.locator('.start-college').evaluate(e=>e.getBoundingClientRect().top);
-  await page.locator('[data-key="subtitleY"]').press('ArrowRight');
-  assert((await preview.locator('.start-college').evaluate(e=>e.getBoundingClientRect().top))>collegeBefore,'subtitle is independently unlocked');
+  const collegeAfter=await preview.locator('.start-college').evaluate(e=>e.getBoundingClientRect().top);
+  assert(Math.abs((after-before)-(collegeAfter-collegeBefore))<.5,'title and College move together');
+  assert.equal(await page.locator('[data-key="subtitleY"]').count(),0,'no independent subtitle position can detach it');
   await preview.locator('#start-random').click();
   assert(await preview.locator('#garden-start').isVisible(),'editing buttons never launches a game');
   const download=page.waitForEvent('download');await page.locator('#export-layout').click();
@@ -31,13 +34,13 @@ const layout=require('../yoga-locked-layout.json');
   const metrics=element=>{const r=element.getBoundingClientRect(),s=getComputedStyle(element);return {x:r.x,y:r.y,width:r.width,height:r.height,fontSize:s.fontSize,tracking:s.letterSpacing};};
   const expected=await Promise.all(['#start-title','.start-college','.difficulty-picker','.start-controls'].map(selector=>preview.locator(selector).evaluate(metrics)));
   const app=await context.newPage();await app.setViewportSize(layout.referenceViewport);
-  await app.goto('http://127.0.0.1:8783/?cover-check=1');await app.locator('#garden-start').waitFor({state:'visible'});
+  await app.goto(base);await app.locator('#garden-start').waitFor({state:'visible'});await app.waitForFunction(()=>document.querySelector('.ear-yoga-lockup').dataset.lockup==='ready');
   const actual=await Promise.all(['#start-title','.start-college','.difficulty-picker','.start-controls'].map(selector=>app.locator(selector).evaluate(metrics)));
   for(let i=0;i<actual.length;i++)for(const field of ['x','y','width','height'])assert(Math.abs(actual[i][field]-expected[i][field])<.5,'app matches editor: '+i+' '+field);
   assert.equal(actual[0].fontSize,expected[0].fontSize);
   assert.equal(actual[1].fontSize,expected[1].fontSize);
   await app.screenshot({path:'/private/tmp/ear-yoga-applied-cover.png'});
   assert.deepEqual(errors,[]);
-  console.log('Cover editor passed: unlocked title/subtitle/buttons, live preview, persistence, JSON export, safe game isolation and side-panel layout.');
+  console.log('Cover editor passed: unified draggable title + College, live preview, persistence, JSON export, safe game isolation and side-panel layout.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

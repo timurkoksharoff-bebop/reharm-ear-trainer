@@ -12,8 +12,10 @@ import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangem
 import {GardenResonance} from './garden-resonance.mjs';
 import {GardenRun} from './garden-run.mjs';
 import {mountGardenRecording} from './garden-recording.mjs';
+import {bindGardenBrand} from './garden-brand.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
 $('build-version').textContent='v'+(globalThis.GARDEN_VERSION||'dev');
+bindGardenBrand();
 function setPlaybackIcon(button,running){
   const state=running?'pause':'play';if(button.dataset.playbackState===state)return;
   button.dataset.playbackState=state;

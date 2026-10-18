@@ -62,9 +62,8 @@ const locked=require('../yoga-locked-layout.json');
    const boxes=await page.evaluate(()=>['.start-college','.ear-yoga-wordmark','.difficulty-picker'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom};}));
    assert(boxes[1].bottom<boxes[2].y,'wordmark clears difficulty at '+width);assert(boxes.every(b=>b.x>=-1&&b.right<=width),'brand fits viewport '+width);
    if(width<height&&width<600){
-    assert(Math.abs(boxes[0].y-height*locked.subtitleY/100)<1,'College uses the user-exported vertical coordinate');
     assert(Math.abs(boxes[1].y-height*locked.titleY/100)<1,'Ear Yoga uses the user-exported vertical coordinate');
-    assert(Math.abs(boxes[0].x-width*locked.subtitleX/100)<1,'College uses the user-exported horizontal coordinate');
+    assert.equal(await page.locator('.ear-yoga-lockup > .start-college').count(),1,'College belongs to the title lockup, not the viewport');
    }
    if(width===414)await page.screenshot({path:'/private/tmp/ear-yoga-1.21-xs-max.png'});
   }

@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg?v=1.34"><link rel="apple-touch-icon" href="icon-192-v1.34.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.34">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.34">
+  <link rel="icon" href="icon.svg?v=1.35"><link rel="apple-touch-icon" href="icon-192-v1.35.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.35">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.35">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -54,8 +54,10 @@
     <small id="build-version" class="build-version" translate="no"></small>
     <div class="garden-start-shell">
       <div class="start-copy">
-        <span class="overline start-college">SPACE MUSIC COLLEGE</span>
-        <h2 id="start-title" class="ear-yoga-wordmark" translate="no">Ear <em>Yoga</em><i aria-hidden="true"></i></h2>
+        <div class="ear-yoga-lockup" aria-label="Ear Yoga · Space Music College" translate="no">
+          <h2 id="start-title" class="ear-yoga-wordmark">Ear <em>Yoga</em><b class="brand-baseline" aria-hidden="true"></b></h2>
+          <span class="overline start-college">SPACE MUSIC COLLEGE<b class="brand-baseline" aria-hidden="true"></b></span>
+        </div>
         <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
       </div>
       <button id="start-menu" class="start-menu" type="button">☰ <span>Меню</span></button>
@@ -186,6 +188,6 @@
   <div id="recording-bar" class="recording-bar" data-user-content hidden><span><i aria-hidden="true"></i> REC <b id="recording-clock">00:00</b></span><button id="recording-stop" type="button">■ Стоп</button></div>
   <dialog id="recording-result" class="recording-result" data-user-content aria-labelledby="recording-title"><h2 id="recording-title">Запись полёта</h2><video id="recording-video" controls playsinline preload="metadata"></video><p id="recording-note"></p><div><a id="recording-save">Сохранить видео</a><button id="recording-close" type="button">Закрыть</button></div></dialog>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.34" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.35" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

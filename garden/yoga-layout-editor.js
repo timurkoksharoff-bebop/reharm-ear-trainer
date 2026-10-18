@@ -2,10 +2,8 @@
  const storageKey='ear-yoga-cover-editor.v2',frame=document.querySelector('iframe'),area=document.querySelector('.preview-area'),space=document.querySelector('.phone-space');
  const defaults={title:25.8,titleX:7.3,titleY:16,titleWidth:66.667,titleWeight:200,titleTracking:-.055,subtitle:3.15,subtitleX:8.7,subtitleY:29.8,subtitleWidth:46.64,tracking:.4,levelsY:33.5,levelsX:3,levelsScale:.9,levelsText:1.15,actionsY:48,actionsX:8,actionsScale:.875,actionsText:1.15,screen:'390x692'};
  const groups=[
- ['Ear Yoga',[
+ ['Ear Yoga + Space Music College',[
  ['title','Размер букв',7,32,.1,'vw'],['titleX','Влево / вправо',-10,80,.1,'vw'],['titleY','Выше / ниже',0,90,.1,'vh'],['titleWidth','Ширина блока',30,110,.1,'vw'],['titleWeight','Толщина букв',100,600,50,''],['titleTracking','Интервал между буквами',-.15,.2,.005,'em']]],
- ['Space Music College',[
- ['subtitle','Размер букв',1,5,.05,'vw'],['subtitleX','Влево / вправо',-10,90,.1,'vw'],['subtitleY','Выше / ниже',0,90,.1,'vh'],['subtitleWidth','Ширина блока',20,100,.1,'vw'],['tracking','Интервал между буквами',0,1,.01,'em']]],
  ['Абитуриент · Студент · Преподаватель',[
  ['levelsX','Влево / вправо',-20,80,.1,'vw'],['levelsY','Выше / ниже',0,90,.1,'vh'],['levelsScale','Размер кнопок',.5,1.5,.01,'×'],['levelsText','Размер текста',.6,1.8,.01,'×']]],
  ['Начать полёт · Выбрать маршрут · Как играть',[
@@ -24,9 +22,9 @@
   const doc=frame.contentDocument;if(!doc?.querySelector('#garden-start'))return;
   let style=doc.querySelector('#cover-editor-overrides');if(!style){style=doc.createElement('style');style.id='cover-editor-overrides';doc.head.append(style);}
   style.textContent=`
-   #garden-start .start-copy h2.ear-yoga-wordmark{position:absolute!important;top:${values.titleY}dvh!important;left:${values.titleX}vw!important;width:${values.titleWidth}vw!important;font-size:${values.title}vw!important;font-weight:${values.titleWeight}!important;letter-spacing:${values.titleTracking}em!important}
+   #garden-start .ear-yoga-lockup{top:${values.titleY}dvh!important;left:${values.titleX}vw!important;width:${values.titleWidth}vw!important;font-size:${values.title}vw!important}
+   #garden-start .ear-yoga-lockup h2.ear-yoga-wordmark{font-weight:${values.titleWeight}!important;letter-spacing:${values.titleTracking}em!important}
    #garden-start .ear-yoga-wordmark em{font-weight:inherit!important}
-   #garden-start .start-copy>.start-college{position:absolute!important;top:${values.subtitleY}dvh!important;left:${values.subtitleX}vw!important;width:${values.subtitleWidth}vw!important;font-size:${values.subtitle}vw!important;letter-spacing:${values.tracking}em!important}
    #garden-start .difficulty-picker{position:absolute!important;top:${values.levelsY}dvh!important;left:${values.levelsX}vw!important;transform:scale(${values.levelsScale})!important}
    #garden-start .difficulty-picker button{font-size:calc(clamp(11px,2.9vw,16px)*${values.levelsText})!important}
    #garden-start .start-controls{position:absolute!important;top:${values.actionsY}dvh!important;right:${values.actionsX}vw!important;transform:scale(${values.actionsScale})!important}
@@ -34,18 +32,19 @@
    #garden-start .start-choice small{font-size:calc(clamp(9px,2.3vw,13px)*${values.actionsText})!important}
    #garden-start .start-tutorial strong,#garden-start .start-route-details>summary{font-size:calc(12px*${values.actionsText})!important}
    #garden-start .start-tutorial small{font-size:calc(10px*${values.actionsText})!important}
-   #garden-start .ear-yoga-wordmark,#garden-start .start-college,#garden-start .difficulty-picker,#garden-start .start-controls{cursor:move;touch-action:none}
+   #garden-start .ear-yoga-lockup,#garden-start .difficulty-picker,#garden-start .start-controls{cursor:move;touch-action:none}
    [data-editor-drag]{outline:1px dashed #e6f4c9!important;outline-offset:4px}`;
+  frame.contentWindow.dispatchEvent(new Event('garden-brand-layout'));
  }
  document.querySelector('#screen').onchange=event=>{values.screen=event.target.value;apply();};
  document.querySelector('#reset-layout').onclick=()=>{values={...defaults};apply();};
  document.querySelector('#export-layout').onclick=()=>{
-  const [width,height]=size(),data={...values,referenceViewport:{width,height},titleText:'Ear Yoga',subtitleText:'SPACE MUSIC COLLEGE',exportedAt:new Date().toISOString()};
+  const [width,height]=size(),data={...values,brandLockup:true,referenceViewport:{width,height},titleText:'Ear Yoga',subtitleText:'SPACE MUSIC COLLEGE',exportedAt:new Date().toISOString()};
   const link=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));link.href=url;link.download='ear-yoga-cover-layout.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);document.querySelector('#layout-status').textContent='Макет скачан. Передай JSON мне — перенесу эти размеры и координаты без перестановок.';
  };
  frame.onload=()=>{
   const doc=frame.contentDocument;let drag=null;
-  const targets=[['.ear-yoga-wordmark','titleX','titleY',1],['.start-college','subtitleX','subtitleY',1],['.difficulty-picker','levelsX','levelsY',1],['.start-controls','actionsX','actionsY',-1]];
+  const targets=[['.ear-yoga-lockup','titleX','titleY',1],['.difficulty-picker','levelsX','levelsY',1],['.start-controls','actionsX','actionsY',-1]];
   doc.addEventListener('pointerdown',event=>{
    const target=targets.find(([selector])=>event.target.closest(selector));if(!target)return;event.preventDefault();event.stopPropagation();
    const element=event.target.closest(target[0]);element.setPointerCapture(event.pointerId);element.setAttribute('data-editor-drag','');

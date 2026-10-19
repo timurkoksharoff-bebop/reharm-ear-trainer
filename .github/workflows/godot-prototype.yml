@@ -1,0 +1,45 @@
+name: Godot prototype checks
+
+on:
+  push:
+    branches: [codex/ear-yoga-godot-prototype]
+    paths: ['godot/**', 'garden/source/**', 'garden/assets/echo-garden/**', 'game/**', '.github/workflows/godot-prototype.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  godot:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare frozen reference data and audio
+        run: |
+          node godot/tools/prepare.mjs
+          node godot/tools/prepare.mjs --check
+      - name: Download pinned official Godot
+        run: |
+          curl -L --fail --retry 3 'https://downloads.godotengine.org/?version=4.5.2&flavor=stable&slug=linux.x86_64.zip' -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.5.2-stable_linux.x86_64"
+          echo "GODOT_BIN=$RUNNER_TEMP/godot/Godot_v4.5.2-stable_linux.x86_64" >> "$GITHUB_ENV"
+      - name: Import and compare against JavaScript 1.36
+        run: |
+          "$GODOT_BIN" --headless --editor --path godot --import --quit
+          "$GODOT_BIN" --headless --path godot --script res://checks/run_checks.gd
+      - name: Check actual renderer, audio clock and UI
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          EAR_YOGA_QA_DIR: ${{ runner.temp }}/ear-yoga-qa
+        run: xvfb-run -a "$GODOT_BIN" --path godot --audio-driver Dummy -- --smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: godot-scene-screenshots
+          path: ${{ runner.temp }}/ear-yoga-qa
+          if-no-files-found: ignore

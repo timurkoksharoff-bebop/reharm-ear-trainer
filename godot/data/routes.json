@@ -1,0 +1,1648 @@
+{
+  "schema": 1,
+  "baseline": "ear-yoga-v1.36-checkpoint",
+  "source": {
+    "book-catalog.mjs": "8c6140edef1d541d44d73ffdfb4f9a0bf52127adc9cace14ec9cdac4be62261c",
+    "music.mjs": "388d8d3b8c21dce89831a280c699ebab8624527b1271ca07dc055d0143d1afe0",
+    "garden-harmony.mjs": "d7219a9d408f896bc536062d8c855cacb28b28fb6e10a00168757d02df774824",
+    "garden-run.mjs": "c78d559455b13ffcf26036dfaedcd9bf38b85665cff3dea2136f68a3d3c23505",
+    "garden-resonance.mjs": "3a46200040135b4d99205f3f241d71e7883d90d0d8a2ab8c973c6ec2e5d06eaf"
+  },
+  "degrees": [
+    "I",
+    "♭II",
+    "II",
+    "♭III",
+    "III",
+    "IV",
+    "♯IV",
+    "V",
+    "♭VI",
+    "VI",
+    "♭VII",
+    "VII"
+  ],
+  "qualityOrder": [
+    "maj",
+    "min",
+    "6",
+    "m6",
+    "7",
+    "maj7",
+    "m7",
+    "m7b5",
+    "dim7",
+    "7sus4",
+    "sus2",
+    "sus4",
+    "aug",
+    "add9",
+    "m7natural9",
+    "m7b5natural9",
+    "maj7sharp11",
+    "7b9",
+    "7b9b13",
+    "7b5",
+    "7sharp5",
+    "7alt",
+    "m7b9",
+    "minSharp5",
+    "augMaj7",
+    "1"
+  ],
+  "tensions": [
+    {
+      "label": "1",
+      "interval": 12
+    },
+    {
+      "label": "♭9",
+      "interval": 13
+    },
+    {
+      "label": "9",
+      "interval": 14
+    },
+    {
+      "label": "♭3",
+      "interval": 15
+    },
+    {
+      "label": "3",
+      "interval": 16
+    },
+    {
+      "label": "11",
+      "interval": 17
+    },
+    {
+      "label": "♯11",
+      "interval": 18
+    },
+    {
+      "label": "5",
+      "interval": 19
+    },
+    {
+      "label": "♭13",
+      "interval": 20
+    },
+    {
+      "label": "13",
+      "interval": 21
+    },
+    {
+      "label": "♭7",
+      "interval": 22
+    },
+    {
+      "label": "7",
+      "interval": 23
+    }
+  ],
+  "routes": [
+    {
+      "id": "fig-1-6",
+      "chapter": 1,
+      "name": "Fig. 1.6 — basic model",
+      "source": "Chapter 1 · Fig. 1.6 · printed p. 9",
+      "baseTonic": 5,
+      "sequence": [
+        {
+          "degree": "I6",
+          "offset": 0,
+          "quality": "6",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            41,
+            53,
+            57,
+            60,
+            62
+          ],
+          "bassMidi": 41,
+          "label": "F6",
+          "qualityLabel": "6",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "VI−7",
+          "offset": 9,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            50,
+            62,
+            65,
+            69,
+            72
+          ],
+          "bassMidi": 50,
+          "label": "D−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "IV",
+          "offset": 5,
+          "quality": "maj",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            46,
+            58,
+            62,
+            65
+          ],
+          "bassMidi": 46,
+          "label": "B♭",
+          "qualityLabel": "maj",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "I6",
+          "offset": 0,
+          "quality": "6",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            41,
+            53,
+            57,
+            60,
+            62
+          ],
+          "bassMidi": 41,
+          "label": "F6",
+          "qualityLabel": "6",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        }
+      ],
+      "distractors": [
+        {
+          "degree": "III−7",
+          "offset": 4,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "II−7",
+          "offset": 2,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "V7sus4",
+          "offset": 7,
+          "quality": "7sus4",
+          "spelling": null,
+          "bassOffset": null
+        }
+      ],
+      "reference": {
+        "degree": "БАЗА I6",
+        "offset": 0,
+        "quality": "6",
+        "spelling": null,
+        "bassOffset": null,
+        "reference": true,
+        "notes": [
+          41,
+          53,
+          57,
+          60,
+          62
+        ],
+        "bassMidi": 41,
+        "label": "F6",
+        "qualityLabel": "6",
+        "tensions": {
+          "1": "neutral",
+          "3": "neutral",
+          "5": "neutral",
+          "7": "neutral",
+          "9": "neutral",
+          "11": "neutral",
+          "13": "neutral",
+          "♭9": "neutral",
+          "♭3": "neutral",
+          "♯11": "neutral",
+          "♭13": "neutral",
+          "♭7": "neutral"
+        },
+        "oxygen": {
+          "available": 0,
+          "reward": 0,
+          "drain": 0
+        }
+      },
+      "choices": [
+        {
+          "value": "maj",
+          "label": "maj"
+        },
+        {
+          "value": "min",
+          "label": "m"
+        },
+        {
+          "value": "6",
+          "label": "6"
+        },
+        {
+          "value": "7",
+          "label": "7"
+        },
+        {
+          "value": "maj7",
+          "label": "maj7"
+        },
+        {
+          "value": "m7",
+          "label": "m7"
+        },
+        {
+          "value": "m7b5",
+          "label": "m7♭5"
+        },
+        {
+          "value": "dim7",
+          "label": "°7"
+        },
+        {
+          "value": "7sus4",
+          "label": "7sus4"
+        },
+        {
+          "value": "sus4",
+          "label": "sus4"
+        }
+      ]
+    },
+    {
+      "id": "fig-1-7",
+      "chapter": 1,
+      "name": "Fig. 1.7 — simple substitution",
+      "source": "Chapter 1 · Fig. 1.7 · printed p. 9",
+      "baseTonic": 5,
+      "sequence": [
+        {
+          "degree": "I6",
+          "offset": 0,
+          "quality": "6",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            41,
+            53,
+            57,
+            60,
+            62
+          ],
+          "bassMidi": 41,
+          "label": "F6",
+          "qualityLabel": "6",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "III−7",
+          "offset": 4,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            45,
+            57,
+            60,
+            64,
+            67
+          ],
+          "bassMidi": 45,
+          "label": "A−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "II−7",
+          "offset": 2,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            43,
+            55,
+            58,
+            62,
+            65
+          ],
+          "bassMidi": 43,
+          "label": "G−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "I6",
+          "offset": 0,
+          "quality": "6",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            41,
+            53,
+            57,
+            60,
+            62
+          ],
+          "bassMidi": 41,
+          "label": "F6",
+          "qualityLabel": "6",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        }
+      ],
+      "distractors": [
+        {
+          "degree": "VI−7",
+          "offset": 9,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "IV",
+          "offset": 5,
+          "quality": "maj",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "V7sus4",
+          "offset": 7,
+          "quality": "7sus4",
+          "spelling": null,
+          "bassOffset": null
+        }
+      ],
+      "reference": {
+        "degree": "БАЗА I6",
+        "offset": 0,
+        "quality": "6",
+        "spelling": null,
+        "bassOffset": null,
+        "reference": true,
+        "notes": [
+          41,
+          53,
+          57,
+          60,
+          62
+        ],
+        "bassMidi": 41,
+        "label": "F6",
+        "qualityLabel": "6",
+        "tensions": {
+          "1": "neutral",
+          "3": "neutral",
+          "5": "neutral",
+          "7": "neutral",
+          "9": "neutral",
+          "11": "neutral",
+          "13": "neutral",
+          "♭9": "neutral",
+          "♭3": "neutral",
+          "♯11": "neutral",
+          "♭13": "neutral",
+          "♭7": "neutral"
+        },
+        "oxygen": {
+          "available": 0,
+          "reward": 0,
+          "drain": 0
+        }
+      },
+      "choices": [
+        {
+          "value": "maj",
+          "label": "maj"
+        },
+        {
+          "value": "min",
+          "label": "m"
+        },
+        {
+          "value": "6",
+          "label": "6"
+        },
+        {
+          "value": "7",
+          "label": "7"
+        },
+        {
+          "value": "maj7",
+          "label": "maj7"
+        },
+        {
+          "value": "m7",
+          "label": "m7"
+        },
+        {
+          "value": "m7b5",
+          "label": "m7♭5"
+        },
+        {
+          "value": "dim7",
+          "label": "°7"
+        },
+        {
+          "value": "7sus4",
+          "label": "7sus4"
+        },
+        {
+          "value": "sus4",
+          "label": "sus4"
+        }
+      ]
+    },
+    {
+      "id": "fig-1-9",
+      "chapter": 1,
+      "name": "Fig. 1.9 — minor II–V",
+      "source": "Chapter 1 · Fig. 1.9 · printed p. 10",
+      "baseTonic": 5,
+      "sequence": [
+        {
+          "degree": "II−7(♭5)",
+          "offset": 2,
+          "quality": "m7b5",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            43,
+            55,
+            58,
+            61,
+            65
+          ],
+          "bassMidi": 43,
+          "label": "Gø7",
+          "qualityLabel": "m7♭5",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "invalid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "valid",
+            "♭13": "valid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 7,
+            "reward": 6,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "V7(♭9)",
+          "offset": 7,
+          "quality": "7b9",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            48,
+            60,
+            64,
+            67,
+            70,
+            73
+          ],
+          "bassMidi": 48,
+          "label": "C7(♭9)",
+          "qualityLabel": "7(♭9)",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "invalid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "valid",
+            "♭3": "valid",
+            "♯11": "valid",
+            "♭13": "valid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 10,
+            "reward": 4.2,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "IMaj7",
+          "offset": 0,
+          "quality": "maj7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            41,
+            53,
+            57,
+            60,
+            64
+          ],
+          "bassMidi": 41,
+          "label": "F△7",
+          "qualityLabel": "maj7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "valid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 7,
+            "reward": 6,
+            "drain": 1
+          }
+        }
+      ],
+      "distractors": [
+        {
+          "degree": "II−7",
+          "offset": 2,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "V7",
+          "offset": 7,
+          "quality": "7",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "I6",
+          "offset": 0,
+          "quality": "6",
+          "spelling": null,
+          "bassOffset": null
+        }
+      ],
+      "reference": {
+        "degree": "БАЗА IMaj7",
+        "offset": 0,
+        "quality": "maj7",
+        "spelling": null,
+        "bassOffset": null,
+        "reference": true,
+        "notes": [
+          41,
+          53,
+          57,
+          60,
+          64
+        ],
+        "bassMidi": 41,
+        "label": "F△7",
+        "qualityLabel": "maj7",
+        "tensions": {
+          "1": "neutral",
+          "3": "neutral",
+          "5": "neutral",
+          "7": "neutral",
+          "9": "neutral",
+          "11": "neutral",
+          "13": "neutral",
+          "♭9": "neutral",
+          "♭3": "neutral",
+          "♯11": "neutral",
+          "♭13": "neutral",
+          "♭7": "neutral"
+        },
+        "oxygen": {
+          "available": 0,
+          "reward": 0,
+          "drain": 0
+        }
+      },
+      "choices": [
+        {
+          "value": "maj",
+          "label": "maj"
+        },
+        {
+          "value": "min",
+          "label": "m"
+        },
+        {
+          "value": "6",
+          "label": "6"
+        },
+        {
+          "value": "7",
+          "label": "7"
+        },
+        {
+          "value": "maj7",
+          "label": "maj7"
+        },
+        {
+          "value": "m7",
+          "label": "m7"
+        },
+        {
+          "value": "m7b5",
+          "label": "m7♭5"
+        },
+        {
+          "value": "dim7",
+          "label": "°7"
+        },
+        {
+          "value": "7sus4",
+          "label": "7sus4"
+        },
+        {
+          "value": "sus4",
+          "label": "sus4"
+        },
+        {
+          "value": "7b9",
+          "label": "7(♭9)"
+        }
+      ]
+    },
+    {
+      "id": "fig-16-4",
+      "chapter": 16,
+      "name": "Fig. 16.4 — hybrid chords develop progression",
+      "source": "Chapter 16 · Fig. 16.4 · printed p. 164",
+      "baseTonic": 4,
+      "sequence": [
+        {
+          "degree": "V−/I",
+          "offset": 7,
+          "quality": "min",
+          "spelling": null,
+          "bassOffset": 0,
+          "notes": [
+            40,
+            59,
+            62,
+            66
+          ],
+          "bassMidi": 40,
+          "label": "B−/E",
+          "qualityLabel": "m",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 5,
+            "reward": 8.4,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "♭VI/♭II",
+          "offset": 8,
+          "quality": "maj",
+          "spelling": "flat",
+          "bassOffset": 1,
+          "notes": [
+            41,
+            60,
+            64,
+            67
+          ],
+          "bassMidi": 41,
+          "label": "C/F",
+          "qualityLabel": "maj",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "V−/I",
+          "offset": 7,
+          "quality": "min",
+          "spelling": null,
+          "bassOffset": 0,
+          "notes": [
+            40,
+            59,
+            62,
+            66
+          ],
+          "bassMidi": 40,
+          "label": "B−/E",
+          "qualityLabel": "m",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 5,
+            "reward": 8.4,
+            "drain": 1
+          }
+        }
+      ],
+      "reference": {
+        "degree": "БАЗА I",
+        "offset": 0,
+        "quality": "maj",
+        "bassOffset": null,
+        "reference": true,
+        "notes": [
+          40,
+          52,
+          56,
+          59
+        ],
+        "bassMidi": 40,
+        "label": "E",
+        "qualityLabel": "maj",
+        "tensions": {
+          "1": "neutral",
+          "3": "neutral",
+          "5": "neutral",
+          "7": "neutral",
+          "9": "neutral",
+          "11": "neutral",
+          "13": "neutral",
+          "♭9": "neutral",
+          "♭3": "neutral",
+          "♯11": "neutral",
+          "♭13": "neutral",
+          "♭7": "neutral"
+        },
+        "oxygen": {
+          "available": 0,
+          "reward": 0,
+          "drain": 0
+        }
+      },
+      "choices": [
+        {
+          "value": "maj",
+          "label": "maj"
+        },
+        {
+          "value": "min",
+          "label": "m"
+        },
+        {
+          "value": "6",
+          "label": "6"
+        },
+        {
+          "value": "7",
+          "label": "7"
+        },
+        {
+          "value": "maj7",
+          "label": "maj7"
+        },
+        {
+          "value": "m7",
+          "label": "m7"
+        },
+        {
+          "value": "m7b5",
+          "label": "m7♭5"
+        },
+        {
+          "value": "dim7",
+          "label": "°7"
+        },
+        {
+          "value": "7sus4",
+          "label": "7sus4"
+        },
+        {
+          "value": "sus4",
+          "label": "sus4"
+        }
+      ]
+    },
+    {
+      "id": "fig-4-2",
+      "chapter": 4,
+      "name": "Fig. 4.2 — Georgia with displacement",
+      "source": "Chapter 4 · Fig. 4.2 · printed p. 37",
+      "baseTonic": 5,
+      "sequence": [
+        {
+          "degree": "IMaj7",
+          "offset": 0,
+          "quality": "maj7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            41,
+            53,
+            57,
+            60,
+            64
+          ],
+          "bassMidi": 41,
+          "label": "F△7",
+          "qualityLabel": "maj7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "valid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 7,
+            "reward": 6,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "VII−7",
+          "offset": 11,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            52,
+            64,
+            67,
+            71,
+            74
+          ],
+          "bassMidi": 52,
+          "label": "E−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "III7",
+          "offset": 4,
+          "quality": "7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            45,
+            57,
+            61,
+            64,
+            67
+          ],
+          "bassMidi": 45,
+          "label": "A7",
+          "qualityLabel": "7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "invalid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "valid",
+            "♭3": "valid",
+            "♯11": "valid",
+            "♭13": "valid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 10,
+            "reward": 4.2,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "VI−7",
+          "offset": 9,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            50,
+            62,
+            65,
+            69,
+            72
+          ],
+          "bassMidi": 50,
+          "label": "D−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "IV6",
+          "offset": 5,
+          "quality": "6",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            46,
+            58,
+            62,
+            65,
+            67
+          ],
+          "bassMidi": 46,
+          "label": "B♭6",
+          "qualityLabel": "6",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "IV−6",
+          "offset": 5,
+          "quality": "m6",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            46,
+            58,
+            61,
+            65,
+            67
+          ],
+          "bassMidi": 46,
+          "label": "B♭−6",
+          "qualityLabel": "m6",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "IMaj7",
+          "offset": 0,
+          "quality": "maj7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            41,
+            53,
+            57,
+            60,
+            64
+          ],
+          "bassMidi": 41,
+          "label": "F△7",
+          "qualityLabel": "maj7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "valid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "invalid",
+            "♭3": "neutral",
+            "♯11": "valid",
+            "♭13": "invalid",
+            "♭7": "neutral"
+          },
+          "oxygen": {
+            "available": 7,
+            "reward": 6,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "VI7",
+          "offset": 9,
+          "quality": "7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            50,
+            62,
+            66,
+            69,
+            72
+          ],
+          "bassMidi": 50,
+          "label": "D7",
+          "qualityLabel": "7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "invalid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "valid",
+            "♭3": "valid",
+            "♯11": "valid",
+            "♭13": "valid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 10,
+            "reward": 4.2,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "II−7",
+          "offset": 2,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            43,
+            55,
+            58,
+            62,
+            65
+          ],
+          "bassMidi": 43,
+          "label": "G−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "V7",
+          "offset": 7,
+          "quality": "7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            48,
+            60,
+            64,
+            67,
+            70
+          ],
+          "bassMidi": 48,
+          "label": "C7",
+          "qualityLabel": "7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "invalid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "valid",
+            "♭3": "valid",
+            "♯11": "valid",
+            "♭13": "valid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 10,
+            "reward": 4.2,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "III−7",
+          "offset": 4,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            45,
+            57,
+            60,
+            64,
+            67
+          ],
+          "bassMidi": 45,
+          "label": "A−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "VI7",
+          "offset": 9,
+          "quality": "7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            50,
+            62,
+            66,
+            69,
+            72
+          ],
+          "bassMidi": 50,
+          "label": "D7",
+          "qualityLabel": "7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "invalid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "valid",
+            "♭3": "valid",
+            "♯11": "valid",
+            "♭13": "valid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 10,
+            "reward": 4.2,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "II−7",
+          "offset": 2,
+          "quality": "m7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            43,
+            55,
+            58,
+            62,
+            65
+          ],
+          "bassMidi": 43,
+          "label": "G−7",
+          "qualityLabel": "m7",
+          "tensions": {
+            "1": "valid",
+            "3": "invalid",
+            "5": "valid",
+            "7": "neutral",
+            "9": "valid",
+            "11": "valid",
+            "13": "neutral",
+            "♭9": "invalid",
+            "♭3": "valid",
+            "♯11": "neutral",
+            "♭13": "invalid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 6,
+            "reward": 7,
+            "drain": 1
+          }
+        },
+        {
+          "degree": "V7",
+          "offset": 7,
+          "quality": "7",
+          "spelling": null,
+          "bassOffset": null,
+          "notes": [
+            48,
+            60,
+            64,
+            67,
+            70
+          ],
+          "bassMidi": 48,
+          "label": "C7",
+          "qualityLabel": "7",
+          "tensions": {
+            "1": "valid",
+            "3": "valid",
+            "5": "valid",
+            "7": "invalid",
+            "9": "valid",
+            "11": "invalid",
+            "13": "valid",
+            "♭9": "valid",
+            "♭3": "valid",
+            "♯11": "valid",
+            "♭13": "valid",
+            "♭7": "valid"
+          },
+          "oxygen": {
+            "available": 10,
+            "reward": 4.2,
+            "drain": 1
+          }
+        }
+      ],
+      "distractors": [
+        {
+          "degree": "VII−7(♭5)",
+          "offset": 11,
+          "quality": "m7b5",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "III7sus4",
+          "offset": 4,
+          "quality": "7sus4",
+          "spelling": null,
+          "bassOffset": null
+        },
+        {
+          "degree": "I6",
+          "offset": 0,
+          "quality": "6",
+          "spelling": null,
+          "bassOffset": null
+        }
+      ],
+      "reference": {
+        "degree": "БАЗА IMaj7",
+        "offset": 0,
+        "quality": "maj7",
+        "spelling": null,
+        "bassOffset": null,
+        "reference": true,
+        "notes": [
+          41,
+          53,
+          57,
+          60,
+          64
+        ],
+        "bassMidi": 41,
+        "label": "F△7",
+        "qualityLabel": "maj7",
+        "tensions": {
+          "1": "neutral",
+          "3": "neutral",
+          "5": "neutral",
+          "7": "neutral",
+          "9": "neutral",
+          "11": "neutral",
+          "13": "neutral",
+          "♭9": "neutral",
+          "♭3": "neutral",
+          "♯11": "neutral",
+          "♭13": "neutral",
+          "♭7": "neutral"
+        },
+        "oxygen": {
+          "available": 0,
+          "reward": 0,
+          "drain": 0
+        }
+      },
+      "choices": [
+        {
+          "value": "maj",
+          "label": "maj"
+        },
+        {
+          "value": "min",
+          "label": "m"
+        },
+        {
+          "value": "6",
+          "label": "6"
+        },
+        {
+          "value": "7",
+          "label": "7"
+        },
+        {
+          "value": "maj7",
+          "label": "maj7"
+        },
+        {
+          "value": "m7",
+          "label": "m7"
+        },
+        {
+          "value": "m7b5",
+          "label": "m7♭5"
+        },
+        {
+          "value": "dim7",
+          "label": "°7"
+        },
+        {
+          "value": "7sus4",
+          "label": "7sus4"
+        },
+        {
+          "value": "sus4",
+          "label": "sus4"
+        },
+        {
+          "value": "m6",
+          "label": "m6"
+        }
+      ]
+    }
+  ]
+}

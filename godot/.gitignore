@@ -1,0 +1,7 @@
+.godot/
+.tools/
+build/
+data/audio/
+assets/*.webp
+assets/*.svg
+assets/*.import

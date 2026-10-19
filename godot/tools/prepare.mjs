@@ -58,6 +58,7 @@ const write=(name,value)=>{
 write('data/routes.json',fixture);write('checks/legacy-traces.json',traces);
 if(check){console.log(`1.36 parity inputs verified: ${routes.length} routes, ${traces.length} mission/score states.`);process.exit(0);}
 
+fs.mkdirSync(path.join(root,'assets'),{recursive:true});
 for(const [src,dest] of [['garden/assets/echo-garden/blue-gardens.webp','blue-gardens.webp'],['garden/assets/echo-garden/lotus.webp','lotus.webp'],['garden/source/app-icon-lotus.svg','lotus-icon.svg']])fs.copyFileSync(path.join(project,src),path.join(root,'assets',dest));
 
 // PCM rendering retains the exact MIDI list, source sample, pitch ratio and

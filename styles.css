@@ -125,7 +125,6 @@ button {
 }
 
 .topbar,
-.workspace-tabs,
 .exercise,
 .actions,
 .stats,
@@ -142,7 +141,6 @@ button {
 }
 
 .workspace-tabs {
-  margin-top: 8px;
   padding: 4px;
   border-radius: 16px;
   background: rgba(255, 253, 248, 0.6);
@@ -725,14 +723,23 @@ body:not([data-workspace="quest"]) .quest-hud {
 }
 
 .topbar {
-  min-height: 108px;
+  min-height: 112px;
   padding: 11px 20px;
   border-radius: 24px;
   background: rgba(255, 253, 248, 0.66);
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr) 42px 48px;
+  grid-template-columns: minmax(230px, 290px) minmax(300px, 1fr) 42px 48px;
   align-items: center;
   gap: 12px;
+}
+
+.topbar-navigation {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(105, 121, 121, 0.17);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .brand-lockup {
@@ -789,6 +796,18 @@ body:not([data-workspace="quest"]) .quest-hud {
 .topbar-title {
   margin: 0 14px;
   text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .topbar h1,
@@ -2478,7 +2497,6 @@ select:focus-visible {
   }
 
   .topbar,
-  .workspace-tabs,
   .exercise,
   .actions,
   .stats,
@@ -2510,7 +2528,7 @@ select:focus-visible {
   }
 
   .topbar {
-    min-height: 121px;
+    min-height: 145px;
     padding: 13px 15px 15px;
     grid-template-columns: 1fr 40px 44px;
     gap: 10px;
@@ -2536,20 +2554,14 @@ select:focus-visible {
   }
 
   .brand-lockup-art {
-    width: 224px;
-    height: 79px;
+    width: min(224px, 100%);
+    height: 70px;
   }
 
-  .topbar-title {
+  .topbar-navigation {
     grid-column: 1 / -1;
     grid-row: 2;
     margin: 0;
-    text-align: left;
-  }
-
-  .topbar h1 {
-    margin-top: 3px;
-    font-size: 30px;
   }
 
   .controls {

@@ -83,10 +83,39 @@
       <div class="brand-lockup brand-lockup--bear" aria-label="Ear Trainer — Functional Listening">
         <img class="brand-lockup-art" src="assets/brand/ear-trainer-lockup.svg" alt="" aria-hidden="true">
       </div>
-      <div class="topbar-title">
+      <div class="topbar-title sr-only" aria-live="polite">
         <p class="eyebrow" id="chapterLabel">Reharmonization Techniques</p>
         <h1 id="appTitle">Chord Progressions</h1>
       </div>
+      <nav class="workspace-tabs topbar-navigation" role="tablist" aria-label="Application mode">
+        <button
+          class="workspace-tab active"
+          id="questTab"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="trainerWorkspace"
+          data-workspace="quest"
+        >Quest</button>
+        <button
+          class="workspace-tab"
+          id="trainerTab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="trainerWorkspace"
+          data-workspace="trainer"
+        >Practice</button>
+        <button
+          class="workspace-tab"
+          id="builderTab"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="builderWorkspace"
+          data-workspace="builder"
+        >Builder</button>
+      </nav>
       <button
         class="icon-button help-button"
         id="helpButton"
@@ -110,36 +139,6 @@
         </svg>
       </button>
     </header>
-
-    <nav class="workspace-tabs" role="tablist" aria-label="Application mode">
-      <button
-        class="workspace-tab active"
-        id="questTab"
-        type="button"
-        role="tab"
-        aria-selected="true"
-        aria-controls="trainerWorkspace"
-        data-workspace="quest"
-      >Quest</button>
-      <button
-        class="workspace-tab"
-        id="trainerTab"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        aria-controls="trainerWorkspace"
-        data-workspace="trainer"
-      >Practice</button>
-      <button
-        class="workspace-tab"
-        id="builderTab"
-        type="button"
-        role="tab"
-        aria-selected="false"
-        aria-controls="builderWorkspace"
-        data-workspace="builder"
-      >Builder</button>
-    </nav>
 
     <button class="settings-scrim" id="settingsScrim" type="button" aria-label="Close settings" hidden></button>
     <aside class="settings-panel" id="settingsPanel" aria-label="Settings" hidden>

@@ -11,7 +11,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const assetRoot=fs.existsSync(path.join(root,'assets/echo-garden'))?path.join(root,'assets/echo-garden'):path.resolve(root,'../assets/echo-garden');
 const output=process.argv[2];
 if(!output||!path.isAbsolute(output))throw Error('Provide an absolute destination directory for the standalone Garden.');
-const version='1.36';
+const version='1.37';
 const iconFile=size=>`icon-${size}-v${version}.png`;
 const jazzTitles=['All of Me','All the Things You Are','Autumn Leaves','Blue Bossa','Fly Me to the Moon','Summertime','Take the A Train','Satin Doll','There Will Never Be Another You','On the Sunny Side of the Street','Misty','My Funny Valentine','Body and Soul','Night and Day','My Foolish Heart','In a Sentimental Mood','Georgia on My Mind','Stardust','The Nearness of You','Someone to Watch Over Me','A Night in Tunisia','Caravan','Giant Steps','Black Orpheus','Corcovado','Wave','Desafinado','Recorda Me','St. Thomas','Footprints','So What','Blue Monk','C Jam Blues',"Bag's Groove","Billie's Bounce",'Straight, No Chaser','Watermelon Man','Cantaloupe Island','Doxy','Oleo','Stella by Starlight','Days of Wine and Roses','On Green Dolphin Street','Have You Met Miss Jones?','How High the Moon','Just Friends','Solar','Confirmation','Softly, as in a Morning Sunrise','What Is This Thing Called Love?'];
 const norm=value=>String(value).toLocaleLowerCase().replace(/[^a-z0-9]/g,'');
@@ -52,6 +52,7 @@ write('ear-yoga.svg',fs.readFileSync(path.join(root,'ear-yoga.svg')));
 write('source/ear-yoga.svg',fs.readFileSync(path.join(root,'ear-yoga.svg')));
 write('garden-flight.css',fs.readFileSync(path.join(root,'garden-flight.css')));
 write('ear-yoga-cover.css',fs.readFileSync(path.join(root,'ear-yoga-cover.css')));
+write('ear-yoga-orbital.css',fs.readFileSync(path.join(root,'ear-yoga-orbital.css')));
 // Local composition tool is separate from the game: edits never auto-apply.
 write('yoga-layout-studio.html',fs.readFileSync(path.join(root,'yoga-layout-studio.html')));
 write('yoga-layout-editor.js',fs.readFileSync(path.join(root,'yoga-layout-editor.js')));
@@ -62,9 +63,12 @@ html=html.replace('</body>','<script src="pwa.js"></script></body>');
 write('index.html',html);
 // Only runtime assets. No PNG masters, studies, other planets or book PDFs.
 const assets=new Set(['blue-gardens.webp','night-bloom-aligned.webp','white-thaw-aligned.webp','manta.webp','lotus.webp','start-garden-orbital-v4.jpg','fonts/InterVariable.woff2','fonts/Inter-LICENSE.txt',...Object.values(GARDEN_ITEMS).filter(i=>i.sprite).map(i=>'collectibles/'+i.sprite+'.webp'),...['felt-c3','felt-e3','felt-g3','hybrid-c4','hybrid-d4','hybrid-orchestra-c4','string-orchestra-c5','piano-n-c5'].map(n=>'samples/'+n+'.wav'),...['reharm','anime','chill','ambient','cinematic','deep-house','funk','gospel','drum-bass'].map(n=>'tours/'+n+'.webp')]);
+const authoredAssets={'menu-orbital-1.37.webp':'art/menu-orbital-1.37.png','menu-reference-1.37.png':'art/menu-reference-1.37.png'};
+for(const asset of Object.keys(authoredAssets))assets.add(asset);
 for(const asset of assets){
   const meteor=asset==='collectibles/meteor-volcanic.webp',master=path.join(assetRoot,'collectibles/meteor-volcanic.png');
-  const from=meteor&&fs.existsSync(master)?master:path.join(assetRoot,asset),to=path.join(output,'assets/echo-garden',asset);
+  const from=authoredAssets[asset]?path.join(root,authoredAssets[asset]):meteor&&fs.existsSync(master)?master:path.join(assetRoot,asset),to=path.join(output,'assets/echo-garden',asset);
+  if(asset==='menu-orbital-1.37.webp'){fs.mkdirSync(path.dirname(to),{recursive:true});await sharp(from).webp({quality:92}).toFile(to);continue;}
   const scene=['blue-gardens.webp','night-bloom-aligned.webp','white-thaw-aligned.webp'].includes(asset),ship=['manta.webp','lotus.webp'].includes(asset);
   const collectible=asset.startsWith('collectibles/'),meta=scene||ship||collectible?await sharp(from).metadata():null,size=scene?1024:ship?768:512;
   // Already optimized WebP files are copied byte-for-byte, avoiding generational
@@ -72,17 +76,20 @@ for(const asset of assets){
   if(meta&&(meta.width>size||meta.height>size)||meteor&&from.endsWith('.png')){fs.mkdirSync(path.dirname(to),{recursive:true});await sharp(from).resize(size,size,{fit:'inside',withoutEnlargement:true}).webp({quality:collectible?86:82,alphaQuality:100}).toFile(to);}
   else write('assets/echo-garden/'+asset,fs.readFileSync(from));
 }
-const mark=fs.readFileSync(path.join(root,'app-icon-lotus.svg'),'utf8');
+const iconMaster=path.join(root,'art/app-icon-ship-1.37.png');
+const iconPreview=await sharp(iconMaster).resize(512,512).png().toBuffer();
+const mark=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><image width="512" height="512" xlink:href="data:image/png;base64,${iconPreview.toString('base64')}"/></svg>`;
 write('icon.svg',mark);
-// Keep the approved Lotus icon; generated art studies are not release assets.
-for(const size of [192,512]){const png=await sharp(path.join(output,'icon.svg')).resize(size,size).png().toBuffer();write(iconFile(size),png);write(`icon-${size}.png`,png);}
+// Only the newly approved ship icon is included; earlier studies stay local.
+for(const size of [192,512]){const png=await sharp(iconMaster).resize(size,size).png().toBuffer();write(iconFile(size),png);write(`icon-${size}.png`,png);}
 write('manifest.webmanifest',JSON.stringify({id:'./',name:'EAR YOGA',short_name:'EAR YOGA',description:'Музыкальный полёт: узнавай бас и аккорды, собирай живую аранжировку.',lang:'ru',start_url:'./',scope:'./',display:'standalone',orientation:'portrait',background_color:'#102e37',theme_color:'#102e37',icons:[192,512].map(size=>({src:iconFile(size),sizes:`${size}x${size}`,type:'image/png',purpose:'any'}))},null,2));
 write('pwa.js',`if('serviceWorker' in navigator&&location.protocol!=='file:'&&(!['localhost','127.0.0.1'].includes(location.hostname)||new URLSearchParams(location.search).has('offline-test'))){const register=()=>navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(()=>{});if(window.gardenFlight?.snapshot().ready)register();else addEventListener('garden-ready',register,{once:true});}\n`);
 const cacheHash=createHash('sha256').update(bundle).update(html).update(fs.readFileSync(path.join(root,'garden-flight.css'))).update(fs.readFileSync(path.join(root,'ear-yoga-cover.css')));
+cacheHash.update(fs.readFileSync(path.join(root,'ear-yoga-orbital.css')));
 for(const size of [192,512])cacheHash.update(fs.readFileSync(path.join(output,iconFile(size))));
 for(const asset of assets)cacheHash.update(fs.readFileSync(path.join(output,'assets/echo-garden',asset)));
 const cacheRevision=cacheHash.digest('hex').slice(0,10);
-const precache=['ear-yoga-cover.css','ear-yoga.svg','./','index.html','garden-flight.css','garden-flight.bundle.js','manifest.webmanifest','pwa.js','icon.svg','icon-192.png','icon-512.png',iconFile(192),iconFile(512),...[...assets].map(a=>'assets/echo-garden/'+a)];
+const precache=['ear-yoga-orbital.css','ear-yoga-cover.css','ear-yoga.svg','./','index.html','garden-flight.css','garden-flight.bundle.js','manifest.webmanifest','pwa.js','icon.svg','icon-192.png','icon-512.png',iconFile(192),iconFile(512),...[...assets].map(a=>'assets/echo-garden/'+a)];
 write('service-worker.js',`const CACHE_NAME='echo-garden-${version}-${cacheRevision}';
 const FILES=${JSON.stringify(precache)};
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
@@ -100,6 +107,9 @@ write('README.md',fs.readFileSync(path.join(output,'README.md'),'utf8').replace(
 write('release.json',JSON.stringify({version,name:'EAR YOGA',publisher:'Space Music College',standalone:true,previewDays:60,trialStarts:'first launch on device; countdown preserved across updates',notes:'Release 1.35: Ear Yoga and Space Music College form one glyph-aligned lockup; S aligns to E and the subtitle stays above the g descender at every aspect ratio, with unified editor dragging. Approved main lettering, buttons and ship preserved. Opt-in desktop video recording with game audio only, local download, no microphone; mobile controls hidden. Only the Lotus ship; speed/altitude selectors removed, volume and EQ retained. Teacher-only translucent O2 fifth vial, separate H2O; 12 chord-relative tones, palette-normalized correct rewards (42 / valid tone count), scaled by route duration / -20 avoid, neutral uncertain cases and 180ms boundary grace. All 184 release routes audited with actual random side-lane medallions; imported m11/9/13/7#9/7#11/o families recognized without changing harmony. Unsupported neutral-only chords do not spend uncollectable O2. Smaller sparse side-lane bubbles unlock after two solved chords. O2 drains from the first chord at 0.45 per second, scaled by duration on long routes; positive O2 income scales too, unchanged collision and answer damage. Floating actual resource deltas. Click-through upper time/score frames, capped one-time bubble bonuses, completion time bonus and device-local PB. Test score, not online tournament validation. Original route notes, sounds, speed, cover and trial countdown preserved. Imported chord codes display as readable symbols. Mobile PWA release.'},null,2));
 write('README.md','# EAR YOGA '+version+' — mobile PWA release\n\nSpace Music College. Includes the approved orbital cover, 50 Jazz Standards, 11 additional saved Route Lab routes and the custom Disco category, plus five sound samples. Existing local browser data is not deleted.\n\nInstall on a phone from HTTPS using Add to Home Screen / Install. Installable offline PWA for iOS and Android. Public URL: https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/.\n');
 const release=JSON.parse(fs.readFileSync(path.join(output,'release.json'),'utf8'));
-release.notes=release.notes.replace(/^Release [\d.]+:/,`Release ${version}: Approved Lotus icon retained; experimental artwork excluded. Mobile update and offline flight verified. `);
+release.channel='mobile-release';
+release.notes='Mobile release 1.37: original reference lettering and ornate controls with continuous pearl and turquoise animations and approved ship icon with trimmed lateral lines. Teacher world and harmonic pace +20%; Student unchanged. Applicant matches Student pace with unlimited reserves and original admission routes. Catalog notes, voicings, slash basses, sounds and in-flight artwork preserved. Published at the user’s explicit request without an additional browser QA round; physical phone review is pending.';
 write('release.json',JSON.stringify(release,null,2));
+for(const file of ['ear-yoga-orbital.css','DESKTOP_1_37.md','tools/garden-desktop-preview-check.cjs','art/ASSET_NOTES.md','art/app-icon-ship-1.37.png',...Object.values(authoredAssets)])write('source/'+file,fs.readFileSync(path.join(root,file)));
+write('README.md',`# EAR YOGA ${version} — mobile PWA\n\nInstall from the existing HTTPS garden URL using Add to Home Screen. It preserves 1.36 gameplay and music with the requested menu, icon and difficulty pacing changes.\n\nSource: source/. Build into a fresh directory with node source/tools/build-garden-standalone.mjs /absolute/new/output. Requires Node.js and sharp, plus the shared game/importer.mjs and game/standards-catalog.mjs from the repository.\n`);
 console.log(`Garden ${version}: ${assets.size} assets, ${(Buffer.byteLength(bundle)/1024).toFixed(0)} KB code, output ${output}`);

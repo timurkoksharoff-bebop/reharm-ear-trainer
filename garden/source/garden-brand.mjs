@@ -3,6 +3,23 @@
 export function bindGardenBrand(){
  const brand=document.querySelector('.ear-yoga-lockup'),title=brand?.querySelector('.ear-yoga-wordmark'),college=brand?.querySelector('.start-college');
  if(!title||!college)return;
+ if(brand.dataset.layout==='orbital-v5'){
+  const selectors=['.difficulty-picker button','#start-random','#start-choose','#start-tutorial','.start-route-details>summary','#start-language','#start-menu'];
+  for(const selector of selectors)for(const control of document.querySelectorAll(selector)){
+   const face=document.createElement('span');face.className='reference-face';face.setAttribute('aria-hidden','true');face.setAttribute('translate','no');control.append(face);
+   const name=()=>control.setAttribute('aria-label',control.textContent.replace(/\s+/g,' ').trim());
+   new MutationObserver(name).observe(control,{childList:true,characterData:true,subtree:true});name();
+   if(control.matches('.difficulty-picker button,.start-choice')){
+    const light=document.createElement('span');light.className='pearl-light';light.setAttribute('aria-hidden','true');light.setAttribute('translate','no');control.append(light);
+    if(control.matches('.difficulty-picker button')){const water=light.cloneNode();water.className='mode-water';control.append(water);}
+   }
+  }
+  const primary=document.querySelector('#start-random'),caption=primary.querySelector('strong');
+  const syncCaption=()=>primary.classList.toggle('live-caption',!['Начать полёт','Start flight'].includes(caption.textContent.trim()));
+  new MutationObserver(syncCaption).observe(caption,{childList:true,characterData:true,subtree:true});syncCaption();
+  const ready=()=>{brand.dataset.lockup='ready';brand.dataset.viewport=innerWidth+'x'+innerHeight;};
+  new ResizeObserver(ready).observe(brand);addEventListener('resize',ready);document.fonts?.ready.then(ready);ready();return;
+ }
  const context=document.createElement('canvas').getContext('2d');let pending=0;
  function metrics(element,text){const s=getComputedStyle(element);context.font=`${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;return context.measureText(text);}
  function glyph(letter){

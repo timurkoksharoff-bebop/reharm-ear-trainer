@@ -1,5 +1,5 @@
-# EAR YOGA 1.36 — mobile PWA release
+# EAR YOGA 1.37 — mobile PWA
 
-Space Music College. Includes the approved orbital cover, 50 Jazz Standards, 11 additional saved Route Lab routes and the custom Disco category, plus five sound samples. Existing local browser data is not deleted.
+Install from the existing HTTPS garden URL using Add to Home Screen. It preserves 1.36 gameplay and music with the requested menu, icon and difficulty pacing changes.
 
-Install on a phone from HTTPS using Add to Home Screen / Install. Installable offline PWA for iOS and Android. Public URL: https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/.
+Source: source/. Build into a fresh directory with node source/tools/build-garden-standalone.mjs /absolute/new/output. Requires Node.js and sharp, plus the shared game/importer.mjs and game/standards-catalog.mjs from the repository.

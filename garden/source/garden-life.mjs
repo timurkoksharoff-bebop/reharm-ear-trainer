@@ -162,7 +162,9 @@ export class GardenLife{
     this.entities=[];this.effects=[];this.chips=[];this.event=null;this.eventAge=99;this.eventCounter=0;this.flightForce={x:0,y:0,intensity:0};this.impact=0;
     this.campIdle=0;this.campPressure=null;this.lastShip=null;this.critical=null;this.failureResource=null;
     this.resources={fuel:86,water:78,crew:92,hull:84};this.inventory=Object.fromEntries(Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact).map(([kind])=>[kind,0]));
+    this.protectResources();
   }
+  protectResources(){const floor=this.difficulty?.minResource||0;if(floor)for(const key of Object.keys(this.resources))this.resources[key]=Math.max(floor,this.resources[key]);}
   setImages(images){this.images={...images};}
   setResource(name,value){if(name in this.resources)this.resources[name]=clamp(value);}
   wrongAnswer(kind,value,qualityOrder=[]){
@@ -214,7 +216,7 @@ export class GardenLife{
     this.resources[item.resource]=clamp(this.resources[item.resource]+item.amount);
     if(item.hullAmount)this.resources.hull=clamp(this.resources.hull+item.hullAmount);
     if(item.crewAmount)this.resources.crew=clamp(this.resources.crew+item.crewAmount);
-    announce(this,{...entity,beforeResources});return true;
+    this.protectResources();announce(this,{...entity,beforeResources});return true;
   }
   collect(entity){
     if(!entity||entity.collected)return false;
@@ -227,7 +229,7 @@ export class GardenLife{
     else if(item.shield){this.shieldHits=3;this.shieldFlash=.15;this.shieldFade=1;}
     else if(item.artifact)this.inventory[entity.kind]=Math.min(99,(this.inventory[entity.kind]||0)+item.amount);
     else{this.resources[item.resource]=clamp(this.resources[item.resource]+item.amount);if(item.hullAmount)this.resources.hull=clamp(this.resources.hull+item.hullAmount);}
-    announce(this,{...entity,beforeResources,item:item.shield?{...item,resource:'artifact',label:'Космический кокон активирован · защита от трёх ударов',color:item.color}:item});return true;
+    this.protectResources();announce(this,{...entity,beforeResources,item:item.shield?{...item,resource:'artifact',label:'Космический кокон активирован · защита от трёх ударов',color:item.color}:item});return true;
   }
   asteroidImpact(entity,view,w,h){
     if(!entity||!entity.impactArmed||this.time-entity.lastDamage<2.5)return false;

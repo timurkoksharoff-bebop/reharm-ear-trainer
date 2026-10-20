@@ -1,0 +1,97 @@
+/* The exact user-selected reference supplies all Russian lettering and ornament.
+   The image is sampled by live HTML controls; light moves over its original detail. */
+#garden-start[data-cover="orbital-v5"]{padding:0;background:#020b1a;overflow:hidden;backdrop-filter:none}
+#garden-start[data-cover]::before{inset:-30px;width:auto;background:url('assets/echo-garden/menu-reference-1.37.png') center/cover no-repeat;filter:blur(35px) brightness(.3);opacity:.7}
+#garden-start[data-cover] .garden-start-shell{--menu-u:min(1vw,.4733955dvh);--reference:url('assets/echo-garden/menu-reference-1.37.png');position:absolute;inset:0;display:block;width:min(100vw,47.33955dvh);height:min(100dvh,211.23986vw);min-height:0;margin:auto;padding:0;gap:0;border:0;border-radius:0;background:url('assets/echo-garden/menu-orbital-1.37.webp') center/100% 100% no-repeat;box-shadow:0 0 90px #0008;overflow:visible;text-shadow:none;isolation:isolate}
+#garden-start[data-cover] .orbital-reference-plate{position:absolute;inset:0;background:var(--reference) center/100% 100%;pointer-events:none;mask:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 863 1823"><path fill="white" fill-rule="evenodd" d="M0 0H863V1823H0Z M40 1276H820V1387H40Z M35 1388H828V1534H35Z M45 1537H820V1661H45Z M202 1683H650V1743H202Z M660 83H824V151H660Z"/></svg>') center/100% 100% no-repeat}
+#garden-start[data-cover] .start-copy,#garden-start[data-cover] .start-controls,#garden-start[data-cover] .start-actions{display:contents;position:static;transform:none;margin:0;padding:0;background:none}
+#garden-start[data-cover] .ear-yoga-lockup{position:absolute;top:2.5%;left:6.5%;width:34%;height:11%;margin:0;pointer-events:none}
+#garden-start[data-cover] .ear-yoga-lockup h2,#garden-start[data-cover] .ear-yoga-lockup .start-college{position:absolute!important;width:1px!important;height:1px;overflow:hidden;clip-path:inset(50%);font-family:'Times New Roman',serif!important}
+#garden-start[data-cover] .ear-yoga-lockup::after,#garden-start[data-cover] .brand-baseline{display:none!important}
+#garden-start[data-cover] .difficulty-picker{position:absolute;inset:70% 4.6% auto;height:6.08%;display:block;width:auto;margin:0;transform:none}
+#garden-start[data-cover] :is(button,.start-route-details>summary){box-sizing:border-box;position:absolute;min-width:0;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;overflow:visible;color:transparent!important;font-family:'Times New Roman',serif!important;text-shadow:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;isolation:isolate;transition:transform 170ms ease,filter 250ms ease;transform-origin:center}
+#garden-start[data-cover] .reference-face{position:absolute;inset:0;z-index:-2;pointer-events:none;background-image:var(--reference);background-repeat:no-repeat;transition:filter 650ms ease;mask:linear-gradient(90deg,transparent,#000 1.5% 98.5%,transparent);}
+#garden-start[data-cover] .difficulty-picker button{top:0;height:100%;font-size:0!important}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"]{border:0;background:transparent;box-shadow:none;color:transparent;filter:none}
+#garden-start[data-cover] .difficulty-picker button[data-difficulty="medium"][aria-pressed="false"] .reference-face{filter:saturate(.18) brightness(.74)}
+#garden-start[data-cover] .difficulty-picker button::before{content:'';position:absolute;inset:-1px 0;z-index:-3}
+#garden-start[data-cover] :is(.start-choice,.difficulty-picker button) .pearl-light{position:absolute;inset:4% 3%;pointer-events:none;overflow:hidden;clip-path:path('');border-radius:50%;mask:radial-gradient(ellipse closest-side,#000 82%,transparent 100%);mix-blend-mode:screen;opacity:.64;transition:opacity 600ms ease}
+#garden-start[data-cover] .pearl-light::before{content:'';position:absolute;inset:-160% -90%;background:linear-gradient(112deg,transparent 28%,#a4f5ff00 36%,#b6ffff3a 42%,#fff6dd99 47%,#fbc9ff70 50%,#a2f7f966 54%,transparent 62%),radial-gradient(ellipse at 40% 70%,#fbd9ff55,transparent 34%);animation:pearl-sweep 7.8s ease-in-out infinite;transform:translateX(-24%) rotate(-8deg);will-change:transform}
+#garden-start[data-cover] .pearl-light::after{content:'';position:absolute;inset:-130% -50%;background:repeating-conic-gradient(from 20deg at 50% 50%,transparent 0deg 21deg,#b8ffff30 24deg,transparent 27deg 57deg,#ffd8ee44 61deg,transparent 65deg 90deg);filter:blur(3px);animation:pearl-caustics 17s linear infinite;will-change:transform}
+#garden-start[data-cover] .difficulty-picker .pearl-light{opacity:0}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .pearl-light{opacity:.95;background:radial-gradient(ellipse at 50% 70%,#16bac456,transparent 75%)}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .reference-face{filter:drop-shadow(0 0 5px #63e4e659)}
+#garden-start[data-cover] .mode-water{position:absolute;inset:8% 6%;pointer-events:none;background-image:var(--reference);background-size:350% 2025.56%;background-position:50% 74.134%;mix-blend-mode:screen;clip-path:ellipse(49% 48%);mask:linear-gradient(transparent 0%,#000 14% 25%,transparent 38% 65%,#000 78% 88%,transparent);opacity:0;transition:opacity 600ms;animation:water-breath 6s ease-in-out infinite}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .mode-water{opacity:.6}
+#garden-start[data-cover] .start-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3%;width:91.9%;height:8.01%;left:4.05%;top:76.14%}
+#garden-start[data-cover] #start-choose{left:5.21%;top:84.31%;width:89.8%;height:6.8%}
+#garden-start[data-cover] .start-choice>span:not(.reference-face):not(.pearl-light){display:none}
+#garden-start[data-cover] .start-choice strong,#garden-start[data-cover] .start-choice small{position:relative;z-index:2;visibility:hidden;font-family:'Times New Roman',serif!important}
+#garden-start[data-cover] .start-choice strong{font-size:calc(var(--menu-u)*4.05);font-weight:400;line-height:1.1}
+#garden-start[data-cover] .start-choice small{font:400 calc(var(--menu-u)*1.7)/1.3 'Yoga Inter',Arial,sans-serif!important;letter-spacing:calc(var(--menu-u)*.55);text-transform:uppercase}
+#garden-start[data-cover] .random-choice strong{font-size:calc(var(--menu-u)*6.25);font-weight:600}
+#garden-start[data-cover] .start-choice .pearl-light{inset:11% 5%;opacity:.5}
+#garden-start[data-cover] #start-choose .pearl-light{animation-delay:-3s;opacity:.7}
+#garden-start[data-cover] #start-choose .pearl-light::before{animation-delay:-3.8s}
+#garden-start[data-cover] .start-route-details{position:static;margin:0;padding:0;border:0}
+#garden-start[data-cover] :is(.start-tutorial,.start-route-details>summary,.start-language){top:92.32%;height:3.3%;font-size:0!important;list-style:none}
+#garden-start[data-cover] .start-tutorial{left:23.4%;width:17.4%}
+#garden-start[data-cover] .start-route-details>summary{left:46.2%;width:14.2%}
+#garden-start[data-cover] .start-language{left:68.5%;width:6.84%}
+#garden-start[data-cover] .start-tutorial>*:not(.reference-face){visibility:hidden}
+#garden-start[data-cover] .start-menu{left:76.48%;top:4.55%;width:19%;height:3.73%;font-size:0!important}
+#garden-start[data-cover] .start-menu::after,#garden-start[data-cover] .start-controls::after{display:none}
+#garden-start[data-cover] .start-menu>span:not(.reference-face){visibility:hidden}
+#garden-start[data-cover] :is(button,.start-route-details>summary):focus-visible{outline:2px solid #f2d6a0;outline-offset:3px}
+@media(hover:hover){#garden-start[data-cover] :is(button,.start-route-details>summary):hover{filter:brightness(1.12)}#garden-start[data-cover] :is(.start-choice,.difficulty-picker button):hover .pearl-light{opacity:1}}
+#garden-start[data-cover] :is(button,.start-route-details>summary):active,#garden-start[data-cover] .is-pressing{transform:translateY(1px) scale(.975);filter:brightness(.88)}
+#garden-start[data-cover] .build-version{z-index:4;right:8px;bottom:5px;left:auto;top:auto;font-size:9px;opacity:.5}
+body.start-open:has(#garden-start[data-cover])>#language-toggle{display:none!important}
+#garden-start[data-cover] .start-route-info{z-index:7;font-family:'Yoga Inter',Arial,sans-serif;max-height:80dvh;overflow:auto}
+/* English and contextual admission captions remain real translated text. Russian
+   default labels use the reference pixels, so every serif and flourish is exact. */
+html[lang="en"] #garden-start[data-cover] .reference-face{--translated:1}
+html[lang="en"] #garden-start[data-cover] :is(.difficulty-picker button,.start-menu,.start-tutorial,.start-language,.start-route-details>summary){color:#f4dfb7!important;font-size:calc(var(--menu-u)*3.4)!important}
+html[lang="en"] #garden-start[data-cover] :is(.start-menu,.start-tutorial) span:not(.reference-face){visibility:visible}
+html[lang="en"] #garden-start[data-cover] .start-tutorial span:first-child,html[lang="en"] #garden-start[data-cover] .start-tutorial span:last-child,html[lang="en"] #garden-start[data-cover] .start-tutorial small,html[lang="en"] #garden-start[data-cover] summary>span:not(.reference-face){display:none}
+html[lang="en"] #garden-start[data-cover] .start-tutorial strong{font:inherit;color:inherit}
+#garden-start[data-cover] .live-caption::before,html[lang="en"] #garden-start[data-cover] .start-choice::before{content:'';position:absolute;z-index:1;inset:21% 23%;background:linear-gradient(120deg,#eee0c8,#f9f0da 50%,#e5d5bf);border-radius:50%;filter:blur(2px)}
+#garden-start[data-cover] .live-caption strong,#garden-start[data-cover] .live-caption small,html[lang="en"] #garden-start[data-cover] .start-choice strong,html[lang="en"] #garden-start[data-cover] .start-choice small{visibility:visible;color:#062c35}
+html[lang="en"] #garden-start[data-cover] #start-choose::before{inset:21% 23%;background:#062033}
+html[lang="en"] #garden-start[data-cover] #start-choose strong{color:#f1e2bd}
+html[lang="en"] #garden-start[data-cover] #start-choose small{color:#c69d6c}
+@keyframes pearl-sweep{0%,100%{transform:translateX(-24%) rotate(-8deg)}50%{transform:translateX(24%) rotate(8deg)}}
+@keyframes pearl-caustics{to{transform:rotate(360deg) scale(1.15)}}
+@keyframes water-breath{0%,100%{transform:translateX(-1.5%) scale(1);filter:hue-rotate(-12deg)}50%{transform:translateX(1.5%) scale(1.05);filter:hue-rotate(16deg)}}
+@media(prefers-reduced-motion:reduce){#garden-start[data-cover] *,#garden-start[data-cover] *::before,#garden-start[data-cover] *::after{animation:none!important;transition:none!important}}
+#garden-start[data-cover] [data-difficulty="light"] .reference-face{background-size:334.49612403% 1642.34234234%;background-position:6.61157025% 74.53271028%}
+#garden-start[data-cover] .difficulty-picker [data-difficulty="light"]{left:0.00000000%;width:33.07692308%}
+#garden-start[data-cover] [data-difficulty="medium"] .reference-face{background-size:322.01492537% 1642.34234234%;background-position:50.08403361% 74.53271028%}
+#garden-start[data-cover] .difficulty-picker [data-difficulty="medium"]{left:33.07692308%;width:34.35897436%}
+#garden-start[data-cover] [data-difficulty="hard"] .reference-face{background-size:339.76377953% 1642.34234234%;background-position:92.93924466% 74.53271028%}
+#garden-start[data-cover] .difficulty-picker [data-difficulty="hard"]{left:67.43589744%;width:32.56410256%}
+#garden-start[data-cover] #start-random .reference-face{background-size:108.82723834% 1248.63013699%;background-position:50.00000000% 82.76684556%}
+#garden-start[data-cover] #start-choose .reference-face{background-size:111.35483871% 1470.16129032%;background-position:51.13636364% 90.46497940%}
+#garden-start[data-cover] #start-tutorial .reference-face{background-size:575.33333333% 3038.33333333%;background-position:28.33099579% 95.46228020%}
+#garden-start[data-cover] .start-route-details>summary .reference-face{background-size:701.62601626% 3038.33333333%;background-position:53.91891892% 95.46228020%}
+#garden-start[data-cover] #start-language .reference-face{background-size:1462.71186441% 3038.33333333%;background-position:73.50746269% 95.46228020%}
+#garden-start[data-cover] #start-menu .reference-face{background-size:526.21951220% 2680.88235294%;background-position:94.42060086% 4.72934473%}
+html[lang="en"] #garden-start[data-cover] [data-difficulty="light"] .reference-face{mask:linear-gradient(#000 0% 28%,transparent 30% 69%,#000 71%)}
+html[lang="en"] #garden-start[data-cover] [data-difficulty="medium"] .reference-face{mask:linear-gradient(#000 0% 28%,transparent 30% 69%,#000 71%)}
+html[lang="en"] #garden-start[data-cover] [data-difficulty="hard"] .reference-face{mask:linear-gradient(#000 0% 28%,transparent 30% 69%,#000 71%)}
+html[lang="en"] #garden-start[data-cover] #start-tutorial .reference-face{mask:linear-gradient(#000 0% 28%,transparent 30% 69%,#000 71%)}
+html[lang="en"] #garden-start[data-cover] .start-route-details>summary .reference-face{mask:linear-gradient(#000 0% 28%,transparent 30% 69%,#000 71%)}
+html[lang="en"] #garden-start[data-cover] #start-language .reference-face{mask:linear-gradient(#000 0% 28%,transparent 30% 69%,#000 71%)}
+html[lang="en"] #garden-start[data-cover] #start-menu .reference-face{mask:linear-gradient(#000 0% 28%,transparent 30% 69%,#000 71%)}
+@media(orientation:landscape) and (max-height:600px){
+ #garden-start[data-cover]{overflow-y:auto}
+ #garden-start[data-cover] .garden-start-shell{position:relative;inset:auto;width:min(100vw,390px);height:min(211.23986vw,823.84px);margin:0 auto;--menu-u:min(1vw,3.9px)}
+}
+/* Reset legacy icon-span dimensions on the independent image/light layers. */
+#garden-start[data-cover] :is(.reference-face,.pearl-light,.mode-water){display:block!important;width:auto!important;height:auto!important;margin:0;padding:0;border:0;border-radius:0;font-size:0;align-self:stretch;grid-area:auto}
+#garden-start[data-cover] :is(.start-choice,.difficulty-picker button) .pearl-light{clip-path:none;border-radius:50%}
+
+#garden-start[data-cover] .start-choice strong,#garden-start[data-cover] .start-choice small{align-self:center}
+/* Invisible target extensions preserve the exact ornament dimensions. */
+#garden-start[data-cover] :is(.start-tutorial,.start-language,.start-menu,.start-route-details>summary)::before{content:'';position:absolute;inset:50% 0 auto;min-height:44px;transform:translateY(-50%)}
+#garden-start[data-cover] .difficulty-picker button::before{inset:50% 0 auto;min-height:44px;transform:translateY(-50%)}

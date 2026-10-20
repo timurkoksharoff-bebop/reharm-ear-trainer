@@ -267,7 +267,7 @@ function updateAdmissionCard(){
 function selectDifficulty(name){
   if(!['light','medium','hard'].includes(name))return;
   difficulty=name;document.body.dataset.difficulty=difficulty;document.body.classList.toggle('teacher-mode',difficulty==='hard');gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
-  $('start-difficulty-note').textContent=difficulty==='light'?'Три учебных маршрута по 3–4 аккорда, медленное движение и защищённые запасы.':'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.';
+  $('start-difficulty-note').textContent=difficulty==='light'?'Три учебных маршрута по 3–4 аккорда, скорость студента и неиссякаемые запасы.':'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.';
   for(const item of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))item.setAttribute('aria-pressed',String(item.dataset.difficulty===difficulty));
   if(difficulty==='light')s.tour='reharm';
   for(const item of document.querySelectorAll('[data-tour]')){item.disabled=difficulty==='light'&&item.dataset.tour!=='reharm';item.setAttribute('aria-pressed',String(item.dataset.tour===s.tour));item.classList.toggle('selected',item.dataset.tour===s.tour);}
@@ -393,6 +393,10 @@ document.addEventListener('visibilitychange',()=>{last=0;keys.clear();if(documen
 addEventListener('pagehide',()=>{mission?.pause();pad.stop(true);});
 function update(dt,clockDt=dt){
   if(s.paused)return;
+  // One world-time multiplier keeps motion, hazards, pickups and oxygen in
+  // step with Teacher's shorter chord duration. The run timer uses real time.
+  const realClockDt=clockDt,timeScale=difficultyProfile(difficulty).timeScale;
+  dt*=timeScale;clockDt*=timeScale;
   s.time=mod(s.time+dt,Math.PI*2000);s.visit+=dt;
   s.travel=mod(s.travel+dt*s.speed*18,100000);
   s.scroll=mod(s.scroll+dt*s.speed*18/s.worldSize,2);
@@ -409,10 +413,11 @@ function update(dt,clockDt=dt){
   s.angle+=(clamp(dx/s.width,-.3,.3)-s.angle)*(1-Math.exp(-dt*4));
   s.pan+=((s.x/s.width-.5)*.13-s.pan)*(1-Math.exp(-dt));
   const missionState=mission?.snapshot();
-  run.tick(clockDt,Boolean(missionState?.running&&missionState.cursor>=0&&!s.gameOver));renderRun();
-  if(!missionState?.complete)gardenLife.update(dt,{...s,clockDt,barSeconds:missionState?.barSeconds,separateBass:Boolean(missionState?.bassPanelNeeded),routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality||(missionState.separateBass&&!part.bass)).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
+  const pacingBarSeconds=missionState?.barSeconds*timeScale;
+  run.tick(realClockDt,Boolean(missionState?.running&&missionState.cursor>=0&&!s.gameOver));renderRun();
+  if(!missionState?.complete)gardenLife.update(dt,{...s,clockDt,barSeconds:pacingBarSeconds,separateBass:Boolean(missionState?.bassPanelNeeded),routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality||(missionState.separateBass&&!part.bass)).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
   const lifeState=gardenLife.snapshot();
-  resonance.update(dt,{clockDt,width:s.width,height:s.height,x:s.x,y:s.y,ship:s.ship,barSeconds:missionState?.barSeconds,active:Boolean(missionState?.running),paused:s.paused,complete:missionState?.complete,solvedChords:missionState?.solved.length??0,totalChords:missionState?.exercise.sequence.length??0,sounding:pad.sounding,audioTime:pad.context?.currentTime,chapter:missionState?.exercise.chapter,tensionMode:missionState?.exercise.tensionMode});
+  resonance.update(dt,{clockDt,timeScale,width:s.width,height:s.height,x:s.x,y:s.y,ship:s.ship,barSeconds:pacingBarSeconds,active:Boolean(missionState?.running),paused:s.paused,complete:missionState?.complete,solvedChords:missionState?.solved.length??0,totalChords:missionState?.exercise.sequence.length??0,sounding:pad.sounding,audioTime:pad.context?.currentTime,chapter:missionState?.exercise.chapter,tensionMode:missionState?.exercise.tensionMode});
   if((lifeState.gameOver||resonance.gameOver)&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').querySelector('span').textContent=resonance.gameOver?'O₂ · 0':'КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ';$('game-over').hidden=false;}
   const shake=lifeState.impact||0,shakeX=Math.sin(s.time*83)*shake*7,shakeY=Math.cos(s.time*71)*shake*5;
   document.documentElement.style.setProperty('--impact-x',`${shakeX.toFixed(2)}px`);document.documentElement.style.setProperty('--impact-y',`${shakeY.toFixed(2)}px`);
@@ -486,6 +491,11 @@ if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','lo
 
 document.body.append($('language-toggle'));
 language=createLanguage();
+if($('start-language')){
+  $('start-language').onclick=()=>language.toggle();
+  language.onChange(lang=>{$('start-language').firstChild.textContent=lang==='en'?'RU':'EN';});
+  $('start-language').firstChild.textContent=language.get()==='en'?'RU':'EN';
+}
 mountGardenRecording({pad,language,onStart:()=>setGardenMenu(false),onReady:()=>{mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();ui();}});
 $('settings-language').onclick=()=>language.toggle();
 language.add(Object.fromEntries(Object.entries(GARDEN_ITEMS).map(([kind,spec])=>[spec.label,guideItemName(kind,true)])));

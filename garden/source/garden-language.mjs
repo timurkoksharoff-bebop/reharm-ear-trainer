@@ -33,6 +33,7 @@ const EN={
  'Три коротких учебных маршрута. Пройдите их, чтобы поступить в Space Music College.':'Complete three short training routes to join Space Music College.',
  'Вы зачислены в Space Music College. Продолжайте в режиме «Студент».':'You have joined Space Music College. Continue in Student mode.',
  'Три учебных маршрута по 3–4 аккорда, медленное движение и защищённые запасы.':'Three routes of 3–4 chords, slower flight and protected supplies.',
+ 'Три учебных маршрута по 3–4 аккорда, скорость студента и неиссякаемые запасы.':'Three routes of 3–4 chords, Student flight speed and unlimited supplies.',
  'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.':'Regular flight: supplies run down; mistakes and rocks cause damage.',
  'Режим преподавателя скоро появится':'Teacher mode is coming later','УРОВЕНЬ':'LEVEL','Следующий полёт':'Next flight',
  'МАРШРУТ':'ROUTE','АККОРД':'CHORD','КРУГ':'LAP','＋ Надстройки':'＋ Extensions','Собрать заново':'Start over',

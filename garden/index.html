@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg?v=1.36"><link rel="apple-touch-icon" href="icon-192-v1.36.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.36">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.36">
+  <link rel="icon" href="icon.svg?v=1.37"><link rel="apple-touch-icon" href="icon-192-v1.37.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.37">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.37">
+  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.37">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -50,17 +51,19 @@
   <section id="exit-confirm" class="exit-confirm" hidden role="dialog" aria-modal="true" aria-labelledby="exit-title"><strong id="exit-title">Вернуться в меню?</strong><p>Текущий полёт завершится.</p><div><button id="exit-cancel">Остаться</button><button id="exit-accept">В меню →</button></div></section>
   <section id="trial-expired" class="trial-expired" hidden role="dialog" aria-modal="true" aria-labelledby="trial-title"><div><span class="overline">SPACE MUSIC COLLEGE</span><h2 id="trial-title">Ознакомительный период завершён</h2><p id="trial-copy">Спасибо, что играли в EAR YOGA. Обратитесь к автору приложения, чтобы получить актуальную сборку.</p><small id="trial-dates"></small><button id="trial-language" type="button">English</button></div></section>
   <aside id="flight-tutorial" hidden aria-live="polite"><span class="tutorial-eyebrow">ПУТЕВОДИТЕЛЬ ПО САДУ</span><div id="tutorial-progress" aria-hidden="true"></div><strong id="tutorial-title"></strong><p id="tutorial-copy"></p><button id="tutorial-back">← Назад</button><button id="tutorial-next">Дальше →</button><button id="tutorial-close">Пропустить тур</button></aside>
-  <section id="garden-start" class="garden-start" hidden aria-label="Главное меню EAR YOGA">
+  <section id="garden-start" class="garden-start" data-cover="orbital-v5" hidden aria-label="Главное меню EAR YOGA">
     <small id="build-version" class="build-version" translate="no"></small>
     <div class="garden-start-shell">
+      <div class="orbital-reference-plate" aria-hidden="true" translate="no"></div>
       <div class="start-copy">
-        <div class="ear-yoga-lockup" aria-label="Ear Yoga · Space Music College" translate="no">
+        <div class="ear-yoga-lockup" data-layout="orbital-v5" aria-label="Ear Yoga · Space Music College" translate="no">
+
           <h2 id="start-title" class="ear-yoga-wordmark">Ear <em>Yoga</em><b class="brand-baseline" aria-hidden="true"></b></h2>
           <span class="overline start-college">SPACE MUSIC COLLEGE<b class="brand-baseline" aria-hidden="true"></b></span>
         </div>
         <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
       </div>
-      <button id="start-menu" class="start-menu" type="button">☰ <span>Меню</span></button>
+      <button id="start-menu" class="start-menu" type="button"><span>Меню</span></button>
       <div class="start-controls">
         <div class="start-actions">
           <button id="start-random" class="start-choice random-choice" type="button"><span aria-hidden="true">✦</span><strong>Начать полёт</strong><small>Случайный маршрут</small></button>
@@ -75,6 +78,7 @@
             <p id="start-difficulty-note" class="difficulty-note">Обычный полёт: запасы расходуются, ошибки и камни наносят урон.</p>
           </div>
         </details>
+        <button id="start-language" class="start-language" type="button" aria-label="Switch language">EN</button>
       </div>
     </div>
   </section>
@@ -188,6 +192,6 @@
   <div id="recording-bar" class="recording-bar" data-user-content hidden><span><i aria-hidden="true"></i> REC <b id="recording-clock">00:00</b></span><button id="recording-stop" type="button">■ Стоп</button></div>
   <dialog id="recording-result" class="recording-result" data-user-content aria-labelledby="recording-title"><h2 id="recording-title">Запись полёта</h2><video id="recording-video" controls playsinline preload="metadata"></video><p id="recording-note"></p><div><a id="recording-save">Сохранить видео</a><button id="recording-close" type="button">Закрыть</button></div></dialog>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.36" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.37" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

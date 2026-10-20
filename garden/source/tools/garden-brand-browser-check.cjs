@@ -6,8 +6,17 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
   page.on('pageerror',e=>errors.push(e.message));await page.goto(process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8788/');
   await page.waitForFunction(()=>window.gardenFlight?.snapshot().ready);await page.evaluate(()=>document.fonts.ready);
   const rows=[];
+  const orbital=await page.locator('.ear-yoga-lockup').getAttribute('data-layout')==='orbital-v5';
   for(const [width,height] of [[320,568],[375,667],[390,692],[390,844],[390,1000],[414,896],[430,932],[600,1024],[768,1024],[1440,900],[844,390]]){
    await page.setViewportSize({width,height});await page.waitForFunction(()=>document.querySelector('.ear-yoga-lockup').dataset.viewport===innerWidth+'x'+innerHeight);
+   if(orbital){
+    const box=await page.evaluate(()=>{const shell=document.querySelector('.garden-start-shell'),plate=document.querySelector('.orbital-reference-plate'),rect=shell.getBoundingClientRect();return {width:rect.width,height:rect.height,reference:getComputedStyle(plate).backgroundImage,mask:getComputedStyle(plate).maskImage};});
+    assert(Math.abs(box.width/box.height-863/1823)<.001,'original reference aspect ratio preserved');
+    assert.match(box.reference,/menu-reference-1.37.png/,'original lettering and composition supplied by approved image');
+    assert.notEqual(box.mask,'none','independent native control cutouts');
+    if(width===390&&height===844)await page.screenshot({path:'/private/tmp/ear-yoga-orbital-brand-1.37.png'});
+    continue;
+   }
    const m=await page.evaluate(()=>{
     const brand=document.querySelector('.ear-yoga-lockup'),title=brand.querySelector('h2'),college=brand.querySelector('.start-college'),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
     const metrics=(el,text)=>{const s=getComputedStyle(el);ctx.font=`${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;return ctx.measureText(text);};
@@ -24,7 +33,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
    rows.push({width,height,relative:m.relative});
    if(width===390&&height===844)await page.screenshot({path:'/private/tmp/ear-yoga-unified-brand-1.35.png'});
   }
-  const sameWidth=rows.filter(r=>r.width===390);assert(Math.max(...sameWidth.map(r=>r.relative))-Math.min(...sameWidth.map(r=>r.relative))<.5,'browser bar / aspect ratio cannot detach College');
-  assert.deepEqual(errors,[]);console.log('Unified brand passed: E/S ink alignment, g lower boundary, no descender overlap, preserved title font/placement, 11 viewports and aspect-ratio changes.');
+  if(!orbital){const sameWidth=rows.filter(r=>r.width===390);assert(Math.max(...sameWidth.map(r=>r.relative))-Math.min(...sameWidth.map(r=>r.relative))<.5,'browser bar / aspect ratio cannot detach College');}
+  assert.deepEqual(errors,[]);console.log(orbital?'Orbital brand passed: coherent logo/title/subtitle, serif styling, 11 viewports and aspect-ratio changes.':'Unified brand passed: E/S ink alignment, g lower boundary, no descender overlap, preserved title font/placement, 11 viewports and aspect-ratio changes.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

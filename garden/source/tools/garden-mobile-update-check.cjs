@@ -37,14 +37,17 @@ if(!oldRoot||!newRoot)throw Error('Provide previous and new absolute release dir
   assert.equal(await page.locator('#build-version').innerText(),'v'+newVersion);
   assert.equal(await page.evaluate(()=>localStorage.getItem('mobile-update-preservation-probe')),'keep');
   const manifest=await page.evaluate(async()=>fetch('manifest.webmanifest').then(r=>r.json()));
+  const approvedMaster=path.join(newRoot,'source/art/app-icon-ship-1.37.png'),newShip=fs.existsSync(approvedMaster);
+  const sharp=newShip?require('sharp'):null;
   for(const size of [192,512]){
    const name=`icon-${size}-v${newVersion}.png`;assert(manifest.icons.some(i=>i.src===name));
    const png=fs.readFileSync(path.join(newRoot,name));assert.equal(png.readUInt32BE(16),size);assert.equal(png.readUInt32BE(20),size);
-   assert.deepEqual(png,fs.readFileSync(path.join(oldRoot,`icon-${size}-v${oldVersion}.png`)),'approved Lotus icon is unchanged');
+   assert.deepEqual(png,newShip?await sharp(approvedMaster).resize(size,size).png().toBuffer():fs.readFileSync(path.join(oldRoot,`icon-${size}-v${oldVersion}.png`)),newShip?'new icon matches the exact approved ship master':'approved Lotus icon is unchanged');
   }
   assert.equal(await page.locator('link[rel="apple-touch-icon"]').getAttribute('href'),`icon-192-v${newVersion}.png`);
   assert.equal(await page.locator('link[rel="icon"]').getAttribute('href'),`icon.svg?v=${newVersion}`);
-  assert.deepEqual(fs.readFileSync(path.join(newRoot,'icon.svg')),fs.readFileSync(path.join(oldRoot,'icon.svg')));
+  if(newShip){const svg=fs.readFileSync(path.join(newRoot,'icon.svg'),'utf8'),embedded=svg.match(/base64,([^"']+)/);assert(embedded,'SVG contains the approved icon');assert.deepEqual(Buffer.from(embedded[1],'base64'),await sharp(approvedMaster).resize(512,512).png().toBuffer());}
+  else assert.deepEqual(fs.readFileSync(path.join(newRoot,'icon.svg')),fs.readFileSync(path.join(oldRoot,'icon.svg')));
   await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.gardenFlight?.snapshot().ready);
   assert.equal(await page.locator('#build-version').innerText(),'v'+newVersion);
   await page.locator('#start-random').tap();
@@ -52,6 +55,6 @@ if(!oldRoot||!newRoot)throw Error('Provide previous and new absolute release dir
   if(await page.locator('#flight-tutorial').isVisible())await page.locator('#tutorial-close').tap();
   await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);
   assert.deepEqual(errors,[]);
-  console.log(`Mobile update passed: ${oldVersion} -> ${newVersion}, existing local data preserved, original Lotus icons unchanged, offline menu and flight.`);
+  console.log(`Mobile update passed: ${oldVersion} -> ${newVersion}, existing local data preserved, ${newShip?'approved ship icons verified':'original Lotus icons unchanged'}, offline menu and flight. Desktop browser emulation only.`);
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

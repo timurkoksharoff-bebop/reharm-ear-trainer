@@ -91,7 +91,7 @@ export class GardenResonance{
   if(!dt||!view.active||view.paused||this.gameOver)return;
   this.time+=dt;for(const flash of this.flashes)flash.age+=dt;this.flashes=this.flashes.filter(f=>f.age<1.8);
   const ready=Boolean(view.sounding?.chord&&!view.sounding.chord.reference);
-  const elapsed=Number.isFinite(view.clockDt)?Math.max(0,Math.min(.5,view.clockDt)):dt;
+  const elapsed=Number.isFinite(view.clockDt)?Math.max(0,Math.min(.5*(view.timeScale??1),view.clockDt)):dt;
   const solved=Math.max(0,Number(view.solvedChords)||0),total=Math.max(2,Number(view.totalChords)||2);
   this.routeLength=total;
   const unlocked=solved>=2,progress=Math.max(0,Math.min(1,(solved-2)/Math.max(1,total-2)));

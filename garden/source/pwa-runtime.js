@@ -19,5 +19,8 @@
  const check=()=>{if(!registration||!navigator.onLine||Date.now()-lastCheck<60000)return;lastCheck=Date.now();registration.update().catch(()=>{});};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){reloadFromMenu();check();}});
  addEventListener('online',check);
+ addEventListener('focus',check);
+ addEventListener('pageshow',check);
+ setInterval(()=>{if(!document.hidden&&document.body.classList.contains('start-open'))check();},60000);
  worker.register('./service-worker.js',{scope:'./',updateViaCache:'none'}).then(value=>{registration=value;inspect(worker.controller);check();}).catch(()=>{});
 })();

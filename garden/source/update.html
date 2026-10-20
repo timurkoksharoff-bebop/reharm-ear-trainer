@@ -4,11 +4,15 @@
  try{
   if(!navigator.serviceWorker||!navigator.onLine)throw Error('Для обновления нужно подключение к интернету. Сохранённая игра доступна по ссылке ниже.');
   const worker=navigator.serviceWorker;
+  const releaseResponse=await fetch('./release.json?update='+Date.now(),{cache:'no-store'});
+  if(!releaseResponse.ok)throw Error('Не удалось проверить последнюю версию. Нажмите «Повторить».');
+  const release=await releaseResponse.json(),targetVersion=release.version||version;
+  status.textContent='Загружаем версию '+targetVersion+'…';
   await new Promise(async(resolve,reject)=>{
    let done=false;
    const timer=setTimeout(()=>finish(Error('Обновление ещё загружается. Нажмите «Повторить».')),60000);
    function finish(error){if(done)return;done=true;clearTimeout(timer);worker.removeEventListener('controllerchange',check);error?reject(error):resolve();}
-   function check(){const controller=worker.controller;if(!controller||done)return;const channel=new MessageChannel(),timeout=setTimeout(()=>channel.port1.close(),2000);channel.port1.onmessage=event=>{clearTimeout(timeout);channel.port1.close();if(controller===worker.controller&&event.data?.type==='EAR_YOGA_VERSION'&&event.data.version===version)finish();};controller.postMessage({type:'EAR_YOGA_VERSION'},[channel.port2]);}
+   function check(){const controller=worker.controller;if(!controller||done)return;const channel=new MessageChannel(),timeout=setTimeout(()=>channel.port1.close(),2000);channel.port1.onmessage=event=>{clearTimeout(timeout);channel.port1.close();if(controller===worker.controller&&event.data?.type==='EAR_YOGA_VERSION'&&event.data.version===targetVersion)finish();};controller.postMessage({type:'EAR_YOGA_VERSION'},[channel.port2]);}
    worker.addEventListener('controllerchange',check);
    try{const registration=await worker.register('./service-worker.js',{scope:'./',updateViaCache:'none'});await registration.update();check();}catch(error){finish(error);}
   });

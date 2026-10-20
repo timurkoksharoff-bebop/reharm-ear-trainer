@@ -1,10 +1,10 @@
 {
-  "version": "1.44",
+  "version": "1.45",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.44: compare Day/Dusk/Night/Cycle on the unobstructed game canvas using a compact lighting dock. Preview playback animates only lighting with mission/resources paused. Rename Light to Headlight and explain the ship spotlight. Hybrid Keys has a gentle 35 ms note attack with its tuning and sustain preserved. Teacher pace is +7% over Student; all three modes share the same visible header pause/resume control. Return restores settings; harmony, sound samples, menu artwork and upward reflections retained.",
+  "notes": "Mobile release 1.45: prevent old HTTP-cache files entering a new offline cache using release-specific fetch URLs, no-store and SHA-256 integrity. Fresh versioned recovery page. Compare Day/Dusk/Night/Cycle on the unobstructed game canvas using a compact lighting dock. Preview playback animates only lighting with mission/resources paused. Rename Light to Headlight and explain the ship spotlight. Hybrid Keys has a gentle 35 ms note attack with its tuning and sustain preserved. Teacher pace is +7% over Student; all three modes share the same visible header pause/resume control. Return restores settings; harmony, sound samples, menu artwork and upward reflections retained.",
   "channel": "mobile-release"
 }

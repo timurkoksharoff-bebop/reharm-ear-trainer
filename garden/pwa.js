@@ -1,7 +1,7 @@
 /* A worker update is applied only while the main menu is open. Player storage
    is never cleared, and an active flight is never interrupted. */
 (()=>{
- const version='1.44',worker=navigator.serviceWorker;
+ const version='1.45',worker=navigator.serviceWorker;
  if(!worker||location.protocol==='file:'||(['localhost','127.0.0.1'].includes(location.hostname)&&!new URLSearchParams(location.search).has('offline-test')))return;
  let pending=false,reloading=false,registration,lastCheck=0;
  const reloadFromMenu=()=>{
@@ -19,5 +19,8 @@
  const check=()=>{if(!registration||!navigator.onLine||Date.now()-lastCheck<60000)return;lastCheck=Date.now();registration.update().catch(()=>{});};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){reloadFromMenu();check();}});
  addEventListener('online',check);
+ addEventListener('focus',check);
+ addEventListener('pageshow',check);
+ setInterval(()=>{if(!document.hidden&&document.body.classList.contains('start-open'))check();},60000);
  worker.register('./service-worker.js',{scope:'./',updateViaCache:'none'}).then(value=>{registration=value;inspect(worker.controller);check();}).catch(()=>{});
 })();

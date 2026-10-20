@@ -652,7 +652,7 @@ body.tutorial-open:after{content:"";position:fixed;inset:0;background:#02101bd9;
 .field-diagram{position:relative;max-width:350px;height:390px;margin:20px auto 10px;border:1px solid #9bcbb755;border-radius:24px;overflow:hidden;background:radial-gradient(ellipse at 45% 55%,#1a454e,#071b28);color:#d8eee4;font:14px Georgia,serif}
 .map-route{position:absolute;left:20px;top:45px;letter-spacing:2px;color:#cbb8ee}
 .map-menu{position:absolute;right:18px;top:12px;color:#b7d6ca}
-.map-pause{position:absolute;left:16px;top:85px;border:1px solid #b0dacc70;border-radius:20px;padding:6px 12px}
+.map-pause{position:absolute;right:78px;top:7px;border:1px solid #b0dacc70;border-radius:20px;padding:6px 12px}
 .map-lotus{position:absolute;left:16px;top:135px;display:flex;align-items:center;gap:7px;color:#b5ead8}
 .map-lotus svg{width:42px;height:42px}.map-lotus span{font:12px system-ui}
 .map-chords{position:absolute;right:14px;top:82px;display:grid;gap:6px;text-align:center;width:65px}
@@ -698,3 +698,7 @@ body.world-open .flight-tools{visibility:hidden}
 .recording-result video{display:block;width:100%;max-height:65vh;background:#031717;border-radius:8px}
 .recording-result p{font:13px/1.5 system-ui,sans-serif;color:#b4cec8}.recording-result>div{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .recording-result button{padding:9px 14px;min-height:38px;border-radius:8px;color:#d7eee7;background:transparent;border:1px solid #a4dcd56e}
+
+/* Shared flight transport: independent of the answer palette in every mode. */
+#harmony-hud[data-variant=minimal] > #mission-toggle{position:fixed;z-index:8;left:auto;right:118px;top:max(9px,env(safe-area-inset-top));display:grid;place-items:center;width:38px;min-width:38px;height:38px;min-height:38px;margin:0;padding:0;border:1px solid #b7e4dd50;border-radius:50%;background:#0c2e330d;box-shadow:none;pointer-events:auto}
+#harmony-hud[data-variant=minimal] .route-heading{margin-right:155px}

@@ -1,10 +1,10 @@
 {
-  "version": "1.42",
+  "version": "1.43",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.42: trial upward reflection motion with horizontal comparison at ?reflections=horizontal; slow pearl sweeps, caustics, water motion and ceramic reflections by 20%; align the turquoise route-button body with its original inner gold frame, sharpen mode-button inner contours, and restore a balanced top-right Settings action opening instrument, volume and EQ directly. Selected-only shine, safe PWA updates, icon, music and gameplay retained.",
+  "notes": "Mobile release 1.43: compare Day/Dusk/Night/Cycle on the unobstructed game canvas using a compact lighting dock. Preview playback animates only lighting with mission/resources paused. Rename Light to Headlight and explain the ship spotlight. Teacher pace is +10% over Student; all three modes share the same visible header pause/resume control. Return restores settings; music, gameplay, menu artwork and upward reflections retained.",
   "channel": "mobile-release"
 }

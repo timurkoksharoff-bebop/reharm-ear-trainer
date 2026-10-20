@@ -53,6 +53,23 @@ const TUTORIAL_KEY='ear-yoga-guide.v2';
 let guide,language,trial,trialExpired=false;
 const wasTutorialDismissed=()=>{try{return localStorage.getItem(TUTORIAL_KEY)==='1';}catch{return false;}};
 let menuWasRunning=false,exitWasRunning=false,menuFromStart=false;
+const lightingPreview={active:false,playing:true,returnFocus:null},lightingSection=$('lighting-settings'),lightingAnchor=document.createComment('lighting settings position');
+lightingSection.before(lightingAnchor);
+function openLightingPreview(){
+  if(lightingPreview.active||!document.body.classList.contains('world-open'))return;
+  lightingPreview.active=true;lightingPreview.playing=true;lightingPreview.returnFocus=document.activeElement;
+  $('lighting-preview-dock').append(lightingSection);$('lighting-preview-dock').hidden=false;document.body.classList.add('lighting-preview');
+  const target=lightingPreview.returnFocus?.matches('[data-light],#lantern')?lightingPreview.returnFocus:lightingSection.querySelector('[data-light][aria-pressed="true"]');
+  target?.focus({preventScroll:true});ui();
+}
+function closeLightingPreview({focus=true}={}){
+  if(!lightingPreview.active)return;
+  lightingPreview.active=false;lightingAnchor.after(lightingSection);document.body.classList.remove('lighting-preview');$('lighting-preview-dock').hidden=true;
+  if(focus&&lightingPreview.returnFocus?.isConnected)lightingPreview.returnFocus.focus({preventScroll:true});ui();
+}
+$('lighting-preview').addEventListener('click',openLightingPreview);
+$('lighting-preview-back').addEventListener('click',()=>closeLightingPreview());
+$('lighting-motion').addEventListener('click',()=>{lightingPreview.playing=!lightingPreview.playing;ui();});
 let difficulty='medium',tutorialStep=0,tutorialDismissed=wasTutorialDismissed(),tutorialActive=false;
 const FAVORITES_KEY='echo-garden-favorites.v1';
 const loadProgress=()=>{try{const saved=JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{}');return {level:Math.max(1,Number(saved.level)||1),completed:Array.isArray(saved.completed)?saved.completed:[],seenRouteIds:Array.isArray(saved.seenRouteIds)?saved.seenRouteIds:[],lastRouteId:saved.lastRouteId||'',admissionCompleted:Array.isArray(saved.admissionCompleted)?saved.admissionCompleted:[]};}catch{return {level:1,completed:[],seenRouteIds:[],lastRouteId:'',admissionCompleted:[]};}};
@@ -90,6 +107,10 @@ function ui(){
   for(const [attribute,value] of [['ship',s.ship],['light',s.lightMode]])for(const b of document.querySelectorAll(`[data-${attribute}]`)){const selected=String(b.dataset[attribute])===String(value);b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));}
   $('pause').setAttribute('aria-pressed',String(s.paused));setPlaybackIcon($('pause'),!s.paused);$('pause').setAttribute('aria-label',s.paused?'Продолжить':'Пауза');
   $('lantern').setAttribute('aria-pressed',String(s.lantern));$('lantern').disabled=s.ship===2;
+  $('lighting-motion').hidden=!lightingPreview.active||s.lightMode!=='cycle';
+  $('lighting-motion').setAttribute('aria-pressed',String(lightingPreview.playing));
+  $('lighting-motion').textContent=lightingPreview.playing?'Ⅱ Пауза цикла':'▶ Продолжить цикл';
+  $('lighting-preview-note').hidden=s.lightMode!=='cycle';
   $('flight-status').textContent=s.paused?'Полёт на паузе':s.night>.6?(s.lantern&&s.ship!==2?'Ночь · свет ведёт нас':'Ночь · естественное свечение'):s.night>.2?'Сумерки · сад продолжает расти':'День · живой цикл';
 }
 function renderVitals(){
@@ -324,10 +345,11 @@ function chooseState(index){
 function pause(){if(trialExpired||tutorialActive)return;s.paused=!s.paused;keys.clear();if(s.paused){mission?.pause();pad.stop(true);}else mission?.start();ui();}
 function clean(value){s.clean=value;document.body.classList.toggle('clean',value);$('restore').hidden=!value;(value?$('restore'):$('clean')).focus();}
 function light(mode){s.lightMode=mode;if(mode==='cycle')s.cycle=Math.acos(clamp(1-2*s.night,-1,1))*180/Math.PI;if(s.paused||reduced)s.night=mode==='night'?1:mode==='dusk'?.48:mode==='day'?0:s.night;ui();}
-for(const b of document.querySelectorAll('[data-light]'))b.addEventListener('click',()=>light(b.dataset.light));
-$('pause').addEventListener('click',pause);$('lantern').addEventListener('click',()=>{s.lantern=!s.lantern;ui();});
+for(const b of document.querySelectorAll('[data-light]'))b.addEventListener('click',()=>{light(b.dataset.light);if(b.dataset.light==='cycle')lightingPreview.playing=true;openLightingPreview();ui();});
+$('pause').addEventListener('click',pause);$('lantern').addEventListener('click',()=>{s.lantern=!s.lantern;openLightingPreview();ui();});
 $('clean').addEventListener('click',()=>clean(true));$('restore').addEventListener('click',()=>clean(false));
 function setGardenMenu(open,{resume=true,view='routes'}={}){
+  closeLightingPreview({focus:false});
   const wasOpen=document.body.classList.contains('world-open'),wasSettings=$('garden-menu').dataset.view==='settings',settings=open&&view==='settings';
   $('garden-menu').dataset.view=settings?'settings':'routes';
   $('garden-menu').setAttribute('aria-label',settings?'Настройки':'Выбор маршрута Сада Эха');
@@ -387,6 +409,7 @@ world.addEventListener('pointermove',e=>{if(e.pointerId===dragId)move(e.clientX,
 for(const name of ['pointerup','pointercancel','lostpointercapture'])world.addEventListener(name,e=>{if(e.pointerId===dragId)dragId=null;});
 addEventListener('keydown',e=>{
   if($('recording-result').open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,select,textarea,[contenteditable="true"]')||e.repeat&&['Space','KeyH'].includes(e.code))return;
+  if(e.code==='Escape'&&lightingPreview.active){e.preventDefault();closeLightingPreview();return;}
   if(e.code==='Escape'&&!$('exit-confirm').hidden){e.preventDefault();closeExitConfirmation(true);return;}
   const cockpit=$('garden-start').hidden&&!document.body.classList.contains('world-open')&&!tutorialActive&&$('exit-confirm').hidden;
   if(!cockpit){if(e.code==='Escape'&&document.body.classList.contains('world-open'))setGardenMenu(false);return;}
@@ -459,7 +482,7 @@ function frame(now){
   raf=0;if(document.hidden)return;
   const frameMs=last?now-last:0,dt=Math.min(.05,frameMs/1000);last=now;
   if(mobileGraphics&&frameMs>0&&frameMs<250){slowFrameAverage=slowFrameAverage*.98+frameMs*.02;if(++graphicsSamples>180&&slowFrameAverage>27&&renderScale>1.1){renderScale=1.1;resize();}}
-  if(s.ready&&!document.body.classList.contains('start-open')){update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
+  if(s.ready&&!document.body.classList.contains('start-open')){if(lightingPreview.active&&lightingPreview.playing&&s.lightMode==='cycle'){s.cycle=mod(s.cycle+dt*15,360);s.night=(1-Math.cos(s.cycle*Math.PI/180))/2;}update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
   raf=requestAnimationFrame(frame);
 }
 async function load(){
@@ -488,7 +511,7 @@ function error(e){s.ready=false;$('loading').hidden=false;$('load-progress').tex
 $('retry').addEventListener('click',()=>location.reload());
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();s.ready=false;last=0;$('loading').hidden=false;$('load-progress').textContent='Восстанавливаем изображение…';});
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextrestored',()=>{try{renderer?.dispose();renderer=createGardenRenderer(world,shipLayer,images.slice(0,6));s.ready=true;last=0;$('loading').hidden=true;}catch(e){error(e);}});
-window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),lastTension:pad.lastTension&&{...pad.lastTension},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
+window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),lightingPreview:{active:lightingPreview.active,playing:lightingPreview.playing},mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),lastTension:pad.lastTension&&{...pad.lastTension},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
 if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','localhost'].includes(location.hostname)){
  const probe=document.createElement('button');probe.id='qa-repeat-pickup';probe.textContent='Проверка: выпустить лотос ∞';probe.style.cssText='position:fixed;left:12px;bottom:180px;z-index:60;color:#d9edcd;background:#102922;border:1px solid #799e84;padding:8px';
  probe.addEventListener('click',()=>{if(!mission.snapshot().running)return;gardenLife.forceSpawn('hold',{x:s.x/s.width,y:s.y/s.height-.12,vx:0});});document.body.append(probe);

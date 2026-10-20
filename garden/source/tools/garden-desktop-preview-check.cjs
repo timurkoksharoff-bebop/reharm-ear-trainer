@@ -39,15 +39,29 @@ const out=process.env.GARDEN_QA_DIR||'/private/tmp/ear-yoga-137-qa';fs.mkdirSync
    if(await page.locator('#flight-tutorial').isVisible())await page.locator('#tutorial-close').click();
    await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);await page.waitForTimeout(250);
    const start=await page.evaluate(()=>({s:gardenFlight.snapshot(),at:performance.now()}));
-   const bar=start.s.mission.barSeconds;assert(Math.abs(bar-(mode==='hard'?4/1.2:4))<1e-9,'wrong chord duration for '+mode);
+   const bar=start.s.mission.barSeconds;assert(Math.abs(bar-(mode==='hard'?4/1.1:4))<1e-9,'wrong chord duration for '+mode);
    await page.waitForTimeout(1100);
    const end=await page.evaluate(()=>({s:gardenFlight.snapshot(),at:performance.now()}));
    const rate=(end.s.time-start.s.time)/((end.at-start.at)/1000);
-   assert(Math.abs(rate-(mode==='hard'?1.2:1))<.12,'wrong world-time pace for '+mode+': '+rate);
+   assert(Math.abs(rate-(mode==='hard'?1.1:1))<.12,'wrong world-time pace for '+mode+': '+rate);
    if(mode==='light')assert(Object.values(end.s.life.resources).every(n=>n===100),'Applicant spends reserves');
    results.push({mode,barSeconds:bar,worldRate:Number(rate.toFixed(3))});
-   await page.locator('#mission-toggle').click();const paused=await page.evaluate(()=>gardenFlight.snapshot());await page.waitForTimeout(250);const after=await page.evaluate(()=>gardenFlight.snapshot());
-   assert.equal(after.time,paused.time,'paused world moved');assert.deepEqual(after.life.resources,paused.life.resources,'paused resources changed');
+   assert.equal(start.s.mission.separateBass,mode==='hard','separate bass policy');
+   assert.equal(start.s.mission.rootMode,mode!=='light','root answer policy');
+   for(const [width,height] of [[320,568],[390,844],[820,1180],[1440,900],[844,390]]){
+    await page.setViewportSize({width,height});
+    const controls=await page.evaluate(()=>['mission-toggle','garden-home','world-controls'].map(id=>{const e=document.getElementById(id),r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {id,box:r.toJSON(),hit:hit?.closest('button')?.id};}));
+    for(const c of controls){assert(c.box.x>=0&&c.box.y>=0&&c.box.right<=width&&c.box.bottom<=height,'control outside '+mode+' '+width+': '+c.id);assert.equal(c.hit,c.id,'covered control '+mode+' '+width+': '+c.id);}
+    assert(controls[0].box.right<controls[1].box.x,'pause overlaps home in '+mode);
+   }
+   await page.setViewportSize({width:390,height:844});
+   await page.locator('#mission-toggle').click();const paused=await page.evaluate(()=>gardenFlight.snapshot());await page.waitForTimeout(350);const after=await page.evaluate(()=>gardenFlight.snapshot());
+   assert(after.paused&&!after.mission.running,'pause did not stop mission in '+mode);assert.equal(after.time,paused.time,'paused world moved');assert.deepEqual(after.life.resources,paused.life.resources,'paused resources changed');assert.equal(after.mission.cursor,paused.mission.cursor,'paused harmony advanced');assert.equal(after.mission.deadline,paused.mission.deadline);
+   await page.locator('#world-controls').click();await page.locator('#menu-close').click();assert((await page.evaluate(()=>gardenFlight.snapshot())).paused,'closing settings resumed a manually paused flight');
+   await page.screenshot({path:path.join(out,mode+'-pause.png')});
+   await page.locator('#mission-toggle').click();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);const resumed=await page.evaluate(()=>gardenFlight.snapshot());await page.waitForTimeout(250);assert((await page.evaluate(()=>gardenFlight.snapshot())).time>resumed.time,'resume failed in '+mode);
+   await page.locator('#world-controls').click();assert(!(await page.evaluate(()=>gardenFlight.snapshot())).mission.running);await page.locator('#menu-close').click();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);
+   await page.locator('#garden-home').click();assert(await page.locator('#exit-confirm').isVisible());await page.locator('#exit-cancel').click();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);
    await page.evaluate(()=>gardenFlight.showMenu());
   }
   await page.locator('[data-difficulty="medium"]').click();await page.locator('#start-choose').click();await page.locator('#garden-route-list').waitFor({state:'visible'});

@@ -1,5 +1,11 @@
 // Presentation-only translations. Never translate catalog values or editable data.
 const EN={
+ '◈ Прожектор':'◈ Headlight','Посмотреть на экране':'Preview lighting','← К настройкам':'← Back to settings',
+ 'Прожектор освещает путь перед кораблём. Заметен в сумерках и ночью.':'The headlight lights the path ahead of the ship. Most visible at dusk and night.',
+ 'Прожектор освещает участок рядом с кораблём и путь впереди. Заметен в сумерках и ночью.':'The headlight illuminates the area around the ship and the path ahead. Most visible at dusk and night.',
+ 'Цикл показан быстрее, чтобы сравнить освещение.':'The cycle plays faster here to compare the lighting.',
+ 'Ⅱ Пауза цикла':'Ⅱ Pause cycle','▶ Продолжить цикл':'▶ Resume cycle',
+
  'Настройки':'Settings','Тембр, громкость и эквалайзер':'Instrument, volume and equalizer',
  'Страницы цепочки аккордов':'Chord sequence pages','Предыдущая часть цепочки':'Previous sequence page','Следующая часть цепочки':'Next sequence page',
  'БАС':'BASS','Нота баса':'Bass note','Корень аккорда относительно тоники':'Chord root relative to the tonic',

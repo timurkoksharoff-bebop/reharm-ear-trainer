@@ -67,7 +67,7 @@ applicant.pause();
 const {timeScale:teacherScale,barSeconds:teacherBar,...teacherProfile}=difficultyProfile('hard');
 const {timeScale:studentScale,barSeconds:studentBar,...studentProfile}=difficultyProfile('medium');
 assert.deepEqual(teacherProfile,studentProfile,'Teacher retains Student physics and damage rules before its requested time scaling');
-assert.equal(teacherScale/studentScale,1.2);assert.equal(studentBar/teacherBar,1.2);
+assert.equal(teacherScale/studentScale,1.1);assert.equal(studentBar/teacherBar,1.1);
 const imported={baseTonic:5,sequence:[{offset:9,rootPc:2,bassPc:9,bassOffset:7,quality:'7',notes:[45,62,66,69,72]},{offset:0,rootPc:5,bassPc:5,bassOffset:0,quality:'maj',notes:[41,53,57,60]}]};
 const copy=JSON.stringify(imported),m=createGardenMission({exercise:imported,separateBass:true});
 assert.equal(m.snapshot().exercise.sequence[0].bassOffset,4);

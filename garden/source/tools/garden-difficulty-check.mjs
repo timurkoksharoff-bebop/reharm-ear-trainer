@@ -28,6 +28,6 @@ for(const name of ['light','medium','hard']){
 assert.equal(difficultyProfile('light').speed,difficultyProfile('medium').speed);
 assert.equal(difficultyProfile('light').barSeconds,difficultyProfile('medium').barSeconds);
 assert.equal(difficultyProfile('light').spawnRate,difficultyProfile('medium').spawnRate);
-assert.equal(difficultyProfile('hard').timeScale,1.2);
-assert.equal(difficultyProfile('medium').barSeconds/difficultyProfile('hard').barSeconds,1.2);
-console.log('Difficulty checks passed: unchanged Student, +20% Teacher pace, Applicant at Student pace with full protected reserves, pause freezes drain.');
+assert.equal(difficultyProfile('hard').timeScale,1.1);
+assert.equal(difficultyProfile('medium').barSeconds/difficultyProfile('hard').barSeconds,1.1);
+console.log('Difficulty checks passed: unchanged Student, +10% Teacher pace, Applicant at Student pace with full protected reserves, pause freezes drain.');

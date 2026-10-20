@@ -118,10 +118,11 @@
       <div class="panel-kicker">АККОРД</div>
       <div id="quality-options" class="answer-options quality-options"></div>
       <details id="quality-advanced" class="quality-advanced"><summary>＋ Надстройки</summary><div id="quality-advanced-options" class="quality-options"></div></details>
-      <button id="mission-toggle" class="mission-toggle" aria-label="Продолжить полёт и музыку"><svg class="playback-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5 19 12 7 19.5Z"/></svg></button>
       <button id="mission-restart" class="text-control" hidden>Собрать заново</button>
       <p id="answer-feedback" class="answer-feedback" aria-live="polite">Нажми аккорд, пока он звучит</p>
     </aside>
+
+    <button id="mission-toggle" class="mission-toggle" aria-label="Продолжить полёт и музыку"><svg class="playback-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4.5 19 12 7 19.5Z"/></svg></button>
 
     <aside id="bass-panel" class="bass-panel" aria-label="Бас относительно тоники" hidden>
       <span class="bass-heading">BASS</span><div id="bass-options"></div>
@@ -181,16 +182,24 @@
           <p id="recording-status" role="status"></p>
         </section>
       </div>
+      <section id="lighting-settings" class="lighting-settings" aria-label="Освещение">
+        <div class="lighting-heading"><strong>Освещение</strong><button id="lighting-preview" type="button">Посмотреть на экране</button></div>
       <div class="toolbar">
         <div class="group daylight" role="group" aria-label="Освещение"><button data-light="day" aria-pressed="false">День</button><button data-light="dusk" aria-pressed="false">Сумерки</button><button data-light="night" aria-pressed="false">Ночь</button><button data-light="cycle" aria-pressed="true" class="selected">Цикл</button></div>
-        <button id="lantern" aria-pressed="true">◈ Свет</button><button id="pause" aria-pressed="false">Ⅱ Пауза</button><button id="clean" aria-label="Скрыть управление">Чистый вид ↗</button>
+        <button id="lantern" aria-pressed="true" aria-describedby="lighting-note" title="Прожектор освещает участок рядом с кораблём и путь впереди. Заметен в сумерках и ночью.">◈ Прожектор</button><button id="lighting-motion" type="button" aria-pressed="true">Ⅱ Пауза цикла</button><button id="pause" aria-pressed="false">Ⅱ Пауза</button><button id="clean" aria-label="Скрыть управление">Чистый вид ↗</button>
       </div>
+        <p id="lighting-note" class="lighting-note">Прожектор освещает путь перед кораблём. Заметен в сумерках и ночью.</p>
+      </section>
     </div>
   </section>
   <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite"><span class="overline">МАРШРУТ ЗАВЕРШЁН · СЛУШАЕМ ДАЛЬШЕ</span><p id="mission-complete-copy">Все аккорды найдены. Последовательность продолжает звучать по кругу.</p><div><button id="mission-next-route" aria-label="Следующий маршрут">✓ Завершено · следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню"><svg class="menu-home-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10 12 3 20 10v11H4Z"/></svg><span>Меню</span></button></div></section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="recording-bar" class="recording-bar" data-user-content hidden><span><i aria-hidden="true"></i> REC <b id="recording-clock">00:00</b></span><button id="recording-stop" type="button">■ Стоп</button></div>
   <dialog id="recording-result" class="recording-result" data-user-content aria-labelledby="recording-title"><h2 id="recording-title">Запись полёта</h2><video id="recording-video" controls playsinline preload="metadata"></video><p id="recording-note"></p><div><a id="recording-save">Сохранить видео</a><button id="recording-close" type="button">Закрыть</button></div></dialog>
+  <aside id="lighting-preview-dock" hidden aria-labelledby="lighting-preview-title">
+    <header><strong id="lighting-preview-title">Освещение</strong><button id="lighting-preview-back" type="button">← К настройкам</button></header>
+    <p id="lighting-preview-note">Цикл показан быстрее, чтобы сравнить освещение.</p>
+  </aside>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
   <script src="garden-flight.bundle.js?v=0.94" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 </body>

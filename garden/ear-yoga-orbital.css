@@ -203,3 +203,28 @@ html[lang="en"] #garden-start[data-cover] .start-tutorial strong{font:inherit!im
 @keyframes pearl-caustics-up{0%{transform:translateY(20%) rotate(-8deg);opacity:0}15%,85%{opacity:.65}100%{transform:translateY(-20%) rotate(-8deg);opacity:0}}
 @keyframes water-breath-up{0%,100%{transform:translateY(2.5%) scale(1);filter:hue-rotate(-12deg)}50%{transform:translateY(-2.5%) scale(1.05);filter:hue-rotate(16deg)}}
 @keyframes glaze-reflection-up{0%{background-position:0 0;opacity:0}12%,85%{opacity:.6}100%{background-position:0 100%;opacity:0}}
+
+/* Lighting is compared on the actual unobstructed game canvas. The same
+   controls move to the dock, with no duplicate IDs or mission playback. */
+.lighting-settings{margin-top:20px;padding-top:16px;border-top:1px solid #b2d9cb22}
+.lighting-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.lighting-heading strong{font:400 16px Georgia,serif;color:#f0dfb9}
+.lighting-heading button{min-height:40px;padding:8px 12px;border:1px solid #b2d9cb55;border-radius:10px;background:#163c40;color:#def1e9;font:12px system-ui,sans-serif}
+.lighting-note,#lighting-preview-note{font:12px/1.45 system-ui,sans-serif!important;color:#b8d3cf!important;margin:10px 0 0!important}
+.lighting-settings :is(#pause,#clean){display:none!important}
+#lighting-motion[hidden],#lighting-preview-dock[hidden],#lighting-preview-note[hidden]{display:none!important}
+body.lighting-preview #garden-menu{visibility:hidden;opacity:0;pointer-events:none}
+body.lighting-preview :is(#world,#life,#ship-layer){pointer-events:none}
+#lighting-preview-dock{position:fixed;z-index:45;left:50%;bottom:calc(12px + env(safe-area-inset-bottom));transform:translateX(-50%);box-sizing:border-box;width:min(740px,calc(100vw - 24px));padding:12px 16px;border:1px solid #b6d5c654;border-radius:18px;background:#061d26e8;backdrop-filter:blur(9px);color:#f0dfbd;box-shadow:0 10px 35px #0005}
+#lighting-preview-dock>header{position:static;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0;margin:0;pointer-events:auto}
+#lighting-preview-dock>header strong{font:400 17px Georgia,serif}
+#lighting-preview-back{min-height:36px;padding:6px 10px;background:transparent;border:1px solid #b8d6c844;border-radius:10px;color:#e2eee0;font:12px system-ui,sans-serif}
+#lighting-preview-dock .lighting-settings{border:0;margin:4px 0 0;padding:0}
+#lighting-preview-dock .lighting-heading{display:none}
+#lighting-preview-dock .toolbar{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:8px;margin:0}
+#lighting-preview-dock .toolbar button{min-height:42px;padding:8px 11px;border:1px solid #a7cdbb44;border-radius:10px;background:#0c2c35;color:#e4efe6;font:12px system-ui,sans-serif}
+#lighting-preview-dock .toolbar [aria-pressed="true"]{border-color:#e9d19c;background:#24514e;color:#fff3d4}
+#lighting-preview-dock .daylight{display:flex;gap:4px}
+#lighting-preview-dock #lighting-preview-note{margin:4px 0 8px!important;font-size:11px!important}
+#lighting-preview-dock .lighting-note{font-size:11px!important}
+@media(max-width:480px){#lighting-preview-dock{padding:10px 12px}#lighting-preview-dock .toolbar{gap:6px}#lighting-preview-dock .toolbar button{min-height:40px;padding:6px 9px;font-size:11px}#lighting-preview-dock .daylight{width:100%}#lighting-preview-dock .daylight button{flex:1}}

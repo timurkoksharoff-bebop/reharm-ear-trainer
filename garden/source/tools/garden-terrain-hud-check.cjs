@@ -1,23 +1,9 @@
-// Regressions for non-seamless painting edges and visible mobile flight results.
+// Mobile HUD/results regression. The terrain shader is restored to the 1.46 reference;
+// continuity via the rejected 1.47 patch blending is no longer a release requirement.
 const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=require('playwright');
-const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8138/',out='/private/tmp/ear-yoga-147-visual';fs.mkdirSync(out,{recursive:true});
+const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8138/',out='/private/tmp/ear-yoga-148-visual';fs.mkdirSync(out,{recursive:true});
 (async()=>{const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});try{
  const page=await browser.newPage({viewport:{width:820,height:1180},locale:'ru-RU',isMobile:true,hasTouch:true,serviceWorkers:'block'}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(base);await page.waitForFunction(()=>gardenFlight?.snapshot().ready);
- const terrain=await page.evaluate(async()=>{
-  const {createGardenRenderer}=await import('./source/garden-flight-renderer.mjs'),ground=document.createElement('canvas'),ship=document.createElement('canvas');ground.width=ship.width=256;ground.height=ship.height=384;
-  const input=document.createElement('canvas');input.width=input.height=256;const ctx=input.getContext('2d'),data=ctx.createImageData(256,256);
-  // Opposite source edges differ by 255: wrapping this painting creates a hard seam.
-  for(let y=0;y<256;y++)for(let x=0;x<256;x++){const k=(y*256+x)*4;data.data.set([x,y,(x+y)/2,255],k);}ctx.putImageData(data,0,0);
-  const renderer=createGardenRenderer(ground,ship,Array(6).fill(input)),gl=ground.getContext('webgl');
-  const state={width:256,height:384,x:128,y:230,worldSize:250,pan:.03,time:3,growth:0,night:0,lantern:false,ship:2,scroll:0};
-  const pixels=()=>{renderer.render(state);const p=new Uint8Array(256*384*4);gl.readPixels(0,0,256,384,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};let maxStep=0,maxWrap=0;
-  for(const lowCostGraphics of [true,false])for(const growth of [0,.5,1.4,2.5,3.7]){
-   Object.assign(state,{lowCostGraphics,growth,scroll:0});const a=pixels();state.scroll=2;const b=pixels();for(let k=0;k<a.length;k++)maxWrap=Math.max(maxWrap,Math.abs(a[k]-b[k]));
-   // Pure base material isolates texture continuity from the intentional growth front.
-   if(growth===0)for(const scroll of [0,.18,.53,1.1,1.98]){state.scroll=scroll;const p=pixels();for(let y=1;y<384;y++)for(let x=1;x<256;x++)for(let c=0;c<3;c++){const k=(y*256+x)*4+c;maxStep=Math.max(maxStep,Math.abs(p[k]-p[k-4]),Math.abs(p[k]-p[k-256*4]));}}
-  }
-  const diagnostics=renderer.diagnostics();renderer.dispose();return {maxStep,maxWrap,diagnostics};
- });assert(terrain.maxStep<12,'hard painting edge survived: '+JSON.stringify(terrain));assert(terrain.maxWrap<3,'flight scroll jumps at wrap: '+JSON.stringify(terrain));assert.equal(terrain.diagnostics.groundError,0);console.log('Terrain continuity:',terrain);
  await page.locator('[data-difficulty="hard"]').click();
  const launch=async()=>{await page.locator('#start-choose').click();await page.locator('[data-tour="chill"]').click();await page.locator('.garden-route-choice').filter({hasText:'Chill 1'}).click();if(await page.locator('#flight-tutorial').isVisible())await page.locator('#tutorial-close').click();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);};
  await launch();await page.locator('#mission-toggle').click();const clock=await page.locator('#run-time').innerText();await page.waitForTimeout(1100);assert.equal(await page.locator('#run-time').innerText(),clock,'paused time advances');
@@ -31,5 +17,5 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8138/',out='/privat
  await page.evaluate(({key})=>{gardenFlight.showMenu();localStorage.setItem('ear-yoga-local-records.v1',JSON.stringify({[key]:{score:1,seconds:1000}}));},{key});await launch();await page.locator('#mission-toggle').click();await solve();assert.equal(await page.locator('#mission-complete').getAttribute('data-record'),'true');assert.match(await page.locator('#completion-title').innerText(),/Новый личный рекорд/);assert(Number((await page.evaluate(()=>JSON.parse(localStorage.getItem('ear-yoga-local-records.v1'))))[key].score)>1);
  await page.locator('#language-toggle').evaluate(e=>e.click());await page.waitForFunction(()=>document.documentElement.lang==='en');assert.match(await page.locator('#completion-title').innerText(),/New personal best/);assert.match(await page.locator('#completion-bonus').innerText(),/Time bonus/);assert.equal(await page.locator('#mission-next-route').innerText(),'Next route →');await page.waitForTimeout(700);assert.equal(await page.locator('#run-record').innerText(),'★ New best!');
  await page.locator('#completion-dismiss').click();await page.evaluate(({key})=>{gardenFlight.showMenu();localStorage.setItem('ear-yoga-local-records.v1',JSON.stringify({[key]:{score:999999,seconds:1}}));},{key});await launch();await page.locator('#mission-toggle').click();await solve();assert.equal(await page.locator('#mission-complete').getAttribute('data-record'),'false');assert.match(await page.locator('#completion-record').innerText(),/999999/);assert.equal((await page.evaluate(()=>JSON.parse(localStorage.getItem('ear-yoga-local-records.v1'))))[key].score,999999);
- assert.deepEqual(errors,[]);console.log('PASS: terrain continuity '+JSON.stringify(terrain)+'; brighter click-through HUD, pause/frozen result, visible Lotus award at 320/390/820, first/improved/unbeaten scoped records and EN translation. Screenshots '+out);
+ assert.deepEqual(errors,[]);console.log('PASS: brighter click-through HUD, pause/frozen result, visible Lotus award at 320/390/820, first/improved/unbeaten scoped records and EN translation. Screenshots '+out);
 }finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,5 +1,6 @@
 // Presentation-only translations. Never translate catalog values or editable data.
 const EN={
+ 'Следующий маршрут →':'Next route →','Свернуть награду':'Dismiss award','МАРШРУТ ПРОЙДЕН':'ROUTE COMPLETE','Маршрут покорён':'Route conquered','Новый личный рекорд':'New personal best','Очки':'Score','Время':'Time','Первый результат сохранён':'First result saved','★ Рекорд!':'★ New best!','✓ Завершено':'✓ Complete',
  '◈ Прожектор':'◈ Headlight','Посмотреть на экране':'Preview lighting','← К настройкам':'← Back to settings',
  'Прожектор освещает путь перед кораблём. Заметен в сумерках и ночью.':'The headlight lights the path ahead of the ship. Most visible at dusk and night.',
  'Прожектор освещает участок рядом с кораблём и путь впереди. Заметен в сумерках и ночью.':'The headlight illuminates the area around the ship and the path ahead. Most visible at dusk and night.',
@@ -80,6 +81,9 @@ const EN={
  'Нажми аккорд, пока он звучит':'Choose the chord while it is playing','База известна. Запусти последовательность.':'Listen to the tonic, then start the sequence.'
 };
 const PATTERNS=[
+ [/^Бонус за время: \+(\d+)$/,(_,n)=>'Time bonus: +'+n],
+ [/^\+(\d+) очков к рекорду$/,(_,n)=>'+'+n+' above your best'],
+ [/^Личный рекорд: (\d+)$/,(_,n)=>'Personal best: '+n],
  [/^Тоника: (.+)$/,(_,note)=>'Tonic: '+note],
  [/^Бас (.+)$/,(_,note)=>'Bass '+note],
  [/^Позиция (\d+): корень (найден|не найден), тип (найден|не найден), бас (найден|не найден)$/,(_,n,r,q,b)=>'Position '+n+': root '+(r==='найден'?'found':'missing')+', quality '+(q==='найден'?'found':'missing')+', bass '+(b==='найден'?'found':'missing')],

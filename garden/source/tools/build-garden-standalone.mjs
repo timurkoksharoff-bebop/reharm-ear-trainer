@@ -11,7 +11,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const assetRoot=fs.existsSync(path.join(root,'assets/echo-garden'))?path.join(root,'assets/echo-garden'):path.resolve(root,'../assets/echo-garden');
 const output=process.argv[2];
 if(!output||!path.isAbsolute(output))throw Error('Provide an absolute destination directory for the standalone Garden.');
-const version='1.46';
+const version='1.47';
 const iconFile=size=>`icon-${size}-v${version}.png`;
 const jazzTitles=['All of Me','All the Things You Are','Autumn Leaves','Blue Bossa','Fly Me to the Moon','Summertime','Take the A Train','Satin Doll','There Will Never Be Another You','On the Sunny Side of the Street','Misty','My Funny Valentine','Body and Soul','Night and Day','My Foolish Heart','In a Sentimental Mood','Georgia on My Mind','Stardust','The Nearness of You','Someone to Watch Over Me','A Night in Tunisia','Caravan','Giant Steps','Black Orpheus','Corcovado','Wave','Desafinado','Recorda Me','St. Thomas','Footprints','So What','Blue Monk','C Jam Blues',"Bag's Groove","Billie's Bounce",'Straight, No Chaser','Watermelon Man','Cantaloupe Island','Doxy','Oleo','Stella by Starlight','Days of Wine and Roses','On Green Dolphin Street','Have You Met Miss Jones?','How High the Moon','Just Friends','Solar','Confirmation','Softly, as in a Morning Sunrise','What Is This Thing Called Love?'];
 const norm=value=>String(value).toLocaleLowerCase().replace(/[^a-z0-9]/g,'');
@@ -96,7 +96,7 @@ const precacheIntegrity=Object.fromEntries(precache.map(file=>[file,'sha256-'+cr
 write('service-worker.js',`const CACHE_NAME='echo-garden-${version}-${cacheRevision}';
 const FILES=${JSON.stringify(precache)};
 const INTEGRITY=${JSON.stringify(precacheIntegrity)};
-self.addEventListener('message',event=>{if(event.data?.type==='EAR_YOGA_VERSION')event.ports[0]?.postMessage({type:'EAR_YOGA_VERSION',version:'${version}'});});
+self.addEventListener('message',event=>{if(event.data?.type==='EAR_YOGA_VERSION')event.ports[0]?.postMessage({type:'EAR_YOGA_VERSION',version:'${version}'});if(event.data?.type==='EAR_YOGA_ACTIVATE')self.skipWaiting();});
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE_NAME);
@@ -112,7 +112,9 @@ self.addEventListener('install',event=>{
       if(!response.ok)throw Error('Failed to cache '+file);
       await cache.put(key,response);
     }));
-    await self.skipWaiting();
+    // Cache verification is complete. Do not keep the install event alive
+    // waiting for activation, which can itself be waiting for install to end.
+    self.skipWaiting();
   })());
 });
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('echo-garden-')&&key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
@@ -131,8 +133,8 @@ write('README.md','# EAR YOGA '+version+' — mobile PWA release\n\nSpace Music 
 const release=JSON.parse(fs.readFileSync(path.join(output,'release.json'),'utf8'));
 release.channel='mobile-release';
 release.recoveryUrl='https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-'+version+'.html';
-release.notes='Mobile release 1.46: reuse previously cached files only after their SHA-256 content matches the new release, avoiding repeated large artwork/audio downloads. Prevent old HTTP-cache files entering a new offline cache using release-specific fetch URLs, no-store and SHA-256 integrity. Fresh versioned recovery page. Compare Day/Dusk/Night/Cycle on the unobstructed game canvas using a compact lighting dock. Preview playback animates only lighting with mission/resources paused. Rename Light to Headlight and explain the ship spotlight. Hybrid Keys has a gentle 35 ms note attack with its tuning and sustain preserved. Teacher pace is +7% over Student; all three modes share the same visible header pause/resume control. Return restores settings; harmony, sound samples, menu artwork and upward reflections retained.';
+release.notes='Mobile release 1.47: continuous interior texture patches remove hard terrain seams, including the scroll wrap. Larger brighter transparent visor time/score with visible personal bests and a gold Lotus completion result. Hybrid Keys has a much softer 240 ms eased attack; sample pitch, MIDI voicings and sustain preserved. Teacher remains +7%; verified PWA recovery retained.';
 write('release.json',JSON.stringify(release,null,2));
-for(const file of ['ear-yoga-orbital.css','DESKTOP_1_37.md','tools/garden-desktop-preview-check.cjs','tools/garden-menu-material-check.cjs','tools/garden-pwa-refresh-check.cjs','tools/garden-pwa-http-cache-check.cjs','tools/garden-lighting-preview-check.cjs','tools/garden-sample-pitch-check.cjs','pwa-runtime.js','update.html','art/ASSET_NOTES.md','art/app-icon-ship-1.37.png',...Object.values(authoredAssets)])write('source/'+file,fs.readFileSync(path.join(root,file)));
-write('README.md',`# EAR YOGA ${version} — mobile PWA\n\nInstall from the existing HTTPS garden URL using Add to Home Screen. It preserves 1.36 gameplay and music with the requested menu, icon and difficulty pacing changes.\n\nSource: source/. Build into a fresh directory with node source/tools/build-garden-standalone.mjs /absolute/new/output. Requires Node.js and sharp, plus the shared game/importer.mjs and game/standards-catalog.mjs from the repository.\n`);
+for(const file of ['ear-yoga-orbital.css','DESKTOP_1_37.md','tools/garden-desktop-preview-check.cjs','tools/garden-menu-material-check.cjs','tools/garden-pwa-refresh-check.cjs','tools/garden-pwa-http-cache-check.cjs','tools/garden-lighting-preview-check.cjs','tools/garden-sample-pitch-check.cjs','tools/garden-terrain-hud-check.cjs','pwa-runtime.js','update.html','art/ASSET_NOTES.md','art/app-icon-ship-1.37.png',...Object.values(authoredAssets)])write('source/'+file,fs.readFileSync(path.join(root,file)));
+write('README.md',`# EAR YOGA ${version} — mobile PWA\n\nInstall from the existing HTTPS garden URL using Add to Home Screen. Approved artwork and exact musical voicings are preserved. This release removes hard terrain seams with continuous interior patch blending, enlarges the transparent time/score HUD, adds a visible Lotus completion result and personal-best feedback, and softens Hybrid Keys with a 240 ms eased attack. Teacher pacing remains 7% above Student.\n\nSource: source/. Build into a fresh directory with node source/tools/build-garden-standalone.mjs /absolute/new/output. Requires Node.js and sharp, plus the shared game/importer.mjs and game/standards-catalog.mjs from the repository.\n`);
 console.log(`Garden ${version}: ${assets.size} assets, ${(Buffer.byteLength(bundle)/1024).toFixed(0)} KB code, output ${output}`);

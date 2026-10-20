@@ -1,11 +1,11 @@
 {
-  "version": "1.46",
+  "version": "1.47",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.46: reuse previously cached files only after their SHA-256 content matches the new release, avoiding repeated large artwork/audio downloads. Prevent old HTTP-cache files entering a new offline cache using release-specific fetch URLs, no-store and SHA-256 integrity. Fresh versioned recovery page. Compare Day/Dusk/Night/Cycle on the unobstructed game canvas using a compact lighting dock. Preview playback animates only lighting with mission/resources paused. Rename Light to Headlight and explain the ship spotlight. Hybrid Keys has a gentle 35 ms note attack with its tuning and sustain preserved. Teacher pace is +7% over Student; all three modes share the same visible header pause/resume control. Return restores settings; harmony, sound samples, menu artwork and upward reflections retained.",
+  "notes": "Mobile release 1.47: continuous interior texture patches remove hard terrain seams, including the scroll wrap. Larger brighter transparent visor time/score with visible personal bests and a gold Lotus completion result. Hybrid Keys has a much softer 240 ms eased attack; sample pitch, MIDI voicings and sustain preserved. Teacher remains +7%; verified PWA recovery retained.",
   "channel": "mobile-release",
-  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.46.html"
+  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.47.html"
 }

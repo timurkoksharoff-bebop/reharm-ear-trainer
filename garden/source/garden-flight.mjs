@@ -48,6 +48,9 @@ const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrang
 const gardenRewards=createGardenRewards({reduced});
 let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,lastCollisionEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false;
 let chainView={route:null,position:null,page:null};
+let runBest=null,completionRecord='',lastRecordLabel=null;
+const runRecordId=()=>routeIdentity(currentRoute)+':'+difficulty+':'+(currentRoute?.baseTonic??5);
+const runClock=seconds=>`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(Math.floor(seconds)%60).padStart(2,'0')}`;
 const PROGRESS_KEY='echo-garden-progress.v1';
 const TUTORIAL_KEY='ear-yoga-guide.v2';
 let guide,language,trial,trialExpired=false;
@@ -214,10 +217,17 @@ function renderMission(model){
   setPlaybackIcon($('mission-toggle'),model.running);$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Продолжить полёт и музыку');$('mission-restart').hidden=true;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
-function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();run.reset();resonance.reset(difficulty==='hard');currentRoute=exercise;completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,rootMode:['medium','hard'].includes(difficulty),separateBass:difficulty==='hard',barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());renderVitals();}
+function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();run.reset();resonance.reset(difficulty==='hard');currentRoute=exercise;runBest=null;completionRecord='';try{runBest=JSON.parse(localStorage.getItem('ear-yoga-local-records.v1')||'{}')[runRecordId()]||null;}catch{}document.querySelector('.run-readout').classList.remove('record-beaten');completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,rootMode:['medium','hard'].includes(difficulty),separateBass:difficulty==='hard',barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());renderVitals();}
 function renderRun(){
-  const r=run.snapshot(),seconds=Math.floor(r.seconds);$('run-time').textContent=`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;$('run-score').textContent=String(r.score);if(!r.finished)$('run-record').textContent='';
+  const r=run.snapshot(),time=runClock(r.seconds),score=String(r.score);
+  if($('run-time').textContent!==time)$('run-time').textContent=time;
+  if($('run-score').textContent!==score)$('run-score').textContent=score;
+  const beaten=runBest&&r.score>runBest.score;
+  document.querySelector('.run-readout').classList.toggle('record-beaten',Boolean(beaten));
+  const label=r.finished?completionRecord:beaten?'★ Рекорд!':runBest?'★ '+runBest.score:'';
+  if(lastRecordLabel!==label){lastRecordLabel=label;$('run-record').textContent=label;}
 }
+
 let activeExercises=[];
 function routeTitle(route,index=0){const name=gardenRouteDisplayName(route,TOUR_NAMES[routeTour(route)]||routeTour(route));return name&&name!==route.id?name:exerciseCode(route,index);}
 function renderGardenRouteList(){
@@ -327,11 +337,19 @@ async function launchRoute(route){
 function completeGardenLevel(){
   completionHandled=true;s.paused=false;
   const result=run.snapshot();
-  try{const key='ear-yoga-local-records.v1',records=JSON.parse(localStorage.getItem(key)||'{}'),id=routeIdentity(currentRoute)+':'+difficulty+':'+(currentRoute.baseTonic??5),previous=records[id],best=!previous||result.score>previous.score;records[id]={score:Math.max(result.score,Number(previous?.score)||0),seconds:Math.min(result.seconds,Number(previous?.seconds)||Infinity)};localStorage.setItem(key,JSON.stringify(records));$('run-record').textContent=best?'★ PB':'✓';}catch{$('run-record').textContent='✓';}
+  const previous=runBest,newRecord=!previous||result.score>previous.score,delta=previous?result.score-previous.score:0;
+  completionRecord=newRecord?'★ Рекорд!':'✓ Завершено';
+  try{const key='ear-yoga-local-records.v1',records=JSON.parse(localStorage.getItem(key)||'{}');records[runRecordId()]={score:Math.max(result.score,Number(previous?.score)||0),seconds:Math.min(result.seconds,Number(previous?.seconds)||Infinity)};localStorage.setItem(key,JSON.stringify(records));}catch{}
+  $('completion-title').textContent=previous&&newRecord?'Новый личный рекорд':'Маршрут покорён';
+  $('completion-score').textContent=String(result.score);$('completion-time').textContent=runClock(result.seconds);
+  $('completion-bonus').textContent='Бонус за время: +'+result.bonus;
+  $('completion-record').textContent=previous&&newRecord?'+'+delta+' очков к рекорду':!previous?'Первый результат сохранён':'Личный рекорд: '+previous.score;
+  $('mission-complete').dataset.record=String(Boolean(newRecord));renderRun();
+
   const id=currentRoute?.id||`${currentRoute?.source||'route'}:${currentRoute?.name||''}`;
   const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
-  $('mission-complete-copy').textContent=`«${routeTitle(currentRoute)}» завершён. Уже разгаданные аккорды и ступени продолжают звучать по кругу; текущая позиция подсвечена.`;$('mission-next-route').disabled=false;$('mission-next-route').textContent='✓ Завершено · следующий маршрут →';$('mission-complete').hidden=false;
+  $('mission-complete-copy').textContent=routeTitle(currentRoute);$('mission-next-route').disabled=false;$('mission-next-route').textContent='Следующий маршрут →';$('mission-complete').hidden=false;
   if(enrolled){$('enrollment').hidden=false;$('enrollment-student').focus({preventScroll:true});}
 }
 async function retryCurrentMission(){
@@ -376,6 +394,7 @@ $('mission-to-menu').addEventListener('click',()=>showGardenStart());
 $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){s.paused=true;keys.clear();mission.pause({preserveHold:true});pad.stop(true);ui();return;}try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
+$('completion-dismiss').addEventListener('click',()=>{$('mission-complete').hidden=true;world.focus({preventScroll:true});});
 $('mission-restart').addEventListener('click',()=>{gardenRewards.reset();run.reset();resonance.reset(difficulty==='hard');mission.restart();s.paused=false;ui();});
 for(const [kind,spec] of Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact)){
   const button=document.createElement('button'),badge=document.createElement('b');

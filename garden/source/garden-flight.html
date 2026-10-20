@@ -192,7 +192,15 @@
       </section>
     </div>
   </section>
-  <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite"><span class="overline">МАРШРУТ ЗАВЕРШЁН · СЛУШАЕМ ДАЛЬШЕ</span><p id="mission-complete-copy">Все аккорды найдены. Последовательность продолжает звучать по кругу.</p><div><button id="mission-next-route" aria-label="Следующий маршрут">✓ Завершено · следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню"><svg class="menu-home-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10 12 3 20 10v11H4Z"/></svg><span>Меню</span></button></div></section>
+  <section id="mission-complete" class="mission-complete" hidden role="status" aria-live="polite">
+    <button id="completion-dismiss" type="button" aria-label="Свернуть награду">×</button>
+    <div class="completion-medal" aria-hidden="true"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="36"/><circle cx="40" cy="40" r="30"/><path d="M40 59C20 48 25 31 40 15C55 31 60 48 40 59ZM40 59C22 61 11 47 13 33C29 35 38 45 40 59ZM40 59C58 61 69 47 67 33C51 35 42 45 40 59Z"/><path d="m36 68 4-4 4 4-4 4Z"/></svg></div>
+    <span class="overline">МАРШРУТ ПРОЙДЕН</span><h2 id="completion-title">Маршрут покорён</h2>
+    <p id="mission-complete-copy"></p>
+    <dl class="completion-results"><div><dt>Очки</dt><dd id="completion-score">0</dd></div><div><dt>Время</dt><dd id="completion-time">00:00</dd></div></dl>
+    <p id="completion-bonus"></p><strong id="completion-record"></strong>
+    <div class="completion-actions"><button id="mission-next-route" aria-label="Следующий маршрут">Следующий маршрут →</button><button id="mission-to-menu" aria-label="В меню">В меню</button></div>
+  </section>
   <button id="restore" hidden aria-label="Показать управление">✳ Управление</button>
   <div id="recording-bar" class="recording-bar" data-user-content hidden><span><i aria-hidden="true"></i> REC <b id="recording-clock">00:00</b></span><button id="recording-stop" type="button">■ Стоп</button></div>
   <dialog id="recording-result" class="recording-result" data-user-content aria-labelledby="recording-title"><h2 id="recording-title">Запись полёта</h2><video id="recording-video" controls playsinline preload="metadata"></video><p id="recording-note"></p><div><a id="recording-save">Сохранить видео</a><button id="recording-close" type="button">Закрыть</button></div></dialog>

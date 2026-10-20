@@ -14,25 +14,35 @@ uniform float u_size,u_scroll,u_pan,u_time,u_growth,u_night,u_lantern,u_mirror,u
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 vec2 hash2(vec2 p){return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);}
-vec3 tileSample(sampler2D tex,vec2 p){
-  // Canyon paintings are not seamless. Mirroring keeps their edge pixels
-  // continuous at every wrap without changing the original Garden sampling.
-  vec2 uv=u_mirror>.5?1.-abs(mod(p,2.)-1.):fract(p);
-  return texture2D(tex,uv).rgb;
+// Sample only the interior of each approved painting. All contributing
+// patches stay inside [0.03,0.97], so a non-seamless source edge never wraps.
+vec3 gardenPatch(sampler2D tex,vec2 p,vec2 vertex){
+  vec2 seed=mod(vertex,2.),q=p-vertex;
+  float turn=floor(hash(seed+vec2(17.,9.))*4.);
+  if(turn<1.)q=q;else if(turn<2.)q=vec2(-q.y,q.x);
+  else if(turn<3.)q=-q;else q=vec2(q.y,-q.x);
+  return texture2D(tex,vec2(.5)+q*.42+(hash2(seed)*2.-1.)*.05).rgb;
 }
 vec3 gardenTile(sampler2D tex,vec2 p){
-  vec2 cell=floor(p),f=fract(p);f=f*f*(3.-2.*f);
-  vec3 a=tileSample(tex,p+hash2(cell)*.74);
-  vec3 b=tileSample(tex,p+hash2(cell+vec2(1.,0.))*.74);
-  vec3 c=tileSample(tex,p+hash2(cell+vec2(0.,1.))*.74);
-  vec3 d=tileSample(tex,p+hash2(cell+vec2(1.,1.))*.74);
+  // Organic, stationary domain warp bends the blend regions. The two-unit
+  // period also matches the bounded flight scroll, including its wrap.
+  p+=.14*vec2(sin(p.y*3.14159265)+.45*sin(p.x*6.2831853),
+               sin(p.x*3.14159265)+.45*sin(p.y*6.2831853));
+  vec2 cell=floor(p),f=fract(p);f=f*f*f*(f*(f*6.-15.)+10.);
+  vec3 a=gardenPatch(tex,p,cell),b=gardenPatch(tex,p,cell+vec2(1.,0.));
+  vec3 c=gardenPatch(tex,p,cell+vec2(0.,1.)),d=gardenPatch(tex,p,cell+vec2(1.,1.));
   return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
+}
+float periodicNoise(vec2 p,float period){
+  vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+  return mix(mix(hash(mod(i,period)),hash(mod(i+vec2(1.,0.),period)),f.x),
+             mix(hash(mod(i+vec2(0.,1.),period)),hash(mod(i+1.,period)),f.x),f.y);
 }
 vec3 terrain(sampler2D tex,vec2 uv){
   vec3 c=gardenTile(tex,uv);
   if(u_lowcost>.5)return c;
   float water=smoothstep(.03,.22,c.g-c.r)*smoothstep(.05,.23,c.b-c.r);
-  vec2 ripples=vec2(sin(uv.y*120.+u_time*.6),cos(uv.x*100.-u_time*.5))*.00065*water;
+  vec2 ripples=vec2(sin(uv.y*119.380521+u_time*.6),cos(uv.x*100.530965-u_time*.5))*.00065*water;
   return gardenTile(tex,uv+ripples);
 }
 float waterness(vec3 c){return smoothstep(.03,.22,c.g-c.r)*smoothstep(.05,.23,c.b-c.r);}
@@ -51,9 +61,9 @@ void main(){
   else if(phase<3.){a=terrain(u_thaw,uv);b=amberMaterial(base);}
   else{a=amberMaterial(base);b=base;}
   vec2 n=uv*5.;
-  float field=noise(n)*.52+noise(n*2.7)*.29+noise(n*7.9)*.13;
+  float field=periodicNoise(n,10.)*.52+periodicNoise(n*2.7,27.)*.29+periodicNoise(n*7.9,79.)*.13;
   float shore=abs(waterness(base)-.5)*2.;
-  field-=shore*.055+sin((uv.x+uv.y)*18.+noise(n*1.3)*4.)*.035;
+  field-=shore*.055+sin((uv.x+uv.y)*18.8495559+periodicNoise(n*1.3,13.)*4.)*.035;
   float edge=amount*1.42-.21;
   float blend=smoothstep(field-.14,field+.14,edge);
   vec3 c=mix(a,b,blend);

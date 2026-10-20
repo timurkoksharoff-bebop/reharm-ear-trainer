@@ -24,3 +24,22 @@ Use case: precise-object-edit. Edit target: supplied square EAR YOGA spacecraft 
 ## Final prompt: menu background
 
 Use case: precise-object-edit / UI background extraction. Edit target: supplied tall portrait EAR YOGA menu reference. Produce the identical tall portrait artwork AS A CLEAN BACKGROUND PLATE for live HTML controls. Preserve the exact spacecraft and luminous lotus/orbital hero group at its current size and location, all planets, starfield, blue nebula, and luminous planetary horizon with its cloud detail. Remove ALL text and UI: remove top-left Ear Yoga lettering, small lotus logo, SPACE MUSIC COLLEGE subtitle and its underline; remove top-right Меню and underline; remove all three difficulty buttons and their gold outlines/ornaments; remove both large bottom action buttons with all frames/fills/ornaments and lettering; remove footer links, footer enclosing oval arcs and bottom star ornament. Replace removed UI areas with naturally continuous matching cosmic sky or dark-blue planet cloud background. Keep the existing soft dark lower gradient, providing a quiet readable area for live buttons. The result must contain ONLY the approved background illustration, with zero text or button frames. Do not redesign, move or replace the ship, planet or central hero. Same tall portrait aspect ratio and crop as reference, opaque background.
+
+## Button surface correction — 1.38
+
+The reference PNGs are unchanged. Runtime SVG contour masks remove photographed
+rectangular sky from the moving control layers and from the matching holes in
+the background plate. Brightness is no longer applied to a rectangular control.
+The unselected Student surface is neutral dark blue; its printed letters are
+extracted from the same reference through an alpha colour matrix. Footer/menu
+lettering stays in the original static Russian plate.
+
+The route button has a dark glazed porcelain body inside its original gold
+frame, with rim light, lower shading and travelling pearl reflection. The ivory
+button retains its original engraving with a subtle material-lighting layer.
+Original printed glyph shapes are layered above the glaze, rather than redrawn.
+No new raster artwork or icon changes.
+
+Focused Chromium pixel checks at 820×1180 and 390×844 confirm exterior pixels
+are unchanged during presses and Student deselection; route activation works.
+These checks are desktop emulation, not physical iOS/Safari testing.

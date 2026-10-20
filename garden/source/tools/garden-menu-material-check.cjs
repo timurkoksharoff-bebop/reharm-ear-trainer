@@ -1,0 +1,34 @@
+// A pixel regression for the reported iPad/phone rectangles. The actual outside
+// corners must stay unchanged during a press and when Student is deselected.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),sharp=require('sharp'),{chromium}=require('playwright');
+const out=process.env.GARDEN_QA_DIR||'/private/tmp/ear-yoga-138-material';fs.mkdirSync(out,{recursive:true});
+const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8138/';
+async function pixels(buffer){return sharp(buffer).ensureAlpha().raw().toBuffer({resolveWithObject:true});}
+function corners(box){return [[.04,.05],[.96,.05],[.04,.95],[.96,.95]].map(([x,y])=>[Math.round(box.x+box.width*x),Math.round(box.y+box.height*y)]);}
+async function unchanged(before,after,points,label){const a=await pixels(before),b=await pixels(after);for(const [x,y] of points){let delta=0;const i=(y*a.info.width+x)*4;for(let c=0;c<3;c++)delta=Math.max(delta,Math.abs(a.data[i+c]-b.data[i+c]));assert(delta<=3,`${label}: exterior background changed at ${x},${y} by ${delta}`);}}
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+ try{
+  for(const viewport of [{width:820,height:1180},{width:390,height:844}]){
+   const context=await browser.newContext({viewport,locale:'ru-RU',serviceWorkers:'block'}),page=await context.newPage(),errors=[];
+   page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url());});
+   await page.goto(base);await page.waitForFunction(()=>gardenFlight?.snapshot().ready);
+   await page.addStyleTag({content:'#garden-start *,#garden-start *::before,#garden-start *::after{animation-play-state:paused!important;transition:none!important}'});
+   const primary=page.locator('#start-random'),secondary=page.locator('#start-choose');
+   for(const [name,button] of [['ivory',primary],['ceramic',secondary]]){
+    const box=await button.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+    const before=await page.screenshot();await page.mouse.down();const pressed=await page.screenshot({path:path.join(out,`${viewport.width}-${name}-pressed.png`)});
+    await unchanged(before,pressed,corners(box),name+' press');
+    await page.mouse.move(0,0);await page.mouse.up();assert(await page.locator('#garden-start').isVisible(),'cancelled press must not start a flight');
+   }
+   const student=await page.locator('button[data-difficulty="medium"]').boundingBox(),before=await page.screenshot();
+   await page.locator('button[data-difficulty="light"]').click();const after=await page.screenshot({path:path.join(out,`${viewport.width}-applicant.png`)});
+   await unchanged(before,after,corners(student),'Student deselection');
+   assert.equal(await page.locator('button[data-difficulty="light"]').getAttribute('aria-pressed'),'true');
+   await page.locator('button[data-difficulty="medium"]').click();await page.screenshot({path:path.join(out,`${viewport.width}-menu.png`)});
+   await secondary.click();await page.locator('#garden-route-list').waitFor({state:'visible'});
+   assert.deepEqual(errors,[]);await context.close();
+  }
+  console.log('PASS: exterior pixels unchanged during ivory/ceramic presses and Student deselection at iPad/phone viewport sizes; route button still opens routes. Desktop Chromium, not physical iOS.');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

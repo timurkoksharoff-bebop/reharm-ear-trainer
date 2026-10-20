@@ -4,12 +4,23 @@ export function bindGardenBrand(){
  const brand=document.querySelector('.ear-yoga-lockup'),title=brand?.querySelector('.ear-yoga-wordmark'),college=brand?.querySelector('.start-college');
  if(!title||!college)return;
  if(brand.dataset.layout==='orbital-v5'){
+  // Extract only the original printed ink for a crisp layer above the glaze.
+  // The alpha comes from the reference pixels; the letters are never redrawn.
+  const inkDefs=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  inkDefs.setAttribute('width','0');inkDefs.setAttribute('height','0');inkDefs.setAttribute('aria-hidden','true');
+  inkDefs.style.cssText='position:absolute;pointer-events:none;overflow:hidden';
+  inkDefs.innerHTML='<defs><filter id="orbital-ivory-ink" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 -2 -1 0 0 1.4"/></filter><filter id="orbital-gold-ink" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 .96 0 0 0 0 .89 0 0 0 0 .73 3 1 -1 0 -.7"/></filter></defs>';
+  document.querySelector('.garden-start-shell').append(inkDefs);
   const selectors=['.difficulty-picker button','#start-random','#start-choose','#start-tutorial','.start-route-details>summary','#start-language','#start-menu'];
   for(const selector of selectors)for(const control of document.querySelectorAll(selector)){
    const face=document.createElement('span');face.className='reference-face';face.setAttribute('aria-hidden','true');face.setAttribute('translate','no');control.append(face);
    const name=()=>control.setAttribute('aria-label',control.textContent.replace(/\s+/g,' ').trim());
    new MutationObserver(name).observe(control,{childList:true,characterData:true,subtree:true});name();
    if(control.matches('.difficulty-picker button,.start-choice')){
+    if(control.matches('[data-difficulty="medium"]')){for(const className of ['mode-rest','reference-ink']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}}
+    if(control.matches('.start-choice')){
+     for(const className of ['porcelain-body','reference-ink']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}
+    }
     const light=document.createElement('span');light.className='pearl-light';light.setAttribute('aria-hidden','true');light.setAttribute('translate','no');control.append(light);
     if(control.matches('.difficulty-picker button')){const water=light.cloneNode();water.className='mode-water';control.append(water);}
    }

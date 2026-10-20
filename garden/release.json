@@ -1,10 +1,10 @@
 {
-  "version": "1.37",
+  "version": "1.38",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.37: original reference lettering and ornate controls with continuous pearl and turquoise animations and approved ship icon with trimmed lateral lines. Teacher world and harmonic pace +20%; Student unchanged. Applicant matches Student pace with unlimited reserves and original admission routes. Catalog notes, voicings, slash basses, sounds and in-flight artwork preserved. Published at the user’s explicit request without an additional browser QA round; physical phone review is pending.",
+  "notes": "Mobile release 1.38: contour masks remove rectangular photographed backgrounds during button presses and mode changes. Dark glazed porcelain material, rim light, pearl reflections and original reference lettering. Teacher/Student/Applicant rules and icon remain 1.37. Physical iPad/iPhone review pending.",
   "channel": "mobile-release"
 }

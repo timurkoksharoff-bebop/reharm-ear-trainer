@@ -43,3 +43,18 @@ No new raster artwork or icon changes.
 Focused Chromium pixel checks at 820×1180 and 390×844 confirm exterior pixels
 are unchanged during presses and Student deselection; route activation works.
 These checks are desktop emulation, not physical iOS/Safari testing.
+
+## Mode selection and English correction — 1.39
+
+English mode sprites now use the same complete gold contour masks as Russian;
+rectangular label windows are removed. Every mode has an opaque dark interior
+with the original Russian ink above it, or live English text. Only the selected
+mode runs visible pearl/water animations; hovering an unselected mode cannot
+light it. Keyboard focus uses the gold contour rather than a rectangular outline.
+English footer labels fit on one line. The duplicated upper Menu action is hidden
+and its painted lettering is removed with a feathered mask into the clean plate;
+Choose route still opens the same route/settings screen. No raster masters changed.
+
+Focused Chromium checks cover RU/EN at iPad/phone viewport sizes, exterior pixels
+during presses and deselection, keyboard focus and single-mode shine during hover.
+PWA recovery/update behavior is checked independently; no physical Safari claim.

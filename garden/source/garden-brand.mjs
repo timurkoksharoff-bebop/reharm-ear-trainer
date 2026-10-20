@@ -17,7 +17,7 @@ export function bindGardenBrand(){
    const name=()=>control.setAttribute('aria-label',control.textContent.replace(/\s+/g,' ').trim());
    new MutationObserver(name).observe(control,{childList:true,characterData:true,subtree:true});name();
    if(control.matches('.difficulty-picker button,.start-choice')){
-    if(control.matches('[data-difficulty="medium"]')){for(const className of ['mode-rest','reference-ink']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}}
+    if(control.matches('.difficulty-picker button')){for(const className of ['mode-rest','reference-ink']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}}
     if(control.matches('.start-choice')){
      for(const className of ['porcelain-body','reference-ink']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}
     }

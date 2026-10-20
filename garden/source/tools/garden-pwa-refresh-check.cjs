@@ -1,0 +1,26 @@
+// Reproduce a previously installed release, recover it through update.html,
+// then verify that the next worker update waits for an active flight to end.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http'),{chromium}=require('playwright');
+const [oldRoot,newRoot]=process.argv.slice(2);if(!oldRoot||!newRoot)throw Error('Provide old and new build directories');
+(async()=>{
+ let root=oldRoot,future=false;
+ const version=JSON.parse(fs.readFileSync(path.join(newRoot,'release.json'))).version,next=version+'-next';
+ const server=http.createServer((req,res)=>{const name=decodeURIComponent(new URL(req.url,'http://localhost').pathname).replace(/^\/+/,''),file=path.resolve(root,name||'index.html');if(!file.startsWith(path.resolve(root)+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(error,data)=>{if(error){res.writeHead(404).end();return;}const ext=path.extname(file),type={'.html':'text/html','.js':'application/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.wav':'audio/wav','.woff2':'font/woff2','.json':'application/json','.svg':'image/svg+xml'}[ext]||'application/octet-stream';if(future&&['service-worker.js','garden-flight.bundle.js','pwa.js'].includes(name))data=Buffer.from(name==='service-worker.js'?data.toString().replace("version:'"+version+"'","version:'"+next+"'").replace('echo-garden-'+version+'-','echo-garden-'+next+'-'):data.toString().replaceAll(version,next));res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-store'});res.end(data);});});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${server.address().port}/`;
+ const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+ try{
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'ru-RU'}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'?offline-test=1');await page.waitForFunction(()=>gardenFlight?.snapshot().ready);await page.evaluate(async()=>{localStorage.setItem('pwa-recovery-probe','preserve');await navigator.serviceWorker.ready;});await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  const oldVersion=await page.locator('#build-version').innerText();root=newRoot;
+  // The old worker still controls this page, and has never cached update.html.
+  await page.goto(base+'update.html?offline-test=1');await page.waitForURL(url=>url.pathname==='/'&&url.searchParams.has('offline-test'),{timeout:60000});await page.waitForFunction(v=>document.querySelector('#build-version')?.textContent==='v'+v&&gardenFlight?.snapshot().ready,version);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pwa-recovery-probe')),'preserve');
+  await page.locator('#start-random').tap();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running||earYoga.guide().active);if(await page.locator('#flight-tutorial').isVisible())await page.locator('#tutorial-close').tap();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);
+  future=true;await page.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});
+  await page.waitForFunction(async expected=>{const sw=navigator.serviceWorker.controller;if(!sw)return false;return new Promise(resolve=>{const c=new MessageChannel(),t=setTimeout(()=>resolve(false),500);c.port1.onmessage=e=>{clearTimeout(t);c.port1.close();resolve(e.data?.version===expected);};sw.postMessage({type:'EAR_YOGA_VERSION'},[c.port2]);});},next);
+  await page.waitForTimeout(350);assert.equal(await page.locator('#build-version').innerText(),'v'+version,'must not reload an active flight');assert(await page.evaluate(()=>gardenFlight.snapshot().mission.running));
+  await page.evaluate(()=>gardenFlight.showMenu());await page.waitForFunction(v=>document.querySelector('#build-version')?.textContent==='v'+v&&gardenFlight?.snapshot().ready,next,{timeout:20000});
+  assert.equal(await page.evaluate(()=>localStorage.getItem('pwa-recovery-probe')),'preserve');await context.setOffline(true);await page.reload();await page.waitForFunction(()=>gardenFlight?.snapshot().ready);assert.equal(await page.locator('#build-version').innerText(),'v'+next);assert.deepEqual(errors,[]);
+  console.log(`PASS: ${oldVersion} recovered to v${version} through update.html without clearing data; next update preserves an active flight, reloads automatically from the menu, and opens offline. Desktop Chromium emulation.`);
+ }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
+})().catch(error=>{console.error(error);process.exitCode=1;});

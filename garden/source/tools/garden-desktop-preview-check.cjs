@@ -7,12 +7,12 @@ const out=process.env.GARDEN_QA_DIR||'/private/tmp/ear-yoga-137-qa';fs.mkdirSync
   const context=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block'}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url());});
   await page.goto(base);await page.waitForFunction(()=>window.gardenFlight?.snapshot().ready);await page.evaluate(()=>document.fonts.ready);
-  assert.equal(await page.locator('#build-version').innerText(),'v1.37');
+  assert.equal(await page.locator('#build-version').innerText(),'v'+await page.evaluate(()=>window.GARDEN_VERSION));
   for(const [width,height] of [[320,568],[375,667],[390,692],[390,844],[430,932],[600,1024],[768,1024],[1440,900],[844,390]]){
    await page.setViewportSize({width,height});await page.waitForTimeout(220);
    const geometry=await page.evaluate(()=>{
     const box=s=>document.querySelector(s).getBoundingClientRect().toJSON();
-    return {difficulty:box('.difficulty-picker'),primary:box('#start-random'),secondary:box('#start-choose'),footer:box('#start-tutorial'),brand:box('.ear-yoga-lockup'),controls:[...document.querySelectorAll('#garden-start button,#garden-start summary')].map(el=>({name:el.id||el.innerText,box:el.getBoundingClientRect().toJSON()}))};
+    return {difficulty:box('.difficulty-picker'),primary:box('#start-random'),secondary:box('#start-choose'),footer:box('#start-tutorial'),brand:box('.ear-yoga-lockup'),controls:[...document.querySelectorAll('#garden-start button,#garden-start summary')].filter(el=>el.getClientRects().length).map(el=>({name:el.id||el.innerText,box:el.getBoundingClientRect().toJSON()}))};
    });
    const where=width+'x'+height;
    assert(geometry.difficulty.bottom<=geometry.primary.top+1,'difficulty overlaps primary at '+where+': '+JSON.stringify(geometry));

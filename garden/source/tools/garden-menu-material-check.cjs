@@ -9,26 +9,30 @@ async function unchanged(before,after,points,label){const a=await pixels(before)
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
-  for(const viewport of [{width:820,height:1180},{width:390,height:844}]){
+  for(const lang of ['ru','en'])for(const viewport of [{width:820,height:1180},{width:390,height:844}]){
    const context=await browser.newContext({viewport,locale:'ru-RU',serviceWorkers:'block'}),page=await context.newPage(),errors=[];
    page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url());});
-   await page.goto(base);await page.waitForFunction(()=>gardenFlight?.snapshot().ready);
+   await page.goto(base);await page.waitForFunction(()=>gardenFlight?.snapshot().ready);if(lang==='en')await page.locator('#start-language').click();
    await page.addStyleTag({content:'#garden-start *,#garden-start *::before,#garden-start *::after{animation-play-state:paused!important;transition:none!important}'});
    const primary=page.locator('#start-random'),secondary=page.locator('#start-choose');
    for(const [name,button] of [['ivory',primary],['ceramic',secondary]]){
     const box=await button.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
-    const before=await page.screenshot();await page.mouse.down();const pressed=await page.screenshot({path:path.join(out,`${viewport.width}-${name}-pressed.png`)});
+    const before=await page.screenshot();await page.mouse.down();const pressed=await page.screenshot({path:path.join(out,`${lang}-${viewport.width}-${name}-pressed.png`)});
     await unchanged(before,pressed,corners(box),name+' press');
     await page.mouse.move(0,0);await page.mouse.up();assert(await page.locator('#garden-start').isVisible(),'cancelled press must not start a flight');
    }
+   const medium=page.locator('button[data-difficulty="medium"]');await medium.focus();assert.equal(await medium.evaluate(el=>getComputedStyle(el).outlineStyle),'none','keyboard focus must follow the leaf, not a rectangle');
+   for(const mode of ['light','medium','hard']){await page.locator('button[data-difficulty="'+mode+'"]').click();await page.locator('button[data-difficulty="'+(mode==='light'?'hard':'light')+'"]').hover();const lights=await page.locator('.difficulty-picker button').evaluateAll(els=>els.map(el=>({selected:el.getAttribute('aria-pressed')==='true',opacity:Number(getComputedStyle(el.querySelector('.pearl-light')).opacity)})));assert.equal(lights.filter(l=>l.opacity>0).length,1,'exactly one mode shines, including hover');assert(lights.every(l=>l.selected||l.opacity===0),'unselected mode shines');}
+   await medium.click();
    const student=await page.locator('button[data-difficulty="medium"]').boundingBox(),before=await page.screenshot();
-   await page.locator('button[data-difficulty="light"]').click();const after=await page.screenshot({path:path.join(out,`${viewport.width}-applicant.png`)});
+   await page.locator('button[data-difficulty="light"]').click();const after=await page.screenshot({path:path.join(out,`${lang}-${viewport.width}-applicant.png`)});
    await unchanged(before,after,corners(student),'Student deselection');
    assert.equal(await page.locator('button[data-difficulty="light"]').getAttribute('aria-pressed'),'true');
-   await page.locator('button[data-difficulty="medium"]').click();await page.screenshot({path:path.join(out,`${viewport.width}-menu.png`)});
+   await page.locator('button[data-difficulty="medium"]').click();await page.screenshot({path:path.join(out,`${lang}-${viewport.width}-menu.png`)});
+   assert(!(await page.locator('#start-menu').isVisible()),'duplicate Menu button remains');
    await secondary.click();await page.locator('#garden-route-list').waitFor({state:'visible'});
    assert.deepEqual(errors,[]);await context.close();
   }
-  console.log('PASS: exterior pixels unchanged during ivory/ceramic presses and Student deselection at iPad/phone viewport sizes; route button still opens routes. Desktop Chromium, not physical iOS.');
+  console.log('PASS: RU/EN exterior pixels unchanged during ivory/ceramic presses and Student deselection; no rectangular focus; exactly one mode shines even on hover at iPad/phone viewport sizes; route button still opens routes. Desktop Chromium, not physical iOS.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

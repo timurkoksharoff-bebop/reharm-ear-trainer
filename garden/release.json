@@ -1,10 +1,10 @@
 {
-  "version": "1.38",
+  "version": "1.39",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.38: contour masks remove rectangular photographed backgrounds during button presses and mode changes. Dark glazed porcelain material, rim light, pearl reflections and original reference lettering. Teacher/Student/Applicant rules and icon remain 1.37. Physical iPad/iPhone review pending.",
+  "notes": "Mobile release 1.39: remove English label windows and rectangular focus borders, use opaque mode surfaces with iridescence on the selected mode only, remove the duplicate upper Menu button, and recover stale PWA screens through update.html. Menu-only automatic updates defer during flight. Icon, music, route library and gameplay unchanged.",
   "channel": "mobile-release"
 }

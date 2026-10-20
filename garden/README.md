@@ -1,4 +1,4 @@
-# EAR YOGA 1.38 — mobile PWA
+# EAR YOGA 1.39 — mobile PWA
 
 Install from the existing HTTPS garden URL using Add to Home Screen. It preserves 1.36 gameplay and music with the requested menu, icon and difficulty pacing changes.
 

@@ -79,3 +79,12 @@ actual gold-tip pixels at reference scale, in addition to prior material checks.
 At the user's request, all four reflective motions run 20% slower: pearl sweep
 9.75s, rotating caustics 21.25s, water breath 7.5s and ceramic reflection 10s.
 Phase offsets scale with the cycle. The 1.40 contour/settings corrections remain.
+
+## Upward reflection trial — 1.42
+
+The user requested a vertical-motion trial following the upward flight direction.
+The pearl light sweeps and ceramic glints travel bottom to top; secondary caustic
+detail and water drift use the vertical axis. The slower 1.41 cycle times remain.
+Button geometry and lettering are unchanged. ?reflections=horizontal selects the
+previous horizontal motion for comparison; removing the query selects upward.
+The horizontal checkpoint is local f74088c / GitHub 42fc9de1fd77963530b35c63e333746118bf4f96.

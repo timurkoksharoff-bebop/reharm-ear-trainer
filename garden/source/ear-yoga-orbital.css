@@ -192,3 +192,14 @@ html[lang="en"] #garden-start[data-cover] .start-tutorial strong{font:inherit!im
 #garden-start[data-cover] #start-choose{--glaze-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20775%20124%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M74%2056%20C109%2018%20144%209%20220%209%20H555%20C631%209%20666%2018%20701%2056%20C665%2093%20632%20102%20555%20102%20H220%20C144%20102%20110%2093%2074%2056Z%22%2F%3E%3C%2Fsvg%3E")}
 #garden-start[data-cover] #start-choose .pearl-light{inset:0;border-radius:0;-webkit-mask:var(--glaze-mask) center/100% 100% no-repeat;mask:var(--glaze-mask) center/100% 100% no-repeat}
 #garden-start[data-cover] .difficulty-picker button .pearl-light{inset:0;border-radius:0;-webkit-mask:var(--mode-interior) center/100% 100% no-repeat;mask:var(--mode-interior) center/100% 100% no-repeat}
+
+/* 1.42 trial: light travels upward with the spacecraft. The horizontal
+   checkpoint remains available at ?reflections=horizontal for comparison. */
+#garden-start[data-cover][data-reflections="vertical"] .pearl-light::before{background:linear-gradient(180deg,transparent 28%,#a4f5ff00 36%,#b6ffff3a 42%,#fff6dd99 47%,#fbc9ff70 50%,#a2f7f966 54%,transparent 62%),radial-gradient(ellipse at 40% 70%,#fbd9ff55,transparent 34%);animation-name:pearl-sweep-up;transform:translateY(24%)}
+#garden-start[data-cover][data-reflections="vertical"] .pearl-light::after{animation-name:pearl-caustics-up}
+#garden-start[data-cover][data-reflections="vertical"] .mode-water{animation-name:water-breath-up}
+#garden-start[data-cover][data-reflections="vertical"] .porcelain-body::after{background:linear-gradient(180deg,transparent 20%,#a8d6e000 35%,#fff0d152 45%,#c3bcf252 50%,#8ffff052 56%,transparent 70%);background-size:100% 220%;animation-name:glaze-reflection-up}
+@keyframes pearl-sweep-up{0%{transform:translateY(24%);opacity:0}12%{opacity:1}85%{opacity:1}100%{transform:translateY(-24%);opacity:0}}
+@keyframes pearl-caustics-up{0%{transform:translateY(20%) rotate(-8deg);opacity:0}15%,85%{opacity:.65}100%{transform:translateY(-20%) rotate(-8deg);opacity:0}}
+@keyframes water-breath-up{0%,100%{transform:translateY(2.5%) scale(1);filter:hue-rotate(-12deg)}50%{transform:translateY(-2.5%) scale(1.05);filter:hue-rotate(16deg)}}
+@keyframes glaze-reflection-up{0%{background-position:0 0;opacity:0}12%,85%{opacity:.6}100%{background-position:0 100%;opacity:0}}

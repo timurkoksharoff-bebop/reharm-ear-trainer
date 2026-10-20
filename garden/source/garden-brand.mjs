@@ -4,6 +4,7 @@ export function bindGardenBrand(){
  const brand=document.querySelector('.ear-yoga-lockup'),title=brand?.querySelector('.ear-yoga-wordmark'),college=brand?.querySelector('.start-college');
  if(!title||!college)return;
  if(brand.dataset.layout==='orbital-v5'){
+  document.querySelector('#garden-start').dataset.reflections=new URLSearchParams(location.search).get('reflections')==='horizontal'?'horizontal':'vertical';
   // Extract only the original printed ink for a crisp layer above the glaze.
   // The alpha comes from the reference pixels; the letters are never redrawn.
   const inkDefs=document.createElementNS('http://www.w3.org/2000/svg','svg');

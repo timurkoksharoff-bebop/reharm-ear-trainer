@@ -30,7 +30,7 @@ const out=process.env.GARDEN_QA_DIR||'/private/tmp/ear-yoga-137-qa';fs.mkdirSync
   await page.screenshot({path:path.join(out,'menu-pressed.png')});await page.mouse.move(0,0);await page.mouse.up();
   assert(await page.locator('#garden-start').isVisible(),'drag away should cancel activation');
   const shimmer=await page.locator('[data-difficulty="medium"] .pearl-light').evaluate(el=>({animation:getComputedStyle(el,'::before').animationName,opacity:getComputedStyle(el).opacity}));
-  assert.equal(shimmer.animation,'pearl-sweep');assert(Number(shimmer.opacity)>0,'selected mode shimmers continuously');
+  assert.match(shimmer.animation,/^pearl-sweep(?:-up)?$/);assert(Number(shimmer.opacity)>0,'selected mode shimmers continuously');
   const results=[];
   for(const mode of ['medium','hard','light']){
    if(!(await page.locator('#garden-start').isVisible()))await page.evaluate(()=>gardenFlight.showMenu());

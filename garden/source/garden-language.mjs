@@ -1,5 +1,6 @@
 // Presentation-only translations. Never translate catalog values or editable data.
 const EN={
+ 'Настройки':'Settings','Тембр, громкость и эквалайзер':'Instrument, volume and equalizer',
  'Страницы цепочки аккордов':'Chord sequence pages','Предыдущая часть цепочки':'Previous sequence page','Следующая часть цепочки':'Next sequence page',
  'БАС':'BASS','Нота баса':'Bass note','Корень аккорда относительно тоники':'Chord root relative to the tonic',
  'Корень внизу · бас слева · тип справа':'Root below · bass left · quality right',

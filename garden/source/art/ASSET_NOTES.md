@@ -58,3 +58,18 @@ Choose route still opens the same route/settings screen. No raster masters chang
 Focused Chromium checks cover RU/EN at iPad/phone viewport sizes, exterior pixels
 during presses and deselection, keyboard focus and single-mode shine during hover.
 PWA recovery/update behavior is checked independently; no physical Safari claim.
+
+## Rim alignment and direct Settings — 1.40
+
+The route-button ceramic surface and its pearl reflection now share a mask
+aligned to the actual inner gold rim (775×124 reference coordinates, tips at
+y=56). The old generic inset lens sat below that centre and overlapped the tip.
+Material and reflection stay inside the rim even during a press. Mode buttons
+have opaque pointed interiors and a fine inner gold stroke for clearer edges;
+only the selected mode shimmers. Raster images and printed glyph shapes unchanged.
+
+A balanced top-right Settings action aligns with the main wordmark and opens the
+existing instrument/volume/EQ controls directly, with route selection hidden.
+Closing restores the main screen and keyboard focus. Choose route retains the
+route library. Focused RU/EN checks cover direct instrument/volume controls and
+actual gold-tip pixels at reference scale, in addition to prior material checks.

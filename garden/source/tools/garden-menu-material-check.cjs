@@ -29,10 +29,28 @@ async function unchanged(before,after,points,label){const a=await pixels(before)
    await unchanged(before,after,corners(student),'Student deselection');
    assert.equal(await page.locator('button[data-difficulty="light"]').getAttribute('aria-pressed'),'true');
    await page.locator('button[data-difficulty="medium"]').click();await page.screenshot({path:path.join(out,`${lang}-${viewport.width}-menu.png`)});
-   assert(!(await page.locator('#start-menu').isVisible()),'duplicate Menu button remains');
+   const settings=page.locator('#start-menu');assert(await settings.isVisible(),'Settings action missing');
+   assert.equal((await settings.getAttribute('aria-label')).trim(),lang==='en'?'Settings':'Настройки');
+   await settings.click();assert.equal(await page.locator('#garden-menu').getAttribute('data-view'),'settings');
+   assert(!(await page.locator('.garden-route-layout').isVisible()),'Settings must not show route selection');
+   assert(await page.locator('.sound-switch').isVisible());assert(await page.locator('#garden-volume').isVisible());assert(await page.locator('#garden-eq-low').isVisible());
+   await page.locator('[data-pad="hybrid"]').click();assert.equal(await page.locator('[data-pad="hybrid"]').getAttribute('aria-pressed'),'true');
+   await page.locator('[data-pad="felt"]').click();
+   const volume=page.locator('#garden-volume'),initial=Number(await volume.inputValue());await volume.focus();await page.keyboard.press('ArrowRight');assert.equal(Number(await volume.inputValue()),initial+5,'direct settings volume is not wired');
+   assert(!(await page.evaluate(()=>gardenFlight.snapshot().mission.running)),'opening sound settings started the flight');
+   await page.locator('#menu-close').click();await page.locator('#garden-start').waitFor({state:'visible'});assert.equal(await page.evaluate(()=>document.activeElement.id),'start-menu');
    await secondary.click();await page.locator('#garden-route-list').waitFor({state:'visible'});
    assert.deepEqual(errors,[]);await context.close();
   }
-  console.log('PASS: RU/EN exterior pixels unchanged during ivory/ceramic presses and Student deselection; no rectangular focus; exactly one mode shines even on hover at iPad/phone viewport sizes; route button still opens routes. Desktop Chromium, not physical iOS.');
+  const reference=await browser.newPage({viewport:{width:863,height:1823},locale:'ru-RU',serviceWorkers:'block'});
+  await reference.goto(base);await reference.waitForFunction(()=>gardenFlight?.snapshot().ready);
+  await reference.addStyleTag({content:'#garden-start *,#garden-start *::before,#garden-start *::after{animation-play-state:paused!important;transition:none!important}'});
+  const route=reference.locator('#start-choose'),box=await route.boundingBox();
+  const painted=await reference.screenshot();
+  await reference.addStyleTag({content:'#garden-start #start-choose :is(.porcelain-body,.pearl-light,.reference-ink){display:none!important}'});
+  const frame=await reference.screenshot();
+  await unchanged(frame,painted,[[69,56],[706,56]].map(([x,y])=>[Math.round(box.x+x*box.width/775),Math.round(box.y+y*box.height/124)]),'gold tip must remain uncovered by ceramic');
+  await reference.close();
+  console.log('PASS: RU/EN exterior pixels unchanged during ivory/ceramic presses and Student deselection; no rectangular focus; exactly one mode shines even on hover at iPad/phone viewport sizes; settings opens instruments/EQ directly and returns focus; route button still opens routes. Desktop Chromium, not physical iOS.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

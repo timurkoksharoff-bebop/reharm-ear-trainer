@@ -327,12 +327,17 @@ function light(mode){s.lightMode=mode;if(mode==='cycle')s.cycle=Math.acos(clamp(
 for(const b of document.querySelectorAll('[data-light]'))b.addEventListener('click',()=>light(b.dataset.light));
 $('pause').addEventListener('click',pause);$('lantern').addEventListener('click',()=>{s.lantern=!s.lantern;ui();});
 $('clean').addEventListener('click',()=>clean(true));$('restore').addEventListener('click',()=>clean(false));
-function setGardenMenu(open,{resume=true}={}){
-  const wasOpen=document.body.classList.contains('world-open');
+function setGardenMenu(open,{resume=true,view='routes'}={}){
+  const wasOpen=document.body.classList.contains('world-open'),wasSettings=$('garden-menu').dataset.view==='settings',settings=open&&view==='settings';
+  $('garden-menu').dataset.view=settings?'settings':'routes';
+  $('garden-menu').setAttribute('aria-label',settings?'Настройки':'Выбор маршрута Сада Эха');
+  $('garden-menu-eyebrow').textContent=settings?'EAR YOGA':'КАРТА САДА';
+  $('garden-menu-title').textContent=settings?'Настройки':'Выбор маршрута';
+  $('garden-menu-description').textContent=settings?'Тембр, громкость и эквалайзер':'Сначала выбери мандалу тура, затем конкретную последовательность.';
   if(open&&!wasOpen){menuWasRunning=Boolean(mission?.snapshot().running)&&!s.paused;mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;}
   document.body.classList.toggle('world-open',open);$('world-controls').setAttribute('aria-expanded',String(open));
-  if(!open&&wasOpen){const backToStart=resume&&menuFromStart,continueFlight=resume&&menuWasRunning&&!tutorialActive&&!s.gameOver;menuWasRunning=false;menuFromStart=false;if(backToStart){showGardenStart();return;}if(continueFlight){s.paused=false;mission?.start();}}
-  if(open)requestAnimationFrame(updateRoutePager);
+  if(!open&&wasOpen){const backToStart=resume&&menuFromStart,continueFlight=resume&&menuWasRunning&&!tutorialActive&&!s.gameOver;menuWasRunning=false;menuFromStart=false;if(backToStart){showGardenStart();if(wasSettings)$('start-menu').focus({preventScroll:true});return;}if(continueFlight){s.paused=false;mission?.start();}}
+  if(open)requestAnimationFrame(()=>{if(settings){$('garden-menu').scrollTop=0;$('garden-menu-title').focus({preventScroll:true});}else updateRoutePager();});
   ui();
 }
 $('world-controls').addEventListener('click',()=>setGardenMenu(!document.body.classList.contains('world-open')));
@@ -342,7 +347,7 @@ $('garden-home').addEventListener('click',()=>{const model=mission.snapshot();if
 $('exit-cancel').addEventListener('click',()=>closeExitConfirmation(true));
 $('exit-accept').addEventListener('click',()=>{closeExitConfirmation(false);showGardenStart();});
 $('start-random').addEventListener('click',randomGardenRoute);
-$('start-menu').addEventListener('click',()=>{menuFromStart=true;hideGardenStart();setGardenMenu(true);});
+$('start-menu').addEventListener('click',()=>{menuFromStart=true;hideGardenStart();setGardenMenu(true,{view:'settings'});});
 $('start-choose').addEventListener('click',async()=>{menuFromStart=true;hideGardenStart();await studio.refresh();renderGardenRouteList();setGardenMenu(true);});
 $('mission-next-route').addEventListener('click',()=>randomGardenRoute({unseenOnly:true}));
 $('mission-to-menu').addEventListener('click',()=>showGardenStart());

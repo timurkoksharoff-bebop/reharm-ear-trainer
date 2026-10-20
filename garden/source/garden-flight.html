@@ -63,7 +63,7 @@
         </div>
         <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
       </div>
-      <button id="start-menu" class="start-menu" type="button" hidden><span>Меню</span></button>
+      <button id="start-menu" class="start-menu" type="button"><svg class="settings-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="#061827"/><circle cx="16" cy="12" r="2" fill="#061827"/><circle cx="10" cy="18" r="2" fill="#061827"/></svg><span>Настройки</span></button>
       <div class="start-controls">
         <div class="start-actions">
           <button id="start-random" class="start-choice random-choice" type="button"><span aria-hidden="true">✦</span><strong>Начать полёт</strong><small>Случайный маршрут</small></button>
@@ -157,7 +157,7 @@
   </section>
 
   <section id="garden-menu" class="deck mandala-menu hud" aria-label="Выбор маршрута Сада Эха">
-    <header class="garden-menu-header"><div><span class="overline">КАРТА САДА</span><h2>Выбор маршрута</h2><p>Сначала выбери мандалу тура, затем конкретную последовательность.</p></div><button id="menu-close" class="mandala-close" aria-label="Закрыть меню">×</button></header>
+    <header class="garden-menu-header"><div><span id="garden-menu-eyebrow" class="overline">КАРТА САДА</span><h2 id="garden-menu-title" tabindex="-1">Выбор маршрута</h2><p id="garden-menu-description">Сначала выбери мандалу тура, затем конкретную последовательность.</p></div><button id="menu-close" class="mandala-close" aria-label="Закрыть меню">×</button></header>
     <div class="garden-route-layout">
       <section class="tour-picker"><span class="panel-kicker">МАНДАЛА ТУРА</span><div id="tour-orbit" class="tour-orbit" role="group" aria-label="Выбор тура"></div></section>
       <section class="route-picker"><div class="route-picker-heading"><div><span class="panel-kicker" data-i18n="routes">ПОСЛЕДОВАТЕЛЬНОСТИ</span><strong id="mandala-tour-name">Reharm</strong></div><div class="mode-switch" role="group" aria-label="Режим прохождения"><button data-mode="quest" class="selected" aria-pressed="true">Квест</button><button data-mode="free" aria-pressed="false">Свободный</button></div></div><div id="reharm-chapters" class="reharm-chapters"><span>ГЛАВА <b id="mandala-chapter">01</b></span><div id="chapter-orbit" class="chapter-orbit" role="group" aria-label="16 уровней Reharmonization+"></div></div><div id="garden-route-list" class="garden-route-list"></div><div id="route-list-pager" class="route-list-pager" hidden><button id="route-list-back" type="button" aria-label="Предыдущие маршруты">↑</button><span id="route-list-position">01 / 01</span><button id="route-list-forward" type="button" aria-label="Следующие маршруты">↓</button></div></section>

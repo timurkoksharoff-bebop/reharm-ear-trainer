@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg?v=1.39"><link rel="apple-touch-icon" href="icon-192-v1.39.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.39">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.39">
-  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.39">
+  <link rel="icon" href="icon.svg?v=1.40"><link rel="apple-touch-icon" href="icon-192-v1.40.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.40">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.40">
+  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.40">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -63,7 +63,7 @@
         </div>
         <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
       </div>
-      <button id="start-menu" class="start-menu" type="button" hidden><span>Меню</span></button>
+      <button id="start-menu" class="start-menu" type="button"><svg class="settings-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="#061827"/><circle cx="16" cy="12" r="2" fill="#061827"/><circle cx="10" cy="18" r="2" fill="#061827"/></svg><span>Настройки</span></button>
       <div class="start-controls">
         <div class="start-actions">
           <button id="start-random" class="start-choice random-choice" type="button"><span aria-hidden="true">✦</span><strong>Начать полёт</strong><small>Случайный маршрут</small></button>
@@ -157,7 +157,7 @@
   </section>
 
   <section id="garden-menu" class="deck mandala-menu hud" aria-label="Выбор маршрута Сада Эха">
-    <header class="garden-menu-header"><div><span class="overline">КАРТА САДА</span><h2>Выбор маршрута</h2><p>Сначала выбери мандалу тура, затем конкретную последовательность.</p></div><button id="menu-close" class="mandala-close" aria-label="Закрыть меню">×</button></header>
+    <header class="garden-menu-header"><div><span id="garden-menu-eyebrow" class="overline">КАРТА САДА</span><h2 id="garden-menu-title" tabindex="-1">Выбор маршрута</h2><p id="garden-menu-description">Сначала выбери мандалу тура, затем конкретную последовательность.</p></div><button id="menu-close" class="mandala-close" aria-label="Закрыть меню">×</button></header>
     <div class="garden-route-layout">
       <section class="tour-picker"><span class="panel-kicker">МАНДАЛА ТУРА</span><div id="tour-orbit" class="tour-orbit" role="group" aria-label="Выбор тура"></div></section>
       <section class="route-picker"><div class="route-picker-heading"><div><span class="panel-kicker" data-i18n="routes">ПОСЛЕДОВАТЕЛЬНОСТИ</span><strong id="mandala-tour-name">Reharm</strong></div><div class="mode-switch" role="group" aria-label="Режим прохождения"><button data-mode="quest" class="selected" aria-pressed="true">Квест</button><button data-mode="free" aria-pressed="false">Свободный</button></div></div><div id="reharm-chapters" class="reharm-chapters"><span>ГЛАВА <b id="mandala-chapter">01</b></span><div id="chapter-orbit" class="chapter-orbit" role="group" aria-label="16 уровней Reharmonization+"></div></div><div id="garden-route-list" class="garden-route-list"></div><div id="route-list-pager" class="route-list-pager" hidden><button id="route-list-back" type="button" aria-label="Предыдущие маршруты">↑</button><span id="route-list-position">01 / 01</span><button id="route-list-forward" type="button" aria-label="Следующие маршруты">↓</button></div></section>
@@ -192,6 +192,6 @@
   <div id="recording-bar" class="recording-bar" data-user-content hidden><span><i aria-hidden="true"></i> REC <b id="recording-clock">00:00</b></span><button id="recording-stop" type="button">■ Стоп</button></div>
   <dialog id="recording-result" class="recording-result" data-user-content aria-labelledby="recording-title"><h2 id="recording-title">Запись полёта</h2><video id="recording-video" controls playsinline preload="metadata"></video><p id="recording-note"></p><div><a id="recording-save">Сохранить видео</a><button id="recording-close" type="button">Закрыть</button></div></dialog>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.39" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.40" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

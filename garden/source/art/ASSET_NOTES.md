@@ -73,3 +73,9 @@ existing instrument/volume/EQ controls directly, with route selection hidden.
 Closing restores the main screen and keyboard focus. Choose route retains the
 route library. Focused RU/EN checks cover direct instrument/volume controls and
 actual gold-tip pixels at reference scale, in addition to prior material checks.
+
+## Reflection pacing — 1.41
+
+At the user's request, all four reflective motions run 20% slower: pearl sweep
+9.75s, rotating caustics 21.25s, water breath 7.5s and ceramic reflection 10s.
+Phase offsets scale with the cycle. The 1.40 contour/settings corrections remain.

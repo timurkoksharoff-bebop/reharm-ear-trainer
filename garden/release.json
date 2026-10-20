@@ -1,10 +1,10 @@
 {
-  "version": "1.40",
+  "version": "1.41",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.40: align the turquoise route-button body with its original inner gold frame, sharpen mode-button inner contours, and restore a balanced top-right Settings action opening instrument, volume and EQ directly. Selected-only shine, safe PWA updates, icon, music and gameplay retained.",
+  "notes": "Mobile release 1.41: slow pearl sweeps, caustics, water motion and ceramic reflections by 20%; align the turquoise route-button body with its original inner gold frame, sharpen mode-button inner contours, and restore a balanced top-right Settings action opening instrument, volume and EQ directly. Selected-only shine, safe PWA updates, icon, music and gameplay retained.",
   "channel": "mobile-release"
 }

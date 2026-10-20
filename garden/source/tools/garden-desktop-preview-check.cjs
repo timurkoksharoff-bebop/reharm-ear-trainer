@@ -39,11 +39,11 @@ const out=process.env.GARDEN_QA_DIR||'/private/tmp/ear-yoga-137-qa';fs.mkdirSync
    if(await page.locator('#flight-tutorial').isVisible())await page.locator('#tutorial-close').click();
    await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);await page.waitForTimeout(250);
    const start=await page.evaluate(()=>({s:gardenFlight.snapshot(),at:performance.now()}));
-   const bar=start.s.mission.barSeconds;assert(Math.abs(bar-(mode==='hard'?4/1.1:4))<1e-9,'wrong chord duration for '+mode);
+   const bar=start.s.mission.barSeconds;assert(Math.abs(bar-(mode==='hard'?4/1.07:4))<1e-9,'wrong chord duration for '+mode);
    await page.waitForTimeout(1100);
    const end=await page.evaluate(()=>({s:gardenFlight.snapshot(),at:performance.now()}));
    const rate=(end.s.time-start.s.time)/((end.at-start.at)/1000);
-   assert(Math.abs(rate-(mode==='hard'?1.1:1))<.12,'wrong world-time pace for '+mode+': '+rate);
+   assert(Math.abs(rate-(mode==='hard'?1.07:1))<.12,'wrong world-time pace for '+mode+': '+rate);
    if(mode==='light')assert(Object.values(end.s.life.resources).every(n=>n===100),'Applicant spends reserves');
    results.push({mode,barSeconds:bar,worldRate:Number(rate.toFixed(3))});
    assert.equal(start.s.mission.separateBass,mode==='hard','separate bass policy');

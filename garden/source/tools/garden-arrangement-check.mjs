@@ -39,7 +39,7 @@ assert.deepEqual(collected,[['arpSpark',3]],'pickup activates exactly once with 
 const seed=life.forceSpawn('arrangementBoost');life.collect(seed);assert.equal(life.inventory.arrangementBoost,1);assert(life.consumeArtifact('arrangementBoost'));assert(!life.consumeArtifact('arrangementBoost'));
 
 const oldFetch=globalThis.fetch;globalThis.fetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(0)});const pad=new GardenPad();globalThis.fetch=oldFetch;
-const starts=[],stops=[],parameter=()=>({value:0,setValueAtTime(){},exponentialRampToValueAtTime(){},cancelScheduledValues(){},setTargetAtTime(){}});
+const starts=[],stops=[],parameter=()=>({value:0,setValueAtTime(){},exponentialRampToValueAtTime(){},linearRampToValueAtTime(){},cancelScheduledValues(){},setTargetAtTime(){}});
 pad.unlock=async()=>{};pad.context={currentTime:10,createGain:()=>({gain:parameter(),connect(){},disconnect(){}}),createBufferSource:()=>({playbackRate:parameter(),connect(){},start(at){starts.push(['sample',at]);},stop(){stops.push('sample');}}),createOscillator:()=>({frequency:parameter(),connect(){},disconnect(){},start(at){starts.push(['layer',at]);},stop(at){stops.push(at);}})};pad.cleanOutput={};pad.sampleBanks.felt=[{midi:48,buffer:{}}];
 await pad.play({offset:0,quality:'6'},0,{arrangement:{arpeggio:'arpSpark',bass:'bassFunk'},barSeconds:4});
 assert.equal(pad.lastArrangement.length,21);assert.equal(pad.voices.length,2,'layers and foundation are both cancellable voice groups');assert.equal(starts.filter(([kind])=>kind==='layer').length,21);

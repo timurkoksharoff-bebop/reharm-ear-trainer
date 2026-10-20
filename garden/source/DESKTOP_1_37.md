@@ -8,9 +8,9 @@ Requested changes:
 - New user-selected orbital home screen, with live HTML controls, hover,
   press and keyboard feedback, RU/EN and the existing menu/tutorial actions.
 - New selected spacecraft app icon, trimming the lateral golden tails only.
-- Teacher: the musical sequence and the world run 10% faster. A chord lasts
-  4 / 1.1 seconds. World animation, steering, pickups, hazards and O₂ use the
-  same 1.1 multiplier. The score timer continues measuring actual seconds.
+- Teacher: the musical sequence and the world run 7% faster. A chord lasts
+  4 / 1.07 seconds. World animation, steering, pickups, hazards and O₂ use the
+  same 1.07 multiplier. The score timer continues measuring actual seconds.
   Duration-based reserve normalization uses the unchanged virtual bar length,
   preserving the existing spending/reward balance per route lap.
 - Applicant: Student movement, chord duration and pickup pace, while all four
@@ -44,3 +44,14 @@ without another browser QA round, for phone review in the morning. The original
 reference now supplies the exact Russian lettering and control ornaments. Pearl
 light sweeps and flowing caustics run continuously, with turquoise motion on the
 selected mode. No additional physical phone or browser testing is claimed.
+
+## Current refinements — 1.44
+
+Teacher pace is now +7% versus Student (4 / 1.07 seconds per chord), as
+requested after the +10% trial. A shared header pause/resume button is present
+in all three modes. Lighting selection opens a compact scene preview; Light
+is labelled Headlight / Прожектор. Hybrid Keys alone has a 35 ms per-note gain
+fade; exact sample tuning, starts, MIDI voicings and sustained levels remain.
+Ambient 1 retains its six imported voicings, D2 through B5. The orchestral
+sources retain their original octave layers; they are not transposed into a
+new register to compensate for their brighter sound.

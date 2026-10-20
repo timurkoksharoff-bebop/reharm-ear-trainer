@@ -61,7 +61,7 @@ export function gardenAnswerState(model,kind,value){
 }
 const PRESETS={
   felt:{name:'Felt Piano',engine:'sample',sampleSet:'felt',cutoff:1450,delay:0,feedback:0,drift:0},
-  hybrid:{name:'Hybrid Keys',engine:'sample',sampleSet:'hybrid',cutoff:7000,delay:0,feedback:0,drift:0},
+  hybrid:{name:'Hybrid Keys',engine:'sample',sampleSet:'hybrid',sampleAttack:.035,cutoff:7000,delay:0,feedback:0,drift:0},
   hybridOrchestra:{name:'Hybrid Orchestra',engine:'sample',sampleSet:'hybridOrchestra',cutoff:9000,delay:.12,feedback:.08,drift:0},
   stringOrchestra:{name:'String Orchestra',engine:'sample',sampleSet:'stringOrchestra',cutoff:9000,delay:.16,feedback:.1,drift:0},
   pianoN:{name:'Piano N',engine:'sample',sampleSet:'pianoN',cutoff:6000,delay:0,feedback:0,drift:0},
@@ -230,7 +230,11 @@ export class GardenPad{
       const phraseSample=arpeggio?nearestSample(sampleBank,middleNote):null;
       notes.forEach((midi,index)=>{
         const sample=phraseSample||nearestSample(sampleBank,midi);
-        const voice=c.createBufferSource(),voiceGain=c.createGain();voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi)/12);voiceGain.gain.value=(index===0?.62:1)*(sample.levelGain??1);voice.connect(voiceGain);voiceGain.connect(group);voice.start(now+(arpeggio?index*.18:0),sample.startOffset||0);sources.push(voice);
+        const voice=c.createBufferSource(),voiceGain=c.createGain(),at=now+(arpeggio?index*.18:0),level=(index===0?.62:1)*(sample.levelGain??1);voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi)/12);
+        // A short per-note fade softens only Hybrid Keys' initial strike.
+        // Start time, sample pitch, sustain and the other instruments stay exact.
+        if(p.sampleAttack){voiceGain.gain.setValueAtTime(0,at);voiceGain.gain.linearRampToValueAtTime(level,at+p.sampleAttack);}else voiceGain.gain.value=level;
+        voice.connect(voiceGain);voiceGain.connect(group);voice.start(at,sample.startOffset||0);sources.push(voice);
       });
       const voice={gain:group,stop:()=>{for(const item of sources){try{item.stop();}catch{}}try{group.disconnect();}catch{}}};this.voices.push(voice);return;
     }

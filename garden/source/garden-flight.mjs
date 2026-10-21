@@ -425,7 +425,7 @@ $('library-open').addEventListener('click',()=>studio.open());$('studio-close').
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){s.paused=true;keys.clear();mission.pause({preserveHold:true});pad.stop(true);ui();return;}try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
 const dismissCompletion=()=>{$('mission-complete').hidden=true;world.focus({preventScroll:true});};
 $('completion-dismiss').addEventListener('click',dismissCompletion);
-$('completion-listen').addEventListener('click',dismissCompletion);
+$('completion-menu').addEventListener('click',()=>showGardenStart());
 const completionBounds=new ResizeObserver(layoutCompletion);
 for(const selector of ['.route-panel','.degrees-panel','.answers-panel','#bass-panel','#quality-advanced-options']){const node=document.querySelector(selector);if(node)completionBounds.observe(node);}
 addEventListener('resize',layoutCompletion);window.visualViewport?.addEventListener('resize',layoutCompletion);

@@ -1,11 +1,11 @@
 {
-  "version": "1.50",
+  "version": "1.51",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.50: enable flying note medallions 1,3,5,7 in Student, with real single-shot tones and existing capped score bonuses. Student retains four supplies; Teacher retains all twelve note variants and its existing oxygen rules. Both unlock after two fully solved chords, freeze on pause and clear for completed listening. RU/EN field guide explains each mode. Four persistent chakra proficiency ranks (red to green) and separate full-mandala medals are available in Settings and About. Three upper ranks remain reserved and unearnable. Independent answer accuracy, laps, route/key variety, complexity and unique note catches determine ranks; existing records stay intact. Compact completion award, original terrain, Hybrid Keys attack and musical voicings retained.",
+  "notes": "Mobile release 1.51: completion card now has Next route and Menu. The solved sequence continues playing while the card stays open, with musical controls visible. Close X dismisses the award without stopping playback; Menu returns to the main cover and stops the flight. Student flying notes, existing achievement rules, original terrain, sound and gameplay are retained. Living atmospheric award art remains a separate local visual prototype.",
   "channel": "mobile-release",
-  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.50.html"
+  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.51.html"
 }

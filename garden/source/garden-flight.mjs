@@ -334,6 +334,18 @@ async function launchRoute(route){
   if(!wasTutorialDismissed()){guide.open({resume:true});return;}
   try{await pad.unlock();if(trialExpired)return;s.paused=false;mission.start();world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}catch(error){$('answer-feedback').textContent=error.message;s.paused=false;ui();}
 }
+function layoutCompletion(){
+  const panel=$('mission-complete');if(panel.hidden)return;
+  const box=selector=>{const node=document.querySelector(selector);if(!node||!node.getClientRects().length)return null;const r=node.getBoundingClientRect();return r.width&&r.height?r:null;};
+  const bass=box('#bass-panel'),tools=box('.flight-tools summary'),answers=box('.answers-panel'),extensions=box('#quality-advanced[open] #quality-advanced-options');
+  const left=Math.max(12,(bass?.right??0)+10,(tools?.right??0)+10);
+  const right=Math.min(innerWidth-12,(answers?.left??innerWidth)-10,(extensions?.left??innerWidth)-10);
+  const top=(box('.route-panel')?.bottom??140)+12,bottom=(box('.degrees-panel')?.top??innerHeight-100)-12;
+  panel.style.setProperty('--completion-x',`${(left+right)/2}px`);
+  panel.style.setProperty('--completion-y',`${(top+bottom)/2}px`);
+  panel.style.setProperty('--completion-width',`${Math.max(1,Math.min(252,right-left))}px`);
+  panel.style.setProperty('--completion-height',`${Math.max(1,bottom-top)}px`);
+}
 function completeGardenLevel(){
   completionHandled=true;s.paused=false;
   const result=run.snapshot();
@@ -349,7 +361,7 @@ function completeGardenLevel(){
   const id=currentRoute?.id||`${currentRoute?.source||'route'}:${currentRoute?.name||''}`;
   const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
-  $('mission-complete-copy').textContent=routeTitle(currentRoute);$('mission-next-route').disabled=false;$('mission-next-route').textContent='Следующий маршрут →';$('mission-complete').hidden=false;
+  $('mission-complete-copy').textContent=routeTitle(currentRoute);$('mission-next-route').disabled=false;$('mission-next-route').textContent='Следующий маршрут →';$('mission-complete').hidden=false;layoutCompletion();
   if(enrolled){$('enrollment').hidden=false;$('enrollment-student').focus({preventScroll:true});}
 }
 async function retryCurrentMission(){
@@ -390,11 +402,15 @@ $('start-random').addEventListener('click',randomGardenRoute);
 $('start-menu').addEventListener('click',()=>{menuFromStart=true;hideGardenStart();setGardenMenu(true,{view:'settings'});});
 $('start-choose').addEventListener('click',async()=>{menuFromStart=true;hideGardenStart();await studio.refresh();renderGardenRouteList();setGardenMenu(true);});
 $('mission-next-route').addEventListener('click',()=>randomGardenRoute({unseenOnly:true}));
-$('mission-to-menu').addEventListener('click',()=>showGardenStart());
 $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){s.paused=true;keys.clear();mission.pause({preserveHold:true});pad.stop(true);ui();return;}try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
-$('completion-dismiss').addEventListener('click',()=>{$('mission-complete').hidden=true;world.focus({preventScroll:true});});
+const dismissCompletion=()=>{$('mission-complete').hidden=true;world.focus({preventScroll:true});};
+$('completion-dismiss').addEventListener('click',dismissCompletion);
+$('completion-listen').addEventListener('click',dismissCompletion);
+const completionBounds=new ResizeObserver(layoutCompletion);
+for(const selector of ['.route-panel','.degrees-panel','.answers-panel','#bass-panel','#quality-advanced-options']){const node=document.querySelector(selector);if(node)completionBounds.observe(node);}
+addEventListener('resize',layoutCompletion);window.visualViewport?.addEventListener('resize',layoutCompletion);
 $('mission-restart').addEventListener('click',()=>{gardenRewards.reset();run.reset();resonance.reset(difficulty==='hard');mission.restart();s.paused=false;ui();});
 for(const [kind,spec] of Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact)){
   const button=document.createElement('button'),badge=document.createElement('b');

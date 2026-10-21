@@ -1,11 +1,11 @@
 {
-  "version": "1.48",
+  "version": "1.49",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.48: restore the exact 1.46 terrain renderer at the user request, removing the rejected 1.47 interior-patch warp/blending. Original paintings and their former rendering are restored, including the known seams. Keep the larger brighter transparent time/score HUD, Lotus completion result, personal best feedback, 240 ms Hybrid Keys attack and verified PWA recovery from 1.47. Teacher remains +7%; musical notes and player data preserved.",
+  "notes": "Mobile release 1.49: compact Lotus completion award fits between the actual answer rails, below the chord chain and above the root degrees. Keep listening dismisses the award while the solved sequence loops with its sounding position highlighted. Original 1.46 terrain renderer, bright HUD, records and 240 ms Hybrid Keys attack retained. Player data and musical notes preserved.",
   "channel": "mobile-release",
-  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.48.html"
+  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.49.html"
 }

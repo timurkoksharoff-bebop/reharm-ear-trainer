@@ -13,6 +13,7 @@ import {GardenResonance,GARDEN_TENSIONS,GARDEN_STUDENT_TENSIONS} from './garden-
 import {GardenRun} from './garden-run.mjs';
 import {GardenSkillFlight,GardenAchievements,GARDEN_RANKS,gardenRankGlyph} from './garden-achievements.mjs';
 import {mountGardenAchievements} from './garden-achievements-view.mjs';
+import {GardenJourneyRatings,mountGardenJourney} from './garden-journey.mjs';
 import {mountGardenRecording} from './garden-recording.mjs';
 import {bindGardenBrand} from './garden-brand.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
@@ -48,7 +49,8 @@ const run=new GardenRun();
 const skillFlight=new GardenSkillFlight();
 let achievementStorage=null;try{achievementStorage=localStorage;}catch{}
 const achievementStore=new GardenAchievements({storage:achievementStorage});
-let achievements;
+let achievements,journey,journeyReturn=null;
+const journeyRatings=new GardenJourneyRatings(achievementStorage);
 const resonance=new GardenResonance({onTone:(midi,detail)=>{const position=mission?.snapshot().cursor??-1;run.tone(detail,position);skillFlight.tone(detail,position);pad.tensionNote(midi,detail);}});
 const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrange(style,rounds),onRestoration:()=>resonance.restore()});
 const gardenRewards=createGardenRewards({reduced});
@@ -324,6 +326,16 @@ function achievementGroups(){
   const routes=[...allBookRoutes(),...(studio?.routes||[])],categories=studio?.categories||[];
   return categories.map(category=>({id:category.id,name:category.name,routes:[...new Set(routes.filter(route=>routeTour(route)===category.id).map(routeIdentity))],image:Number.isInteger(category.mandalaSeed)?gardenMandalaDataUri(category.mandalaSeed):`assets/echo-garden/tours/${category.id}.webp`})).filter(group=>group.routes.length);
 }
+function journeyRoutes(){return difficulty==='light'?GARDEN_ADMISSION_ROUTES:[...allBookRoutes(),...(studio?.routes||[])];}
+function journeyData(){
+ const routes=journeyRoutes(),done=progress.completed,groups=difficulty==='light'?[{id:'reharm',name:language.get()==='en'?'First flights':'Первые полёты',image:'assets/echo-garden/tours/reharm.webp'}]:achievementGroups();
+ return {version:globalThis.GARDEN_VERSION||'dev',language:language.get(),difficulty,earned:GARDEN_RANKS.map(r=>Boolean(achievementStore.snapshot().earned[r.id])),rankNames:GARDEN_RANKS.map(r=>language.get()==='en'?r.en:r.ru),groups:groups.map(group=>({id:group.id,name:group.name,image:new URL(group.image,location.href).href,routes:routes.filter(r=>difficulty==='light'||routeTour(r)===group.id).map((r,i)=>({id:routeIdentity(r),name:routeTitle(r,i),chords:r.sequence.length,chapter:r.chapter||null,completed:done.includes(routeIdentity(r)),rating:journeyRatings.best(routeIdentity(r),done)}))})).filter(g=>g.routes.length)};
+}
+async function openJourney(){
+ if(journey?.isOpen){journey.open();return;}
+ pad.unlock().catch(()=>{});
+ journeyReturn={fromStart:!$('garden-start').hidden,running:Boolean(mission?.snapshot().running)&&!s.paused};mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();await studio.refresh();journey.open();ui();
+}
 async function randomGardenRoute({unseenOnly=false}={}){
   if(difficulty==='light'){const admission=gardenAdmissionState(progress);if(admission.next)launchRoute(admission.next);else $('mission-complete-copy').textContent='Абитуриентский маршрут завершён. Переключись на «Студент», чтобы открыть новые полёты.';return;}
   await studio.refresh();
@@ -374,6 +386,7 @@ function completeGardenLevel(){
   const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
   const skill=skillFlight.finish(mission.snapshot(),result,{difficulty}),official=allBookRoutes().some(route=>route.id===id)||(studio?.routes||[]).some(route=>route.id===id&&route.builtin);
+  const stars=journeyRatings.record(id,skill);$('completion-record').textContent+=' · '+'★'.repeat(stars)+'☆'.repeat(5-stars);
   const ranks=achievementStore.record(skill,{eligible:official&&currentRoute.sequence.length>=4}),mandalas=achievementStore.syncMandalas(achievementGroups(),progress.completed),rank=GARDEN_RANKS.find(r=>r.id===ranks.at(-1));
   const medal=document.querySelector('.completion-medal');if(!medal.dataset.original)medal.dataset.original=medal.innerHTML;
   medal.classList.toggle('chakra-earned',Boolean(rank));medal.style.setProperty('--chakra',rank?.color||'#efd28c');medal.innerHTML=rank?gardenRankGlyph(rank):medal.dataset.original;
@@ -410,7 +423,7 @@ function setGardenMenu(open,{resume=true,view='routes'}={}){
   if(open)requestAnimationFrame(()=>{if(settings){$('garden-menu').scrollTop=0;$('garden-menu-title').focus({preventScroll:true});}else updateRoutePager();});
   ui();
 }
-$('world-controls').addEventListener('click',()=>setGardenMenu(!document.body.classList.contains('world-open')));
+$('world-controls').addEventListener('click',()=>setGardenMenu(!document.body.classList.contains('world-open'),{view:'settings'}));
 $('menu-close').addEventListener('click',()=>setGardenMenu(false));
 function closeExitConfirmation(resume){$('exit-confirm').hidden=true;if(resume&&exitWasRunning){s.paused=false;mission.start();}exitWasRunning=false;world.focus({preventScroll:true});ui();}
 $('garden-home').addEventListener('click',()=>{const model=mission.snapshot();if(!currentRoute||model.complete||s.gameOver){showGardenStart();return;}exitWasRunning=model.running&&!s.paused;mission.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();$('exit-confirm').hidden=false;$('exit-cancel').focus({preventScroll:true});ui();});
@@ -418,7 +431,7 @@ $('exit-cancel').addEventListener('click',()=>closeExitConfirmation(true));
 $('exit-accept').addEventListener('click',()=>{closeExitConfirmation(false);showGardenStart();});
 $('start-random').addEventListener('click',randomGardenRoute);
 $('start-menu').addEventListener('click',()=>{menuFromStart=true;hideGardenStart();setGardenMenu(true,{view:'settings'});});
-$('start-choose').addEventListener('click',async()=>{menuFromStart=true;hideGardenStart();await studio.refresh();renderGardenRouteList();setGardenMenu(true);});
+$('start-choose').addEventListener('click',async()=>{if(new URLSearchParams(location.search).get('routes')==='classic'){menuFromStart=true;hideGardenStart();await studio.refresh();renderGardenRouteList();setGardenMenu(true);}else openJourney();});
 $('mission-next-route').addEventListener('click',()=>randomGardenRoute({unseenOnly:true}));
 $('retry-mission').addEventListener('click',retryCurrentMission);
 $('library-open').addEventListener('click',()=>studio.open());$('studio-close').addEventListener('click',()=>studio.close());$('studio-capture').addEventListener('click',()=>studio.toggleCapture());$('studio-save').addEventListener('click',()=>studio.save());
@@ -535,7 +548,7 @@ function frame(now){
   raf=0;if(document.hidden)return;
   const frameMs=last?now-last:0,dt=Math.min(.05,frameMs/1000);last=now;
   if(mobileGraphics&&frameMs>0&&frameMs<250){slowFrameAverage=slowFrameAverage*.98+frameMs*.02;if(++graphicsSamples>180&&slowFrameAverage>27&&renderScale>1.1){renderScale=1.1;resize();}}
-  if(s.ready&&!document.body.classList.contains('start-open')){if(lightingPreview.active&&lightingPreview.playing&&s.lightMode==='cycle'){s.cycle=mod(s.cycle+dt*15,360);s.night=(1-Math.cos(s.cycle*Math.PI/180))/2;}update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
+  if(s.ready&&!journey?.isOpen&&!document.body.classList.contains('start-open')){if(lightingPreview.active&&lightingPreview.playing&&s.lightMode==='cycle'){s.cycle=mod(s.cycle+dt*15,360);s.night=(1-Math.cos(s.cycle*Math.PI/180))/2;}update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
   raf=requestAnimationFrame(frame);
 }
 async function load(){
@@ -557,7 +570,7 @@ async function load(){
   const phase=Number(params.get('phase'));if(Number.isFinite(phase)&&phase>=0&&phase<4)s.growth=phase;
   if(['day','dusk','night','cycle'].includes(params.get('light'))){light(params.get('light'));s.night=params.get('light')==='night'?1:params.get('light')==='dusk'?.48:0;}
   if(params.get('ship')==='lotus')s.ship=1;if(params.get('still')==='1')s.paused=true;
-  if(params.get('studio')==='1')studio.open();else showGardenStart();
+  if(params.get('studio')==='1')studio.open();else {showGardenStart();if(params.get('journey')==='1')openJourney();}
   ui();if(!raf)raf=requestAnimationFrame(frame);
 }
 function error(e){s.ready=false;$('loading').hidden=false;$('load-progress').textContent=e.message;$('retry').hidden=false;}
@@ -579,7 +592,8 @@ if($('start-language')){
 }
 mountGardenRecording({pad,language,onStart:()=>setGardenMenu(false),onReady:()=>{mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();ui();}});
 $('settings-language').onclick=()=>language.toggle();
-achievements=mountGardenAchievements({store:achievementStore,language,groups:achievementGroups,completed:()=>progress.completed});
+achievements=mountGardenAchievements({store:achievementStore,language,groups:achievementGroups,completed:()=>progress.completed,onMap:()=>{document.getElementById('achievements-board').close();openJourney();}});
+journey=mountGardenJourney({data:journeyData,onLaunch:id=>{const route=journeyRoutes().find(r=>routeIdentity(r)===id);journeyReturn=null;if(route)launchRoute(route);},onAchievements:()=>achievements.open(),onClassic:()=>{menuFromStart=journeyReturn?.fromStart;journeyReturn=null;hideGardenStart();renderGardenRouteList();setGardenMenu(true);},onClose:()=>{const previous=journeyReturn;journeyReturn=null;if(previous?.fromStart)showGardenStart();else if(previous?.running){s.paused=false;mission?.start();ui();}}});
 for(const button of document.querySelectorAll('[data-open-achievements]'))button.addEventListener('click',()=>achievements.open());
 language.add(Object.fromEntries(Object.entries(GARDEN_ITEMS).map(([kind,spec])=>[spec.label,guideItemName(kind,true)])));
 language.add(Object.fromEntries(Object.entries(GARDEN_ARRANGEMENTS).map(([kind,spec])=>[spec.label+' — '+spec.detail,guideItemName(kind,true)+' — '+guideItemCopy(kind,true)])));
@@ -622,3 +636,5 @@ document.addEventListener('click',event=>{if(trialExpired&&!$('trial-expired').c
 document.addEventListener('keydown',event=>{if(trialExpired&&!$('trial-expired').contains(event.target)){event.preventDefault();event.stopImmediatePropagation();}},true);
 window.earYoga=Object.freeze({guide:()=>guide.snapshot(),trial:()=>trial.check(),language:()=>language.get()});
 ui();renderVitals();updateProgressCard();load().then(checkTrial).catch(error);
+
+for(const button of document.querySelectorAll('[data-open-journey]'))button.addEventListener('click',openJourney);

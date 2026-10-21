@@ -1,6 +1,6 @@
 import {GARDEN_RANKS,gardenRankGlyph,gardenRankStats,gardenRankRequirements} from './garden-achievements.mjs';
 
-export function mountGardenAchievements({store,language,groups,completed}){
+export function mountGardenAchievements({store,language,groups,completed,onMap}){
  const dialog=document.createElement('dialog');dialog.id='achievements-board';dialog.className='achievements-board';dialog.dataset.userContent='';document.body.append(dialog);
  let returnFocus=null;
  const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
@@ -8,10 +8,11 @@ export function mountGardenAchievements({store,language,groups,completed}){
   const en=language.get()==='en',pick=(ru,eng)=>en?eng:ru,state=store.snapshot(),earned=GARDEN_RANKS.filter(r=>state.earned[r.id]),current=earned.at(-1),collections=groups();
   store.syncMandalas(collections,completed());const fresh=store.snapshot();
   dialog.replaceChildren();dialog.setAttribute('aria-label',pick('Достижения · владение гармонией','Achievements · harmony practice'));
-  const header=el('header','achievements-header'),titles=el('div');titles.append(el('span','overline','EAR YOGA · SPACE MUSIC COLLEGE'),el('h2','',pick('Созвездие гармонии','A constellation of harmony')),el('p','',current?pick('Твой уровень: ','Your rank: ')+(en?current.en:current.ru):pick('Каждый уверенный полёт приближает первый уровень.','Every confident flight brings your first rank closer.')));
+  const header=el('header','achievements-header'),titles=el('div');const logo=el('img','achievements-wordmark');logo.src='ear-yoga-wordmark.svg';logo.alt='Ear Yoga — Space Music College';titles.append(logo,el('h2','',pick('Достижения','Achievements')),el('p','',current?pick('Твой уровень: ','Your rank: ')+(en?current.en:current.ru):pick('Каждый уверенный полёт приближает первый уровень.','Every confident flight brings your first rank closer.')));
   const close=el('button','achievements-close','×');close.type='button';close.setAttribute('aria-label',pick('Закрыть достижения','Close achievements'));close.addEventListener('click',()=>dialog.close());header.append(titles,close);dialog.append(header);
   const tower=el('div','chakra-constellation');
   for(const rank of GARDEN_RANKS){const won=Boolean(fresh.earned[rank.id]),node=el('div','chakra-star'+(won?' earned':'')+(rank.reserved?' reserved':''));node.style.setProperty('--chakra',rank.color);node.innerHTML=gardenRankGlyph(rank);node.append(el('strong','',en?rank.en:rank.ru),el('small','',won?pick('Открыто','Earned'):rank.reserved?pick('В будущем','Future'):pick('Впереди','Ahead')));tower.append(node);}dialog.append(tower);
+  const mapButton=el('button','journey-open',pick('Карта путешествий ↗','Journey map ↗'));mapButton.type='button';mapButton.addEventListener('click',()=>onMap?.());dialog.append(mapButton);
   const note=el('p','achievements-note',pick('Четыре ступени практики. Верхние три пока закрыты и не присуждаются. Награды сохраняются на этом устройстве.','Four practice ranks. The upper three are reserved and cannot be earned yet. Awards are saved on this device.'));dialog.append(note);
   const ranks=el('div','achievement-ranks');
   for(const rank of GARDEN_RANKS.filter(r=>!r.reserved)){

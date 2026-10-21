@@ -1,12 +1,12 @@
 /* A worker update is applied only while the main menu is open. Player storage
    is never cleared, and an active flight is never interrupted. */
 (()=>{
- const version='1.51',worker=navigator.serviceWorker;
+ const version='1.52',worker=navigator.serviceWorker;
  if(!worker||location.protocol==='file:'||(['localhost','127.0.0.1'].includes(location.hostname)&&!new URLSearchParams(location.search).has('offline-test')))return;
  let pending=false,reloading=false,registration,lastCheck=0;
  const reloadFromMenu=()=>{
   const menu=document.querySelector('#garden-start');
-  if(pending&&!reloading&&!document.hidden&&menu&&!menu.hidden&&document.body.classList.contains('start-open')){reloading=true;location.reload();}
+  if(pending&&!reloading&&!document.hidden&&!document.querySelector('dialog[open]')&&menu&&!menu.hidden&&document.body.classList.contains('start-open')){reloading=true;location.reload();}
  };
  const inspect=controller=>{
   if(!controller)return;
@@ -15,7 +15,7 @@
   controller.postMessage({type:'EAR_YOGA_VERSION'},[channel.port2]);
  };
  worker.addEventListener('controllerchange',()=>inspect(worker.controller));
- new MutationObserver(reloadFromMenu).observe(document.body,{attributes:true,subtree:true,attributeFilter:['hidden','class']});
+ new MutationObserver(reloadFromMenu).observe(document.body,{attributes:true,subtree:true,attributeFilter:['hidden','class','open']});
  const activate=()=>registration?.waiting?.postMessage({type:'EAR_YOGA_ACTIVATE'});
  const watch=()=>{const installing=registration?.installing;if(installing)installing.addEventListener('statechange',activate);activate();};
  const check=()=>{if(!registration||!navigator.onLine||Date.now()-lastCheck<60000)return;activate();if(registration.installing||registration.waiting)return;lastCheck=Date.now();registration.update().catch(()=>{});};

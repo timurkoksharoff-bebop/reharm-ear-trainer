@@ -1,24 +1,18 @@
 // Device-local practice milestones. Saved game scores cannot establish accuracy.
 export const GARDEN_RANKS=Object.freeze([
- {id:'muladhara',ru:'Муладхара',en:'Muladhara',color:'#ef5d69',petals:4,routes:3,accuracy:.80,laps:4,keys:1,teacher:0,sevenths:0,complex:0,bass:0,tones:0,toneRoutes:0,toneAccuracy:0,days:1},
- {id:'svadhisthana',ru:'Свадхистхана',en:'Svadhisthana',color:'#ffa357',petals:6,routes:8,accuracy:.88,laps:3,keys:3,teacher:0,sevenths:4,complex:0,bass:0,tones:0,toneRoutes:0,toneAccuracy:0,days:1},
- {id:'manipura',ru:'Манипура',en:'Manipura',color:'#f6d86b',petals:10,routes:12,accuracy:.92,laps:2.5,keys:4,teacher:4,sevenths:4,complex:2,bass:2,tones:8,toneRoutes:3,toneAccuracy:.75,days:2},
- {id:'anahata',ru:'Анахата',en:'Anahata',color:'#84df9d',petals:12,routes:20,accuracy:.96,laps:2,keys:5,teacher:10,sevenths:6,complex:5,bass:4,tones:24,toneRoutes:6,toneAccuracy:.85,days:3},
- {id:'vishuddha',ru:'Вишуддха',en:'Vishuddha',color:'#68d8ef',petals:16,reserved:true},
- {id:'ajna',ru:'Аджна',en:'Ajna',color:'#9896f4',petals:2,reserved:true},
- {id:'sahasrara',ru:'Сахасрара',en:'Sahasrara',color:'#d8a2f3',petals:24,reserved:true}
+ {id:'muladhara',ru:'Корни и бас',en:'Roots and bass',color:'#ef5d69',petals:4,routes:3,accuracy:.80,laps:4,keys:1,teacher:0,sevenths:0,complex:0,bass:0,tones:0,toneRoutes:0,toneAccuracy:0,days:1},
+ {id:'svadhisthana',ru:'Аккорды и обороты',en:'Chords and progressions',color:'#ffa357',petals:6,routes:8,accuracy:.88,laps:3,keys:3,teacher:0,sevenths:4,complex:0,bass:0,tones:0,toneRoutes:0,toneAccuracy:0,days:1},
+ {id:'manipura',ru:'Надстройки',en:'Extensions',color:'#f6d86b',petals:10,routes:12,accuracy:.92,laps:2.5,keys:4,teacher:4,sevenths:4,complex:2,bass:2,tones:8,toneRoutes:3,toneAccuracy:.75,days:2},
+ {id:'anahata',ru:'Гармонический слух',en:'Harmonic hearing',color:'#84df9d',petals:12,routes:20,accuracy:.96,laps:2,keys:5,teacher:10,sevenths:6,complex:5,bass:4,tones:24,toneRoutes:6,toneAccuracy:.85,days:3},
+ {id:'vishuddha',ru:'Будущая награда V',en:'Future award V',color:'#68d8ef',petals:16,reserved:true},
+ {id:'ajna',ru:'Будущая награда VI',en:'Future award VI',color:'#9896f4',petals:2,reserved:true},
+ {id:'sahasrara',ru:'Будущая награда VII',en:'Future award VII',color:'#d8a2f3',petals:24,reserved:true}
 ]);
 const mod12=n=>(n%12+12)%12;
 const safeKey=s=>typeof s==='string'&&s.length<180&&!['__proto__','constructor','prototype'].includes(s);
 const seventh=q=>/7|9|11|13/.test(q);
 const complex=q=>/9|11|13|alt|sharp|b5|♭5|b9|♭9|augMaj/.test(q)&&!['m7b5','m7♭5'].includes(q);
-let chakraGlyphNumber=0;
-export function gardenRankGlyph(rank){
- const count=rank.petals,color=rank.color,id='chakra-light-'+(++chakraGlyphNumber);
- const petals=Array.from({length:count},(_,i)=>`<path transform="rotate(${i*360/count} 60 60)" d="M60 35Q43 22 60 7Q77 22 60 35Z"/>`).join('');
- const mark=rank.id==='muladhara'?'<rect x="42" y="42" width="36" height="36"/><path d="M46 48H74L60 73Z"/>':rank.id==='svadhisthana'?'<path d="M40 46A23 23 0 1 0 80 46A22 22 0 0 1 40 46Z"/>':rank.id==='anahata'?'<path d="M60 37 81 73H39ZM60 83 39 47H81Z"/>':'<path d="M38 45H82L60 83Z"/>';
- return `<svg viewBox="0 0 120 120" aria-hidden="true" focusable="false" style="--chakra:${color}"><defs><radialGradient id="${id}" cx="42%" cy="32%" r="73%"><stop stop-color="#fff5d5" stop-opacity=".45"/><stop offset=".24" stop-color="${color}" stop-opacity=".5"/><stop offset=".67" stop-color="${color}" stop-opacity=".13"/><stop offset="1" stop-color="#041923" stop-opacity=".4"/></radialGradient></defs><circle class="chakra-aura" style="fill:url(#${id})" cx="60" cy="60" r="51"/><g class="chakra-gold">${petals}<circle cx="60" cy="60" r="51"/><circle cx="60" cy="60" r="48" opacity=".5"/><circle cx="60" cy="60" r="31"/>${mark}</g><circle class="chakra-core" cx="60" cy="60" r="4"/><path class="chakra-spark" d="M60 1V15M53 8H67"/></svg>`;
-}
+export function gardenRankGlyph(rank){return `<span class="rank-raster" data-rank="${GARDEN_RANKS.findIndex(r=>r.id===rank.id)}" aria-hidden="true"></span>`;}
 
 export class GardenSkillFlight{
  constructor(){this.reset();}
@@ -46,7 +40,7 @@ export class GardenSkillFlight{
   return {route:String(route.id||''),difficulty,key:mod12(route.baseTonic??5),date:[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-'),
    accuracy:this.correct/Math.max(1,this.attempts),laps:run.seconds/Math.max(1,route.sequence.length*model.barSeconds),independent,
    seventh:route.sequence.some(c=>seventh(c.quality)),complex:route.sequence.some(c=>complex(c.quality)),bass:model.separateBass&&route.sequence.some(c=>Number(c.offset)!==Number(c.bassOffset??c.offset)),
-   tones:notes.filter(v=>v==='valid').length,toneAccuracy:notes.length?notes.filter(v=>v==='valid').length/notes.length:0};
+   tones:notes.filter(v=>v==='valid').length,toneAttempts:notes.length,toneAccuracy:notes.length?notes.filter(v=>v==='valid').length/notes.length:0};
  }
 }
 

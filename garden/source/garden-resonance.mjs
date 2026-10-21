@@ -9,6 +9,7 @@ export const GARDEN_TENSIONS=Object.freeze([
  {label:'3',interval:16},{label:'11',interval:17},{label:'♯11',interval:18},{label:'5',interval:19},
  {label:'♭13',interval:20},{label:'13',interval:21},{label:'♭7',interval:22},{label:'7',interval:23}
 ]);
+export const GARDEN_STUDENT_TENSIONS=Object.freeze(GARDEN_TENSIONS.filter(t=>['1','3','5','7'].includes(t.label)));
 const toneSpec=label=>GARDEN_TENSIONS.find(t=>t.label===label)||({'♯9':{label:'♯9',interval:15},'♭5':{interval:18},'6':{interval:21},'♭6':{interval:20},'4':{interval:17},'2':{interval:14}})[label];
 const mod=n=>((n%12)+12)%12;
 const clamp=n=>Math.max(0,Math.min(100,n));
@@ -64,10 +65,11 @@ export function drawGardenTension(ctx,label,size,time=0){
 }
 export class GardenResonance{
  constructor({random=Math.random,onTone}={}){this.random=random;this.onTone=onTone;this.reset(false);}
- reset(enabled=false){this.enabled=enabled;this.energy=80;this.clock=3;this.time=0;this.routeLength=0;this.entities=[];this.flashes=[];this.sequence=0;this.last=null;this.critical=0;this.gameOver=false;}
- restore(){if(this.enabled&&!this.gameOver){const delta=100-this.energy;this.energy=100;if(delta>.05)this.flashes.push({x:.5,y:.43,label:'O₂',verdict:'valid',delta,age:0});}}
+ reset(enabled=false,{palette=GARDEN_TENSIONS,oxygen=enabled}={}){this.enabled=enabled;this.palette=palette;this.oxygenEnabled=Boolean(enabled&&oxygen);this.energy=80;this.clock=3;this.time=0;this.routeLength=0;this.entities=[];this.flashes=[];this.sequence=0;this.last=null;this.critical=0;this.gameOver=false;}
+ restore(){if(this.oxygenEnabled&&!this.gameOver){const delta=100-this.energy;this.energy=100;if(delta>.05)this.flashes.push({x:.5,y:.43,label:'O₂',verdict:'valid',delta,age:0});}}
  spawn(label,overrides={}){
-  if(!this.enabled||!toneSpec(label))return null;
+  const spec=toneSpec(label);
+  if(!this.enabled||!spec||!this.palette.some(t=>mod(t.interval)===mod(spec.interval)))return null;
   const side=this.random()<.5?.22:.70;
   const entity={id:++this.sequence,label,x:side+this.random()*.08,y:-.08,vy:.10+this.random()*.018,age:0,collected:false,...overrides};this.entities.push(entity);return entity;
  }
@@ -79,7 +81,7 @@ export class GardenResonance{
   const verdict=boundary?'neutral':gardenTensionVerdict(sounding.chord,entity.label,{...context,tonic:sounding.tonic});
   const scale=gardenRouteDrainScale(context.totalChords??this.routeLength,context.barSeconds??sounding.barSeconds);
   const profile=gardenOxygenProfile(sounding.chord,{...context,tonic:sounding.tonic});
-  const midi=gardenTensionMidi(sounding.chord,sounding.tonic,entity.label),before=this.energy,requestedDelta=verdict==='valid'?profile.reward*scale:verdict==='invalid'?-GARDEN_OXYGEN_RULES.avoidDamage:0;
+  const midi=gardenTensionMidi(sounding.chord,sounding.tonic,entity.label),before=this.energy,requestedDelta=this.oxygenEnabled?(verdict==='valid'?profile.reward*scale:verdict==='invalid'?-GARDEN_OXYGEN_RULES.avoidDamage:0):0;
   this.energy=clamp(this.energy+requestedDelta);const delta=this.energy-before;this.last={id:entity.id,label:entity.label,verdict,delta,requestedDelta,midi,boundary};
   this.flashes.push({x:entity.x,y:entity.y,label:entity.label,verdict,delta,age:0});
   if(midi!=null)this.onTone?.(midi,this.last);
@@ -98,12 +100,12 @@ export class GardenResonance{
   // Breathing starts with the first actual chord, not only after hints unlock.
   // Normalize positive income as well as expenditure on long routes: otherwise
   // unscaled pickups could outgrow the discounted drain indefinitely.
-  if(ready)this.energy=clamp(this.energy-elapsed*GARDEN_OXYGEN_RULES.drainPerSecond*gardenRouteDrainScale(total,view.barSeconds??4)*gardenOxygenProfile(view.sounding.chord,{...view,tonic:view.sounding.tonic}).drain);
+  if(this.oxygenEnabled&&ready)this.energy=clamp(this.energy-elapsed*GARDEN_OXYGEN_RULES.drainPerSecond*gardenRouteDrainScale(total,view.barSeconds??4)*gardenOxygenProfile(view.sounding.chord,{...view,tonic:view.sounding.tonic}).drain);
   if(ready&&unlocked){
    this.clock-=elapsed;
    if(this.clock<=0&&this.entities.length<4){
     // Labels never reveal which will fit the chord at collision time.
-    this.spawn(GARDEN_TENSIONS[Math.floor(this.random()*GARDEN_TENSIONS.length)].label);
+    this.spawn(this.palette[Math.floor(this.random()*this.palette.length)].label);
     this.clock=(4.2+this.random()*1.2)*(2-progress);
    }
   }
@@ -112,7 +114,7 @@ export class GardenResonance{
    if(ready&&view.ship!==2&&Math.hypot(e.x*view.width-view.x,e.y*view.height-view.y)<18.2+(view.shipRadius??14))this.collect(e,view.sounding,view);
   }
   this.entities=this.entities.filter(e=>!e.collected&&e.y<1.12);
-  if(this.energy<=0)this.critical+=elapsed;else this.critical=0;
+  if(this.oxygenEnabled&&this.energy<=0)this.critical+=elapsed;else this.critical=0;
   if(this.critical>=3.5)this.gameOver=true;
  }
  draw(ctx,width,height){
@@ -123,8 +125,8 @@ export class GardenResonance{
    ctx.save();ctx.globalAlpha=Math.min(.95,(1.8-f.age)*1.2);ctx.strokeStyle=color;ctx.fillStyle=color;ctx.shadowColor=bad?'#ff3030':'#10242b';ctx.shadowBlur=bad?14:5;ctx.lineWidth=2;
    if(bad&&f.age<.75){ctx.beginPath();ctx.arc(x,y,19+f.age*15,0,Math.PI*2);ctx.stroke();ctx.globalAlpha*=.25;ctx.fill();ctx.globalAlpha=Math.min(.95,(1.8-f.age)*1.2);}
    ctx.textAlign='center';ctx.font='bold 20px Georgia';ctx.fillText(f.label,x,y-f.age*24);ctx.font='bold 18px system-ui';
-   const amount=Math.round(Math.abs(f.delta)*10)/10;ctx.fillText(`${f.delta<0?'−':'+'}${amount} O₂`,x,y-f.age*24+24);ctx.restore();
+   if(this.oxygenEnabled){const amount=Math.round(Math.abs(f.delta)*10)/10;ctx.fillText(`${f.delta<0?'−':'+'}${amount} O₂`,x,y-f.age*24+24);}ctx.restore();
   }
  }
- snapshot(){return {enabled:this.enabled,energy:this.energy,gameOver:this.gameOver,last:this.last&&{...this.last},entities:this.entities.map(e=>({...e}))};}
+ snapshot(){return {enabled:this.enabled,oxygenEnabled:this.oxygenEnabled,palette:this.palette.map(t=>t.label),energy:this.energy,gameOver:this.gameOver,last:this.last&&{...this.last},entities:this.entities.map(e=>({...e}))};}
 }

@@ -1,6 +1,15 @@
-# RES / Resonance - experimental Teacher drill
+# RES / Resonance - Student notes and Teacher oxygen drill
 
-Only Teacher mode. Original chords, voicings and tempo are unchanged.
+Student automatically spawns only the user-confirmed labels 1, 3, 5, 7.
+They use the same root-relative pitch and verdict functions as Teacher:
+12, 16, 19, 23 semitones respectively, with no implicit remapping for chord
+quality. Student keeps four supply vials: note contact sounds once and valid
+notes earn the existing capped score bonus, with no O2 drain, damage or failure.
+Applicant has no medallions. Teacher retains the full twelve-label pool and
+all existing O2 rules below. Both note modes unlock after two fully solved
+positions; pause freezes them and completed listening clears them.
+
+Original chords, voicings and tempo are unchanged.
 The fifth gauge is labelled O2 / Oxygen; H2O remains separate. Internal
 resonance identifiers stay stable. Labels denote intervals above the chord
 root (not the key tonic or slash bass). The sounding audio chord is used at

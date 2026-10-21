@@ -1,7 +1,7 @@
 /* A worker update is applied only while the main menu is open. Player storage
    is never cleared, and an active flight is never interrupted. */
 (()=>{
- const version='1.49',worker=navigator.serviceWorker;
+ const version='1.50',worker=navigator.serviceWorker;
  if(!worker||location.protocol==='file:'||(['localhost','127.0.0.1'].includes(location.hostname)&&!new URLSearchParams(location.search).has('offline-test')))return;
  let pending=false,reloading=false,registration,lastCheck=0;
  const reloadFromMenu=()=>{

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {GardenResonance,GARDEN_TENSIONS,gardenTensionVerdict,gardenTensionMidi,gardenOxygenProfile} from '../garden-resonance.mjs';
+import {GardenResonance,GARDEN_TENSIONS,GARDEN_STUDENT_TENSIONS,gardenTensionVerdict,gardenTensionMidi,gardenOxygenProfile} from '../garden-resonance.mjs';
 import {GardenPad} from '../garden-harmony.mjs';
 const chord={offset:7,bassOffset:2,quality:'7',notes:[38,60,64,67,70]},original=JSON.stringify(chord);
 for(let tonic=0;tonic<12;tonic++)for(const t of GARDEN_TENSIONS){
@@ -33,7 +33,7 @@ for(const quality of ['maj','maj7','m7','7','m7b5','dim7','aug','ireal:o','1']){
 }
 assert.equal(gardenOxygenProfile({quality:'unknown'}).drain,0,'unsupported neutral-only harmony cannot spend uncollectable oxygen');
 const calls=[],res=new GardenResonance({random:()=>.5,onTone:(midi,event)=>calls.push({midi,event})});
-assert.equal(res.spawn('9'),null,'Student and Applicant have no tokens');
+assert.equal(res.spawn('9'),null,'disabled mode has no tokens');
 res.reset(true);
 const sounding={chord,tonic:5,at:10,barSeconds:4},context={audioTime:11};
 let token=res.spawn('9'),result=res.collect(token,sounding,context);
@@ -58,8 +58,21 @@ res.energy=0;for(let i=0;i<34;i++)res.update(.1,{active:true});assert(!res.gameO
 res.energy=0;for(let i=0;i<36;i++)res.update(.1,{active:true});assert(res.gameOver,'RES has a recoverable 3.5-second zero window');
 res.reset(false);res.update(30,view);assert.equal(res.entities.length,0);assert.equal(res.energy,80);
 assert.equal(JSON.stringify(chord),original,'catalog and MIDI are untouched');
+assert.deepEqual(GARDEN_STUDENT_TENSIONS.map(t=>t.label),['1','3','5','7']);
+assert.deepEqual(GARDEN_STUDENT_TENSIONS.map(t=>t.interval),[12,16,19,23],'Student preserves the existing root-relative pitches');
+let seed=12345;const studentCalls=[],student=new GardenResonance({random:()=>((seed=(1664525*seed+1013904223)>>>0)/2**32),onTone:(m,event)=>studentCalls.push({m,event})});
+student.reset(true,{palette:GARDEN_STUDENT_TENSIONS,oxygen:false});
+for(const t of GARDEN_TENSIONS)assert.equal(Boolean(student.spawn(t.label)),['1','3','5','7'].includes(t.label),'Student rejects pitches outside its confirmed pool');
+student.entities=[];const seen=new Set();
+for(let i=0;i<1200;i++){student.update(.1,{...view,ship:2});for(const e of student.entities)seen.add(e.label);}
+assert.deepEqual([...seen].sort(),['1','3','5','7']);assert.equal(student.energy,80);assert(!student.gameOver);assert(!student.oxygenEnabled);
+let studentResult=student.collect(student.spawn('1'),sounding,context);assert.equal(studentResult.verdict,'valid');assert.equal(studentResult.delta,0);assert.equal(studentCalls.at(-1).m,72);
+studentResult=student.collect(student.spawn('7'),sounding,context);assert.equal(studentResult.verdict,'invalid');assert.equal(studentResult.delta,0);assert.equal(student.energy,80,'Student has no hidden oxygen damage');
+const studentPaused=JSON.stringify(student.snapshot());student.update(30,{...view,paused:true});assert.equal(JSON.stringify(student.snapshot()),studentPaused);
+student.energy=0;for(let i=0;i<50;i++)student.update(.1,{...view,ship:2});assert(!student.gameOver,'an unused O2 value cannot fail Student');
+student.update(.1,{...view,complete:true});assert.equal(student.entities.length,0,'completed listening clears Student tokens');
 const pad=new GardenPad(),tones=[];
 pad.context={state:'running',currentTime:4,createGain:()=>({gain:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}}),createOscillator:()=>{const t={frequency:{value:0},connect(){},disconnect(){},start(at){this.at=at;},stop(at){this.until=at;}};tones.push(t);return t;}};pad.cleanOutput={};
 assert.equal(pad.tensionNote(74),3);assert(tones.every(t=>Math.abs(t.at-4.004)<1e-9&&Math.abs(t.until-4.854)<1e-9),'all partials attack together, ring once and stop');
 assert.equal(pad.lastTension.loop,false);assert.equal(pad.lastTension.midi,74);assert.equal(pad.transients.size,1);pad.stop(true);assert.equal(pad.transients.size,0);assert.equal(pad.sounding,null);
-console.log('Resonance passed: 12 keys, ROOT-relative notes, conservative rules, modal/half-diminished safety, 180ms boundary grace, one-shot metallic notes, pause, passing, restoration, zero rescue and Teacher isolation.');
+console.log('Resonance passed: Student 1/3/5/7 natural pool, ROOT-relative one-shot notes and no hidden O2; Teacher full palette, original verdicts/balance/boundary grace, pause/restoration/zero rescue and untouched MIDI.');

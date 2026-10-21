@@ -1,0 +1,56 @@
+[
+  {
+    "family": "Cormorant",
+    "label": "Выразительная антиква",
+    "category": "serif",
+    "cyrillic": true,
+    "weights": [
+      300,
+      700
+    ],
+    "italic": false,
+    "credit": "https://fonts.google.com/specimen/Cormorant",
+    "license": "OFL 1.1",
+    "licenseFile": "cormorant-OFL.txt",
+    "files": [
+      "cormorant-cyrillic.woff2",
+      "cormorant-latin.woff2"
+    ]
+  },
+  {
+    "family": "Forum",
+    "label": "Римская пластика",
+    "category": "display",
+    "cyrillic": true,
+    "weights": [
+      400,
+      400
+    ],
+    "italic": false,
+    "credit": "https://fonts.google.com/specimen/Forum",
+    "license": "OFL 1.1",
+    "licenseFile": "forum-OFL.txt",
+    "files": [
+      "forum-cyrillic.woff2",
+      "forum-latin.woff2"
+    ]
+  },
+  {
+    "family": "Manrope",
+    "label": "Чистый современный гротеск",
+    "category": "sans",
+    "cyrillic": true,
+    "weights": [
+      200,
+      800
+    ],
+    "italic": false,
+    "credit": "https://fonts.google.com/specimen/Manrope",
+    "license": "OFL 1.1",
+    "licenseFile": "manrope-OFL.txt",
+    "files": [
+      "manrope-cyrillic.woff2",
+      "manrope-latin.woff2"
+    ]
+  }
+]

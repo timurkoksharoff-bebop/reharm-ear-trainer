@@ -1,0 +1,64 @@
+/* Exact user-selected Variant3. Only chosen, locally cached fonts. */
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url(cover-brand/cormorant-cyrillic.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url(cover-brand/cormorant-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Forum';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(cover-brand/forum-cyrillic.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Forum';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(cover-brand/forum-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: block;
+  src: url(cover-brand/manrope-cyrillic.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: block;
+  src: url(cover-brand/manrope-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+#garden-start[data-cover] .orbital-reference-plate{clip-path:inset(14% 0 0)}
+.chosen-cover-brand{position:absolute;left:0;top:0;z-index:4;transform-origin:0 0;pointer-events:none}
+.chosen-cover-brand .chosen-brand-text,.chosen-cover-brand .chosen-brand-lotus{position:absolute;display:block;white-space:nowrap;line-height:normal;font-synthesis:none;text-shadow:0 2px 12px #05132766;transform-origin:center}
+.chosen-cover-brand .chosen-brand-lotus svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 8px #d4b77124)}
+#garden-start[data-cover] .chosen-cover-brand #start-menu{position:absolute!important;display:flex!important;width:max-content!important;height:auto!important;min-width:0!important;min-height:0!important;padding:0!important;margin:0!important;gap:0!important;line-height:normal!important;font-synthesis:none;white-space:nowrap;pointer-events:auto;text-shadow:0 2px 12px #05132766}
+#garden-start[data-cover] .chosen-cover-brand #start-menu>span:not(.reference-face){font:inherit!important;letter-spacing:inherit!important;color:inherit!important;visibility:visible!important}
+#garden-start[data-cover] .chosen-cover-brand #start-menu .settings-mark{display:block;width:.72em!important;height:.72em!important;margin-right:.3em;flex:none;stroke-width:1.2}
+#garden-start[data-cover] .chosen-cover-brand #start-menu .settings-mark[hidden]{display:none!important}
+#garden-start[data-cover] .chosen-cover-brand #start-menu::after{left:2%;right:2%;bottom:-11px;height:1px;background:linear-gradient(90deg,transparent,currentColor 35% 65%,transparent);opacity:.65}
+#garden-start[data-cover] .chosen-cover-brand #start-menu::before{content:'';position:absolute;inset:auto;left:50%;top:50%;width:max(calc(100% + 40px),var(--chosen-hit,110px));height:max(calc(100% + 72px),var(--chosen-hit,110px));min-height:0;transform:translate(-50%,-50%);background:none;pointer-events:auto}

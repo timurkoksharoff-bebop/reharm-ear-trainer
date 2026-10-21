@@ -1,3 +1,4 @@
+import {mountChosenCoverBrand} from './garden-cover-brand.mjs';
 // One lockup, not two independent viewport positions. Preserve the approved
 // title font and placement; fit the endorsement into its actual descender band.
 export function bindGardenBrand(){
@@ -29,6 +30,7 @@ export function bindGardenBrand(){
   const primary=document.querySelector('#start-random'),caption=primary.querySelector('strong');
   const syncCaption=()=>primary.classList.toggle('live-caption',!['Начать полёт','Start flight'].includes(caption.textContent.trim()));
   new MutationObserver(syncCaption).observe(caption,{childList:true,characterData:true,subtree:true});syncCaption();
+  mountChosenCoverBrand();
   const ready=()=>{brand.dataset.lockup='ready';brand.dataset.viewport=innerWidth+'x'+innerHeight;};
   new ResizeObserver(ready).observe(brand);addEventListener('resize',ready);document.fonts?.ready.then(ready);ready();return;
  }

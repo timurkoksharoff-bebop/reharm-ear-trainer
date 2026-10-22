@@ -44,6 +44,9 @@
     <article class="vital" data-resource="resonance" style="--vital:#c2e5ff;--level:.8" title="O₂ · Кислород / Oxygen" hidden>
       <span class="vital-pickup resonance-symbol" aria-hidden="true">O₂</span><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>O₂</strong><small id="vital-resonance">80</small>
     </article>
+    <article class="vital" data-resource="navigation" style="--vital:#e4ca8b;--level:.8" title="NAV · Навигация / Navigation" hidden>
+      <span class="vital-pickup resonance-symbol" aria-hidden="true">⌖</span><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>NAV</strong><small id="vital-navigation">80</small>
+    </article>
     <p id="vital-event" class="vital-event" aria-live="polite"></p>
   </section>
   <section id="game-over" class="game-over hud" hidden role="alertdialog" aria-label="Миссия провалена"><span>КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ</span><strong>MISSION FAILED</strong><p>Экспедиция потеряла устойчивость. Маршрут остаётся прежним.</p><button id="retry-mission">Повторить миссию</button></section>
@@ -62,7 +65,7 @@
           <h2 id="start-title" class="ear-yoga-wordmark">Ear <em>Yoga</em><b class="brand-baseline" aria-hidden="true"></b></h2>
           <span class="overline start-college">SPACE MUSIC COLLEGE<b class="brand-baseline" aria-hidden="true"></b></span>
         </div>
-        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
+        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button><button data-difficulty="professor" aria-pressed="false" class="experimental-mode"><span class="mode-live-name">Профессор</span><small class="mode-status">β</small></button><button data-difficulty="guru" aria-pressed="false" class="experimental-mode" disabled title="Режим Гуру пока в разработке"><span class="mode-live-name">Гуру</span><small class="mode-status">скоро</small></button></div>
       </div>
       <button id="start-menu" class="start-menu" type="button"><svg class="settings-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="#061827"/><circle cx="16" cy="12" r="2" fill="#061827"/><circle cx="10" cy="18" r="2" fill="#061827"/></svg><span>Настройки</span></button>
       <div class="start-controls">

@@ -9,16 +9,20 @@ import {JAZZ_STANDARD_ROUTES} from './garden-jazz-routes.mjs';
 import {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS} from './garden-life.mjs';
 import {createGardenRewards} from './garden-rewards.mjs';
 import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
-import {GardenResonance,GARDEN_TENSIONS,GARDEN_STUDENT_TENSIONS} from './garden-resonance.mjs';
-import {GardenRun} from './garden-run.mjs';
+import {GardenResonance,GARDEN_TENSIONS,GARDEN_STUDENT_TENSIONS,gardenTensionVerdict} from './garden-resonance.mjs';
+import {GardenModesFlight,GARDEN_MODES,GARDEN_MODE_FAMILIES,gardenModeById,gardenModeFormula,gardenModeExplanation} from './garden-modes.mjs';
+import {GardenRun,GardenProfessorCombos} from './garden-run.mjs';
 import {GardenSkillFlight,GardenAchievements,GARDEN_RANKS,gardenRankGlyph} from './garden-achievements.mjs';
 import {mountGardenAchievements} from './garden-achievements-view.mjs';
 import {GardenJourneyRatings,gardenRouteRatingText,mountGardenJourney} from './garden-journey.mjs';
 import {mountGardenRecording} from './garden-recording.mjs';
 import {bindGardenBrand} from './garden-brand.mjs';
+import {gardenWordmarkMarkup,createGardenWordmark} from './garden-wordmark.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
 $('build-version').textContent='v'+(globalThis.GARDEN_VERSION||'dev');
 bindGardenBrand();
+for(const selector of ['.site-header .brand','#loading p','#trial-expired .overline','#enrollment .enrollment-college']){const node=document.querySelector(selector);if(node){node.replaceChildren(createGardenWordmark());node.classList.add('shared-brand-slot');}}
+document.querySelector('#loading .loading-mark')?.remove();
 function setPlaybackIcon(button,running){
   const state=running?'pause':'play';if(button.dataset.playbackState===state)return;
   button.dataset.playbackState=state;
@@ -46,13 +50,26 @@ const s={ready:false,lowCostGraphics:mobileGraphics,from:0,to:0,transition:1,pen
 let renderer,images,last=0,raf=0,dpr=1,dragId=null,tx=.5,ty=.56,keys=new Set(),loaded=0;
 const pad=new GardenPad({deferSamplesUntilReady:true});
 const run=new GardenRun();
+const professorCombos=new GardenProfessorCombos({onCombo:showProfessorCombo});
+let comboNotice=null;
 const skillFlight=new GardenSkillFlight();
 let achievementStorage=null;try{achievementStorage=localStorage;}catch{}
 const achievementStore=new GardenAchievements({storage:achievementStorage});
 let achievements,journey,journeyReturn=null;
 const journeyRatings=new GardenJourneyRatings(achievementStorage);
-const resonance=new GardenResonance({onTone:(midi,detail)=>{const position=mission?.snapshot().cursor??-1;run.tone(detail,position);skillFlight.tone(detail,position);pad.tensionNote(midi,detail);}});
-const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrange(style,rounds),onRestoration:()=>resonance.restore()});
+const toneResonance=new GardenResonance({onTone:(midi,detail)=>{
+ const position=mission?.snapshot().cursor??-1;run.tone(detail,position);skillFlight.tone(detail,position);pad.tensionNote(midi,detail);
+ if(difficulty==='professor'){syncProfessorCombos();modesFlight.recordTension(detail.label,pad.sounding,{audioTime:pad.context?.currentTime,boundary:detail.boundary,tensionMode:mission?.snapshot().exercise.tensionMode});professorCombos.tone(detail);}
+}});
+const modesFlight=new GardenModesFlight({onOffer:offerProfessorPair,onScale:event=>{
+ if(!event.boundary&&event.kind==='mode')pad.previewScale(event.notes,{remaining:event.remaining});
+ const position=mission?.snapshot().cursor??-1;event.scoreDelta=difficulty==='professor'?run.mode(event,position):0;renderModeReadout(event);
+ if(difficulty==='professor'){syncProfessorCombos();professorCombos.mode(event);}
+}});
+const resonance=toneResonance;
+const professorRatings=new GardenJourneyRatings(achievementStorage,'ear-yoga-professor-route-stars.v1');
+const activeRatings=()=>difficulty==='professor'?professorRatings:journeyRatings;
+const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrange(style,rounds),onRestoration:()=>{resonance.restore();modesFlight.restore();}});
 const gardenRewards=createGardenRewards({reduced});
 let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,lastCollisionEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false;
 let chainView={route:null,position:null,page:null};
@@ -102,6 +119,41 @@ const exerciseCode=(exercise,index)=>{
 };
 // Particles are reused and time/scroll wrap; neither grows with flight duration.
 const motes=Array.from({length:56},(_,i)=>({x:mod(Math.sin(i*127.13+14)*43758.54,1),y:mod(Math.sin(i*71.72+8)*31341.4,1),r:.5+(i%5)*.23,phase:i*2.399}));
+const modeReadout=document.createElement('aside');modeReadout.id='mode-readout';modeReadout.hidden=true;modeReadout.setAttribute('aria-live','polite');modeReadout.dataset.userContent='';document.body.append(modeReadout);
+function renderModeReadout(event){
+ const mode=gardenModeById(event.modeId);if(!mode)return;if(event.verdict==='invalid'){comboToast.hidden=true;comboNotice=null;}const en=language.get()==='en';modeReadout.hidden=false;modeReadout.dataset.verdict=event.verdict;modeReadout.replaceChildren();const title=document.createElement('strong'),copy=document.createElement('span');title.textContent=event.root+' · '+(en?mode.en:mode.ru);
+ const conflicts=event.conflicts||[];copy.textContent=event.boundary?(en?'Chord is changing: no sound, no grading':'Смена аккорда: без звука и без оценки'):conflicts.length?conflicts.map(c=>(c.source==='written'?(en?'Written chord tone ':'В аккорде '):(en?'Chosen ':'Выбрана '))+c.label+(en?' does not fit this scale':' — не сочетается с этим ладом')+(c.expected?(en?'; scale contains ':'; в ладу ')+c.expected:'')).join(' · '):gardenModeExplanation(event.reason,en);
+ modeReadout.append(title,copy);const receipt=document.createElement('span'),delta=Number(event.delta)||0;receipt.textContent=(delta?`${delta<0?'−':'+'}${Math.abs(delta)} NAV · `:event.verdict==='compatible'?(event.requestedDelta>0?(en?'NAV is full · ':'NAV заполнена · '):(en?'Already counted · ':'Уже учтено · ')):(en?'NAV unchanged · ':'NAV без изменений · '))+(en?'Chosen tones: ':'Выбранные тоны: ')+(modesFlight.snapshot().selectedTensions.join(', ')||'—');if(event.tier)receipt.textContent+=' · '+(en?event.tier.en:event.tier.ru);if(event.scoreDelta>0)receipt.textContent+=' · +'+event.scoreDelta+(en?' points':' очков');else if(event.points>0)receipt.textContent+=' · '+(run.extra>=Math.min(500,run.totalParts*10)?(en?'route score bonus full':'лимит бонуса очков'):(en?'scale score already earned':'очки за этот лад уже получены'));modeReadout.append(receipt);
+}
+const comboToast=document.createElement('aside');comboToast.id='professor-combo';comboToast.hidden=true;comboToast.dataset.userContent='';comboToast.setAttribute('aria-live','polite');document.body.append(comboToast);
+function showProfessorCombo(event){
+ if(difficulty!=='professor')return;const points=run.combo(event);if(!points)return;
+ const en=language.get()==='en',names={precision:['Точный вход','Precise entry'],insight:['Внутри гармонии','Inside harmony'],resonance:['Созвучие','Resonance'],constellation:['Полная картина','Full picture']},parts={precision:['Аккорд + надстройка','Chord + tension'],insight:['Аккорд + лад','Chord + scale'],resonance:['Лад + надстройка','Scale + tension'],constellation:['Аккорд + лад + надстройка','Chord + scale + tension']};
+ comboNotice={event:{...event},points,age:0};comboToast.replaceChildren();const label=document.createElement('small'),title=document.createElement('strong'),receipt=document.createElement('span');label.textContent='✧ '+(en?'HARMONY COMBO':'ГАРМОНИЧЕСКОЕ КОМБО');title.textContent=names[event.id][en?1:0];receipt.textContent=parts[event.id][en?1:0]+' · +'+points+(en?' points':' очков');comboToast.append(label,title,receipt);comboToast.dataset.combo=event.id;comboToast.hidden=false;modeReadout.hidden=true;document.querySelector('.run-readout').classList.add('combo-score');renderRun();
+}
+function sameSoundingChord(a,b){return Boolean(a&&b&&a.offset===b.offset&&a.quality===b.quality&&(a.bassOffset??a.offset)===(b.bassOffset??b.offset)&&JSON.stringify(a.notes||[])===JSON.stringify(b.notes||[]));}
+function syncProfessorCombos(model=mission?.snapshot()){
+ const sounding=pad.sounding;if(!model||!sounding||!sameSoundingChord(sounding.chord,model.current)||!model.running||model.cursor<0){professorCombos.observe({});return null;}
+ const requiredKinds=['degree','quality',...(model.separateBass&&Number(model.current.bassOffset??model.current.offset)!==Number(model.current.offset)?['bass']:[])];professorCombos.observe({position:model.cursor,onset:sounding.at,requiredKinds,complete:model.complete});return model;
+}
+function forecastProfessorSounding(seconds,model=mission?.snapshot(),sounding=pad.sounding){
+ if(!model?.running||model.complete||!sounding||!model.exercise.sequence.length)return null;
+ const bar=model.barSeconds;if(!(bar>0)||!Number.isFinite(model.deadline)||model.deadline<=0)return null;
+ const now=pad.context?.currentTime??0,until=Math.max(0,(model.deadline-performance.now())/1000),eta=Math.max(0,Number(seconds)||0);
+ if(eta<until&&sameSoundingChord(sounding.chord,model.current)&&!sounding.chord.reference)return {...sounding,tensionMode:model.exercise.tensionMode,phase:Math.max(0,now+eta-sounding.at),remaining:until-eta,predicted:false};
+ const after=eta-until,steps=1+Math.floor(Math.max(0,after)/bar),phase=Math.max(0,after)%bar,index=model.held&&model.cursor>=0?model.cursor:mod(model.cursor+steps,model.exercise.sequence.length),chord=model.exercise.sequence[index];
+ return {chord,tonic:model.exercise.baseTonic??sounding.tonic??5,barSeconds:bar,at:now+eta-phase,phase,remaining:bar-phase,tensionMode:model.exercise.tensionMode,predicted:true};
+}
+function offerProfessorPair(offer){
+ if(difficulty!=='professor'||!offer.eligible||toneResonance.entities.length>=4||!offer.targetSounding)return;
+ const target=offer.targetSounding,valid=GARDEN_TENSIONS.filter(t=>offer.mode.notes.includes(mod(t.interval,12))&&gardenTensionVerdict(target.chord,t.label,{tonic:target.tonic,tensionMode:target.tensionMode})==='valid');if(!valid.length)return;
+ const order=['9','♯11','13','♭9','♭3','♭13','7','♭7','3','5','1','11'];valid.sort((a,b)=>order.indexOf(a.label)-order.indexOf(b.label));const choices=valid.slice(0,Math.min(3,valid.length)),chosen=choices[Math.floor(Math.random()*choices.length)],e=offer.entity;
+ toneResonance.spawn(chosen.label,{x:clamp(e.x+(e.x<.5?.10:-.10),.16,.84),y:e.y,vy:e.vy,planned:true,pairedMode:e.modeId});
+}
+const professorSettings=document.createElement('fieldset');professorSettings.id='professor-settings';professorSettings.hidden=true;professorSettings.dataset.userContent='';$('settings-panel').append(professorSettings);
+let modeFamilyChoices=GARDEN_MODE_FAMILIES.map(f=>f.id);try{const saved=JSON.parse(localStorage.getItem('ear-yoga-professor-families.v1'));if(Array.isArray(saved))modeFamilyChoices=saved.filter(id=>GARDEN_MODE_FAMILIES.some(f=>f.id===id));}catch{}modesFlight.setFamilies(modeFamilyChoices);
+function renderProfessorSettings(){const en=language.get()==='en';professorSettings.innerHTML='<legend>'+(en?'Professor · scale laboratory':'Профессор · лаборатория ладов')+'</legend><p>'+(en?'Tensions refill O₂; scales use NAV. Clear scale/tone conflicts cost 15 NAV; compatible scales give 6/9/12 NAV by tier, plus 6/10/14 score points. Flying scales unlock after one third of the route is fully solved. Contextual cases are penalty-free. Choices reset with each sounding chord. Separate ratings.':'Надстройки пополняют O₂; лады отвечают за NAV. Явный конфликт лада с выбранным тоном: −15 NAV; совместимый лад: +6/9/12 NAV по уровню и +6/10/14 очков. Лады появляются после полностью разгаданной трети маршрута. Спорные сочетания без штрафа. Выбор действует до смены звучащего аккорда. Рейтинг отдельный.')+'</p>';for(const family of GARDEN_MODE_FAMILIES){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=modesFlight.families.has(family.id);input.dataset.modeFamily=family.id;label.append(input,document.createTextNode(en?family.en:family.ru));professorSettings.append(label);input.onchange=()=>{modesFlight.setFamilies([...professorSettings.querySelectorAll('input:checked')].map(e=>e.dataset.modeFamily));try{localStorage.setItem('ear-yoga-professor-families.v1',JSON.stringify([...modesFlight.families]));}catch{}};}const list=document.createElement('details'),summary=document.createElement('summary');summary.textContent=(en?'Scale names and formulas · ':'Названия и формулы · ')+GARDEN_MODES.length;list.append(summary);for(const mode of GARDEN_MODES){const row=document.createElement('p');row.textContent=mode.label+' — '+(en?mode.en:mode.ru)+' · '+gardenModeFormula(mode);list.append(row);}professorSettings.append(list);}
+queueMicrotask(renderProfessorSettings);
 function resize(){
   s.width=innerWidth;s.height=innerHeight;dpr=Math.min(devicePixelRatio||1,renderScale);
   for(const canvas of [world,life,shipLayer]){canvas.width=Math.round(s.width*dpr);canvas.height=Math.round(s.height*dpr);}
@@ -129,6 +181,7 @@ function renderVitals(){
   const res=resonance.snapshot(),resElement=document.querySelector('.vital[data-resource="resonance"]');
   resElement.hidden=!res.oxygenEnabled;resElement.style.setProperty('--level',String(res.energy/100));resElement.classList.toggle('low',res.energy<24);
   resElement.setAttribute('aria-label',`O₂: ${Math.round(res.energy)}%`);$('vital-resonance').textContent=String(Math.round(res.energy));
+  const nav=modesFlight.snapshot(),navElement=document.querySelector('.vital[data-resource="navigation"]');navElement.hidden=!nav.navigationEnabled;navElement.style.setProperty('--level',String(nav.navigation/100));navElement.classList.toggle('low',nav.navigation<24);navElement.setAttribute('aria-label',`NAV: ${Math.round(nav.navigation)}%`);$('vital-navigation').textContent=String(Math.round(nav.navigation));
   const repeatState=mission?.snapshot();$('infinity-toggle').disabled=!repeatState?.running||repeatState.complete||(!repeatState.held&&(model.inventory.hold||0)<1);$('infinity-toggle').title=repeatState?.held?'Выключить повтор и продолжить':`Повторить аккорд · зарядов лотоса: ${model.inventory.hold||0}`;
   for(const [name,definition] of Object.entries(GARDEN_RESOURCES)){
     const element=document.querySelector(`.vital[data-resource="${name}"]`),value=Math.round(model.resources[name]);
@@ -155,6 +208,7 @@ function collisionThud(){
   oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
 }
 function renderMission(model){
+  requestAnimationFrame(layoutFlightTools);
   skillFlight.observe(model);
   run.observe(model);renderRun();
   renderTutorial(model);
@@ -203,7 +257,7 @@ function renderMission(model){
   const mayAnswer=model.running&&model.cursor>=0&&!solved.has(model.cursor),prototypePalette=['expanded','compact'].includes(document.body.dataset.paletteLayout),qualities=gardenAvailableAnswers(model.exercise,{expanded:prototypePalette,rootMode:model.rootMode});
   document.body.classList.toggle('student-palette',!prototypePalette);
   const visibleDegrees=gardenFilteredChoices('degree',model.current,model.filters?.degree,undefined,{rootMode:model.rootMode}),visibleQualities=gardenFilteredChoices('quality',model.current,model.filters?.quality,qualities,{rootMode:model.rootMode});
-  const answerPart=(kind,value)=>{const before=mission.snapshot(),target=before.current,correct=kind==='degree'?Number(value)===(before.rootMode?gardenRootOffset(target):gardenBassOffset(target)):kind==='bass'?Number(value)===gardenBassOffset(target):gardenCanonicalQuality(value)===gardenQualityAnswer(target,{rootMode:before.rootMode});skillFlight.answer(before,kind,correct);const result=mission.answerPart(kind,value);if(!result.ignored){if(!result.correct){run.misses++;gardenLife.wrongAnswer(kind,value,qualities);renderVitals();}gardenRewards.answer(result,kind,{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});}};
+  const answerPart=(kind,value)=>{const before=mission.snapshot(),target=before.current,correct=kind==='degree'?Number(value)===(before.rootMode?gardenRootOffset(target):gardenBassOffset(target)):kind==='bass'?Number(value)===gardenBassOffset(target):gardenCanonicalQuality(value)===gardenQualityAnswer(target,{rootMode:before.rootMode});skillFlight.answer(before,kind,correct);if(difficulty==='professor'&&before.running&&before.cursor>=0&&!before.currentParts[kind]&&syncProfessorCombos(before)){const independent=!Object.values(before.filters||{}).some(Boolean)&&before.navigation?.revealedPosition!==before.cursor;professorCombos.answer({kind,correct,independent,positionComplete:correct&&professorCombos.snapshot().requiredKinds.every(k=>k===kind||before.currentParts[k])});}const result=mission.answerPart(kind,value);if(!result.ignored){if(!result.correct){run.misses++;gardenLife.wrongAnswer(kind,value,qualities);renderVitals();}gardenRewards.answer(result,kind,{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});}};
   document.body.classList.toggle('teacher-mode',Boolean(model.separateBass));
   document.querySelector('.degrees-panel').setAttribute('aria-label',model.rootMode?'Корень аккорда относительно тоники':'Бас относительно тоники');
   $('bass-panel').hidden=!model.bassPanelNeeded;
@@ -226,8 +280,8 @@ function renderMission(model){
   setPlaybackIcon($('mission-toggle'),model.running);$('mission-toggle').title=model.running?'Пауза':'Продолжить';$('mission-toggle').setAttribute('aria-label',model.running?'Поставить полёт и музыку на паузу':'Продолжить полёт и музыку');$('mission-restart').hidden=true;
   if(model.complete&&!completionHandled)completeGardenLevel();
 }
-function resetResonance(){resonance.reset(difficulty!=='light',{palette:difficulty==='medium'?GARDEN_STUDENT_TENSIONS:GARDEN_TENSIONS,oxygen:difficulty==='hard'});}
-function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();run.reset();skillFlight.reset();resetResonance();currentRoute=exercise;runBest=null;completionRecord='';try{runBest=JSON.parse(localStorage.getItem('ear-yoga-local-records.v1')||'{}')[runRecordId()]||null;}catch{}document.querySelector('.run-readout').classList.remove('record-beaten');completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,rootMode:['medium','hard'].includes(difficulty),separateBass:difficulty==='hard',barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());renderVitals();}
+function resetResonance(){resonance.reset(difficulty!=='light',{palette:difficulty==='medium'?GARDEN_STUDENT_TENSIONS:GARDEN_TENSIONS,oxygen:['hard','professor'].includes(difficulty)});modesFlight.reset(difficulty==='professor');$('mode-readout').hidden=true;}
+function bindMission(exercise){if(!exercise)return;mission?.pause();pad.stop(true);gardenRewards.reset();run.reset();professorCombos.reset();comboNotice=null;comboToast.hidden=true;document.querySelector('.run-readout').classList.remove('combo-score');skillFlight.reset();resetResonance();currentRoute=exercise;runBest=null;completionRecord='';try{runBest=JSON.parse(localStorage.getItem('ear-yoga-local-records.v1')||'{}')[runRecordId()]||null;}catch{}document.querySelector('.run-readout').classList.remove('record-beaten');completionHandled=false;lastMissionPosition='';mission=createGardenMission({exercise,rootMode:difficulty!=='light',separateBass:['hard','professor'].includes(difficulty),barSeconds:difficultyProfile(difficulty).barSeconds,onChange:renderMission,onChord:(chord,model)=>pad.play(chord,model.exercise.baseTonic??5,{arpeggio:model.arpeggio,arrangement:model.arrangement,barSeconds:model.barSeconds}).catch(error=>{$('answer-feedback').textContent=error.message;})});renderMission(mission.snapshot());renderVitals();}
 function renderRun(){
   const r=run.snapshot(),time=runClock(r.seconds),score=String(r.score);
   if($('run-time').textContent!==time)$('run-time').textContent=time;
@@ -286,6 +340,7 @@ function updateProgressCard(){
   $('garden-completed').textContent=`${progress.completed.length} ${progress.completed.length===1?'маршрут пройден':'маршрутов пройдено'}`;
 }
 function showGardenStart(state='menu'){
+  modeReadout.hidden=true;comboToast.hidden=true;comboNotice=null;document.querySelector('.run-readout').classList.remove('combo-score');
   mission?.pause();pad.stop(true);s.paused=true;keys.clear();tutorialActive=false;$('flight-tutorial').hidden=true;$('mission-complete').hidden=true;document.querySelectorAll('.tutorial-focus').forEach(el=>el.classList.remove('tutorial-focus'));document.querySelector('.flight-tools')?.removeAttribute('open');document.body.classList.remove('tutorial-open');setGardenMenu(false,{resume:false});$('game-over').hidden=true;
   document.body.classList.add('start-open');$('garden-start').hidden=false;
   // Keep the approved wordmark markup and typography from the cover template.
@@ -306,9 +361,9 @@ function updateAdmissionCard(){
   }else $('start-random').querySelector('small').textContent='Случайный маршрут';
 }
 function selectDifficulty(name){
-  if(!['light','medium','hard'].includes(name))return;
-  difficulty=name;document.body.dataset.difficulty=difficulty;document.body.classList.toggle('teacher-mode',difficulty==='hard');gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
-  $('start-difficulty-note').textContent=difficulty==='light'?'Три учебных маршрута по 3–4 аккорда, скорость студента и неиссякаемые запасы.':'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.';
+  if(!['light','medium','hard','professor'].includes(name))return;
+  difficulty=name;document.body.dataset.difficulty=difficulty;document.body.classList.toggle('teacher-mode',['hard','professor'].includes(difficulty));document.body.classList.toggle('professor-mode',difficulty==='professor');$('professor-settings').hidden=difficulty!=='professor';$('mode-readout').hidden=true;gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
+  $('start-difficulty-note').textContent=difficulty==='professor'?'Профессор: надстройки и O₂, лады и NAV; корень, тип и слеш-бас. Отдельный рейтинг.':difficulty==='light'?'Три учебных маршрута по 3–4 аккорда, скорость студента и неиссякаемые запасы.':'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.';
   for(const item of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))item.setAttribute('aria-pressed',String(item.dataset.difficulty===difficulty));
   if(difficulty==='light')s.tour='reharm';
   for(const item of document.querySelectorAll('[data-tour]')){item.disabled=difficulty==='light'&&item.dataset.tour!=='reharm';item.setAttribute('aria-pressed',String(item.dataset.tour===s.tour));item.classList.toggle('selected',item.dataset.tour===s.tour);}
@@ -328,9 +383,9 @@ function achievementGroups(){
 }
 function journeyRoutes(){return difficulty==='light'?GARDEN_ADMISSION_ROUTES:[...allBookRoutes(),...(studio?.routes||[])];}
 function journeyData(){
- const routes=journeyRoutes(),done=progress.completed,groups=difficulty==='light'?[{id:'reharm',name:language.get()==='en'?'First flights':'Первые полёты',image:'assets/echo-garden/tours/reharm.webp'}]:achievementGroups();
+ const routes=journeyRoutes(),done=difficulty==='professor'?Object.keys(professorRatings.data):progress.completed,groups=difficulty==='light'?[{id:'reharm',name:language.get()==='en'?'First flights':'Первые полёты',image:'assets/echo-garden/tours/reharm.webp'}]:achievementGroups();
  groups.push({id:'favorites',name:language.get()==='en'?'Favorites':'Избранное',image:'assets/echo-garden/tours/reharm.webp'});
- return {version:globalThis.GARDEN_VERSION||'dev',language:language.get(),difficulty,earned:GARDEN_RANKS.map(r=>Boolean(achievementStore.snapshot().earned[r.id])),rankNames:GARDEN_RANKS.map(r=>language.get()==='en'?r.en:r.ru),groups:groups.map(group=>({id:group.id,name:group.name,image:new URL(group.image,location.href).href,routes:routes.filter(r=>group.id==='favorites'?favorites.has(routeIdentity(r)):difficulty==='light'||routeTour(r)===group.id).map((r,i)=>({id:routeIdentity(r),name:routeTitle(r,i),chords:r.sequence.length,chapter:r.chapter||null,completed:done.includes(routeIdentity(r)),rating:journeyRatings.best(routeIdentity(r),done)}))})).filter(g=>g.routes.length||g.id==='favorites')};
+ return {version:globalThis.GARDEN_VERSION||'dev',language:language.get(),difficulty,earned:GARDEN_RANKS.map(r=>Boolean(achievementStore.snapshot().earned[r.id])),rankNames:GARDEN_RANKS.map(r=>language.get()==='en'?r.en:r.ru),groups:groups.map(group=>({id:group.id,name:group.name,image:new URL(group.image,location.href).href,routes:routes.filter(r=>group.id==='favorites'?favorites.has(routeIdentity(r)):difficulty==='light'||routeTour(r)===group.id).map((r,i)=>({id:routeIdentity(r),name:routeTitle(r,i),chords:r.sequence.length,chapter:r.chapter||null,completed:done.includes(routeIdentity(r)),rating:activeRatings().best(routeIdentity(r),difficulty==='professor'?[]:done)}))})).filter(g=>g.routes.length||g.id==='favorites')};
 }
 async function openJourney(){
  if(journey?.isOpen){journey.open();return;}
@@ -359,7 +414,11 @@ async function launchRoute(route){
   if(!wasTutorialDismissed()){guide.open({resume:true});return;}
   try{await pad.unlock();if(trialExpired)return;s.paused=false;mission.start();world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}catch(error){$('answer-feedback').textContent=error.message;s.paused=false;ui();}
 }
+function layoutFlightTools(){
+ if(difficulty!=='professor')return;const route=document.querySelector('.route-panel');if(!route?.getClientRects().length)return;const edge=route.getBoundingClientRect().bottom;document.body.style.setProperty('--professor-combo-top',`${Math.max(112,Math.min(innerHeight-125,edge+12))}px`);document.body.style.setProperty('--flight-tools-top',`${Math.max(128,Math.min(innerHeight-146,edge+12))}px`);
+}
 function layoutCompletion(){
+  layoutFlightTools();
   const panel=$('mission-complete');if(panel.hidden)return;
   const box=selector=>{const node=document.querySelector(selector);if(!node||!node.getClientRects().length)return null;const r=node.getBoundingClientRect();return r.width&&r.height?r:null;};
   const bass=box('#bass-panel'),tools=box('.flight-tools summary'),answers=box('.answers-panel'),extensions=box('#quality-advanced[open] #quality-advanced-options');
@@ -372,7 +431,7 @@ function layoutCompletion(){
   panel.style.setProperty('--completion-height',`${Math.max(1,bottom-top)}px`);
 }
 function completeGardenLevel(){
-  completionHandled=true;s.paused=false;
+  completionHandled=true;s.paused=false;modeReadout.hidden=true;comboToast.hidden=true;
   const result=run.snapshot();
   const previous=runBest,newRecord=!previous||result.score>previous.score,delta=previous?result.score-previous.score:0;
   completionRecord=newRecord?'★ Рекорд!':'✓ Завершено';
@@ -387,7 +446,7 @@ function completeGardenLevel(){
   const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
   const skill=skillFlight.finish(mission.snapshot(),result,{difficulty}),official=allBookRoutes().some(route=>route.id===id)||(studio?.routes||[]).some(route=>route.id===id&&route.builtin);
-  const previousStars=journeyRatings.best(id),stars=journeyRatings.record(id,skill),rating=gardenRouteRatingText(skill,{best:stars,previous:previousStars,en:language.get()==='en'});
+  const previousStars=activeRatings().best(id),stars=activeRatings().record(id,skill),rating=gardenRouteRatingText(skill,{best:stars,previous:previousStars,en:language.get()==='en'});
   $('completion-rating').open=false;$('completion-rating-summary').textContent=rating.summary;$('completion-rating-detail').textContent=rating.detail;
   const ranks=achievementStore.record(skill,{eligible:official&&currentRoute.sequence.length>=4}),mandalas=achievementStore.syncMandalas(achievementGroups(),progress.completed),rank=GARDEN_RANKS.find(r=>r.id===ranks.at(-1));
   const medal=document.querySelector('.completion-medal');if(!medal.dataset.original)medal.dataset.original=medal.innerHTML;
@@ -414,9 +473,10 @@ $('clean').addEventListener('click',()=>clean(true));$('restore').addEventListen
 function setGardenMenu(open,{resume=true,view='routes'}={}){
   closeLightingPreview({focus:false});
   const wasOpen=document.body.classList.contains('world-open'),wasSettings=$('garden-menu').dataset.view==='settings',settings=open&&view==='settings';
+  if(settings)renderProfessorSettings();
   $('garden-menu').dataset.view=settings?'settings':'routes';
   $('garden-menu').setAttribute('aria-label',settings?'Настройки':'Выбор маршрута Сада Эха');
-  $('garden-menu-eyebrow').textContent=settings?'EAR YOGA':'КАРТА САДА';
+  if(settings)$('garden-menu-eyebrow').innerHTML=gardenWordmarkMarkup();else $('garden-menu-eyebrow').textContent='КАРТА САДА';
   $('garden-menu-title').textContent=settings?'Настройки':'Выбор маршрута';
   $('garden-menu-description').textContent=settings?'Тембр, громкость и эквалайзер':'Сначала выбери мандалу тура, затем конкретную последовательность.';
   if(open&&!wasOpen){menuWasRunning=Boolean(mission?.snapshot().running)&&!s.paused;mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;}
@@ -444,7 +504,7 @@ $('completion-menu').addEventListener('click',()=>showGardenStart());
 const completionBounds=new ResizeObserver(layoutCompletion);
 for(const selector of ['.route-panel','.degrees-panel','.answers-panel','#bass-panel','#quality-advanced-options']){const node=document.querySelector(selector);if(node)completionBounds.observe(node);}
 addEventListener('resize',layoutCompletion);window.visualViewport?.addEventListener('resize',layoutCompletion);
-$('mission-restart').addEventListener('click',()=>{gardenRewards.reset();run.reset();skillFlight.reset();resetResonance();mission.restart();s.paused=false;ui();});
+$('mission-restart').addEventListener('click',()=>{gardenRewards.reset();run.reset();professorCombos.reset();comboNotice=null;comboToast.hidden=true;document.querySelector('.run-readout').classList.remove('combo-score');skillFlight.reset();resetResonance();mission.restart();s.paused=false;ui();});
 for(const [kind,spec] of Object.entries(GARDEN_ITEMS).filter(([,item])=>item.artifact)){
   const button=document.createElement('button'),badge=document.createElement('b');
   button.dataset.useArtifact=kind;button.title=spec.label;button.setAttribute('aria-label',spec.label);
@@ -510,11 +570,13 @@ function update(dt,clockDt=dt){
   s.pan+=((s.x/s.width-.5)*.13-s.pan)*(1-Math.exp(-dt));
   const missionState=mission?.snapshot();
   const pacingBarSeconds=missionState?.barSeconds*timeScale;
+  if(comboNotice){comboNotice.age+=realClockDt;if(comboNotice.age>2.6){comboToast.hidden=true;comboNotice=null;document.querySelector('.run-readout').classList.remove('combo-score');}}
   run.tick(realClockDt,Boolean(missionState?.running&&missionState.cursor>=0&&!s.gameOver));renderRun();
   if(!missionState?.complete)gardenLife.update(dt,{...s,clockDt,barSeconds:pacingBarSeconds,separateBass:Boolean(missionState?.bassPanelNeeded),routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality||(missionState.separateBass&&!part.bass)).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
   const lifeState=gardenLife.snapshot();
-  resonance.update(dt,{clockDt,timeScale,width:s.width,height:s.height,x:s.x,y:s.y,ship:s.ship,barSeconds:pacingBarSeconds,active:Boolean(missionState?.running),paused:s.paused,complete:missionState?.complete,solvedChords:missionState?.solved.length??0,totalChords:missionState?.exercise.sequence.length??0,sounding:pad.sounding,audioTime:pad.context?.currentTime,chapter:missionState?.exercise.chapter,tensionMode:missionState?.exercise.tensionMode});
-  if((lifeState.gameOver||resonance.gameOver)&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').querySelector('span').textContent=resonance.gameOver?'O₂ · 0':'КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ';$('game-over').hidden=false;}
+  const harmonicView={clockDt,timeScale,previousX,previousY,forecastSounding:eta=>forecastProfessorSounding(eta,missionState),width:s.width,height:s.height,x:s.x,y:s.y,ship:s.ship,barSeconds:pacingBarSeconds,active:Boolean(missionState?.running),paused:s.paused,complete:missionState?.complete,solvedChords:missionState?.solved.length??0,totalChords:missionState?.exercise.sequence.length??0,sounding:pad.sounding,audioTime:pad.context?.currentTime,chapter:missionState?.exercise.chapter,tensionMode:missionState?.exercise.tensionMode};
+  resonance.update(dt,harmonicView);modesFlight.update(dt,harmonicView);
+  if((lifeState.gameOver||resonance.gameOver||modesFlight.gameOver)&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').querySelector('span').textContent=resonance.gameOver?'O₂ · 0':modesFlight.gameOver?'NAV · 0':'КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ';$('game-over').hidden=false;}
   const shake=lifeState.impact||0,shakeX=Math.sin(s.time*83)*shake*7,shakeY=Math.cos(s.time*71)*shake*5;
   document.documentElement.style.setProperty('--impact-x',`${shakeX.toFixed(2)}px`);document.documentElement.style.setProperty('--impact-y',`${shakeY.toFixed(2)}px`);
   document.body.classList.toggle('garden-impact',shake>.05);
@@ -543,7 +605,7 @@ function atmosphere(){
   gardenRewards.draw(ctx,s.width,s.height);
   if(new URLSearchParams(location.search).has('qa')){life.dataset.rewards=JSON.stringify(gardenRewards.snapshot());life.dataset.arrangement=JSON.stringify({status:mission?.snapshot().arrangementStatus||{},events:pad.lastArrangement||[],pickups:gardenLife.snapshot().entities.filter(item=>GARDEN_ITEMS[item.kind]?.arrangement)});}
   gardenLife.draw(ctx,s);
-  resonance.draw(ctx,s.width,s.height);
+  resonance.draw(ctx,s.width,s.height);modesFlight.draw(ctx,s.width,s.height,{language:language.get()});if(difficulty==='professor'&&modesFlight.last?.age>5)modeReadout.hidden=true;
 }
 let uiTick=0;
 function frame(now){
@@ -579,7 +641,7 @@ function error(e){s.ready=false;$('loading').hidden=false;$('load-progress').tex
 $('retry').addEventListener('click',()=>location.reload());
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();s.ready=false;last=0;$('loading').hidden=false;$('load-progress').textContent='Восстанавливаем изображение…';});
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextrestored',()=>{try{renderer?.dispose();renderer=createGardenRenderer(world,shipLayer,images.slice(0,6));s.ready=true;last=0;$('loading').hidden=true;}catch(e){error(e);}});
-window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),lightingPreview:{active:lightingPreview.active,playing:lightingPreview.playing},mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),lastTension:pad.lastTension&&{...pad.lastTension},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
+window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),lightingPreview:{active:lightingPreview.active,playing:lightingPreview.playing},mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),modes:modesFlight.snapshot(),run:run.snapshot(),combos:professorCombos.snapshot(),audio:{state:pad.context?.state,time:pad.context?.currentTime,sounding:pad.sounding&&{at:pad.sounding.at,barSeconds:pad.sounding.barSeconds}},lastTension:pad.lastTension&&{...pad.lastTension},lastModePreview:pad.lastModePreview&&{...pad.lastModePreview,notes:[...pad.lastModePreview.notes]},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),spawnMode:(id,options)=>modesFlight.spawn(id,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
 if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','localhost'].includes(location.hostname)){
  const probe=document.createElement('button');probe.id='qa-repeat-pickup';probe.textContent='Проверка: выпустить лотос ∞';probe.style.cssText='position:fixed;left:12px;bottom:180px;z-index:60;color:#d9edcd;background:#102922;border:1px solid #799e84;padding:8px';
  probe.addEventListener('click',()=>{if(!mission.snapshot().running)return;gardenLife.forceSpawn('hold',{x:s.x/s.width,y:s.y/s.height-.12,vx:0});});document.body.append(probe);
@@ -587,6 +649,7 @@ if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','lo
 
 document.body.append($('language-toggle'));
 language=createLanguage();
+language.onChange(()=>{renderProfessorSettings();if(!modeReadout.hidden&&modesFlight.last)renderModeReadout(modesFlight.last);});
 if($('start-language')){
   $('start-language').onclick=()=>language.toggle();
   language.onChange(lang=>{$('start-language').firstChild.textContent=lang==='en'?'RU':'EN';});

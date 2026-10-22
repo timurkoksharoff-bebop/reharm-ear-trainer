@@ -228,3 +228,22 @@ body.lighting-preview :is(#world,#life,#ship-layer){pointer-events:none}
 #lighting-preview-dock #lighting-preview-note{margin:4px 0 8px!important;font-size:11px!important}
 #lighting-preview-dock .lighting-note{font-size:11px!important}
 @media(max-width:480px){#lighting-preview-dock{padding:10px 12px}#lighting-preview-dock .toolbar{gap:6px}#lighting-preview-dock .toolbar button{min-height:40px;padding:6px 9px;font-size:11px}#lighting-preview-dock .daylight{width:100%}#lighting-preview-dock .daylight button{flex:1}}
+/* Five study categories: the approved three shapes move up; two equal-size
+   counterparts sit between their centres, with a separate gap before Launch. */
+#garden-start[data-cover] .difficulty-picker{top:60.5%}
+#garden-start[data-cover] .difficulty-picker .experimental-mode{top:calc(max(100%,44px) + 10px);width:33.33%}
+#garden-start[data-cover] .difficulty-picker [data-difficulty="professor"]{left:16.5%}
+#garden-start[data-cover] .difficulty-picker [data-difficulty="guru"]{left:50.5%;opacity:1;cursor:default}
+#garden-start[data-cover] .experimental-mode :is(.reference-face,.reference-ink,.mode-water){display:none!important}
+#garden-start[data-cover] .experimental-mode .mode-live-name{display:block;position:absolute;inset:25% 3% 17%;color:#f3dfb7;font:400 calc(var(--menu-u)*3.45)/1.1 'Times New Roman',serif;white-space:nowrap;z-index:3}
+#garden-start[data-cover] .experimental-mode .mode-status{position:absolute;right:14%;bottom:14%;font:calc(var(--menu-u)*1.45) system-ui;color:#a0c5c3;z-index:3}
+#garden-start[data-cover] .experimental-mode[disabled] .mode-rest{background:radial-gradient(ellipse,#203643,#0b263a 80%)}
+@media(max-height:650px){#garden-start[data-cover] .difficulty-picker{top:58%}}
+@media(max-height:470px){#garden-start[data-cover] .difficulty-picker{top:50%}}
+
+#garden-start[data-cover] .experimental-mode .experimental-contour{display:block;position:absolute;inset:0;width:100%;height:100%;z-index:2;fill:none;stroke:#dfc28b;stroke-width:1.5;pointer-events:none}
+#garden-start[data-cover] .experimental-mode .experimental-contour path+path{stroke:#f2e1bb;stroke-width:.65;opacity:.8}
+#garden-start[data-cover] .experimental-mode .mode-status{right:14%;bottom:24%;font-size:calc(var(--menu-u)*1.4)}
+#garden-start[data-cover] .experimental-mode .mode-live-name{inset:36% 3% 18%;font-size:calc(var(--menu-u)*3.1)}
+#garden-start[data-cover] .difficulty-picker button:not(.experimental-mode) .reference-face{clip-path:polygon(0 50%,8% 28%,25% 9%,45% 0,55% 0,75% 9%,92% 28%,100% 50%,92% 76%,75% 94%,55% 100%,45% 100%,25% 94%,8% 76%)}
+@media(orientation:landscape) and (max-height:600px){#garden-start[data-cover] .difficulty-picker{top:60.5%}}

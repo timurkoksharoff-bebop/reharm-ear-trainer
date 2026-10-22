@@ -77,7 +77,7 @@ const base=process.env.GARDEN_RELEASE_URL||'http://127.0.0.1:8788/';
   assert(state.resonance.energy>beforeEleven);assert(!state.gameOver,'natural 11 over Anime 5 F#m9 replenishes O2, never fails the mission');
   await page.evaluate(()=>gardenFlight.showMenu());await page.locator('#start-tutorial').click();
   assert.equal(await page.locator('[data-guide-tension]').count(),12);await page.locator('#field-resonance').screenshot({path:'/private/tmp/ear-yoga-resonance-guide.png'});
-  await page.locator('#guide-language').click();assert.match(await page.locator('#field-resonance').innerText(),/Teacher only/);assert(!/[А-Яа-яЁё]/.test(await page.locator('#field-resonance').innerText()));
+  await page.locator('#guide-language').click();assert.match(await page.locator('#field-resonance').innerText(),/Teacher and Professor/);assert(!/[А-Яа-яЁё]/.test(await page.locator('#field-resonance').innerText()));
   assert.deepEqual(errors,[]);console.log('Resonance browser passed: natural Student 1/3/5/7 tokens, four supplies and real scored one-shot notes; Teacher twelve variants and original O2; pause, unchanged MIDI, five layouts and RU/EN guides.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

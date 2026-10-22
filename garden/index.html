@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg?v=1.54"><link rel="apple-touch-icon" href="icon-192-v1.54.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.54">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.54">
-  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.54">
-  <link rel="stylesheet" href="ear-yoga-brand.css?v=1.54">
+  <link rel="icon" href="icon.svg?v=1.57"><link rel="apple-touch-icon" href="icon-192-v1.57.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.57">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.57">
+  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.57">
+  <link rel="stylesheet" href="ear-yoga-brand.css?v=1.57">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -44,6 +44,9 @@
     <article class="vital" data-resource="resonance" style="--vital:#c2e5ff;--level:.8" title="O₂ · Кислород / Oxygen" hidden>
       <span class="vital-pickup resonance-symbol" aria-hidden="true">O₂</span><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>O₂</strong><small id="vital-resonance">80</small>
     </article>
+    <article class="vital" data-resource="navigation" style="--vital:#e4ca8b;--level:.8" title="NAV · Навигация / Navigation" hidden>
+      <span class="vital-pickup resonance-symbol" aria-hidden="true">⌖</span><span class="vital-column" aria-hidden="true"><i></i><em></em></span><strong>NAV</strong><small id="vital-navigation">80</small>
+    </article>
     <p id="vital-event" class="vital-event" aria-live="polite"></p>
   </section>
   <section id="game-over" class="game-over hud" hidden role="alertdialog" aria-label="Миссия провалена"><span>КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ</span><strong>MISSION FAILED</strong><p>Экспедиция потеряла устойчивость. Маршрут остаётся прежним.</p><button id="retry-mission">Повторить миссию</button></section>
@@ -62,7 +65,7 @@
           <h2 id="start-title" class="ear-yoga-wordmark">Ear <em>Yoga</em><b class="brand-baseline" aria-hidden="true"></b></h2>
           <span class="overline start-college">SPACE MUSIC COLLEGE<b class="brand-baseline" aria-hidden="true"></b></span>
         </div>
-        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button></div>
+        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button><button data-difficulty="professor" aria-pressed="false" class="experimental-mode"><span class="mode-live-name">Профессор</span><small class="mode-status">β</small></button><button data-difficulty="guru" aria-pressed="false" class="experimental-mode" disabled title="Режим Гуру пока в разработке"><span class="mode-live-name">Гуру</span><small class="mode-status">скоро</small></button></div>
       </div>
       <button id="start-menu" class="start-menu" type="button"><svg class="settings-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="#061827"/><circle cx="16" cy="12" r="2" fill="#061827"/><circle cx="10" cy="18" r="2" fill="#061827"/></svg><span>Настройки</span></button>
       <div class="start-controls">
@@ -213,6 +216,6 @@
     <p id="lighting-preview-note">Цикл показан быстрее, чтобы сравнить освещение.</p>
   </aside>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.54" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.57" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

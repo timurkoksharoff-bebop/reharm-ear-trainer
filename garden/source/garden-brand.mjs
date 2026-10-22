@@ -27,6 +27,9 @@ export function bindGardenBrand(){
     if(control.matches('.difficulty-picker button')){const water=light.cloneNode();water.className='mode-water';control.append(water);}
    }
   }
+  const modeStyle=getComputedStyle(document.querySelector('[data-difficulty="medium"]'));
+  for(const button of document.querySelectorAll('.experimental-mode'))for(const property of ['--mode-interior','--mode-rim'])button.style.setProperty(property,modeStyle.getPropertyValue(property));
+  for(const button of document.querySelectorAll('.experimental-mode')){const contour=document.createElementNS('http://www.w3.org/2000/svg','svg');contour.setAttribute('viewBox','0 0 268 111');contour.setAttribute('preserveAspectRatio','none');contour.setAttribute('aria-hidden','true');contour.classList.add('experimental-contour');contour.innerHTML='<path d="M2 56C37 23 72 9 124 7L134 0L145 7C197 9 232 23 267 56C232 90 197 101 145 102L134 110L124 102C72 101 37 90 2 56Z"/><path d="M12 56C43 29 77 17 134 14C191 17 225 29 257 56C225 83 191 94 134 96C77 94 43 83 12 56Z"/>';button.append(contour);}
   const primary=document.querySelector('#start-random'),caption=primary.querySelector('strong');
   const syncCaption=()=>primary.classList.toggle('live-caption',!['Начать полёт','Start flight'].includes(caption.textContent.trim()));
   new MutationObserver(syncCaption).observe(caption,{childList:true,characterData:true,subtree:true});syncCaption();

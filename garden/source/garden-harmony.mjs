@@ -197,6 +197,7 @@ export class GardenPad{
     }
   }
   async play(chord,tonicPitchClass=5,{arpeggio=false,arrangement={},barSeconds=4}={}){
+    this.modePreviewStop?.();
     const generation=++this.generation;
     await this.unlock();
     if(generation!==this.generation||this.backgrounded||globalThis.document?.hidden)return;
@@ -279,6 +280,15 @@ export class GardenPad{
     });
     const voice={gain:group,stop:()=>{for(const oscillator of oscillators){try{oscillator.stop();}catch{}}try{group.disconnect();}catch{}}};
     this.voices.push(voice);
+  }
+  previewScale(notes,{remaining=1.7}={}){
+    const c=this.context;if(!c||c.state!=='running'||this.backgrounded||!Array.isArray(notes)||notes.length<2||remaining<.65)return false;
+    this.modePreviewStop?.();
+    const duration=Math.min(1.65,remaining-.12),step=duration/(notes.length+.25),at=c.currentTime+.012,group=c.createGain(),sources=[];
+    group.gain.value=1;group.connect(this.cleanOutput);
+    let stopped=false;const stop=()=>{if(stopped)return;stopped=true;const now=c.currentTime;group.gain.cancelScheduledValues(now);group.gain.setValueAtTime(group.gain.value,now);group.gain.linearRampToValueAtTime(0,now+.012);for(const source of sources){try{source.stop(now+.018);}catch{}}setTimeout(()=>{for(const source of sources)try{source.disconnect();}catch{}try{group.disconnect();}catch{}},25);this.transients.delete(stop);if(this.modePreviewStop===stop){this.modePreviewStop=null;if(this.lastModePreview)this.lastModePreview.active=false;}};
+    notes.forEach((midi,index)=>{const start=at+index*step,level=c.createGain();level.gain.setValueAtTime(.0001,start);level.gain.exponentialRampToValueAtTime(.052,start+Math.min(.022,step*.22));level.gain.exponentialRampToValueAtTime(.0001,start+step*1.08);level.connect(group);for(const [ratio,amplitude] of [[1,1],[2,.12]]){const tone=c.createOscillator(),partial=c.createGain();tone.type='sine';tone.frequency.value=frequency(midi)*ratio;partial.gain.value=amplitude;tone.connect(partial);partial.connect(level);tone.start(start);tone.stop(start+step*1.1);sources.push(tone);}});
+    this.modePreviewStop=stop;this.transients.add(stop);this.lastModePreview={active:true,notes:[...notes],at,duration,character:'soft-flute',remaining};setTimeout(stop,(duration+.15)*1000);return true;
   }
   async feedback(correct,{complete=false,kind='degree',value=0}={}){
     const generation=this.generation;

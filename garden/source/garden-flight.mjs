@@ -13,7 +13,7 @@ import {GardenResonance,GARDEN_TENSIONS,GARDEN_STUDENT_TENSIONS} from './garden-
 import {GardenRun} from './garden-run.mjs';
 import {GardenSkillFlight,GardenAchievements,GARDEN_RANKS,gardenRankGlyph} from './garden-achievements.mjs';
 import {mountGardenAchievements} from './garden-achievements-view.mjs';
-import {GardenJourneyRatings,mountGardenJourney} from './garden-journey.mjs';
+import {GardenJourneyRatings,gardenRouteRatingText,mountGardenJourney} from './garden-journey.mjs';
 import {mountGardenRecording} from './garden-recording.mjs';
 import {bindGardenBrand} from './garden-brand.mjs';
 const $=id=>document.getElementById(id),world=$('world'),life=$('life'),shipLayer=$('ship-layer'),ctx=life.getContext('2d');
@@ -329,7 +329,8 @@ function achievementGroups(){
 function journeyRoutes(){return difficulty==='light'?GARDEN_ADMISSION_ROUTES:[...allBookRoutes(),...(studio?.routes||[])];}
 function journeyData(){
  const routes=journeyRoutes(),done=progress.completed,groups=difficulty==='light'?[{id:'reharm',name:language.get()==='en'?'First flights':'Первые полёты',image:'assets/echo-garden/tours/reharm.webp'}]:achievementGroups();
- return {version:globalThis.GARDEN_VERSION||'dev',language:language.get(),difficulty,earned:GARDEN_RANKS.map(r=>Boolean(achievementStore.snapshot().earned[r.id])),rankNames:GARDEN_RANKS.map(r=>language.get()==='en'?r.en:r.ru),groups:groups.map(group=>({id:group.id,name:group.name,image:new URL(group.image,location.href).href,routes:routes.filter(r=>difficulty==='light'||routeTour(r)===group.id).map((r,i)=>({id:routeIdentity(r),name:routeTitle(r,i),chords:r.sequence.length,chapter:r.chapter||null,completed:done.includes(routeIdentity(r)),rating:journeyRatings.best(routeIdentity(r),done)}))})).filter(g=>g.routes.length)};
+ groups.push({id:'favorites',name:language.get()==='en'?'Favorites':'Избранное',image:'assets/echo-garden/tours/reharm.webp'});
+ return {version:globalThis.GARDEN_VERSION||'dev',language:language.get(),difficulty,earned:GARDEN_RANKS.map(r=>Boolean(achievementStore.snapshot().earned[r.id])),rankNames:GARDEN_RANKS.map(r=>language.get()==='en'?r.en:r.ru),groups:groups.map(group=>({id:group.id,name:group.name,image:new URL(group.image,location.href).href,routes:routes.filter(r=>group.id==='favorites'?favorites.has(routeIdentity(r)):difficulty==='light'||routeTour(r)===group.id).map((r,i)=>({id:routeIdentity(r),name:routeTitle(r,i),chords:r.sequence.length,chapter:r.chapter||null,completed:done.includes(routeIdentity(r)),rating:journeyRatings.best(routeIdentity(r),done)}))})).filter(g=>g.routes.length||g.id==='favorites')};
 }
 async function openJourney(){
  if(journey?.isOpen){journey.open();return;}
@@ -379,14 +380,15 @@ function completeGardenLevel(){
   $('completion-title').textContent=previous&&newRecord?'Новый личный рекорд':'Маршрут покорён';
   $('completion-score').textContent=String(result.score);$('completion-time').textContent=runClock(result.seconds);
   $('completion-bonus').textContent='Бонус за время: +'+result.bonus;
-  $('completion-record').textContent=previous&&newRecord?'+'+delta+' очков к рекорду':!previous?'Первый результат сохранён':'Личный рекорд: '+previous.score;
+  $('completion-record').textContent=previous&&newRecord?'+'+delta+' очков к рекорду':!previous?'Первые очки в этой тональности':'Личный рекорд: '+previous.score;
   $('mission-complete').dataset.record=String(Boolean(newRecord));renderRun();
 
   const id=currentRoute?.id||`${currentRoute?.source||'route'}:${currentRoute?.name||''}`;
   const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
   const skill=skillFlight.finish(mission.snapshot(),result,{difficulty}),official=allBookRoutes().some(route=>route.id===id)||(studio?.routes||[]).some(route=>route.id===id&&route.builtin);
-  const stars=journeyRatings.record(id,skill);$('completion-record').textContent+=' · '+'★'.repeat(stars)+'☆'.repeat(5-stars);
+  const previousStars=journeyRatings.best(id),stars=journeyRatings.record(id,skill),rating=gardenRouteRatingText(skill,{best:stars,previous:previousStars,en:language.get()==='en'});
+  $('completion-rating').open=false;$('completion-rating-summary').textContent=rating.summary;$('completion-rating-detail').textContent=rating.detail;
   const ranks=achievementStore.record(skill,{eligible:official&&currentRoute.sequence.length>=4}),mandalas=achievementStore.syncMandalas(achievementGroups(),progress.completed),rank=GARDEN_RANKS.find(r=>r.id===ranks.at(-1));
   const medal=document.querySelector('.completion-medal');if(!medal.dataset.original)medal.dataset.original=medal.innerHTML;
   medal.classList.toggle('chakra-earned',Boolean(rank));medal.style.setProperty('--chakra',rank?.color||'#efd28c');medal.innerHTML=rank?gardenRankGlyph(rank):medal.dataset.original;
@@ -483,8 +485,8 @@ addEventListener('keydown',e=>{
   if(e.code==='Space'){e.preventDefault();$('mission-toggle').click();}if(e.code==='KeyH')clean(!s.clean);if(e.code==='Escape'&&s.clean)clean(false);
 },true);
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();dragId=null;});
-document.addEventListener('visibilitychange',()=>{last=0;keys.clear();if(document.hidden){mission?.pause();pad.stop(true);s.paused=true;cancelAnimationFrame(raf);raf=0;}else{ui();if(!raf)raf=requestAnimationFrame(frame);}});
-addEventListener('pagehide',()=>{mission?.pause();pad.stop(true);});
+document.addEventListener('visibilitychange',()=>{last=0;keys.clear();if(document.hidden){mission?.pause();pad.backgroundSilence();s.paused=true;cancelAnimationFrame(raf);raf=0;}else{ui();if(!raf)raf=requestAnimationFrame(frame);}});
+addEventListener('pagehide',()=>{mission?.pause();pad.backgroundSilence();});
 function update(dt,clockDt=dt){
   if(s.paused)return;
   // One world-time multiplier keeps motion, hazards, pickups and oxygen in

@@ -1,11 +1,11 @@
 {
-  "version": "1.53",
+  "version": "1.54",
   "name": "EAR YOGA",
   "publisher": "Space Music College",
   "standalone": true,
   "previewDays": 60,
   "trialStarts": "first launch on device; countdown preserved across updates",
-  "notes": "Mobile release 1.53: Exact user-selected cover Variant3 (Cormorant / Forum, original lotus and positioned Manrope Settings), with locally cached fonts. Choose route opens the interactive planetary journey map. Each world offers a random flight or a route carousel. Five-star best results and completed-route percentages are saved separately from proficiency achievements; planet ratings average completed routes. Natural drag, overhead view, zoom, no Saturn rings, seven vertical jewel awards and a consistent wordmark. Existing harmony, audio, terrain, Teacher +7%, Student flying notes and saved progress are preserved.",
+  "notes": "Mobile release 1.54: Correct near/far planet occlusion around the stationary skill axis, including planet taps and drags across signs. Favorites has its own planet and the map header uses the selected Variant3 lettering and lotus. All partial option filters now allow up to four stars; full reveals allow up to two. Expandable best-rating receipt explains hints and star thresholds. Audio fades out before background suspension; delayed notes are cancelled. Exact user-selected cover Variant3 (Cormorant / Forum, original lotus and positioned Manrope Settings), with locally cached fonts. Choose route opens the interactive planetary journey map. Each world offers a random flight or a route carousel. Five-star best results and completed-route percentages are saved separately from proficiency achievements; planet ratings average completed routes. Natural drag, overhead view, zoom, no Saturn rings, seven vertical jewel awards and a consistent wordmark. Existing harmony, timbres, terrain, Teacher +7%, Student flying notes and saved progress are preserved.",
   "channel": "mobile-release",
-  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.53.html"
+  "recoveryUrl": "https://timurkoksharoff-bebop.github.io/reharm-ear-trainer/garden/update-1.54.html"
 }

@@ -1,13 +1,26 @@
 // Route ratings and the journey map are separate from proficiency ranks.
 export function gardenRouteStars(flight){
  if(!flight)return 1;
- if(!flight.independent||!['medium','hard'].includes(flight.difficulty))return 1;
+ if(!['medium','hard'].includes(flight.difficulty))return 1;
+ const cap=flight.independent?5:flight.ratingCap===4?4:flight.ratingCap===2?2:1;
  let stars=1;const notes=!(flight.toneAttempts>0)||flight.toneAccuracy>=.85;
  if(flight.accuracy>=.8&&flight.laps<=5)stars=2;
  if(flight.accuracy>=.93&&flight.laps<=3)stars=3;
  if(flight.accuracy>=.98&&flight.laps<=1.65&&notes)stars=4;
  if(flight.accuracy===1&&flight.laps<=1.05&&(!(flight.toneAttempts>0)||flight.toneAccuracy===1))stars=5;
- return stars;
+ return Math.min(stars,cap);
+}
+export function gardenRouteRatingText(flight,{best,previous=0,en=false}={}){
+ const current=gardenRouteStars(flight),improved=previous>0&&best>previous,stars='★'.repeat(best)+'☆'.repeat(5-best);
+ const summary=(en?'Best rating: ':'Лучший рейтинг: ')+stars+(improved?' ↑':'');
+ let reason;
+ if(!flight)reason=en?'Not enough answer data for a higher rating.':'Недостаточно данных об ответах для более высокой оценки.';
+ else if(!['medium','hard'].includes(flight.difficulty))reason=en?'Applicant: completion earns 1★. Higher grades are available in Student and Teacher.':'Абитуриент: прохождение даёт 1★. Более высокие оценки доступны в Студенте и Преподавателе.';
+ else if(!flight.independent)reason=flight.ratingCap===4?(en?'Reduced answer options: maximum 4★. Accuracy: ':'Сокращение вариантов ответа: максимум 4★. Точность: ')+Math.round(flight.accuracy*100)+'% · '+Number(flight.laps).toFixed(2)+(en?' laps.':' круга.'):flight.ratingCap===2?(en?'Full reveal: maximum 2★.':'Полное раскрытие: максимум 2★.'):(en?'Not enough independent answer data.':'Недостаточно данных о самостоятельных ответах.');
+ else reason=(en?'Accuracy: ':'Точность: ')+Math.round(flight.accuracy*100)+'% · '+Number(flight.laps).toFixed(2)+(en?' laps.':' круга.')+(flight.toneAttempts>0?(en?' Valid flying notes: ':' Верные летающие ноты: ')+Math.round(flight.toneAccuracy*100)+'%.':'');
+ const thresholds=en?'2★: ≥80%, ≤5 laps; 3★: ≥93%, ≤3; 4★: ≥98%, ≤1.65 and ≥85% valid notes; 5★: 100%, ≤1.05 and no wrong notes. Only attempted notes count.':'2★: ≥80%, ≤5 кругов; 3★: ≥93%, ≤3; 4★: ≥98%, ≤1,65 и ≥85% верных нот; 5★: 100%, ≤1,05 и ни одной неверной ноты. Учитываются только пойманные ноты.';
+ const detail=(en?'This flight: ':'Этот полёт: ')+current+'/5. '+reason+' '+(improved?(en?'Rating improved: ':'Рейтинг повышен: ')+previous+' → '+best+'. ':'')+thresholds+' '+(en?'Your best rating never decreases.':'Лучший рейтинг не снижается.');
+ return {summary,detail};
 }
 export class GardenJourneyRatings{
  constructor(storage){this.storage=storage;this.key='ear-yoga-route-stars.v1';this.data={};try{const value=JSON.parse(storage?.getItem(this.key)||'{}');for(const [id,r]of Object.entries(value))if(!['__proto__','constructor','prototype'].includes(id)&&id.length<180&&Number.isInteger(r.stars)&&r.stars>=1&&r.stars<=5)this.data[id]={stars:r.stars};}catch{}}

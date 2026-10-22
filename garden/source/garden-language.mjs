@@ -81,7 +81,7 @@ const EN={
  'Запасы экспедиции':'Expedition supplies','Бас относительно тоники':'Bass relative to the tonic','Цепочка аккордов':'Chord sequence','Ступень и тип верхнего аккорда; бас выбери внизу':'Upper chord degree and quality; select the bass below',
  'Нажми аккорд, пока он звучит':'Choose the chord while it is playing','База известна. Запусти последовательность.':'Listen to the tonic, then start the sequence.'
 };
-Object.assign(EN,{'✦ Достижения · владение гармонией':'✦ Achievements · harmony practice','Мандала пройдена':'Mandala completed'});
+Object.assign(EN,{'✦ Достижения · владение гармонией':'✦ Achievements · harmony practice','Мандала пройдена':'Mandala completed','Первые очки в этой тональности':'First score in this key'});
 const PATTERNS=[
  [/^Открыт уровень: (.+)$/,(_,name)=>'Rank earned: '+({'Муладхара':'Muladhara','Свадхистхана':'Svadhisthana','Манипура':'Manipura','Анахата':'Anahata'}[name]||name)],
  [/^Бонус за время: \+(\d+)$/,(_,n)=>'Time bonus: +'+n],

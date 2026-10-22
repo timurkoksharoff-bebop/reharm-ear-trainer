@@ -1,6 +1,8 @@
 // An isolated journey-map study. It does not read or change game/player storage.
 const $=id=>document.getElementById(id);
 const canvas=$('cosmos'),ctx=canvas.getContext('2d',{alpha:false});
+// The stationary DOM axis is at depth zero, between the two canvas passes.
+const foreground=$('cosmos-foreground'),frontCtx=foreground.getContext('2d');
 const colours=['#f27578','#edb164','#e7d388','#8ed7b1','#91d4de','#9cacf0','#cea7e7'];
 const skills=['Корни и бас','Аккорды и обороты','Надстройки','Гармонический слух','Будущая награда V','Будущая награда VI','Будущая награда VII'];
 const worlds=[
@@ -22,8 +24,8 @@ if(!embedded){location.replace('../?journey=1');throw Error('Opening the journey
 const runtime=await new Promise(resolve=>{const receive=event=>{if(event.origin!==location.origin||event.source!==parent||event.data?.type!=='ear-yoga-journey-data')return;removeEventListener('message',receive);resolve(event.data.data);};addEventListener('message',receive);parent.postMessage({type:'ear-yoga-journey',action:'ready'},location.origin);});
 const sendHost=(action,extra={})=>parent.postMessage({type:'ear-yoga-journey',action,...extra},location.origin);
 const presets=[...worlds];worlds.splice(0,worlds.length,...runtime.groups.map((g,i)=>{
- const preset=presets.find(p=>p.name.toLowerCase()===g.name.toLowerCase())||presets[i%7],routes=g.routes.map(r=>({...r})),rated=routes.filter(r=>r.rating>0),done=routes.filter(r=>r.completed).length;
- return {...preset,name:g.name,tour:g.id,level:i%7,phase:preset.phase+(i>6?i*.8:0),colour:[...preset.colour],art:g.image,routes,done,percent:routes.length?Math.round(done/routes.length*100):0,average:rated.length?rated.reduce((n,r)=>n+r.rating,0)/rated.length:0,earned:done===routes.length,desc:runtime.language==='en'?'Choose a random flight or a specific route.':'Случайный полёт или конкретная последовательность — выбери своё путешествие.'};
+ const preset=g.id==='favorites'?{...presets[0],colour:[205,118,151],kind:'rock',phase:1.8,size:29}:presets.find(p=>p.name.toLowerCase()===g.name.toLowerCase())||presets[i%7],routes=g.routes.map(r=>({...r})),rated=routes.filter(r=>r.rating>0),done=routes.filter(r=>r.completed).length;
+ return {...preset,name:g.name,tour:g.id,level:i%7,phase:preset.phase+(i>6?i*.8:0),colour:[...preset.colour],art:g.image,routes,done,percent:routes.length?Math.round(done/routes.length*100):0,average:rated.length?rated.reduce((n,r)=>n+r.rating,0)/rated.length:0,earned:routes.length>0&&done===routes.length,desc:runtime.language==='en'?'Choose a random flight or a specific route.':'Случайный полёт или конкретная последовательность — выбери своё путешествие.'};
 }));
 skills.splice(0,skills.length,...runtime.rankNames);
 $('worlds-toggle').querySelector('span').textContent=String(worlds.length).padStart(2,'0');
@@ -43,7 +45,7 @@ $('core-axis').innerHTML=skills.map((name,i)=>`<button class="core-node ${runtim
 for(const b of document.querySelectorAll('[data-core]'))b.addEventListener('click',()=>openSkill(Number(b.dataset.core),b));
 $('world-list').innerHTML=worlds.map((v,i)=>`<button data-world="${i}">${v.name}<small>${v.routes.length?v.percent+'% · '+(v.average?v.average.toFixed(1)+'/5':'—'):'Впереди'}</small></button>`).join('');
 for(const b of document.querySelectorAll('[data-world]'))b.addEventListener('click',()=>{openWorld(Number(b.dataset.world),b);$('world-list').hidden=true;$('worlds-toggle').setAttribute('aria-expanded','false');});
-for(const v of worlds){const label=document.createElement('div');label.className='planet-label';label.innerHTML=`<strong data-user-content>${v.name}</strong><span class="planet-stats">${v.routes.length?`<em>${v.percent}%</em> · ${starMarkup(v.average)} <small>${v.average?v.average.toFixed(1).replace('.',','):'—'}</small>`:'Будущий мир'}</span>`;$('planet-labels').append(label);labels.push(label);}
+for(const v of worlds){const label=document.createElement('div');label.className='planet-label';label.innerHTML=`<strong data-user-content>${v.name}</strong><span class="planet-stats">${v.routes.length?`<em>${v.percent}%</em> · ${starMarkup(v.average)} <small>${v.average?v.average.toFixed(1).replace('.',','):'—'}</small>`:v.tour==='favorites'?'♡ · 0':'Будущий мир'}</span>`;$('planet-labels').append(label);labels.push(label);}
 
 // Cached, shaded sphere textures. Geometry, lights, orbital positions and depth
 // are rendered in real time; the actual player's mandalas are separate images.
@@ -78,6 +80,7 @@ function createBackdrop(){
 }
 function resize(){
  w=innerWidth;h=innerHeight;dpr=Math.min(1.75,devicePixelRatio||1);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+ foreground.width=canvas.width;foreground.height=canvas.height;frontCtx.setTransform(dpr,0,0,dpr,0,0);
  centres=[...document.querySelectorAll('[data-core]')].map(e=>{const b=e.getBoundingClientRect();return b.top+b.height/2;});createBackdrop();wake();
 }
 function ringRadius(level){return w*(w<700?.365:.31)*(1+.12*Math.sin(level*.92));}
@@ -114,20 +117,21 @@ function paintHelix(){
  }
 }
 function render(){
+ frontCtx.clearRect(0,0,w,h);
  ctx.drawImage(background,-50+Math.sin(yaw*.2)*16,-50+Math.sin(tilt)*8);
  for(let i=0;i<7;i++){const cy=centres[i],radius=Math.min(w*.28,150),rgb=colours[i].match(/\w\w/g).map(v=>parseInt(v,16)),light=ctx.createRadialGradient(w/2,cy,0,w/2,cy,radius);light.addColorStop(0,`rgba(${rgb.join(',')},.07)`);light.addColorStop(.35,`rgba(${rgb.join(',')},.025)`);light.addColorStop(1,'transparent');ctx.fillStyle=light;ctx.fillRect(w/2-radius,cy-radius,radius*2,radius*2);}
  for(const s of stars){const x=(s.x+Math.sin(yaw*.15)*s.depth*12+w)%w,y=s.y+(tilt-.37)*s.depth*5;ctx.fillStyle=`rgba(218,225,219,${s.alpha})`;ctx.beginPath();ctx.arc(x,y,s.size,0,Math.PI*2);ctx.fill();if(s.size>1.25){ctx.strokeStyle=`rgba(222,220,201,${s.alpha*.27})`;ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(x-5,y);ctx.lineTo(x+5,y);ctx.moveTo(x,y-5);ctx.lineTo(x,y+5);ctx.stroke();}}
  for(let level=6;level>=0;level--)paintRing(level);paintHelix();
  hits=worlds.map((v,i)=>{const p=orbitalPoint(v.level,v.phase,v.radius),r=v.size*p.s*(w<700?.81:1.12);return {...p,r,i};}).sort((a,b)=>b.z-a.z);
- for(const p of hits){const v=worlds[p.i],behind=p.z>0,alpha=behind?.65:1;paintSphere(ctx,v,p.x,p.y,p.r,alpha);
-  if(p.i===hover||p.i===selected){ctx.strokeStyle='rgba(245,222,164,.75)';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(p.x,p.y,p.r+9,0,Math.PI*2);ctx.stroke();}
+ for(const p of hits){const v=worlds[p.i],behind=p.z>=0,g=behind?ctx:frontCtx,alpha=behind?.65:1;paintSphere(g,v,p.x,p.y,p.r,alpha);
+  if(p.i===hover||p.i===selected){g.strokeStyle='rgba(245,222,164,.75)';g.lineWidth=.7;g.beginPath();g.arc(p.x,p.y,p.r+9,0,Math.PI*2);g.stroke();}
  }
  const placed=[];
  for(const p of [...hits].reverse()){
   const v=worlds[p.i],l=labels[p.i],bw=Math.min(145,Math.max(95,v.name.length*(w<700?6.5:8))),bh=w<700?34:39,x=clamp(p.x,bw/2+8,w-bw/2-8),clear=Math.abs(x-w/2)>(w<700?45:64);
   let y=p.y+p.r+12,valid=false;
   if(clear&&p.x>5&&p.x<w-5)for(const candidate of [y,p.y-p.r-bh-12]){const r={x:x-bw/2,y:candidate,w:bw,h:bh};if(r.y<(w<700?140:105)||r.y+bh>h-100)continue;if(placed.some(b=>r.x<b.x+b.w+9&&r.x+r.w+9>b.x&&r.y<b.y+b.h+7&&r.y+r.h+7>b.y))continue;placed.push(r);y=candidate;valid=true;break;}
-  l.style.left=x+'px';l.style.top=y+'px';l.style.opacity=valid?(p.z>0?.48:.97):0;l.style.zIndex=p.z>0?5:10;l.classList.toggle('selected',p.i===hover||p.i===selected);
+  l.style.left=x+'px';l.style.top=y+'px';l.style.opacity=valid?(p.z>=0?.48:.97):0;l.style.zIndex=p.z>=0?5:17;l.classList.toggle('selected',p.i===hover||p.i===selected);
  }
 }
 function frame(time){
@@ -139,7 +143,15 @@ function frame(time){
 }
 function wake(){dirty=true;if(!raf){last=0;raf=requestAnimationFrame(frame);}}
 function pick(x,y){return [...hits].reverse().find(p=>Math.hypot(x-p.x,y-p.y)<Math.max(20,p.r+9))?.i??-1;}
-canvas.addEventListener('pointerdown',e=>{canvas.focus({preventScroll:true});canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});down={x:e.clientX,y:e.clientY,time:performance.now()};dragged=false;velocity=0;canvas.classList.add('dragging');if(pointers.size===2){const a=[...pointers.values()];pinchDistance=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchZoom=zoom;dragged=true;}wake();});
+function startPointer(e){canvas.focus({preventScroll:true});canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});down={x:e.clientX,y:e.clientY,time:performance.now()};dragged=false;velocity=0;canvas.classList.add('dragging');if(pointers.size===2){const a=[...pointers.values()];pinchDistance=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);pinchZoom=zoom;dragged=true;}wake();}
+canvas.addEventListener('pointerdown',startPointer);
+// A planet covering a sign must receive the same tap/drag as its visible edge.
+// Uncovered signs keep their native buttons, keyboard focus and award action.
+$('core-axis').addEventListener('pointerdown',e=>{
+ if(hits.some(p=>p.z<0&&Math.hypot(e.clientX-p.x,e.clientY-p.y)<p.r)){
+  e.preventDefault();e.stopPropagation();startPointer(e);
+ }
+},true);
 canvas.addEventListener('pointermove',e=>{
  if(!pointers.has(e.pointerId)){const hit=pick(e.clientX,e.clientY);if(hit!==hover){hover=hit;canvas.style.cursor=hit<0?'grab':'pointer';wake();}return;}
  const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -163,6 +175,7 @@ function showDetail(focus){localize();returnFocus=focus;$('celestial-detail').sh
 function openWorld(i,focus){
  selected=i;const v=worlds[i];$('celestial-detail').classList.add('route-detail');$('detail-planet').hidden=false;$('detail-medal').hidden=true;$('detail-eyebrow').textContent='КАРТА ПУТЕШЕСТВИЙ';$('detail-title').textContent=v.name;$('detail-description').textContent=v.desc;
  $('detail-progress').innerHTML=`<strong>${v.percent}%</strong> · ${v.done} / ${v.routes.length} маршрутов<br>${starMarkup(v.average,'Среднее: ')} <span>${v.average?v.average.toFixed(1).replace('.',',')+' / 5':'Пока без оценки'}</span><br><small>Среднее лучших результатов пройденных маршрутов</small>`;
+ if(v.tour==='favorites'&&!v.routes.length)$('detail-progress').textContent=runtime.language==='en'?'Tap ♡ beside a route during a flight. Your favorites will appear on this planet.':'Нажми ♡ возле названия маршрута в полёте. Избранные маршруты появятся на этой планете.';
  activeRoutes=v.routes;routeIndex=0;$('manual-routes').hidden=true;$('route-manual').setAttribute('aria-expanded','false');$('route-selector').hidden=!activeRoutes.length;renderDeck();
  const g=$('detail-planet').getContext('2d');g.clearRect(0,0,420,300);paintSphere(g,v,210,144,94);if(v.art){const image=new Image();image.onload=()=>{if(selected===i&&$('celestial-detail').open){g.globalAlpha=.95;g.drawImage(image,304,192,69,69);g.globalAlpha=1;}};image.src=v.art;}
  showDetail(focus);
@@ -193,7 +206,7 @@ syncSpin();resize();
 const escapeMap=event=>{if(event.key==='Escape'&&!$('celestial-detail').open)sendHost('close');};addEventListener('keydown',escapeMap);
 
 // Read-only diagnostics for local geometry/motion review, no player state.
-window.journeyPreview={snapshot:()=>({yaw,tilt,zoom,auto,planets:hits.map(p=>({name:worlds[p.i].name,x:p.x,y:p.y,r:p.r})),centres:[...centres],worlds:worlds.map(v=>({name:v.name,total:v.routes.length,completed:v.done,percent:v.percent,average:v.average})),renderer:'Canvas 2D / perspective projection',dpr})};
+window.journeyPreview={snapshot:()=>({yaw,tilt,zoom,auto,planets:hits.map(p=>({name:worlds[p.i].name,x:p.x,y:p.y,r:p.r,z:p.z,layer:p.z<0?'foreground':'background'})),centres:[...centres],worlds:worlds.map(v=>({name:v.name,total:v.routes.length,completed:v.done,percent:v.percent,average:v.average})),renderer:'Canvas 2D / perspective projection / depth-separated axis',dpr})};
 
 function localize(){
  if(runtime.language!=='en')return;

@@ -16,8 +16,8 @@ export function gardenRankGlyph(rank){return `<span class="rank-raster" data-ran
 
 export class GardenSkillFlight{
  constructor(){this.reset();}
- reset(){this.manual=new Set();this.attempts=0;this.correct=0;this.assisted=false;this.toneEvents=new Map();this.finished=false;}
- observe(model){if(!this.finished&&Object.values(model.filters||{}).some(f=>f?.remaining))this.assisted=true;}
+ reset(){this.manual=new Set();this.attempts=0;this.correct=0;this.assisted=false;this.ratingCap=5;this.toneEvents=new Map();this.finished=false;}
+ observe(model){if(this.finished)return;for(const filter of Object.values(model.filters||{}))if(filter?.remaining){this.assisted=true;this.ratingCap=Math.min(this.ratingCap,[2,3,4].includes(filter.divisor)?4:1);}}
  answer(model,kind,correct){
   if(this.finished||!model.running||model.complete||model.cursor<0||model.currentParts?.[kind]||!model.answerKinds.includes(kind))return;
   this.attempts++;
@@ -36,9 +36,9 @@ export class GardenSkillFlight{
   this.finished=true;
   const route=model.exercise,notes=[...this.toneEvents.values()];
   // Independent answers for every part are necessary; reveals never count.
-  const independent=!this.assisted&&this.manual.size===model.totalParts&&this.attempts>0;
+  const allManual=this.manual.size===model.totalParts&&this.attempts>0,independent=!this.assisted&&allManual;
   return {route:String(route.id||''),difficulty,key:mod12(route.baseTonic??5),date:[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-'),
-   accuracy:this.correct/Math.max(1,this.attempts),laps:run.seconds/Math.max(1,route.sequence.length*model.barSeconds),independent,
+   accuracy:this.correct/Math.max(1,this.attempts),laps:run.seconds/Math.max(1,route.sequence.length*model.barSeconds),independent,ratingCap:allManual?this.ratingCap:2,
    seventh:route.sequence.some(c=>seventh(c.quality)),complex:route.sequence.some(c=>complex(c.quality)),bass:model.separateBass&&route.sequence.some(c=>Number(c.offset)!==Number(c.bassOffset??c.offset)),
    tones:notes.filter(v=>v==='valid').length,toneAttempts:notes.length,toneAccuracy:notes.length?notes.filter(v=>v==='valid').length/notes.length:0};
  }

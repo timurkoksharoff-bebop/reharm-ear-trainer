@@ -114,9 +114,11 @@ export class GardenPad{
       pianoN:[['piano-n-c5.wav',72]]
     };
     this.transients=new Set();this.sounding=null;
+    this.backgrounded=false;this.backgroundTimer=0;this.lifecycleGain=null;
     this.samplesReady=deferSamplesUntilReady?new Promise(resolve=>addEventListener('garden-ready',()=>resolve(),{once:true})):Promise.resolve();
   }
   async unlock(){
+    if(globalThis.document?.hidden)return;
     if(!this.context){
       const Engine=window.AudioContext||window.webkitAudioContext;
       if(!Engine)throw Error('В этом браузере нет Web Audio.');
@@ -128,17 +130,34 @@ export class GardenPad{
       this.eqHigh=c.createBiquadFilter();this.eqHigh.type='highshelf';this.eqHigh.frequency.value=3800;
       this.limiter=c.createDynamicsCompressor();this.limiter.threshold.value=-5;this.limiter.knee.value=5;this.limiter.ratio.value=8;this.limiter.attack.value=.004;this.limiter.release.value=.14;
       this.master=c.createGain();this.master.gain.value=this.masterVolume;
-      this.eqLow.connect(this.eqMid);this.eqMid.connect(this.eqHigh);this.eqHigh.connect(this.limiter);this.limiter.connect(this.master);this.master.connect(c.destination);
+      this.lifecycleGain=c.createGain();this.lifecycleGain.gain.value=1;
+      this.eqLow.connect(this.eqMid);this.eqMid.connect(this.eqHigh);this.eqHigh.connect(this.limiter);this.limiter.connect(this.lifecycleGain);this.lifecycleGain.connect(this.master);this.master.connect(c.destination);
       this.cleanOutput.connect(this.eqLow);
       this.filter=c.createBiquadFilter();this.filter.type='lowpass';this.filter.Q.value=.72;
-      this.delay=c.createDelay(1.4);this.delayFeedback=c.createGain();
-      const wet=c.createGain();wet.gain.value=.24;
       this.output.connect(this.filter);this.filter.connect(this.eqLow);
-      this.filter.connect(this.delay);this.delay.connect(this.delayFeedback);this.delayFeedback.connect(this.delay);this.delay.connect(wet);wet.connect(this.eqLow);
+      this.resetEcho();
       this.applyEqualizer();
       this.applyPreset(this.preset);
     }
+    if(this.backgrounded){
+      clearTimeout(this.backgroundTimer);this.backgroundTimer=0;this.stop(true);this.resetEcho();this.applyPreset(this.preset);this.backgrounded=false;
+    }
     if(this.context.state!=='running')await this.context.resume();
+    if(!this.backgrounded&&this.lifecycleGain){const at=this.context.currentTime;this.lifecycleGain.gain.cancelScheduledValues(at);this.lifecycleGain.gain.setTargetAtTime(1,at,.025);}
+  }
+  resetEcho(){
+    const c=this.context;if(!c||!this.filter)return;
+    if(this.delay){try{this.filter.disconnect(this.delay);this.delay.disconnect();this.delayFeedback.disconnect();this.wet.disconnect();}catch{}}
+    this.delay=c.createDelay(1.4);this.delayFeedback=c.createGain();this.wet=c.createGain();this.wet.gain.value=.24;
+    this.filter.connect(this.delay);this.delay.connect(this.delayFeedback);this.delayFeedback.connect(this.delay);this.delay.connect(this.wet);this.wet.connect(this.eqLow);
+  }
+  backgroundSilence(){
+    if(this.backgrounded)return;
+    this.backgrounded=true;this.generation++;const c=this.context;if(!c)return;
+    const gain=this.lifecycleGain?.gain,at=c.currentTime;
+    if(gain){if(gain.cancelAndHoldAtTime)gain.cancelAndHoldAtTime(at);else{gain.cancelScheduledValues(at);gain.setValueAtTime(gain.value,at);}gain.linearRampToValueAtTime(0,at+.035);}
+    // The audio thread performs the fade even if background timers are throttled.
+    this.backgroundTimer=setTimeout(()=>{this.backgroundTimer=0;if(!this.backgrounded)return;this.stop(true);if(c.state==='running')c.suspend().catch(()=>{});},60);
   }
   async loadSampleBank(sampleSet){
     if(!this.sampleBanks[sampleSet])this.sampleBanks[sampleSet]=(async()=>{
@@ -180,7 +199,7 @@ export class GardenPad{
   async play(chord,tonicPitchClass=5,{arpeggio=false,arrangement={},barSeconds=4}={}){
     const generation=++this.generation;
     await this.unlock();
-    if(generation!==this.generation)return;
+    if(generation!==this.generation||this.backgrounded||globalThis.document?.hidden)return;
     const c=this.context,p=PRESETS[this.preset];this.lastArrangement=[];
     const sampleBank=p.engine==='sample'?await this.loadSampleBank(p.sampleSet):null;
     if(generation!==this.generation)return;
@@ -262,7 +281,9 @@ export class GardenPad{
     this.voices.push(voice);
   }
   async feedback(correct,{complete=false,kind='degree',value=0}={}){
+    const generation=this.generation;
     await this.unlock();
+    if(generation!==this.generation||this.backgrounded||globalThis.document?.hidden)return 0;
     const c=this.context,at=c.currentTime+.006,group=c.createGain(),degree=Number(value),isDegree=kind==='degree';
     const voices=correct
       ?isDegree
@@ -288,11 +309,12 @@ export class GardenPad{
       oscillator.onended=()=>{try{oscillator.disconnect();partial.disconnect();}catch{}};
       return oscillator;
     });
-    setTimeout(()=>{try{group.disconnect();}catch{}},Math.ceil((duration+.08)*1000));
+    const stop=()=>{for(const oscillator of oscillators){try{oscillator.stop();oscillator.disconnect();}catch{}}try{group.disconnect();}catch{}this.transients.delete(stop);};
+    this.transients.add(stop);setTimeout(stop,Math.ceil((duration+.08)*1000));
     return oscillators.length;
   }
   tensionNote(midi,detail={}){
-    const c=this.context;if(!c||c.state!=='running'||!Number.isFinite(midi))return 0;
+    const c=this.context;if(!c||c.state!=='running'||this.backgrounded||!Number.isFinite(midi))return 0;
     const at=c.currentTime+.004,group=c.createGain(),sources=[];
     group.gain.setValueAtTime(.0001,at);group.gain.exponentialRampToValueAtTime(.075,at+.008);group.gain.exponentialRampToValueAtTime(.0001,at+.82);group.connect(this.cleanOutput);
     const stop=()=>{for(const source of sources){try{source.stop();source.disconnect();}catch{}}try{group.disconnect();}catch{}this.transients.delete(stop);};

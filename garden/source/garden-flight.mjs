@@ -1,3 +1,9 @@
+import {mountGardenSkillAtlas} from './garden-skill-atlas.mjs';
+import {gardenSkillAtlasData} from './garden-skill-atlas-data.mjs';
+import {mountGardenModeLayoutEditor} from './garden-mode-layout.mjs';
+import {GardenModeAccess} from './garden-mode-access.mjs';
+import {GardenModeDemo} from './garden-mode-demo.mjs';
+import {GardenProfessorTeacher,mountGardenProfessorTeacher} from './garden-professor-teacher.mjs';
 import {createLanguage} from './garden-language.mjs';
 import {createGuide,guideItemName,guideItemCopy} from './garden-guide.mjs';
 import {createTrial} from './garden-trial.mjs';
@@ -10,7 +16,7 @@ import {createGardenLife,drawGardenAssistGlyph,GARDEN_RESOURCES,GARDEN_ITEMS} fr
 import {createGardenRewards} from './garden-rewards.mjs';
 import {GARDEN_ARRANGEMENTS,drawGardenArrangementFlower} from './garden-arrangement.mjs';
 import {GardenResonance,GARDEN_TENSIONS,GARDEN_STUDENT_TENSIONS,gardenTensionVerdict} from './garden-resonance.mjs';
-import {GardenModesFlight,GARDEN_MODES,GARDEN_MODE_FAMILIES,gardenModeById,gardenModeFormula,gardenModeExplanation} from './garden-modes.mjs';
+import {GardenModesFlight,GARDEN_MODES,GARDEN_MODE_FAMILIES,gardenModeById,gardenModeFormula,gardenModeExplanation,gardenModeVerdict,gardenModeTensionVerdict} from './garden-modes.mjs';
 import {GardenRun,GardenProfessorCombos} from './garden-run.mjs';
 import {GardenSkillFlight,GardenAchievements,GARDEN_RANKS,gardenRankGlyph} from './garden-achievements.mjs';
 import {mountGardenAchievements} from './garden-achievements-view.mjs';
@@ -54,17 +60,21 @@ const professorCombos=new GardenProfessorCombos({onCombo:showProfessorCombo});
 let comboNotice=null;
 const skillFlight=new GardenSkillFlight();
 let achievementStorage=null;try{achievementStorage=localStorage;}catch{}
+const professorTeacher=new GardenProfessorTeacher({storage:achievementStorage});
+let professorWorkshop,workshopWasRunning=false,modeDemo,demoReturn=null,modeLayoutEditor,skillAtlas,atlasWasRunning=false;
 const achievementStore=new GardenAchievements({storage:achievementStorage});
+const testingQuery=new URLSearchParams(location.search),localTesting=['127.0.0.1','localhost','[::1]'].includes(location.hostname)&&testingQuery.get('testing')!=='0'&&(testingQuery.get('testing')==='1'||matchMedia('(pointer:fine)').matches);
+const modeAccess=new GardenModeAccess({storage:achievementStorage,flights:achievementStore.snapshot().flights,testing:localTesting});
 let achievements,journey,journeyReturn=null;
 const journeyRatings=new GardenJourneyRatings(achievementStorage);
 const toneResonance=new GardenResonance({onTone:(midi,detail)=>{
- const position=mission?.snapshot().cursor??-1;run.tone(detail,position);skillFlight.tone(detail,position);pad.tensionNote(midi,detail);
- if(difficulty==='professor'){syncProfessorCombos();modesFlight.recordTension(detail.label,pad.sounding,{audioTime:pad.context?.currentTime,boundary:detail.boundary,tensionMode:mission?.snapshot().exercise.tensionMode});professorCombos.tone(detail);}
+ const position=mission?.snapshot().cursor??-1;if(!modeDemo?.active){run.tone(detail,position);skillFlight.tone(detail,position);}pad.tensionNote(midi,detail);
+ if(difficulty==='professor'&&!modeDemo?.active){professorTeacher.record({kind:'tension',id:detail.label,chord:pad.sounding?.chord,position,verdict:detail.verdict==='valid'?'correct':detail.verdict,boundary:detail.boundary,reason:'tension'});syncProfessorCombos();modesFlight.recordTension(detail.label,pad.sounding,{audioTime:pad.context?.currentTime,boundary:detail.boundary,tensionMode:mission?.snapshot().exercise.tensionMode});professorCombos.tone(detail);}else if(difficulty==='professor'&&modeDemo?.active)modesFlight.recordTension(detail.label,pad.sounding,{audioTime:pad.context?.currentTime,boundary:detail.boundary});
 }});
-const modesFlight=new GardenModesFlight({onOffer:offerProfessorPair,onScale:event=>{
+const modesFlight=new GardenModesFlight({preference:mode=>professorTeacher.weight(mode),onOffer:offerProfessorPair,onScale:event=>{
  if(!event.boundary&&event.kind==='mode')pad.previewScale(event.notes,{remaining:event.remaining});
- const position=mission?.snapshot().cursor??-1;event.scoreDelta=difficulty==='professor'?run.mode(event,position):0;renderModeReadout(event);
- if(difficulty==='professor'){syncProfessorCombos();professorCombos.mode(event);}
+ const position=mission?.snapshot().cursor??-1;event.scoreDelta=difficulty==='professor'&&!modeDemo?.active?run.mode(event,position):0;if(modeDemo?.active){event.points=0;modeReadout.hidden=true;const m=gardenModeById(event.modeId),en=language.get()==='en';modeDemo.setFeedback((en?m.en:m.ru).split(' / ')[0]+' · '+(event.verdict==='compatible'?(en?'fits':'сочетается'):en?'colour audition':'слушаем окраску'));}else renderModeReadout(event);
+ if(difficulty==='professor'&&!modeDemo?.active){professorTeacher.record({kind:'mode',id:event.modeId,chord:pad.sounding?.chord,position,verdict:event.verdict,boundary:event.boundary,reason:event.reason,conflicts:event.conflicts});syncProfessorCombos();professorCombos.mode(event);}
 }});
 const resonance=toneResonance;
 const professorRatings=new GardenJourneyRatings(achievementStorage,'ear-yoga-professor-route-stars.v1');
@@ -152,7 +162,8 @@ function offerProfessorPair(offer){
 }
 const professorSettings=document.createElement('fieldset');professorSettings.id='professor-settings';professorSettings.hidden=true;professorSettings.dataset.userContent='';$('settings-panel').append(professorSettings);
 let modeFamilyChoices=GARDEN_MODE_FAMILIES.map(f=>f.id);try{const saved=JSON.parse(localStorage.getItem('ear-yoga-professor-families.v1'));if(Array.isArray(saved))modeFamilyChoices=saved.filter(id=>GARDEN_MODE_FAMILIES.some(f=>f.id===id));}catch{}modesFlight.setFamilies(modeFamilyChoices);
-function renderProfessorSettings(){const en=language.get()==='en';professorSettings.innerHTML='<legend>'+(en?'Professor · scale laboratory':'Профессор · лаборатория ладов')+'</legend><p>'+(en?'Tensions refill O₂; scales use NAV. Clear scale/tone conflicts cost 15 NAV; compatible scales give 6/9/12 NAV by tier, plus 6/10/14 score points. Flying scales unlock after one third of the route is fully solved. Contextual cases are penalty-free. Choices reset with each sounding chord. Separate ratings.':'Надстройки пополняют O₂; лады отвечают за NAV. Явный конфликт лада с выбранным тоном: −15 NAV; совместимый лад: +6/9/12 NAV по уровню и +6/10/14 очков. Лады появляются после полностью разгаданной трети маршрута. Спорные сочетания без штрафа. Выбор действует до смены звучащего аккорда. Рейтинг отдельный.')+'</p>';for(const family of GARDEN_MODE_FAMILIES){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=modesFlight.families.has(family.id);input.dataset.modeFamily=family.id;label.append(input,document.createTextNode(en?family.en:family.ru));professorSettings.append(label);input.onchange=()=>{modesFlight.setFamilies([...professorSettings.querySelectorAll('input:checked')].map(e=>e.dataset.modeFamily));try{localStorage.setItem('ear-yoga-professor-families.v1',JSON.stringify([...modesFlight.families]));}catch{}};}const list=document.createElement('details'),summary=document.createElement('summary');summary.textContent=(en?'Scale names and formulas · ':'Названия и формулы · ')+GARDEN_MODES.length;list.append(summary);for(const mode of GARDEN_MODES){const row=document.createElement('p');row.textContent=mode.label+' — '+(en?mode.en:mode.ru)+' · '+gardenModeFormula(mode);list.append(row);}professorSettings.append(list);}
+function renderProfessorSettings(){const en=language.get()==='en';professorSettings.innerHTML='<legend>'+(en?'Master · scale laboratory':'Мастер · лаборатория ладов')+'</legend><p>'+(en?'Tensions refill O₂; scales use NAV. Clear scale/tone conflicts cost 15 NAV; compatible scales give 6/9/12 NAV by tier, plus 6/10/14 score points. Flying scales unlock after one third of the route is fully solved. Contextual cases are penalty-free. Choices reset with each sounding chord. Separate ratings.':'Надстройки пополняют O₂; лады отвечают за NAV. Явный конфликт лада с выбранным тоном: −15 NAV; совместимый лад: +6/9/12 NAV по уровню и +6/10/14 очков. Лады появляются после полностью разгаданной трети маршрута. Спорные сочетания без штрафа. Выбор действует до смены звучащего аккорда. Рейтинг отдельный.')+'</p>';for(const family of GARDEN_MODE_FAMILIES){const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=modesFlight.families.has(family.id);input.dataset.modeFamily=family.id;label.append(input,document.createTextNode(en?family.en:family.ru));professorSettings.append(label);input.onchange=()=>{modesFlight.setFamilies([...professorSettings.querySelectorAll('input:checked')].map(e=>e.dataset.modeFamily));try{localStorage.setItem('ear-yoga-professor-families.v1',JSON.stringify([...modesFlight.families]));}catch{}};}const list=document.createElement('details'),summary=document.createElement('summary');summary.textContent=(en?'Scale names and formulas · ':'Названия и формулы · ')+GARDEN_MODES.length;list.append(summary);for(const mode of GARDEN_MODES){const row=document.createElement('p');row.textContent=mode.label+' — '+(en?mode.en:mode.ru)+' · '+gardenModeFormula(mode);list.append(row);}professorSettings.append(list);const learn=document.createElement('button');learn.type='button';learn.id='professor-learn';learn.textContent=en?'Scale workshop & flight review':'Мастерская ладов и разбор полётов';learn.onclick=()=>professorWorkshop.open();professorSettings.append(learn);}
+
 queueMicrotask(renderProfessorSettings);
 function resize(){
   s.width=innerWidth;s.height=innerHeight;dpr=Math.min(devicePixelRatio||1,renderScale);
@@ -209,8 +220,7 @@ function collisionThud(){
 }
 function renderMission(model){
   requestAnimationFrame(layoutFlightTools);
-  skillFlight.observe(model);
-  run.observe(model);renderRun();
+  if(!modeDemo?.active){skillFlight.observe(model);run.observe(model);}renderRun();
   renderTutorial(model);
   const chainPosition=`${model.round}:${model.cursor}`;
   if(chainView.route!==model.exercise.id||chainView.position!==chainPosition)chainView={route:model.exercise.id,position:chainPosition,page:null};
@@ -257,7 +267,7 @@ function renderMission(model){
   const mayAnswer=model.running&&model.cursor>=0&&!solved.has(model.cursor),prototypePalette=['expanded','compact'].includes(document.body.dataset.paletteLayout),qualities=gardenAvailableAnswers(model.exercise,{expanded:prototypePalette,rootMode:model.rootMode});
   document.body.classList.toggle('student-palette',!prototypePalette);
   const visibleDegrees=gardenFilteredChoices('degree',model.current,model.filters?.degree,undefined,{rootMode:model.rootMode}),visibleQualities=gardenFilteredChoices('quality',model.current,model.filters?.quality,qualities,{rootMode:model.rootMode});
-  const answerPart=(kind,value)=>{const before=mission.snapshot(),target=before.current,correct=kind==='degree'?Number(value)===(before.rootMode?gardenRootOffset(target):gardenBassOffset(target)):kind==='bass'?Number(value)===gardenBassOffset(target):gardenCanonicalQuality(value)===gardenQualityAnswer(target,{rootMode:before.rootMode});skillFlight.answer(before,kind,correct);if(difficulty==='professor'&&before.running&&before.cursor>=0&&!before.currentParts[kind]&&syncProfessorCombos(before)){const independent=!Object.values(before.filters||{}).some(Boolean)&&before.navigation?.revealedPosition!==before.cursor;professorCombos.answer({kind,correct,independent,positionComplete:correct&&professorCombos.snapshot().requiredKinds.every(k=>k===kind||before.currentParts[k])});}const result=mission.answerPart(kind,value);if(!result.ignored){if(!result.correct){run.misses++;gardenLife.wrongAnswer(kind,value,qualities);renderVitals();}gardenRewards.answer(result,kind,{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});}};
+  const answerPart=(kind,value)=>{if(modeDemo?.active)return;const before=mission.snapshot(),target=before.current,correct=kind==='degree'?Number(value)===(before.rootMode?gardenRootOffset(target):gardenBassOffset(target)):kind==='bass'?Number(value)===gardenBassOffset(target):gardenCanonicalQuality(value)===gardenQualityAnswer(target,{rootMode:before.rootMode});skillFlight.answer(before,kind,correct);if(difficulty==='professor'&&before.running&&before.cursor>=0&&!before.currentParts[kind]&&syncProfessorCombos(before)){const independent=!Object.values(before.filters||{}).some(Boolean)&&before.navigation?.revealedPosition!==before.cursor;professorCombos.answer({kind,correct,independent,positionComplete:correct&&professorCombos.snapshot().requiredKinds.every(k=>k===kind||before.currentParts[k])});}const result=mission.answerPart(kind,value);if(!result.ignored){if(difficulty==='professor')professorTeacher.record({kind:'answer',id:kind+':'+String(value),chord:target,position:before.cursor,verdict:result.correct?'correct':'wrong',assisted:Object.values(before.filters||{}).some(Boolean),reason:kind});if(!result.correct){run.misses++;gardenLife.wrongAnswer(kind,value,qualities);renderVitals();}gardenRewards.answer(result,kind,{x:s.x/s.width,y:Math.max(.18,s.y/s.height-.15)});pad.feedback(result.correct,{complete:result.positionComplete||result.complete,kind,value}).catch(()=>{});}};
   document.body.classList.toggle('teacher-mode',Boolean(model.separateBass));
   document.querySelector('.degrees-panel').setAttribute('aria-label',model.rootMode?'Корень аккорда относительно тоники':'Бас относительно тоники');
   $('bass-panel').hidden=!model.bassPanelNeeded;
@@ -346,7 +356,7 @@ function showGardenStart(state='menu'){
   // Keep the approved wordmark markup and typography from the cover template.
   $('start-note').textContent=state==='complete'?`Маршрут «${routeTitle(currentRoute)}» собран. Сад открыл следующий уровень.`:'Сад усложняет маршруты постепенно и запоминает пройденные уровни.';
   $('start-random').querySelector('strong').textContent=state==='complete'?'Следующий полёт':'Начать полёт';
-  updateAdmissionCard();
+  updateAdmissionCard();renderModeAccess();
   document.querySelector('.start-route-details')?.removeAttribute('open');
   updateProgressCard();ui();
 }
@@ -357,13 +367,31 @@ function updateAdmissionCard(){
     const admission=gardenAdmissionState(progress);
     $('start-random').querySelector('strong').textContent=admission.finished?'Повторить обучение':'Учебный полёт';
     $('start-random').querySelector('small').textContent=admission.finished?'Обучение пройдено':`${admission.completed.length+1} / ${admission.total} · ${admission.next.sequence.length} аккорда`;
-    $('start-note').textContent=admission.finished?'Вы зачислены в Space Music College. Продолжайте в режиме «Студент».':'Три коротких учебных маршрута. Пройдите их, чтобы поступить в Space Music College.';
+    $('start-note').textContent=admission.finished?'Вы зачислены в Space Music College. Продолжайте в режиме «Пилот».':'Три коротких учебных маршрута. Пройдите их, чтобы поступить в Space Music College.';
   }else $('start-random').querySelector('small').textContent='Случайный маршрут';
 }
-function selectDifficulty(name){
+function renderModeNames(){const names=language.get()==='en'?{light:'Cadet',medium:'Pilot',hard:'Navigator',professor:'Master',guru:'Guru'}:{light:'Курсант',medium:'Пилот',hard:'Штурман',professor:'Мастер',guru:'Гуру'};for(const button of document.querySelectorAll('.difficulty-picker button[data-difficulty]')){const label=button.querySelector('.mode-live-name');if(label)label.textContent=names[button.dataset.difficulty];}}
+function renderModeAccess(){
+ const en=language?.get()==='en';for(const button of document.querySelectorAll('.difficulty-picker button[data-difficulty]')){const mode=button.dataset.difficulty,locked=!modeAccess.can(mode);button.classList.toggle('mode-locked',locked&&mode!=='guru');button.setAttribute('aria-disabled',String(locked));if(locked&&mode!=='guru')button.title=(en?'Locked · preview available. ':'Закрыт · доступен просмотр. ')+modeAccess.requirements(mode,en);else if(mode!=='guru')button.removeAttribute('title');}
+}
+let modeGateDialog;
+function showModeGate(mode){
+ if(!modeGateDialog){modeGateDialog=document.createElement('dialog');modeGateDialog.id='mode-gate';modeGateDialog.dataset.userContent='';document.body.append(modeGateDialog);}
+ const en=language.get()==='en',label=mode==='hard'?(en?'Navigator':'Штурман'):(en?'Master':'Мастер');modeGateDialog.replaceChildren();const h=document.createElement('h2');h.textContent=label;const p=document.createElement('p');p.textContent=modeAccess.requirements(mode,en);const fine=document.createElement('p');fine.textContent=en?'Cadet training is optional. Pilot is available immediately. Full answer reveals and demo flights do not count.':'Курсанта проходить необязательно: Пилот доступен сразу. Полное раскрытие ответов и демонстрации в допуск не засчитываются.';const actions=document.createElement('div');for(const [text,action]of [[en?'Watch a flight':'Посмотреть полёт',()=>{modeGateDialog.close();startModeDemo(mode);}],[en?'Practise Reharm':'Тренировать Reharm',()=>{modeGateDialog.close();selectDifficulty(mode==='hard'?'medium':modeAccess.can('hard')?'hard':'medium');s.tour='reharm';selectChapter(mode==='hard'?2:1);openJourney();}],[en?'Close':'Закрыть',()=>modeGateDialog.close()]]){const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;actions.append(b);}modeGateDialog.append(h,p,fine,actions);modeGateDialog.showModal();
+}
+async function startModeDemo(mode){
+ if(trialExpired||modeDemo.active)return;await studio.refresh();const route=(studio.routes||[]).find(r=>r.id==='cinematic-journeying'&&r.builtin)||(studio.routes||[]).find(r=>r.id==='builtin-chill-03'&&r.builtin);if(!route)return;
+ demoReturn={difficulty,route:currentRoute,tour:s.tour};const a=modeAccess.snapshot(),en=language.get()==='en',requirements=mode==='hard'?(en?`Unlock: Reharm · Pilot · ${a.teacherDone}/${a.teacherTotal}`:`Допуск: Reharm · Пилот · ${a.teacherDone}/${a.teacherTotal}`):(en?`Unlock: Reharm BASS · Navigator · ${a.professorDone}/${a.professorTotal}`:`Допуск: Reharm BASS · Штурман · ${a.professorDone}/${a.professorTotal}`);modeDemo.start({difficulty:mode,route,requirements});document.body.classList.add('mode-demo-active');selectDifficulty(mode,{preview:true});hideGardenStart();setGardenMenu(false,{resume:false});$('mission-complete').hidden=true;$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();bindMission(route);try{await pad.unlock();if(!modeDemo.active)return;s.paused=false;mission.start();ui();}catch{stopModeDemo();}
+}
+function stopModeDemo(){
+ if(!demoReturn)return;modeDemo.stop();mission?.pause();pad.stop(true);document.body.classList.remove('mode-demo-active');const back=demoReturn;demoReturn=null;selectDifficulty(back.difficulty);s.tour=back.tour;if(back.route)bindMission(back.route);showGardenStart();
+}
+document.addEventListener('click',event=>{if(!modeDemo?.active)return;if(event.target.closest('#mode-demo,#mission-toggle'))return;event.preventDefault();event.stopImmediatePropagation();},true);
+function selectDifficulty(name,{preview=false}={}){
   if(!['light','medium','hard','professor'].includes(name))return;
+  if(!modeAccess.can(name)&&!(preview&&modeDemo?.active)){showModeGate(name);return;}
   difficulty=name;document.body.dataset.difficulty=difficulty;document.body.classList.toggle('teacher-mode',['hard','professor'].includes(difficulty));document.body.classList.toggle('professor-mode',difficulty==='professor');$('professor-settings').hidden=difficulty!=='professor';$('mode-readout').hidden=true;gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
-  $('start-difficulty-note').textContent=difficulty==='professor'?'Профессор: надстройки и O₂, лады и NAV; корень, тип и слеш-бас. Отдельный рейтинг.':difficulty==='light'?'Три учебных маршрута по 3–4 аккорда, скорость студента и неиссякаемые запасы.':'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.';
+  $('start-difficulty-note').textContent=difficulty==='professor'?'Мастер: надстройки и O₂, лады и NAV; корень, тип и слеш-бас. Отдельный рейтинг.':difficulty==='light'?'Три учебных маршрута по 3–4 аккорда, скорость пилота и неиссякаемые запасы.':'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.';
   for(const item of document.querySelectorAll('.difficulty-picker button[data-difficulty]'))item.setAttribute('aria-pressed',String(item.dataset.difficulty===difficulty));
   if(difficulty==='light')s.tour='reharm';
   for(const item of document.querySelectorAll('[data-tour]')){item.disabled=difficulty==='light'&&item.dataset.tour!=='reharm';item.setAttribute('aria-pressed',String(item.dataset.tour===s.tour));item.classList.toggle('selected',item.dataset.tour===s.tour);}
@@ -393,7 +421,7 @@ async function openJourney(){
  journeyReturn={fromStart:!$('garden-start').hidden,running:Boolean(mission?.snapshot().running)&&!s.paused};mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();await studio.refresh();journey.open();ui();
 }
 async function randomGardenRoute({unseenOnly=false}={}){
-  if(difficulty==='light'){const admission=gardenAdmissionState(progress);if(admission.next)launchRoute(admission.next);else $('mission-complete-copy').textContent='Абитуриентский маршрут завершён. Переключись на «Студент», чтобы открыть новые полёты.';return;}
+  if(difficulty==='light'){const admission=gardenAdmissionState(progress);if(admission.next)launchRoute(admission.next);else $('mission-complete-copy').textContent='Курсантский маршрут завершён. Переключись на «Пилот», чтобы открыть новые полёты.';return;}
   await studio.refresh();
   const unlockedChapter=Math.min(16,1+Math.floor((progress.level-1)/2)),maxLength=Math.min(18,4+Math.floor((progress.level-1)/2));
   const book=allBookRoutes(unlockedChapter),tour=(studio.routes||[]).filter(route=>route.sequence.length<=maxLength);
@@ -405,21 +433,28 @@ async function randomGardenRoute({unseenOnly=false}={}){
   const route=pool[Math.floor(Math.random()*pool.length)]||gardenExercisesForChapter(1)[0];
   launchRoute(route);
 }
-async function launchRoute(route){
+async function launchRoute(route,{skipLesson=false}={}){
   if(!route||trialExpired)return;
+  if(!modeAccess.can(difficulty)){showModeGate(difficulty);return;}
+  if(difficulty==='professor'&&!skipLesson&&professorTeacher.data.preflight){const topic=professorTeacher.recommendation(route.sequence,[...modesFlight.families]);if(topic&&!professorTeacher.data.seenLessons.includes(topic)){professorWorkshop.open({modeId:topic,next:()=>launchRoute(route,{skipLesson:true})});return;}}
   if(difficulty==='light'&&!GARDEN_ADMISSION_ROUTES.some(item=>item.id===route.id))return;
   const id=routeIdentity(route);if(!progress.seenRouteIds.includes(id)){progress.seenRouteIds.push(id);saveProgress();}
   gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
-  hideGardenStart();$('mission-complete').hidden=true;setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);
+  hideGardenStart();$('mission-complete').hidden=true;setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);if(difficulty==='professor')professorTeacher.beginFlight(routeIdentity(route));
   if(!wasTutorialDismissed()){guide.open({resume:true});return;}
   try{await pad.unlock();if(trialExpired)return;s.paused=false;mission.start();world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}catch(error){$('answer-feedback').textContent=error.message;s.paused=false;ui();}
 }
+function layoutModeDemo(){
+ if(!modeDemo?.active)return;const hud=$('mode-demo');if(!hud)return;const box=selector=>{const e=document.querySelector(selector);return e?.getClientRects().length?e.getBoundingClientRect():null;};const route=box('.route-panel'),root=box('.degrees-panel'),bass=box('#bass-panel'),answers=box('.answers-panel');if(!route)return;
+ const visibleRects=selector=>[...document.querySelectorAll(selector)].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>e.getBoundingClientRect());const bassRight=Math.max(bass?.right??0,...visibleRects('[data-bass-degree]').map(r=>r.right)),qualityLeft=Math.min(answers?.left??innerWidth,...visibleRects('[data-quality]').map(r=>r.left));const left=Math.max(12,bassRight+8),right=Math.min(innerWidth-12,qualityLeft-8),width=Math.max(80,Math.min(260,right-left));hud.style.left=((left+right)/2)+'px';hud.style.width=width+'px';const top=route.bottom+10;hud.style.setProperty('--mode-demo-top',`${top}px`);
+}
 function layoutFlightTools(){
+ layoutModeDemo();
  if(difficulty!=='professor')return;const route=document.querySelector('.route-panel');if(!route?.getClientRects().length)return;const edge=route.getBoundingClientRect().bottom;document.body.style.setProperty('--professor-combo-top',`${Math.max(112,Math.min(innerHeight-125,edge+12))}px`);document.body.style.setProperty('--flight-tools-top',`${Math.max(128,Math.min(innerHeight-146,edge+12))}px`);
 }
 function layoutCompletion(){
   layoutFlightTools();
-  const panel=$('mission-complete');if(panel.hidden)return;
+  const panel=$('mission-complete');if(panel.hidden)return;const review=$('professor-review');if(review)review.hidden=difficulty!=='professor';
   const box=selector=>{const node=document.querySelector(selector);if(!node||!node.getClientRects().length)return null;const r=node.getBoundingClientRect();return r.width&&r.height?r:null;};
   const bass=box('#bass-panel'),tools=box('.flight-tools summary'),answers=box('.answers-panel'),extensions=box('#quality-advanced[open] #quality-advanced-options');
   const left=Math.max(12,(bass?.right??0)+10,(tools?.right??0)+10);
@@ -431,6 +466,7 @@ function layoutCompletion(){
   panel.style.setProperty('--completion-height',`${Math.max(1,bottom-top)}px`);
 }
 function completeGardenLevel(){
+  if(modeDemo?.active){completionHandled=true;return;}
   completionHandled=true;s.paused=false;modeReadout.hidden=true;comboToast.hidden=true;
   const result=run.snapshot();
   const previous=runBest,newRecord=!previous||result.score>previous.score,delta=previous?result.score-previous.score:0;
@@ -446,6 +482,7 @@ function completeGardenLevel(){
   const firstClear=id&&!progress.completed.includes(id);if(firstClear){progress.completed.push(id);progress.level+=1;}progress.lastRouteId=id;
   const enrolled=difficulty==='light'&&recordGardenAdmission(progress,id);saveProgress();
   const skill=skillFlight.finish(mission.snapshot(),result,{difficulty}),official=allBookRoutes().some(route=>route.id===id)||(studio?.routes||[]).some(route=>route.id===id&&route.builtin);
+  const accessResult=modeAccess.record(skill,{official});renderModeAccess();
   const previousStars=activeRatings().best(id),stars=activeRatings().record(id,skill),rating=gardenRouteRatingText(skill,{best:stars,previous:previousStars,en:language.get()==='en'});
   $('completion-rating').open=false;$('completion-rating-summary').textContent=rating.summary;$('completion-rating-detail').textContent=rating.detail;
   const ranks=achievementStore.record(skill,{eligible:official&&currentRoute.sequence.length>=4}),mandalas=achievementStore.syncMandalas(achievementGroups(),progress.completed),rank=GARDEN_RANKS.find(r=>r.id===ranks.at(-1));
@@ -453,6 +490,7 @@ function completeGardenLevel(){
   medal.classList.toggle('chakra-earned',Boolean(rank));medal.style.setProperty('--chakra',rank?.color||'#efd28c');medal.innerHTML=rank?gardenRankGlyph(rank):medal.dataset.original;
   if(rank)$('completion-title').textContent=(language?.get()==='en'?'Rank earned: ':'Открыт уровень: ')+(language?.get()==='en'?rank.en:rank.ru);
   else if(mandalas.length)$('completion-title').textContent=language?.get()==='en'?'Mandala completed':'Мандала пройдена';
+  if(accessResult.secret||accessResult.teacher||accessResult.professor)$('completion-title').textContent=language.get()==='en'?(accessResult.secret?'Secret passage · all available modes unlocked':accessResult.professor?'Master unlocked':'Navigator unlocked'):(accessResult.secret?'Тайный проход · все доступные режимы открыты':accessResult.professor?'Открыт Мастер':'Открыт Штурман');
   $('mission-complete-copy').textContent=routeTitle(currentRoute);$('mission-next-route').disabled=false;$('mission-next-route').textContent='Следующий маршрут →';$('mission-complete').hidden=false;layoutCompletion();
   if(enrolled){$('enrollment').hidden=false;$('enrollment-student').focus({preventScroll:true});}
 }
@@ -500,6 +538,7 @@ $('library-open').addEventListener('click',()=>studio.open());$('studio-close').
 $('mission-toggle').addEventListener('click',async()=>{const model=mission.snapshot();if(model.running){s.paused=true;keys.clear();mission.pause({preserveHold:true});pad.stop(true);ui();return;}try{await pad.unlock();s.paused=false;mission.start();ui();}catch(error){$('answer-feedback').textContent=error.message;}});
 const dismissCompletion=()=>{$('mission-complete').hidden=true;world.focus({preventScroll:true});};
 $('completion-dismiss').addEventListener('click',dismissCompletion);
+const reviewFlight=document.createElement('button');reviewFlight.type='button';reviewFlight.id='professor-review';reviewFlight.textContent='Разбор полёта';reviewFlight.onclick=()=>professorWorkshop.open({report:true});$('mission-complete').append(reviewFlight);
 $('completion-menu').addEventListener('click',()=>showGardenStart());
 const completionBounds=new ResizeObserver(layoutCompletion);
 for(const selector of ['.route-panel','.degrees-panel','.answers-panel','#bass-panel','#quality-advanced-options']){const node=document.querySelector(selector);if(node)completionBounds.observe(node);}
@@ -531,11 +570,13 @@ $('artifact-belt').addEventListener('click',event=>{if(event.target.closest('[da
 for(const button of document.querySelectorAll('[data-pad]'))button.addEventListener('click',()=>{pad.applyPreset(button.dataset.pad);for(const item of document.querySelectorAll('[data-pad]'))item.setAttribute('aria-pressed',String(item===button));});
 const audioTuning=[['garden-volume','smc-garden-volume',value=>{pad.setMasterVolume(value/100);return `${value}%`;},120],['garden-eq-low','smc-garden-eq-low',value=>{pad.setEqualizer('low',value);return `${value} dB`;},0],['garden-eq-mid','smc-garden-eq-mid',value=>{pad.setEqualizer('mid',value);return `${value} dB`;},0],['garden-eq-high','smc-garden-eq-high',value=>{pad.setEqualizer('high',value);return `${value} dB`;},0]];
 for(const [id,key,apply,fallback] of audioTuning){const control=$(id),output=document.querySelector(`output[for="${id}"]`);let saved=Number(localStorage.getItem(key));if(!Number.isFinite(saved)||saved<Number(control.min)||saved>Number(control.max))saved=fallback;control.value=String(saved);const update=()=>{const value=Number(control.value);output.textContent=apply(value);localStorage.setItem(key,String(value));};control.addEventListener('input',update);update();}
-function move(x,y){tx=clamp(x/s.width,.1,.9);ty=clamp(y/s.height,.2,.78);$('gesture').classList.add('dismissed');}
-world.addEventListener('pointerdown',e=>{if(e.button!==0||dragId!==null)return;dragId=e.pointerId;world.setPointerCapture(dragId);move(e.clientX,e.clientY);world.focus({preventScroll:true});});
+function move(x,y){if(modeDemo?.active)return;tx=clamp(x/s.width,.1,.9);ty=clamp(y/s.height,.2,.78);$('gesture').classList.add('dismissed');}
+world.addEventListener('pointerdown',e=>{if(modeDemo?.active)return;if(e.button!==0||dragId!==null)return;dragId=e.pointerId;world.setPointerCapture(dragId);move(e.clientX,e.clientY);world.focus({preventScroll:true});});
 world.addEventListener('pointermove',e=>{if(e.pointerId===dragId)move(e.clientX,e.clientY);});
 for(const name of ['pointerup','pointercancel','lostpointercapture'])world.addEventListener(name,e=>{if(e.pointerId===dragId)dragId=null;});
 addEventListener('keydown',e=>{
+  if(modeLayoutEditor?.isOpen||skillAtlas?.isOpen)return;
+  if(modeDemo?.active){if(e.target.closest?.('#mode-demo')&&e.code!=='Escape')return;if(e.code==='Escape'){e.preventDefault();stopModeDemo();}else if(e.code==='Space'){e.preventDefault();$('mission-toggle').click();}else if(!['Tab','Enter'].includes(e.code)){e.preventDefault();}return;}
   if($('recording-result').open||$('achievements-board')?.open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,select,textarea,[contenteditable="true"]')||e.repeat&&['Space','KeyH'].includes(e.code))return;
   if(e.code==='Escape'&&lightingPreview.active){e.preventDefault();closeLightingPreview();return;}
   if(e.code==='Escape'&&!$('exit-confirm').hidden){e.preventDefault();closeExitConfirmation(true);return;}
@@ -550,7 +591,8 @@ addEventListener('pagehide',()=>{mission?.pause();pad.backgroundSilence();});
 function update(dt,clockDt=dt){
   if(s.paused)return;
   // One world-time multiplier keeps motion, hazards, pickups and oxygen in
-  // step with Teacher's shorter chord duration. The run timer uses real time.
+  // step with Navigator's shorter chord duration. The run timer uses real time.
+  if(modeDemo?.active){const target=modeDemo.update(clockDt,mission.snapshot(),pad.sounding,{audioTime:pad.context?.currentTime,paused:s.paused,solve:(kind,value)=>mission.answerPart(kind,value),toneFor:(chord,sounding)=>GARDEN_TENSIONS.find(t=>!['1','5'].includes(t.label)&&gardenTensionVerdict(chord,t.label,{tonic:sounding.tonic})==='valid')?.label,modeFor:(chord,sounding)=>GARDEN_MODES.find(m=>modesFlight.families.has(m.family)&&gardenModeTensionVerdict(chord,m,modesFlight.snapshot().selectedTensions,{tonic:sounding.tonic}).verdict==='compatible')?.id,spawnTone:label=>resonance.spawn(label,{x:s.x/s.width,y:s.y/s.height,vy:0}),spawnMode:id=>modesFlight.spawn(id,{x:s.x/s.width,y:s.y/s.height,vy:0})});if(target){tx=target.x;ty=target.y;}if(!modeDemo.active)return;for(const key of Object.keys(gardenLife.resources))gardenLife.resources[key]=100;resonance.energy=100;modesFlight.navigation=100;}
   const realClockDt=clockDt,timeScale=difficultyProfile(difficulty).timeScale;
   dt*=timeScale;clockDt*=timeScale;
   s.time=mod(s.time+dt,Math.PI*2000);s.visit+=dt;
@@ -572,7 +614,7 @@ function update(dt,clockDt=dt){
   const pacingBarSeconds=missionState?.barSeconds*timeScale;
   if(comboNotice){comboNotice.age+=realClockDt;if(comboNotice.age>2.6){comboToast.hidden=true;comboNotice=null;document.querySelector('.run-readout').classList.remove('combo-score');}}
   run.tick(realClockDt,Boolean(missionState?.running&&missionState.cursor>=0&&!s.gameOver));renderRun();
-  if(!missionState?.complete)gardenLife.update(dt,{...s,clockDt,barSeconds:pacingBarSeconds,separateBass:Boolean(missionState?.bassPanelNeeded),routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality||(missionState.separateBass&&!part.bass)).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
+  if(!modeDemo?.active&&!missionState?.complete)gardenLife.update(dt,{...s,clockDt,barSeconds:pacingBarSeconds,separateBass:Boolean(missionState?.bassPanelNeeded),routeLength:missionState?.exercise.sequence.length||0,remainingChords:missionState?.progress.filter(part=>!part.degree||!part.quality||(missionState.separateBass&&!part.bass)).length??0,active:Boolean(missionState?.running),flying:!s.paused,answering:Boolean(missionState?.running&&missionState.cursor>=0)});
   const lifeState=gardenLife.snapshot();
   const harmonicView={clockDt,timeScale,previousX,previousY,forecastSounding:eta=>forecastProfessorSounding(eta,missionState),width:s.width,height:s.height,x:s.x,y:s.y,ship:s.ship,barSeconds:pacingBarSeconds,active:Boolean(missionState?.running),paused:s.paused,complete:missionState?.complete,solvedChords:missionState?.solved.length??0,totalChords:missionState?.exercise.sequence.length??0,sounding:pad.sounding,audioTime:pad.context?.currentTime,chapter:missionState?.exercise.chapter,tensionMode:missionState?.exercise.tensionMode};
   resonance.update(dt,harmonicView);modesFlight.update(dt,harmonicView);
@@ -612,7 +654,7 @@ function frame(now){
   raf=0;if(document.hidden)return;
   const frameMs=last?now-last:0,dt=Math.min(.05,frameMs/1000);last=now;
   if(mobileGraphics&&frameMs>0&&frameMs<250){slowFrameAverage=slowFrameAverage*.98+frameMs*.02;if(++graphicsSamples>180&&slowFrameAverage>27&&renderScale>1.1){renderScale=1.1;resize();}}
-  if(s.ready&&!journey?.isOpen&&!document.body.classList.contains('start-open')){if(lightingPreview.active&&lightingPreview.playing&&s.lightMode==='cycle'){s.cycle=mod(s.cycle+dt*15,360);s.night=(1-Math.cos(s.cycle*Math.PI/180))/2;}update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
+  if(s.ready&&!journey?.isOpen&&!skillAtlas?.isOpen&&!document.body.classList.contains('start-open')){if(lightingPreview.active&&lightingPreview.playing&&s.lightMode==='cycle'){s.cycle=mod(s.cycle+dt*15,360);s.night=(1-Math.cos(s.cycle*Math.PI/180))/2;}update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
   raf=requestAnimationFrame(frame);
 }
 async function load(){
@@ -634,14 +676,14 @@ async function load(){
   const phase=Number(params.get('phase'));if(Number.isFinite(phase)&&phase>=0&&phase<4)s.growth=phase;
   if(['day','dusk','night','cycle'].includes(params.get('light'))){light(params.get('light'));s.night=params.get('light')==='night'?1:params.get('light')==='dusk'?.48:0;}
   if(params.get('ship')==='lotus')s.ship=1;if(params.get('still')==='1')s.paused=true;
-  if(params.get('studio')==='1')studio.open();else {showGardenStart();if(params.get('journey')==='1')openJourney();}
+  if(params.get('studio')==='1')studio.open();else {showGardenStart();if(params.get('journey')==='1')openJourney();if(['1','controls'].includes(params.get('mode-layout')))modeLayoutEditor.open({compare:params.get('mode-layout')!=='controls'});else if(params.get('skills')==='1')openSkillAtlas();}
   ui();if(!raf)raf=requestAnimationFrame(frame);
 }
 function error(e){s.ready=false;$('loading').hidden=false;$('load-progress').textContent=e.message;$('retry').hidden=false;}
 $('retry').addEventListener('click',()=>location.reload());
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();s.ready=false;last=0;$('loading').hidden=false;$('load-progress').textContent='Восстанавливаем изображение…';});
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextrestored',()=>{try{renderer?.dispose();renderer=createGardenRenderer(world,shipLayer,images.slice(0,6));s.ready=true;last=0;$('loading').hidden=true;}catch(e){error(e);}});
-window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),lightingPreview:{active:lightingPreview.active,playing:lightingPreview.playing},mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),modes:modesFlight.snapshot(),run:run.snapshot(),combos:professorCombos.snapshot(),audio:{state:pad.context?.state,time:pad.context?.currentTime,sounding:pad.sounding&&{at:pad.sounding.at,barSeconds:pad.sounding.barSeconds}},lastTension:pad.lastTension&&{...pad.lastTension},lastModePreview:pad.lastModePreview&&{...pad.lastModePreview,notes:[...pad.lastModePreview.notes]},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),spawnMode:(id,options)=>modesFlight.spawn(id,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
+window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),lightingPreview:{active:lightingPreview.active,playing:lightingPreview.playing},mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),modes:modesFlight.snapshot(),access:modeAccess.snapshot(),demo:modeDemo?.snapshot(),teacher:professorTeacher.snapshot(),run:run.snapshot(),combos:professorCombos.snapshot(),audio:{state:pad.context?.state,time:pad.context?.currentTime,sounding:pad.sounding&&{at:pad.sounding.at,barSeconds:pad.sounding.barSeconds}},lastTension:pad.lastTension&&{...pad.lastTension},lastModePreview:pad.lastModePreview&&{...pad.lastModePreview,notes:[...pad.lastModePreview.notes]},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),spawnMode:(id,options)=>modesFlight.spawn(id,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
 if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','localhost'].includes(location.hostname)){
  const probe=document.createElement('button');probe.id='qa-repeat-pickup';probe.textContent='Проверка: выпустить лотос ∞';probe.style.cssText='position:fixed;left:12px;bottom:180px;z-index:60;color:#d9edcd;background:#102922;border:1px solid #799e84;padding:8px';
  probe.addEventListener('click',()=>{if(!mission.snapshot().running)return;gardenLife.forceSpawn('hold',{x:s.x/s.width,y:s.y/s.height-.12,vx:0});});document.body.append(probe);
@@ -649,7 +691,17 @@ if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','lo
 
 document.body.append($('language-toggle'));
 language=createLanguage();
-language.onChange(()=>{renderProfessorSettings();if(!modeReadout.hidden&&modesFlight.last)renderModeReadout(modesFlight.last);});
+renderModeNames();
+if(localTesting){const note=document.createElement('small');note.id='local-testing-note';note.textContent=language.get()==='en'?'Local testing · modes unlocked':'Локальный тест · режимы открыты';document.querySelector('.garden-start-shell').append(note);}
+modeLayoutEditor=mountGardenModeLayoutEditor({language,onOpen:()=>showGardenStart(),onClose:()=>ui()});
+const layoutButton=document.createElement('button');layoutButton.id='mode-layout-open';layoutButton.type='button';layoutButton.dataset.userContent='';layoutButton.textContent=language.get()==='en'?'Mode button layout':'Расположение кнопок режимов';layoutButton.onclick=()=>modeLayoutEditor.open();$('settings-panel').append(layoutButton);
+modeDemo=new GardenModeDemo({onExit:()=>stopModeDemo(),language:()=>language.get()});
+renderModeAccess();
+professorWorkshop=mountGardenProfessorTeacher({teacher:professorTeacher,pad,language,onPause:()=>{workshopWasRunning=Boolean(mission?.snapshot().running)&&!s.paused;mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();},onResume:()=>{if(workshopWasRunning){s.paused=false;mission?.start();}workshopWasRunning=false;ui();}});
+skillAtlas=mountGardenSkillAtlas({language,getData:()=>gardenSkillAtlasData(professorTeacher.snapshot(),{language:language.get(),enabledFamilies:[...modesFlight.families]}),onLesson:modeId=>professorWorkshop.open({modeId}),onClose:()=>{pad.stop(true);if(atlasWasRunning){s.paused=false;mission?.start();}atlasWasRunning=false;ui();}});
+function openSkillAtlas(){if(skillAtlas.isOpen)return;atlasWasRunning=Boolean(mission?.snapshot().running)&&!s.paused;mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();skillAtlas.open();}
+const atlasButton=document.createElement('button');atlasButton.id='skill-atlas-open';atlasButton.type='button';atlasButton.className='achievements-open';atlasButton.dataset.userContent='';atlasButton.textContent=language.get()==='en'?'◌ Skill orbit · scales':'◌ Орбита навыков · лады';atlasButton.onclick=openSkillAtlas;$('settings-panel').querySelector('[data-open-achievements]').after(atlasButton);
+language.onChange(()=>{atlasButton.textContent=language.get()==='en'?'◌ Skill orbit · scales':'◌ Орбита навыков · лады';renderModeNames();if($('local-testing-note'))$('local-testing-note').textContent=language.get()==='en'?'Local testing · modes unlocked':'Локальный тест · режимы открыты';layoutButton.textContent=language.get()==='en'?'Mode button layout':'Расположение кнопок режимов';renderModeAccess();$('professor-review').textContent=language.get()==='en'?'Flight review':'Разбор полёта';renderProfessorSettings();if(!modeReadout.hidden&&modesFlight.last)renderModeReadout(modesFlight.last);});
 if($('start-language')){
   $('start-language').onclick=()=>language.toggle();
   language.onChange(lang=>{$('start-language').firstChild.textContent=lang==='en'?'RU':'EN';});
@@ -657,7 +709,7 @@ if($('start-language')){
 }
 mountGardenRecording({pad,language,onStart:()=>setGardenMenu(false),onReady:()=>{mission?.pause({preserveHold:true});pad.stop(true);s.paused=true;keys.clear();ui();}});
 $('settings-language').onclick=()=>language.toggle();
-achievements=mountGardenAchievements({store:achievementStore,language,groups:achievementGroups,completed:()=>progress.completed,onMap:()=>{document.getElementById('achievements-board').close();openJourney();}});
+achievements=mountGardenAchievements({store:achievementStore,language,groups:achievementGroups,completed:()=>progress.completed,onSkills:openSkillAtlas,onMap:()=>{document.getElementById('achievements-board').close();openJourney();}});
 journey=mountGardenJourney({data:journeyData,onLaunch:id=>{const route=journeyRoutes().find(r=>routeIdentity(r)===id);journeyReturn=null;if(route)launchRoute(route);},onAchievements:()=>achievements.open(),onClassic:()=>{menuFromStart=journeyReturn?.fromStart;journeyReturn=null;hideGardenStart();renderGardenRouteList();setGardenMenu(true);},onClose:()=>{const previous=journeyReturn;journeyReturn=null;if(previous?.fromStart)showGardenStart();else if(previous?.running){s.paused=false;mission?.start();ui();}}});
 for(const button of document.querySelectorAll('[data-open-achievements]'))button.addEventListener('click',()=>achievements.open());
 language.add(Object.fromEntries(Object.entries(GARDEN_ITEMS).map(([kind,spec])=>[spec.label,guideItemName(kind,true)])));

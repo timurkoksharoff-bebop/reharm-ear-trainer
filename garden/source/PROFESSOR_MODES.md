@@ -1,7 +1,7 @@
 # Professor — experimental chord/scale audition
 
 The first three difficulty modes keep their existing harmony and audio. Professor
-uses Teacher's root/quality/independent-bass answers and 7% pacing, with compact
+uses Teacher's root/quality/independent-bass answers and a pace 3% slower than Teacher (1.07 × 0.97 relative to Student), with compact
 scale flight tags alongside the twelve single tensions and original oxygen rules. Guru is a reserved, disabled category.
 Scale choices affect a separate NAV resource and bounded score extras; they do
 not rewrite chord voicings, oxygen rules or proficiency ranks. Single tensions keep their
@@ -42,7 +42,7 @@ are explained by the full name and chord context rather than changing its MIDI.
 
 41 entries: major7, melodic-minor7, harmonic-minor7, harmonic-major7,
 pentatonics6, blues2, symmetric3, eight-note bebop2. Melodic minor is the jazz
-ascending form in both directions; previews currently ascend one octave.
+ascending form in both directions; previews alternate six broken contours within one octave, with short/long phrases fitted to the current chord window.
 Pentatonics include major, minor, minor6, half-diminished, majorb6 and suspended.
 The half–whole and whole–half diminished collections are distinct.
 Bebop major and dominant contain intentional passing tones, so they stay neutral.
@@ -128,3 +128,41 @@ Automatic arrival is shifted by at most0.8 seconds away from chord boundaries
 when a deadline forecast supplies phase/remaining, with matching spawn-height
 adjustment and a fresh harmony lookup before selection. User movement, jumps
 and holds still make this advisory; every catch is checked again.
+
+
+## Local adaptive workshop (1.59 prototype)
+
+Local-only descriptive practice statistics, not a diagnosis or audio/AI assessment.
+Stored under ear-yoga-professor-teacher.v1, independently of scores and ranks.
+An actual mode/tension/manual-answer decision is recorded at most once per
+outcome/item/chord/route-position per flight. Boundary events, contextual/neutral
+scale judgments, ignored answers and assisted core answers are excluded. No
+retroactive inference from old scores. Three recurring conflicts in at least two
+route positions qualify for a compact review; three later successful decisions
+with the same item/quality clear that recommendation. Raw repeated collisions
+are not shown as an error total. The review is reachable from Professor settings
+and its compact completion card.
+
+Mastery requires at least eight recent graded choices, >=80% successful across
+at least three route positions. Two mastered foundation modes gently increase
+advanced weights; four and forty successful mode choices increase rare weights.
+All enabled families remain possible; harmony/arrival eligibility and the regular
+compatible-offer guarantee remain in place. The next unmastered topic gets a
+small emphasis. These thresholds are provisional game pedagogy, not textbook
+standards. Continued mistakes reduce novelty pressure without banning a mode.
+
+Optional preflight lessons pick an unreviewed topic structurally relevant to at
+least one route chord and respect selected families. Every existing catalogue
+mode has a compact card with the degree formula, alternate names, a C-rooted
+example, a chromatic keyboard showing chord/scale membership, separate chord,
+scale and combined auditions. Examples are newly constructed minimal voicings,
+not copied textbook examples and never rewrite route harmony. Lesson audio and
+flight audio are mutually exclusive; closing resumes only an already-running
+flight, or explicitly launches the selected route. Listening is not mastery.
+
+Re-reviewed Miller printed p.32: melodic-minor family names and aliases; Berklee
+printed p.21: distinction between melodic fourth and sustained tension11.
+Phrygian dominant = Mixolydian b2 b6 follows identical interval collections.
+Sparse, blues/bebop and functional/slash-bass cases remain contextual rather than
+universal claims of correctness. No Hungarian-minor scale was silently invented
+or added: cards cover the current verified41; extra scales need separate review.

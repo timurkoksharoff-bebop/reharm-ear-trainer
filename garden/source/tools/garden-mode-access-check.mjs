@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {GardenModeAccess,GARDEN_TEACHER_EXAMS,GARDEN_PROFESSOR_EXAMS,GARDEN_TEACHER_CHAPTERS} from '../garden-mode-access.mjs';
+const f=(route,difficulty='medium',extra={})=>({route,difficulty,independent:true,ratingCap:5,accuracy:1,laps:1.5,...extra});
+let saved;const storage={getItem:()=>saved,setItem:(k,v)=>saved=v};const a=new GardenModeAccess({storage});assert(a.can('medium')&&a.can('light'));assert(!a.can('hard')&&!a.can('professor')&&!a.can('guru'));
+assert.equal(GARDEN_TEACHER_EXAMS.length,60);assert.equal(GARDEN_PROFESSOR_EXAMS.length,18);assert.equal(GARDEN_TEACHER_CHAPTERS.length,8);
+for(const id of GARDEN_TEACHER_EXAMS)a.record(f(id,'light'),{official:true});assert.equal(a.snapshot().teacherDone,0);
+for(const id of GARDEN_TEACHER_EXAMS)a.record(f(id,'medium'),{official:true,demo:true});assert.equal(a.snapshot().teacherDone,0);
+for(const id of GARDEN_TEACHER_EXAMS)a.record(f(id),{official:true});assert(a.can('hard')&&!a.can('professor'));
+for(const id of GARDEN_PROFESSOR_EXAMS)a.record(f(id,'medium'),{official:true});assert(!a.can('professor'));
+for(const id of GARDEN_PROFESSOR_EXAMS)a.record(f(id,'hard'),{official:true});assert(a.can('professor'));assert(new GardenModeAccess({storage}).can('professor'));
+const b=new GardenModeAccess();for(const extra of [{independent:false,ratingCap:4},{independent:false,ratingCap:2},{accuracy:.929},{laps:3.001}]){b.record(f('cinematic-epic-13','medium',extra),{official:true});assert(!b.can('professor'));}
+b.record(f('cinematic-epic-13'),{official:false});assert(!b.can('hard'));
+b.record(f('cinematic-epic-13','light'),{official:true});assert(!b.can('hard'));
+b.record(f('cinematic-epic-13'),{official:true,demo:true});assert(!b.can('hard'));
+b.record(f('cinematic-epic-13','medium',{accuracy:.93,laps:3,toneAttempts:5,toneAccuracy:0}),{official:true});assert(b.can('professor')&&!b.can('guru'),'three-star core performance allows optional tone slips');
+const migratedSecret=new GardenModeAccess({flights:[f('cinematic-epic-13','medium',{accuracy:.93,laps:3,toneAttempts:3,toneAccuracy:0})]});assert(migratedSecret.snapshot().allAccess&&migratedSecret.can('hard')&&migratedSecret.can('professor'),'actual historical three-star Epic flight migrates');
+let testerSaved;const testerStorage={getItem:()=>testerSaved,setItem:(key,value)=>testerSaved=value};
+const tester=new GardenModeAccess({storage:testerStorage,testing:true});assert(tester.can('hard')&&tester.can('professor')&&!tester.can('guru'));assert.equal(tester.snapshot().testing,true);assert.equal(tester.snapshot().allAccess,false);assert.equal(tester.snapshot().teacherDone,0);assert.equal(tester.snapshot().professorDone,0);
+const persistedTesting=JSON.parse(testerSaved);assert.equal(persistedTesting.allAccess,false);assert(!('testing'in persistedTesting));assert.deepEqual(persistedTesting.medium,[]);assert.deepEqual(persistedTesting.hard,[]);
+const ordinaryAfterTester=new GardenModeAccess({storage:testerStorage});assert.equal(ordinaryAfterTester.snapshot().testing,false);assert(!ordinaryAfterTester.can('hard')&&!ordinaryAfterTester.can('professor'),'local tester access is never a saved unlock');
+const c=new GardenModeAccess();c.record(f(GARDEN_TEACHER_EXAMS[0],'medium',{independent:false,ratingCap:4}),{official:true});assert.equal(c.snapshot().teacherDone,1);c.record(f(GARDEN_TEACHER_EXAMS[1],'medium',{independent:false,ratingCap:2}),{official:true});assert.equal(c.snapshot().teacherDone,1);
+assert.equal(new GardenModeAccess({flights:[f(GARDEN_TEACHER_EXAMS[0])]}).snapshot().teacherDone,1);
+console.log('PASS mode access: 60 actual non-slash/18 slash exams, explicit difficulty, Applicant/demo/full-reveal exclusions, partial hints allowed, stored/migrated evidence, independent three-star official Epic shortcut ignoring optional tone slips, retroactive actual flights, ephemeral local tester separation and Guru reserved.');

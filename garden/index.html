@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg?v=1.57"><link rel="apple-touch-icon" href="icon-192-v1.57.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.57">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.57">
-  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.57">
-  <link rel="stylesheet" href="ear-yoga-brand.css?v=1.57">
+  <link rel="icon" href="icon.svg?v=1.66"><link rel="apple-touch-icon" href="icon-192-v1.66.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.66">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.66">
+  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.66">
+  <link rel="stylesheet" href="garden-mode-variants.css?v=1.66">
+  <link rel="stylesheet" href="ear-yoga-brand.css?v=1.66">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -65,7 +66,7 @@
           <h2 id="start-title" class="ear-yoga-wordmark">Ear <em>Yoga</em><b class="brand-baseline" aria-hidden="true"></b></h2>
           <span class="overline start-college">SPACE MUSIC COLLEGE<b class="brand-baseline" aria-hidden="true"></b></span>
         </div>
-        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Абитуриент</button><button data-difficulty="medium" aria-pressed="true">Студент</button><button data-difficulty="hard" aria-pressed="false">Преподаватель</button><button data-difficulty="professor" aria-pressed="false" class="experimental-mode"><span class="mode-live-name">Профессор</span><small class="mode-status">β</small></button><button data-difficulty="guru" aria-pressed="false" class="experimental-mode" disabled title="Режим Гуру пока в разработке"><span class="mode-live-name">Гуру</span><small class="mode-status">скоро</small></button></div>
+        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Курсант</button><button data-difficulty="medium" aria-pressed="true">Пилот</button><button data-difficulty="hard" aria-pressed="false">Штурман</button><button data-difficulty="professor" aria-pressed="false" class="experimental-mode"><span class="mode-live-name">Мастер</span><small class="mode-status">β</small></button><button data-difficulty="guru" aria-pressed="false" class="experimental-mode" disabled title="Режим Гуру пока в разработке"><span class="mode-live-name">Гуру</span><small class="mode-status">скоро</small></button></div>
       </div>
       <button id="start-menu" class="start-menu" type="button"><svg class="settings-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="#061827"/><circle cx="16" cy="12" r="2" fill="#061827"/><circle cx="10" cy="18" r="2" fill="#061827"/></svg><span>Настройки</span></button>
       <div class="start-controls">
@@ -87,7 +88,7 @@
       </div>
     </div>
   </section>
-  <section id="enrollment" class="enrollment" hidden role="dialog" aria-modal="true" aria-labelledby="enrollment-title"><div class="enrollment-card"><span class="enrollment-college">SPACE MUSIC COLLEGE</span><span class="enrollment-flower" aria-hidden="true">✺</span><h2 id="enrollment-title">Вы зачислены!</h2><p>Три учебных полёта пройдены.<br>Добро пожаловать в Space Music College.<br>Продолжайте в режиме «Студент».</p><button id="enrollment-student">Продолжить как студент →</button><button id="enrollment-close">Остаться в учебном режиме</button></div></section>
+  <section id="enrollment" class="enrollment" hidden role="dialog" aria-modal="true" aria-labelledby="enrollment-title"><div class="enrollment-card"><span class="enrollment-college">SPACE MUSIC COLLEGE</span><span class="enrollment-flower" aria-hidden="true">✺</span><h2 id="enrollment-title">Вы зачислены!</h2><p>Три учебных полёта пройдены.<br>Добро пожаловать в Space Music College.<br>Продолжайте в режиме «Пилот».</p><button id="enrollment-student">Продолжить как пилот →</button><button id="enrollment-close">Остаться в учебном режиме</button></div></section>
   <section id="artifact-belt" class="artifact-belt hud" aria-label="Накопленные артефакты">
     <div id="jump-charges" class="jump-charges" aria-label="Заряды прыжков"></div>
     <div id="assist-charges" class="assist-charges" aria-label="Редкие подсказки"></div>
@@ -216,6 +217,6 @@
     <p id="lighting-preview-note">Цикл показан быстрее, чтобы сравнить освещение.</p>
   </aside>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.57" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.66" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

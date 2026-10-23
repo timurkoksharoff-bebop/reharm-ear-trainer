@@ -9,7 +9,7 @@ console.log('Journey ratings passed: five grades, accuracy/tempo/independence/no
 
 assert.match(gardenRouteRatingText({...base,independent:false},{best:1}).detail,/самостоятельных/);
 assert.match(gardenRouteRatingText(base,{best:5,previous:1,en:true}).detail,/1 → 5/);
-assert.match(gardenRouteRatingText({...base,difficulty:"light"},{best:1}).detail,/Абитуриент/);
+assert.match(gardenRouteRatingText({...base,difficulty:"light"},{best:1}).detail,/Курсант/);
 const halves={...base,independent:false,ratingCap:4};
 assert.equal(gardenRouteStars(halves),4,'half-options hint caps a perfect flight at four');
 assert.equal(gardenRouteStars({...halves,accuracy:.85}),2,'cap is not an automatic award');

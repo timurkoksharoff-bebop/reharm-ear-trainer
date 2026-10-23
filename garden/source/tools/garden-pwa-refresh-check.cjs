@@ -25,6 +25,24 @@ const [oldRoot,newRoot]=process.argv.slice(2);if(!oldRoot||!newRoot)throw Error(
    future=false;const second=await browser.newContext({viewport:{width:390,height:844}}),mapPage=await second.newPage();await mapPage.goto(base+'?offline-test=1');await mapPage.waitForFunction(()=>gardenFlight?.snapshot().ready);await mapPage.evaluate(async()=>navigator.serviceWorker.ready);await mapPage.waitForFunction(()=>navigator.serviceWorker.controller);await mapPage.locator('#start-choose').click();await mapPage.locator('#journey-map').waitFor({state:'visible'});const map=await(await mapPage.locator('#journey-map iframe').elementHandle()).contentFrame();await map.waitForURL('**/journey/universe.html?embedded=1');await map.waitForFunction(()=>window.journeyPreview);future=true;await mapPage.evaluate(async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();});
    await mapPage.waitForFunction(expected=>new Promise(resolve=>{const c=new MessageChannel(),t=setTimeout(()=>resolve(false),800);c.port1.onmessage=e=>{clearTimeout(t);c.port1.close();resolve(e.data?.version===expected);};navigator.serviceWorker.controller.postMessage({type:'EAR_YOGA_VERSION'},[c.port2]);}),next);await mapPage.waitForTimeout(250);assert.equal(await mapPage.locator('#build-version').innerText(),'v'+version,'a map open above the cover must defer reload');assert(await mapPage.locator('#journey-map').isVisible());await map.locator('.brand').click();await mapPage.waitForFunction(v=>document.querySelector('#build-version')?.textContent==='v'+v,next);await second.close();console.log('PASS: update also waits for the open journey map to close.');
   }
+  for(const view of [
+   {name:'skill atlas',query:'skills=1',selector:'#garden-skill-atlas',close:'.skill-atlas-close'},
+   {name:'mode layout editor',query:'mode-layout=controls',selector:'#mode-layout-editor',close:'header button'}
+  ]){
+   future=false;const viewContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,locale:'ru-RU'}),viewPage=await viewContext.newPage();
+   try{
+    await viewPage.goto(base+'?offline-test=1&'+view.query);await viewPage.waitForFunction(()=>gardenFlight?.snapshot().ready);const overlay=viewPage.locator(view.selector);await overlay.waitFor({state:'visible'});
+    await viewPage.evaluate(async()=>{localStorage.setItem('pwa-overlay-preservation-probe','keep');await navigator.serviceWorker.ready;});await viewPage.waitForFunction(()=>!!navigator.serviceWorker.controller);
+    future=true;await viewPage.evaluate(async()=>{const registration=await navigator.serviceWorker.getRegistration();await registration.update();});
+    await viewPage.waitForFunction(expected=>new Promise(resolve=>{const c=new MessageChannel(),t=setTimeout(()=>resolve(false),800);c.port1.onmessage=e=>{clearTimeout(t);c.port1.close();resolve(e.data?.version===expected);};navigator.serviceWorker.controller.postMessage({type:'EAR_YOGA_VERSION'},[c.port2]);}),next);
+    await viewPage.waitForTimeout(250);assert.equal(await viewPage.locator('#build-version').innerText(),'v'+version,view.name+' must defer reload');assert(await overlay.isVisible(),view.name+' remains open');
+    if(view.name==='mode layout editor'){
+     await overlay.getByRole('button',{name:'Посмотреть без панели',exact:true}).tap();const dock=viewPage.locator('#mode-layout-dock');await dock.waitFor({state:'visible'});await viewPage.waitForTimeout(250);assert.equal(await viewPage.locator('#build-version').innerText(),'v'+version,'comparison preview must also defer reload');await dock.getByRole('button',{name:'Готово',exact:true}).tap();
+    }else await overlay.locator(view.close).tap();
+    await viewPage.waitForFunction(v=>document.querySelector('#build-version')?.textContent==='v'+v&&gardenFlight?.snapshot().ready,next,{timeout:20000});assert.equal(await viewPage.evaluate(()=>localStorage.getItem('pwa-overlay-preservation-probe')),'keep');
+    console.log('PASS: update waits for '+view.name+' to close, then reloads without changing saved data.');
+   }finally{await viewContext.close();}
+  }
   console.log(`PASS: ${oldVersion} recovered to v${version} through update.html without clearing data; next update preserves an active flight, reloads automatically from the menu, and opens offline. Desktop Chromium emulation.`);
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(error=>{console.error(error);process.exitCode=1;});

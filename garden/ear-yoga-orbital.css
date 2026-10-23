@@ -247,3 +247,25 @@ body.lighting-preview :is(#world,#life,#ship-layer){pointer-events:none}
 #garden-start[data-cover] .experimental-mode .mode-live-name{inset:36% 3% 18%;font-size:calc(var(--menu-u)*3.1)}
 #garden-start[data-cover] .difficulty-picker button:not(.experimental-mode) .reference-face{clip-path:polygon(0 50%,8% 28%,25% 9%,45% 0,55% 0,75% 9%,92% 28%,100% 50%,92% 76%,75% 94%,55% 100%,45% 100%,25% 94%,8% 76%)}
 @media(orientation:landscape) and (max-height:600px){#garden-start[data-cover] .difficulty-picker{top:60.5%}}
+
+/* Cover study: higher categories above the original trio; the selected craft
+   uses the same warm ivory material as Launch. Paint stays inside its mask. */
+#garden-start[data-cover] .difficulty-picker{top:70.5%;left:5.3%;right:5.3%;height:5.3%}
+#garden-start[data-cover] .difficulty-picker .experimental-mode{top:calc(-100% - 1px)}
+#garden-start[data-cover] .difficulty-picker [data-difficulty="professor"]{left:18%}
+#garden-start[data-cover] .difficulty-picker [data-difficulty="guru"]{left:49%}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .mode-rest{background:radial-gradient(ellipse at 49% -18%,#fffdf1 0%,#fff0ce 28%,transparent 63%),radial-gradient(ellipse at 50% 112%,#b49872 0%,transparent 57%),linear-gradient(180deg,#ecdbba 0%,#f4e8d0 34%,#d9c5a5 68%,#c5ad87 88%,#ffefd0 100%)}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .reference-ink{filter:url('#orbital-gold-ink') brightness(.19) saturate(.6)}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .pearl-light{opacity:.5;background:radial-gradient(ellipse at 50% 65%,#fff6d75c,transparent 75%)}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .mode-water{opacity:.08}
+#garden-start[data-cover] .experimental-mode[aria-pressed="true"] .mode-live-name{color:#173942;text-shadow:0 1px 0 #fff9e8a6}
+#garden-start[data-cover] .experimental-mode[aria-pressed="true"] .mode-status{color:#55646a}
+html[lang="en"] #garden-start[data-cover] .difficulty-picker button[aria-pressed="true"]{color:#173942!important}
+
+/* New flight titles use live lettering; no old sampled academic names remain. */
+#garden-start[data-cover] .difficulty-picker button .reference-ink{display:none!important}
+#garden-start[data-cover] .difficulty-picker button .mode-live-name{display:block;position:absolute;inset:36% 3% 18%;color:#f3dfb7;font:400 calc(var(--menu-u)*3.1)/1.1 'Times New Roman',serif;white-space:nowrap;z-index:3}
+#garden-start[data-cover] .difficulty-picker button[aria-pressed="true"] .mode-live-name{color:#173942;text-shadow:0 1px 0 #fff9e8a6}
+#garden-start[data-cover] .difficulty-picker button :is(.reference-face,.mode-water){display:none!important}
+
+#garden-start[data-cover] #local-testing-note{position:absolute;left:8px;bottom:5px;font:8px/1.2 system-ui;color:#d4c39b;opacity:.72;pointer-events:none}

@@ -6,7 +6,8 @@
  let pending=false,reloading=false,registration,lastCheck=0;
  const reloadFromMenu=()=>{
   const menu=document.querySelector('#garden-start');
-  if(pending&&!reloading&&!document.hidden&&!document.querySelector('dialog[open]')&&menu&&!menu.hidden&&document.body.classList.contains('start-open')){reloading=true;location.reload();}
+  const overlay=document.querySelector('dialog[open],#garden-skill-atlas:not([hidden])');
+  if(pending&&!reloading&&!document.hidden&&!overlay&&!document.body.classList.contains('mode-layout-editing')&&menu&&!menu.hidden&&document.body.classList.contains('start-open')){reloading=true;location.reload();}
  };
  const inspect=controller=>{
   if(!controller)return;

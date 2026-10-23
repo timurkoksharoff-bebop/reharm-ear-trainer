@@ -22,7 +22,7 @@ export class GardenSkillFlight{
   if(this.finished||!model.running||model.complete||model.cursor<0||model.currentParts?.[kind]||!model.answerKinds.includes(kind))return;
   this.attempts++;
   if(correct){this.correct++;this.manual.add(model.cursor+':'+kind);
-   // Teacher's root also solves an identical bass; this is an independent inference.
+   // Navigator's root also solves an identical bass; this is an independent inference.
    if(kind==='degree'&&model.separateBass&&Number(model.current.offset)===Number(model.current.bassOffset??model.current.offset))this.manual.add(model.cursor+':bass');
   }
  }
@@ -53,7 +53,7 @@ export function gardenRankStats(flights,rank){
 }
 export function gardenRankRequirements(rank,stats,en=false){
  const pair=(key,ru,english)=>({key,label:en?english:ru,value:stats[key],target:rank[key]});
- return [pair('routes','Разные маршруты','Different routes'),pair('keys','Тональности','Keys'),...(rank.teacher?[pair('teacher','Маршруты преподавателя','Teacher routes')]:[]),...(rank.sevenths?[pair('sevenths','Маршруты с септаккордами','Routes with seventh chords')]:[]),...(rank.complex?[pair('complex','Сложные аккорды · преподаватель','Extended chords · Teacher')]:[]),...(rank.bass?[pair('bass','Самостоятельный бас · преподаватель','Independent bass · Teacher')]:[]),...(rank.tones?[pair('tones','Верные летающие ноты','Valid flying notes'),pair('toneRoutes','Маршруты с верными нотами','Routes with valid notes')]:[]),...(rank.days>1?[pair('days','Дни практики','Practice days')]:[])];
+ return [pair('routes','Разные маршруты','Different routes'),pair('keys','Тональности','Keys'),...(rank.teacher?[pair('teacher','Маршруты штурмана','Navigator routes')]:[]),...(rank.sevenths?[pair('sevenths','Маршруты с септаккордами','Routes with seventh chords')]:[]),...(rank.complex?[pair('complex','Сложные аккорды · штурман','Extended chords · Navigator')]:[]),...(rank.bass?[pair('bass','Самостоятельный бас · штурман','Independent bass · Navigator')]:[]),...(rank.tones?[pair('tones','Верные летающие ноты','Valid flying notes'),pair('toneRoutes','Маршруты с верными нотами','Routes with valid notes')]:[]),...(rank.days>1?[pair('days','Дни практики','Practice days')]:[])];
 }
 export class GardenAchievements{
  constructor({storage=null,key='ear-yoga-achievements.v1'}={}){

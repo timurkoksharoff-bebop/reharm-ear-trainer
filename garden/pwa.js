@@ -1,12 +1,13 @@
 /* A worker update is applied only while the main menu is open. Player storage
    is never cleared, and an active flight is never interrupted. */
 (()=>{
- const version='1.57',worker=navigator.serviceWorker;
+ const version='1.66',worker=navigator.serviceWorker;
  if(!worker||location.protocol==='file:'||(['localhost','127.0.0.1'].includes(location.hostname)&&!new URLSearchParams(location.search).has('offline-test')))return;
  let pending=false,reloading=false,registration,lastCheck=0;
  const reloadFromMenu=()=>{
   const menu=document.querySelector('#garden-start');
-  if(pending&&!reloading&&!document.hidden&&!document.querySelector('dialog[open]')&&menu&&!menu.hidden&&document.body.classList.contains('start-open')){reloading=true;location.reload();}
+  const overlay=document.querySelector('dialog[open],#garden-skill-atlas:not([hidden])');
+  if(pending&&!reloading&&!document.hidden&&!overlay&&!document.body.classList.contains('mode-layout-editing')&&menu&&!menu.hidden&&document.body.classList.contains('start-open')){reloading=true;location.reload();}
  };
  const inspect=controller=>{
   if(!controller)return;

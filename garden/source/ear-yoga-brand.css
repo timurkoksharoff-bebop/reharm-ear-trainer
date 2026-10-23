@@ -52,9 +52,12 @@
   src: url(cover-brand/manrope-latin.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-/* The live five-category controls replace the old reference strip. Keep the
-   clean background visible there, including below the staggered second row. */
-#garden-start[data-cover] .orbital-reference-plate{clip-path:polygon(0 14%,100% 14%,100% 59%,0 59%,0 76.14%,100% 76.14%,100% 100%,0 100%)}
+/* The reference supplies ornament and the footer; the clean painting supplies
+   the planet. Feather the reference into it instead of restarting a full-width
+   dark rectangle at Launch. Its existing RU/EN contour masks still cut holes
+   around the live controls, while the old five-mode strip stays hidden. */
+#garden-start[data-cover] .orbital-reference-plate{clip-path:none;background:none}
+#garden-start[data-cover] .orbital-reference-plate::before{content:'';position:absolute;inset:0;background:var(--reference) center/100% 100% no-repeat;-webkit-mask:linear-gradient(transparent 0% 13%,#000 16% 55%,transparent 59% 76%,#000 91%);mask:linear-gradient(transparent 0% 13%,#000 16% 55%,transparent 59% 76%,#000 91%);pointer-events:none}
 .chosen-cover-brand{position:absolute;left:0;top:0;z-index:4;transform-origin:0 0;pointer-events:none}
 .chosen-cover-brand .chosen-brand-text,.chosen-cover-brand .chosen-brand-lotus{position:absolute;display:block;white-space:nowrap;line-height:normal;font-synthesis:none;text-shadow:0 2px 12px #05132766;transform-origin:center}
 .chosen-cover-brand .chosen-brand-lotus svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 8px #d4b77124)}

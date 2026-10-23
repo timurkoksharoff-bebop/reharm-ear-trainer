@@ -2,6 +2,30 @@ import {BOOK_CATALOG} from './book-catalog.mjs';
 import {INTERVALS,DEGREES,QUALITIES} from './music.mjs';
 import {createGardenArrangement,gardenArrangementEvents} from './garden-arrangement.mjs';
 
+// Indices refer to the actual scale, including its upper tonic. No added pitches.
+export function gardenScalePhrase(notes,{remaining=1.7,variation=0}={}){
+  if(!Array.isArray(notes)||notes.length<2||remaining<.65)return null;
+  const duration=Math.min(3.2,remaining-.12),count=Math.min(18,Math.max(3,Math.floor(duration/.145))),n=notes.length;
+  const patterns=['up','down','thirds-up','thirds-down','pendulum','weave'];
+  const pattern=patterns[((variation%patterns.length)+patterns.length)%patterns.length];
+  const indices=[];
+  for(let i=0;i<count;i++){
+    const wave=k=>{const p=((k%(2*(n-1)))+2*(n-1))%(2*(n-1));return p<n?p:2*(n-1)-p;};
+    let index;
+    if(pattern==='up')index=wave(i);
+    else if(pattern==='down')index=n-1-wave(i);
+    else if(pattern==='thirds-up')index=wave(Math.floor(i/2)+(i%2)*2);
+    else if(pattern==='thirds-down')index=n-1-wave(Math.floor(i/2)+(i%2)*2);
+    else if(pattern==='pendulum')index=i%2?n-1-Math.floor(i/2)%n:Math.floor(i/2)%n;
+    else index=wave([0,2,1,3,2,4,3,1][i%8]+Math.floor(i/8));
+    indices.push(index);
+  }
+  // Short windows keep a simple contour instead of squeezing a long pattern.
+  if(duration<1.05)for(let i=0;i<count;i++)indices[i]=variation%2?n-1-i:i;
+  const phrase=indices.map(i=>notes[Math.max(0,Math.min(n-1,i))]);
+  return {notes:phrase,pattern:duration<1.05?(variation%2?'short-down':'short-up'):pattern,duration,step:duration/(count+.25)};
+}
+
 const GARDEN_INTERVALS={...INTERVALS,'1':[0],m:INTERVALS.min,'m7♭5':INTERVALS.m7b5,sus2:[0,2,7],sus4:[0,5,7],add9:[0,4,7,14],m9:INTERVALS.m7natural9};
 export const gardenDegreeLabel=offset=>DEGREES[Number(offset)]?.glyph??'?';
 const IMPORTED_QUALITY_LABELS={'ireal:7b13':'7(♭13)','ireal:mMaj7':'m(maj7)'};
@@ -284,11 +308,14 @@ export class GardenPad{
   previewScale(notes,{remaining=1.7}={}){
     const c=this.context;if(!c||c.state!=='running'||this.backgrounded||!Array.isArray(notes)||notes.length<2||remaining<.65)return false;
     this.modePreviewStop?.();
-    const duration=Math.min(1.65,remaining-.12),step=duration/(notes.length+.25),at=c.currentTime+.012,group=c.createGain(),sources=[];
+    const phrase=gardenScalePhrase(notes,{remaining,variation:this.modePhraseSequence||0});
+    this.modePhraseSequence=(this.modePhraseSequence||0)+1;
+    const scaleNotes=[...notes];notes=phrase.notes;
+    const {duration,step}=phrase,at=c.currentTime+.012,group=c.createGain(),sources=[];
     group.gain.value=1;group.connect(this.cleanOutput);
     let stopped=false;const stop=()=>{if(stopped)return;stopped=true;const now=c.currentTime;group.gain.cancelScheduledValues(now);group.gain.setValueAtTime(group.gain.value,now);group.gain.linearRampToValueAtTime(0,now+.012);for(const source of sources){try{source.stop(now+.018);}catch{}}setTimeout(()=>{for(const source of sources)try{source.disconnect();}catch{}try{group.disconnect();}catch{}},25);this.transients.delete(stop);if(this.modePreviewStop===stop){this.modePreviewStop=null;if(this.lastModePreview)this.lastModePreview.active=false;}};
     notes.forEach((midi,index)=>{const start=at+index*step,level=c.createGain();level.gain.setValueAtTime(.0001,start);level.gain.exponentialRampToValueAtTime(.052,start+Math.min(.022,step*.22));level.gain.exponentialRampToValueAtTime(.0001,start+step*1.08);level.connect(group);for(const [ratio,amplitude] of [[1,1],[2,.12]]){const tone=c.createOscillator(),partial=c.createGain();tone.type='sine';tone.frequency.value=frequency(midi)*ratio;partial.gain.value=amplitude;tone.connect(partial);partial.connect(level);tone.start(start);tone.stop(start+step*1.1);sources.push(tone);}});
-    this.modePreviewStop=stop;this.transients.add(stop);this.lastModePreview={active:true,notes:[...notes],at,duration,character:'soft-flute',remaining};setTimeout(stop,(duration+.15)*1000);return true;
+    this.modePreviewStop=stop;this.transients.add(stop);this.lastModePreview={active:true,notes:[...notes],scaleNotes,pattern:phrase.pattern,at,duration,character:'soft-flute',remaining};setTimeout(stop,(duration+.15)*1000);return true;
   }
   async feedback(correct,{complete=false,kind='degree',value=0}={}){
     const generation=this.generation;

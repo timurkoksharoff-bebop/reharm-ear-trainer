@@ -21,7 +21,7 @@ const EN={
  'Корень не совпал — найденные ответы сохранены':'Wrong root — found answers kept','Бас не совпал — найденные ответы сохранены':'Wrong bass — found answers kept','Тип не совпал — найденные ответы сохранены':'Wrong quality — found answers kept',
  'Найди бас слева.':'Find the bass on the left.','Корень есть. Найди тип аккорда.':'Root found. Find the chord quality.',
  'Определи корень внизу, тип справа и бас слева.':'Find the root below, quality on the right, and bass on the left.',
- 'Сад Эха':'Echo Garden','Абитуриент':'Applicant','Студент':'Student','Преподаватель':'Teacher',
+ 'Сад Эха':'Echo Garden','Курсант':'Cadet','Пилот':'Pilot','Штурман':'Navigator',
  'Введи название категории.':'Enter a collection name.','Такая категория уже есть.':'This collection already exists.',
  '■ Зафиксировать аккорд':'■ Capture chord','● Записать следующий аккорд':'● Record next chord','ГОТОВ К НОВОМУ ШАГУ':'READY FOR NEXT STEP',
  'Разреши микрофон в настройках браузера.':'Allow microphone access in your browser settings.',
@@ -36,15 +36,15 @@ const EN={
  'Вернуться в меню?':'Return to menu?','Текущий полёт завершится.':'This flight will end.','Остаться':'Stay','В меню →':'Menu →','Меню':'Menu','Продолжить':'Continue','Пауза':'Pause','Закрыть':'Close','Закрыть меню':'Close menu',
  'ⓘ Карта полёта и артефакты':'ⓘ Flight map & artifacts','Синие сады':'Blue gardens','Ночное цветение':'Night bloom','Белая оттепель':'White thaw','Янтарное созревание':'Amber season',
  'ЕДИНЫЙ МИР':'LIVING WORLD','единая карта · живой цикл':'one landscape · living cycle','Цветущие острова и прозрачные русла':'Flowering islands and crystal streams',
- 'Вы зачислены!':'You are enrolled!','Три учебных полёта пройдены.':'Three training flights complete.','Добро пожаловать в Space Music College.':'Welcome to Space Music College.','Продолжайте в режиме «Студент».':'Continue in Student mode.',
- 'Продолжить как студент →':'Continue as a student →','Остаться в учебном режиме':'Stay in training mode','Повторить обучение':'Repeat training','Учебный полёт':'Training flight','Обучение пройдено':'Training complete',
+ 'Вы зачислены!':'You are enrolled!','Три учебных полёта пройдены.':'Three training flights complete.','Добро пожаловать в Space Music College.':'Welcome to Space Music College.','Продолжайте в режиме «Пилот».':'Continue in Pilot mode.',
+ 'Продолжить как пилот →':'Continue as a pilot →','Остаться в учебном режиме':'Stay in training mode','Повторить обучение':'Repeat training','Учебный полёт':'Training flight','Обучение пройдено':'Training complete',
  'Сад усложняет маршруты постепенно и запоминает пройденные уровни.':'Routes gradually become harder. Your completed levels are saved on this device.',
  'Три коротких учебных маршрута. Пройдите их, чтобы поступить в Space Music College.':'Complete three short training routes to join Space Music College.',
- 'Вы зачислены в Space Music College. Продолжайте в режиме «Студент».':'You have joined Space Music College. Continue in Student mode.',
+ 'Вы зачислены в Space Music College. Продолжайте в режиме «Пилот».':'You have joined Space Music College. Continue in Pilot mode.',
  'Три учебных маршрута по 3–4 аккорда, медленное движение и защищённые запасы.':'Three routes of 3–4 chords, slower flight and protected supplies.',
- 'Три учебных маршрута по 3–4 аккорда, скорость студента и неиссякаемые запасы.':'Three routes of 3–4 chords, Student flight speed and unlimited supplies.',
+ 'Три учебных маршрута по 3–4 аккорда, скорость пилота и неиссякаемые запасы.':'Three routes of 3–4 chords, Pilot flight speed and unlimited supplies.',
  'Обычный полёт: запасы расходуются, ошибки и камни наносят урон.':'Regular flight: supplies run down; mistakes and rocks cause damage.',
- 'Режим преподавателя скоро появится':'Teacher mode is coming later','УРОВЕНЬ':'LEVEL','Следующий полёт':'Next flight',
+ 'Режим штурмана скоро появится':'Navigator mode is coming later','УРОВЕНЬ':'LEVEL','Следующий полёт':'Next flight',
  'МАРШРУТ':'ROUTE','АККОРД':'CHORD','КРУГ':'LAP','＋ Надстройки':'＋ Extensions','Собрать заново':'Start over',
  'Бас и аккорд — два независимых ответа':'Bass and chord are two independent answers','Слушаем базу':'Listen to the tonic',
  'Обе части этой позиции уже найдены':'Both parts of this position are solved','Запусти последовательность':'Start the sequence',
@@ -81,7 +81,7 @@ const EN={
  'Запасы экспедиции':'Expedition supplies','Бас относительно тоники':'Bass relative to the tonic','Цепочка аккордов':'Chord sequence','Ступень и тип верхнего аккорда; бас выбери внизу':'Upper chord degree and quality; select the bass below',
  'Нажми аккорд, пока он звучит':'Choose the chord while it is playing','База известна. Запусти последовательность.':'Listen to the tonic, then start the sequence.'
 };
-Object.assign(EN,{'Профессор':'Professor','Гуру':'Guru','скоро':'soon','Режим Гуру пока в разработке':'Guru mode is coming later','✦ Достижения · владение гармонией':'✦ Achievements · harmony practice','Мандала пройдена':'Mandala completed','Первые очки в этой тональности':'First score in this key'});
+Object.assign(EN,{'Мастер':'Master','Гуру':'Guru','скоро':'soon','Режим Гуру пока в разработке':'Guru mode is coming later','✦ Достижения · владение гармонией':'✦ Achievements · harmony practice','Мандала пройдена':'Mandala completed','Первые очки в этой тональности':'First score in this key'});
 const PATTERNS=[
  [/^Открыт уровень: (.+)$/,(_,name)=>'Rank earned: '+({'Муладхара':'Muladhara','Свадхистхана':'Svadhisthana','Манипура':'Manipura','Анахата':'Anahata'}[name]||name)],
  [/^Бонус за время: \+(\d+)$/,(_,n)=>'Time bonus: +'+n],

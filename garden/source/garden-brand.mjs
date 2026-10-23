@@ -19,7 +19,7 @@ export function bindGardenBrand(){
    const name=()=>control.setAttribute('aria-label',control.textContent.replace(/\s+/g,' ').trim());
    new MutationObserver(name).observe(control,{childList:true,characterData:true,subtree:true});name();
    if(control.matches('.difficulty-picker button,.start-choice')){
-    if(control.matches('.difficulty-picker button')){for(const className of ['mode-rest','reference-ink','mode-rim']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}}
+    if(control.matches('.difficulty-picker button')){if(!control.querySelector('.mode-live-name')){const label=document.createElement('span');label.className='mode-live-name';label.dataset.userContent='';label.textContent=[...control.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join('').trim();for(const n of [...control.childNodes])if(n.nodeType===Node.TEXT_NODE)n.remove();control.append(label);}for(const className of ['mode-rest','reference-ink','mode-rim']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}}
     if(control.matches('.start-choice')){
      for(const className of ['porcelain-body','reference-ink']){const layer=document.createElement('span');layer.className=className;layer.setAttribute('aria-hidden','true');layer.setAttribute('translate','no');control.append(layer);}
     }

@@ -7,7 +7,8 @@ fs.mkdirSync(out,{recursive:true});
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
  try{
-  const context=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block'});
+  const context=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block',isMobile:true,hasTouch:true});
+  await context.addInitScript(()=>{localStorage.setItem('ear-yoga-mode-access.v1',JSON.stringify({version:1,allAccess:true,medium:[],hard:[]}));const key='ear-yoga-professor-teacher.v1';if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify({version:1,preflight:false}));});
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   const url=new URL(base);url.searchParams.set('routes','classic');
@@ -29,11 +30,13 @@ fs.mkdirSync(out,{recursive:true});
   };
   assert.equal(await page.locator('.difficulty-picker button').count(),5);
   assert(await page.locator('button[data-difficulty="guru"]').isDisabled());
-  assert((await page.locator('.orbital-reference-plate').evaluate(e=>getComputedStyle(e).clipPath)).includes('76.14%'),'no old control silhouettes');
+  const backdrop=await page.locator('.orbital-reference-plate').evaluate(e=>({clip:getComputedStyle(e).clipPath,mask:getComputedStyle(e,'::before').maskImage}));
+  assert.equal(backdrop.clip,'none','reference backdrop has no hard horizontal cut');
+  assert(backdrop.mask.includes('linear-gradient')&&backdrop.mask.includes('76%')&&backdrop.mask.includes('91%'),'reference backdrop feathers into the planet');
   for(const [width,height] of [[320,568],[390,844],[820,1180],[844,390]]){
    await page.setViewportSize({width,height});
    const boxes=await page.locator('.difficulty-picker button').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height};}));
-   assert(boxes[3].y>boxes[0].y&&boxes[4].y>boxes[0].y);
+   assert(boxes[3].y<boxes[0].y&&boxes[4].y<boxes[0].y);
    assert(boxes[3].x>boxes[0].x&&boxes[3].x<boxes[1].x);
    const launch=await page.locator('#start-random').boundingBox();assert(boxes[3].y+boxes[3].h<launch.y,'second row clears Launch at '+width);
    assert(boxes.every(b=>b.x>=0&&b.x+b.w<=width+1));
@@ -67,8 +70,8 @@ fs.mkdirSync(out,{recursive:true});
   await newOnset();await cursor(0);
   s=await catchTone('9');assert(s.modes.selectedTensions.includes('9'));const beforePhrygian=s.modes.navigation;
   s=await catchMode('phrygian');assert.equal(s.modes.last.verdict,'invalid');assert.equal(s.modes.last.reason,'tension-conflict');assert.equal(s.modes.last.delta,-15);assert.equal(s.modes.navigation,beforePhrygian-15);assert(s.modes.last.conflicts.some(c=>c.label==='9'&&c.expected==='♭9'));
-  assert.deepEqual(s.lastModePreview.notes.map(n=>n-s.lastModePreview.notes[0]),[0,1,3,5,7,8,10,12]);
-  assert.equal(s.lastModePreview.notes[0]%12,(s.mission.exercise.baseTonic+s.mission.current.offset)%12);
+  assert.deepEqual(s.lastModePreview.scaleNotes.map(n=>n-s.lastModePreview.scaleNotes[0]),[0,1,3,5,7,8,10,12]);
+  assert.equal(s.lastModePreview.scaleNotes[0]%12,(s.mission.exercise.baseTonic+s.mission.current.offset)%12);
   assert.match(await page.locator('#mode-readout').innerText(),/9.*не сочетается/s);
   assert.match(await page.locator('#mode-readout').innerText(),/15 NAV/);
   await page.evaluate(()=>{gardenFlight.spawnTension('♯11',{x:.22,y:.43});gardenFlight.spawnMode('lydian',{x:.75,y:.4});});await page.waitForTimeout(120);
@@ -85,8 +88,8 @@ fs.mkdirSync(out,{recursive:true});
   await page.locator('[data-degree="4"]').click();assert(!(await snapshot()).mission.currentParts.bass,'ROOT answer does not solve slash BASS');await page.locator('[data-quality="m7"]').click();assert(!(await snapshot()).mission.currentParts.bass);await page.locator('[data-bass-degree="11"]').click();assert((await snapshot()).mission.currentParts.bass);
   s=await snapshot();assert.equal(s.mission.solved.length,1);assert(!s.modes.unlocked);assert.equal(s.modes.offeringCount,0,'one of six is below unlock threshold');
   await newOnset();await cursor(4);await catchTone('9');s=await catchMode('ionian');assert.equal(s.combos.best['4'],24,'matching scale and tone form resonance combo');
-  await page.locator('[data-quality="maj"]').click();await page.locator('[data-degree="5"]').click();s=await snapshot();assert.equal(s.combos.best['4'],48,'independent core answers upgrade to constellation combo');assert.equal(s.mission.solved.length,2);await page.screenshot({path:out+'/professor-constellation-48.png'});
-  const comboScore=s.run.score;s=await catchMode('ionian');s=await catchTone('9');assert.equal(s.run.score,comboScore,'repeated same-onset catches cannot farm combo');assert.equal(s.combos.best['4'],48);
+  await page.locator('[data-quality="maj"]').click();await page.locator('[data-degree="5"]').click();s=await snapshot();assert.equal(s.combos.best['4'],48,'independent core answers upgrade to constellation combo');assert.equal(s.mission.solved.length,2);
+  const comboScore=s.run.score;s=await catchMode('ionian');s=await catchTone('9');assert.equal(s.run.score,comboScore,'repeated same-onset catches cannot farm combo');assert.equal(s.combos.best['4'],48);await page.screenshot({path:out+'/professor-constellation-48.png'});
   await page.waitForFunction(()=>gardenFlight.snapshot().modes.unlocked);s=await snapshot();assert.equal(s.modes.unlockThreshold,2);
   await page.waitForFunction(()=>{const s=gardenFlight.snapshot();return s.modes.offeringCount>0&&s.resonance.entities.some(e=>e.planned);},{},{timeout:12000});s=await snapshot();assert(s.modes.lastOffer.usesForecast,'automatic offers forecast arrival harmony');
   await page.screenshot({path:out+'/professor-combo-offer.png'});
@@ -100,7 +103,7 @@ fs.mkdirSync(out,{recursive:true});
   for(const [mode,labels,vials] of [['medium',['1','3','5','7'],4],['hard',null,5]]){
    await page.locator(`button[data-difficulty="${mode}"]`).click();await page.locator('#start-random').click();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);s=await snapshot();if(labels)assert.deepEqual(s.resonance.palette,labels);else assert.equal(s.resonance.palette.length,12);assert.equal(s.resonance.oxygenEnabled,mode==='hard');assert(!s.modes.enabled);assert.equal(await visibleVials(),vials);await page.evaluate(()=>gardenFlight.showMenu());
   }
-  await page.locator('#start-language').click();assert.equal(await page.locator('.mode-live-name').first().innerText(),'Professor');assert.equal(await page.locator('.mode-live-name').nth(1).innerText(),'Guru');
+  await page.locator('#start-language').click();assert.deepEqual(await page.locator('.difficulty-picker .mode-live-name').allTextContents(),['Cadet','Pilot','Navigator','Master','Guru']);
   await page.reload();await page.waitForFunction(()=>gardenFlight.snapshot().ready);assert(!await page.evaluate(()=>JSON.parse(localStorage.getItem('ear-yoga-professor-families.v1')).includes('blues')));assert.deepEqual(errors,[]);
   console.log('Professor1.57 browser PASS: bright-point /label-only /swept pickup; 1/3unlock /forecastpairs /6-14tierpoints /48combo /dedupe; 3+2 cover /4viewports; 12tensions+41scales /6vials; 9→Phrygian and Lydian→11 NAV−15; per-onset reset; pause/audio cancellation; life-wheel O2+NAV restoration; expanded inventory; exact slash ROOT/quality/BASS; original Student/Teacher; persisted families; RU/EN. '+out);
  }finally{await browser.close();}

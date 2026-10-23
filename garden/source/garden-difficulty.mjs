@@ -16,7 +16,7 @@ export function recordGardenAdmission(progress,id){
 export const GARDEN_DIFFICULTIES=Object.freeze({
   light:{speed:2,timeScale:1,barSeconds:4,spawnRate:1,drain:0,wrongDamage:0,minResource:100,maxChapter:1,maxLength:4},
   medium:{speed:2,timeScale:1,barSeconds:4,spawnRate:1,drain:1,wrongDamage:3,minResource:0,maxChapter:16,maxLength:18},
-  professor:{experimental:true,speed:2,timeScale:1.07,barSeconds:4/1.07,spawnRate:1,drain:1,wrongDamage:3,minResource:0,maxChapter:16,maxLength:18},
+  professor:{experimental:true,speed:2,timeScale:1.0379,barSeconds:4/1.0379,spawnRate:1,drain:1,wrongDamage:3,minResource:0,maxChapter:16,maxLength:18},
   hard:{speed:2,timeScale:1.07,barSeconds:4/1.07,spawnRate:1,drain:1,wrongDamage:3,minResource:0,maxChapter:16,maxLength:18}
 });
 export const difficultyProfile=name=>GARDEN_DIFFICULTIES[name]||GARDEN_DIFFICULTIES.medium;

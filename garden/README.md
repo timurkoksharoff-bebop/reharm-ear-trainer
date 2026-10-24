@@ -1,4 +1,4 @@
-# EAR YOGA 1.67 — mobile PWA
+# EAR YOGA 1.68 — mobile PWA
 
 Professor beta combines12 flying tensions/O2 with41 scale flight tags and degree formulas/NAV, one-octave soft flute auditions, family switches and a separate experimental star store. Selected pitches are checked against complete scales in both orders; clear conflicts cost15 NAV and compatible scales restore6/9/12 NAV and6/10/14 score points by tier. Modes unlock after a third of the route is solved; common contextual choices, projected arrival harmony and matching tension offers support independent same-onset combos. Small translucent receipts show bounded incremental combo bonuses. The selected Variant3 wordmark is shared across the achievement cabinet and secondary headers. Guru is reserved. Chord collections and the three original modes are preserved. See source/PROFESSOR_MODES.md.
 

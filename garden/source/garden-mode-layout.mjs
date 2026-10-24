@@ -6,7 +6,7 @@ const MODE_STYLES=['original','porcelain','capsule','portal','lotus'];
 const rows={light:'lower',medium:'lower',hard:'lower',professor:'upper',guru:'upper'};
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const value=(n,fallback,a,b)=>typeof n==='number'&&Number.isFinite(n)?clamp(n,a,b):fallback;
-export function gardenModeLayoutDefaults(){return {version:1,style:'capsule',group:{x:0,y:0,scale:1,gap:0},upper:{x:0,y:0,scale:1,spacing:1},lower:{x:0,y:0,scale:1,spacing:1},buttons:Object.fromEntries(MODES.map(id=>[id,{x:id==='professor'?-1.1:id==='guru'?1.1:0,y:0,scale:1,rotation:0}]))};}
+export function gardenModeLayoutDefaults(){return {version:1,style:'lotus',group:{x:0,y:-.6,scale:1,gap:-1.2},upper:{x:0,y:0,scale:1,spacing:1},lower:{x:0,y:0,scale:1,spacing:1},buttons:Object.fromEntries(MODES.map(id=>[id,{x:id==='professor'?-1.1:id==='guru'?1.1:0,y:0,scale:1,rotation:0}]))};}
 export function normalizeGardenModeLayout(raw){
  const d=gardenModeLayoutDefaults();if(!raw||raw.version!==1)return d;
  // Stored v1 layouts predate selectable shapes. Keep those original layouts

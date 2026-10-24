@@ -1,0 +1,50 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#061827"><title>EAR YOGA · Обновление</title><style>body{margin:0;min-height:100dvh;display:grid;place-items:center;background:#061827;color:#f1dfb9;font:20px Georgia,serif;text-align:center}main{max-width:28rem;padding:28px}h1{font-weight:400}p{font:16px/1.5 system-ui,sans-serif;color:#b6d5d5}button,a{display:inline-block;margin:10px;padding:12px 18px;border:1px solid #d6bd89;border-radius:12px;background:transparent;color:inherit;font:16px system-ui,sans-serif}[hidden]{display:none!important}</style></head><body><main><h1>Ear Yoga</h1><p id="status" role="status">Загружаем обновление…</p><button id="retry" hidden>Повторить</button><a id="open-saved" href="./" hidden>Открыть сохранённую версию</a></main><script>
+(async()=>{
+ const version='1.68',status=document.querySelector('#status'),retry=document.querySelector('#retry'),saved=document.querySelector('#open-saved');retry.onclick=()=>location.reload();
+ try{
+  if(!navigator.serviceWorker||!navigator.onLine)throw Error('Для обновления нужно подключение к интернету. Сохранённая игра доступна по ссылке ниже.');
+  const worker=navigator.serviceWorker;
+  const releaseResponse=await fetch('./release.json?update='+Date.now(),{cache:'no-store'});
+  if(!releaseResponse.ok)throw Error('Не удалось проверить последнюю версию. Нажмите «Повторить».');
+  const release=await releaseResponse.json(),targetVersion=release.version||version;
+  status.textContent='Загружаем версию '+targetVersion+'…';
+  await new Promise(async(resolve,reject)=>{
+   let done=false,replacementTimer;
+   const timer=setTimeout(()=>finish(Error('Обновление ещё загружается. Нажмите «Повторить».')),180000);
+   function finish(error){if(done)return;done=true;clearTimeout(timer);clearTimeout(replacementTimer);worker.removeEventListener('controllerchange',check);error?reject(error):resolve();}
+   function check(){const controller=worker.controller;if(!controller||done)return;const channel=new MessageChannel(),timeout=setTimeout(()=>channel.port1.close(),2000);channel.port1.onmessage=event=>{clearTimeout(timeout);channel.port1.close();if(controller===worker.controller&&event.data?.type==='EAR_YOGA_VERSION'&&event.data.version===targetVersion)finish();};controller.postMessage({type:'EAR_YOGA_VERSION'},[channel.port2]);}
+   worker.addEventListener('controllerchange',check);
+   try{
+    let registration=await worker.register('./service-worker.js',{scope:'./',updateViaCache:'none'}),replacing=false;
+    const activate=()=>{
+     registration.waiting?.postMessage({type:'EAR_YOGA_ACTIVATE'});
+     if(done||replacing||replacementTimer||!registration.waiting)return;
+     replacementTimer=setTimeout(async()=>{
+      if(done||!registration.waiting)return;
+      // Recovery is an explicit update screen, with no flight in progress.
+      // A stuck older registration can be replaced without clearing caches,
+      // progress, records, routes or any other player storage.
+      replacing=true;
+      try{
+       const fresh=new URL(location.href);
+       if(fresh.searchParams.get('recovery-registration')===targetVersion)throw Error('Закройте другие вкладки игры и нажмите «Повторить». Данные игры сохранены.');
+       await registration.unregister();fresh.searchParams.set('recovery-registration',targetVersion);
+       // Navigate once without the old registration before installing anew.
+       location.replace(fresh.href);
+      }catch(error){finish(error);}
+     },3000);
+    };
+    const watch=()=>{const installing=registration.installing;if(installing)installing.addEventListener('statechange',()=>{setTimeout(activate,0);check();});activate();};
+    registration.addEventListener('updatefound',watch);watch();
+    // Registration already starts an update. Do not start a second job while
+    // that install is in progress; explicitly activate a verified waiting worker.
+    if(!registration.installing&&!registration.waiting)await registration.update();check();
+   }catch(error){finish(error);}
+  });
+  const html=await (await fetch('./index.html',{cache:'no-store'})).text();
+  const bundle=await (await fetch('./garden-flight.bundle.js?v='+encodeURIComponent(targetVersion),{cache:'no-store'})).text();
+  if(!html.includes('garden-flight.bundle.js?v='+targetVersion)||!bundle.includes('window.GARDEN_VERSION='+JSON.stringify(targetVersion)))throw Error('Файлы игры ещё не обновились. Нажмите «Повторить».');
+  location.replace('./'+(new URLSearchParams(location.search).has('offline-test')?'?offline-test=1':''));
+ }catch(error){status.textContent=error.message||'Не удалось загрузить обновление. Попробуйте ещё раз.';retry.hidden=false;saved.hidden=false;}
+})();
+</script></body></html>

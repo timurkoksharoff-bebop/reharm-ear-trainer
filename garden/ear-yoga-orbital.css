@@ -45,7 +45,7 @@
 #garden-start[data-cover] :is(button,.start-route-details>summary):focus-visible{outline:2px solid #f2d6a0;outline-offset:3px}
 @media(hover:hover){#garden-start[data-cover] :is(button,.start-route-details>summary):hover{filter:none}#garden-start[data-cover] :is(.start-choice,.difficulty-picker button):hover .pearl-light{opacity:1}}
 #garden-start[data-cover] :is(button,.start-route-details>summary):active,#garden-start[data-cover] .is-pressing{transform:translateY(1px) scale(.975);filter:none}
-#garden-start[data-cover] .build-version{z-index:4;right:8px;bottom:5px;left:auto;top:auto;font-size:9px;opacity:.5}
+#garden-start[data-cover] .build-version{z-index:4;right:calc(24px + env(safe-area-inset-right,0px));bottom:5px;left:auto;top:auto;font-size:9px;opacity:.5}
 body.start-open:has(#garden-start[data-cover])>#language-toggle{display:none!important}
 #garden-start[data-cover] .start-route-info{z-index:7;font-family:'Yoga Inter',Arial,sans-serif;max-height:80dvh;overflow:auto}
 /* English and contextual admission captions remain real translated text. Russian

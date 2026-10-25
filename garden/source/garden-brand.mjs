@@ -12,6 +12,11 @@ export function bindGardenBrand(){
   inkDefs.setAttribute('width','0');inkDefs.setAttribute('height','0');inkDefs.setAttribute('aria-hidden','true');
   inkDefs.style.cssText='position:absolute;pointer-events:none;overflow:hidden';
   inkDefs.innerHTML='<defs><filter id="orbital-ivory-ink" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 -2 -1 0 0 1.4"/></filter><filter id="orbital-gold-ink" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 .96 0 0 0 0 .89 0 0 0 0 .73 3 1 -1 0 -.7"/></filter></defs>';
+  const warmSurface=document.createElementNS('http://www.w3.org/2000/svg','filter');
+  warmSurface.id='orbital-warm-surface';
+  warmSurface.setAttribute('color-interpolation-filters','sRGB');
+  warmSurface.innerHTML='<feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 4 0 -1 0 -.15"/>';
+  inkDefs.querySelector('defs').append(warmSurface);
   document.querySelector('.garden-start-shell').append(inkDefs);
   const selectors=['.difficulty-picker button','#start-random','#start-choose','#start-tutorial','.start-route-details>summary','#start-language','#start-menu'];
   for(const selector of selectors)for(const control of document.querySelectorAll(selector)){

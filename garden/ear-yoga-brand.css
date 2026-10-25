@@ -58,6 +58,13 @@
    around the live controls, while the old five-mode strip stays hidden. */
 #garden-start[data-cover] .orbital-reference-plate{clip-path:none;background:none}
 #garden-start[data-cover] .orbital-reference-plate::before{content:'';position:absolute;inset:0;background:var(--reference) center/100% 100% no-repeat;-webkit-mask:linear-gradient(transparent 0% 13%,#000 16% 55%,transparent 59% 76%,#000 91%);mask:linear-gradient(transparent 0% 13%,#000 16% 55%,transparent 59% 76%,#000 91%);pointer-events:none}
+/* A painted night surface continues below the original horizon. Only its upper
+   join feathers; the lower clouds and tiny lights retain their actual detail.
+   The hero and complete original control contours remain separate layers. */
+#garden-start[data-cover] .garden-start-shell::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:url('assets/echo-garden/menu-night-surface-1.74.webp') center/100% 100% no-repeat;-webkit-mask:linear-gradient(transparent 0% 61%,#000 69% 100%);mask:linear-gradient(transparent 0% 61%,#000 69% 100%)}
+/* Remove blue photographic overscan by colour, not by tracing a smaller rim.
+   All original warm gold/ivory pixels survive; the printed ink sits above. */
+#garden-start[data-cover] #start-random .reference-face{filter:url('#orbital-warm-surface')}
 .chosen-cover-brand{position:absolute;left:0;top:0;z-index:4;transform-origin:0 0;pointer-events:none}
 .chosen-cover-brand .chosen-brand-text,.chosen-cover-brand .chosen-brand-lotus{position:absolute;display:block;white-space:nowrap;line-height:normal;font-synthesis:none;text-shadow:0 2px 12px #05132766;transform-origin:center}
 .chosen-cover-brand .chosen-brand-lotus svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1px 8px #d4b77124)}

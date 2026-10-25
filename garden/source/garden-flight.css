@@ -720,7 +720,11 @@ body #mission-complete[hidden]{display:none!important}
 body #mission-complete .completion-medal{grid-column:1;grid-row:1;width:32px;height:32px;margin:0;align-self:center;color:#f2d699;filter:drop-shadow(0 0 6px #e9d29344)}
 .completion-medal svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.1}
 body #mission-complete>.overline{display:none}
-body #mission-complete h2{grid-column:2;grid-row:1;align-self:center;margin:0;padding-right:20px;text-align:left;font:17px/1.12 Georgia,serif;color:#fff0c9}
+body #mission-complete h2{grid-column:1/-1;grid-row:2;align-self:center;margin:0;padding:0;text-align:center;font:17px/1.12 Georgia,serif;color:#fff0c9}
+body #mission-complete #completion-replay{grid-column:2;grid-row:1;justify-self:end;display:grid;place-items:center;width:36px;height:36px;min-height:36px;margin-right:23px;padding:7px;border:1px solid #c9b27b70;border-radius:50%;background:#a7d4cb0a;box-shadow:none;color:#f4dfb3;pointer-events:auto}
+body #mission-complete #completion-replay svg{width:20px;height:20px}
+body #mission-complete #completion-replay:hover{background:#a7d4cb22;border-color:#e9d095bb}
+body #mission-complete #completion-replay::after{content:none!important}
 body #mission-complete p{grid-column:1/-1;display:block;margin:0;font:10px/1.3 system-ui;color:#cfdfd7;overflow-wrap:anywhere}
 body #mission-complete #mission-complete-copy{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 body #mission-complete #completion-bonus{display:none}
@@ -803,3 +807,26 @@ body.professor-mode.paged-chain .flight-tools-body{max-height:min(360px,calc(100
 
 #professor-lesson .legend-chord{color:#6ed9df}#professor-lesson .legend-scale{color:#e8ca7b}
 #mode-gate{width:min(460px,calc(100vw - 28px));max-height:calc(100dvh - 40px);box-sizing:border-box;overflow:auto;border-radius:24px;border:1px solid #c4b58788;background:linear-gradient(145deg,#17323a,#081925);color:#e6e8dc;padding:24px;font:14px/1.55 system-ui}#mode-gate::backdrop{background:#020e1bb3}#mode-gate h2{font:28px Georgia,serif;color:#f0dfb6}#mode-gate p{color:#bed3cf}#mode-gate div{display:flex;flex-wrap:wrap;gap:8px}#mode-gate button{font:inherit;color:#e7dfc4;background:#ffffff08;border:1px solid #acc7b755;padding:10px 13px;border-radius:14px;cursor:pointer}.difficulty-picker .mode-locked{filter:saturate(.7);opacity:.78}.mode-demo-active #world{pointer-events:none}.mode-demo-active .flight-tools,.mode-demo-active .degrees-panel,.mode-demo-active .answers-panel,.mode-demo-active #bass-panel{pointer-events:none}.mode-demo-active #answer-feedback{opacity:.65}
+
+/* Optional preflight sound questions; choices stay separate from the lesson. */
+#professor-lesson button,#professor-lesson select{min-height:44px;max-width:100%}
+#professor-lesson header button{min-width:44px;height:44px;padding:0}
+#professor-lesson nav button[aria-pressed="true"]{border-color:#ddc895aa;background:#d1c69b16;color:#f4dfb1}
+#professor-lesson .sound-intro{font-size:13px;line-height:1.6}
+#professor-lesson .mode-sound-form{display:grid;gap:12px;min-width:0}
+#professor-lesson .mode-sound-question{box-sizing:border-box;min-inline-size:0;margin:0;padding:12px;border:1px solid #a9c4b43d;border-radius:14px}
+#professor-lesson .mode-sound-question legend{padding:0 5px;font:16px/1.3 Georgia,serif;color:#e9d9af}
+#professor-lesson .mode-sound-question select{box-sizing:border-box;display:block;width:100%;min-width:0;margin:0;font-size:13px}
+#professor-lesson .mode-sound-question:disabled{opacity:.5}
+#professor-lesson .mode-sound-question:disabled select,#professor-lesson .mode-sound-question:disabled input{cursor:default}
+#professor-lesson .mode-sound-slider{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:10px;font-size:13px;line-height:1.4}
+#professor-lesson .mode-sound-slider+label{margin-top:8px}
+#professor-lesson .mode-sound-slider output{color:#ebd8a8;font:13px/1.4 ui-monospace,monospace}
+#professor-lesson .mode-sound-slider input{grid-column:1/-1;box-sizing:border-box;width:100%;min-width:0;min-height:44px;margin:0;accent-color:#dbc38e;cursor:pointer}
+#professor-lesson .mode-sound-summary{margin:8px 0 0;color:#a9cbbf;font-size:12px;line-height:1.6}
+#professor-lesson .mode-sound-note,#professor-lesson .mode-sound-example{margin:0;font-size:12px;line-height:1.6}
+#professor-lesson .mode-sound-example{color:#e7d6b0}
+#professor-lesson .mode-sound-preview{margin:0}
+#professor-lesson .mode-sound-preview button{flex:1 1 180px;font-size:13px}
+#professor-lesson footer label{min-height:44px}
+@media(max-width:360px){#professor-lesson .mode-sound-question{padding:10px}#professor-lesson .mode-sound-question legend{font-size:15px}#professor-lesson .mode-sound-question select{padding-inline:9px}}

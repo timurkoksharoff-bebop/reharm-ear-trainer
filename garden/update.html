@@ -1,6 +1,6 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#061827"><title>EAR YOGA · Обновление</title><style>body{margin:0;min-height:100dvh;display:grid;place-items:center;background:#061827;color:#f1dfb9;font:20px Georgia,serif;text-align:center}main{max-width:28rem;padding:28px}h1{font-weight:400}p{font:16px/1.5 system-ui,sans-serif;color:#b6d5d5}button,a{display:inline-block;margin:10px;padding:12px 18px;border:1px solid #d6bd89;border-radius:12px;background:transparent;color:inherit;font:16px system-ui,sans-serif}[hidden]{display:none!important}</style></head><body><main><h1>Ear Yoga</h1><p id="status" role="status">Загружаем обновление…</p><button id="retry" hidden>Повторить</button><a id="open-saved" href="./" hidden>Открыть сохранённую версию</a></main><script>
 (async()=>{
- const version='1.68',status=document.querySelector('#status'),retry=document.querySelector('#retry'),saved=document.querySelector('#open-saved');retry.onclick=()=>location.reload();
+ const version='1.77',status=document.querySelector('#status'),retry=document.querySelector('#retry'),saved=document.querySelector('#open-saved');retry.onclick=()=>location.reload();
  try{
   if(!navigator.serviceWorker||!navigator.onLine)throw Error('Для обновления нужно подключение к интернету. Сохранённая игра доступна по ссылке ниже.');
   const worker=navigator.serviceWorker;

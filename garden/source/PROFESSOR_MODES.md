@@ -42,7 +42,7 @@ are explained by the full name and chord context rather than changing its MIDI.
 
 41 entries: major7, melodic-minor7, harmonic-minor7, harmonic-major7,
 pentatonics6, blues2, symmetric3, eight-note bebop2. Melodic minor is the jazz
-ascending form in both directions; previews alternate six broken contours within one octave, with short/long phrases fitted to the current chord window.
+ascending form in both directions. In-flight previews now construct short melodic phrases from the selected collection; the workshop retains the six original scale-exercise contours for comparison.
 Pentatonics include major, minor, minor6, half-diminished, majorb6 and suspended.
 The half–whole and whole–half diminished collections are distinct.
 Bebop major and dominant contain intentional passing tones, so they stay neutral.
@@ -87,7 +87,7 @@ in improvised music. Enharmonic pitches compare by sound, retaining labels.
 Selections belong only to the actual sounding chord onset and clear on a new
 onset, including a new loop; no stale choice is carried to another harmony.
 The same conflicting mode/pitch pair costs once per onset. NAV starts80,
-compatible choices restore6 once per mode/onset, and clear conflicts cost15.
+compatible choices restore6/9/12 once per mode/onset, and clear conflicts cost20.
 There is no passive NAV drain. Zero has3.5 seconds of recovery grace; the
 Wheel of Life restores NAV and O₂. Boundary/paused/expired windows are safe.
 The HUD explains the conflicting degree and its scale alternative without
@@ -103,13 +103,15 @@ including independent bass. Single tensions keep their original two-chord gate.
 
 Offers favour ordinary Ionian/Dorian/Mixolydian/Lydian/Aeolian vocabulary; recent
 labels are softly downweighted rather than excluded. Jazz choices remain regular
-and uncommon rotations remain possible. Every second offering prefers a compatible
-base/jazz choice if one exists in the enabled families. Selection uses projected
+and uncommon rotations remain possible. Each shuffled quartet has two compatible support slots, one explicit-conflict
+slot and one open slot. Support prefers base/jazz choices when available; an
+empty pool falls back to enabled modes without reclassifying neutral colours. Selection uses projected
 arrival harmony from the actual mission deadline, bar length, cursor and hold
 state. Manual jumps/movement can invalidate that forecast; only the actual sounding
-chord at pickup is authoritative. A matching tension may accompany an eligible
-scale, selected from the intersection of scale membership and existing valid O2
-tones. No full function/modulation analysis is claimed.
+chord at pickup is authoritative. A matching tension accompanies35% of eligible scales, selected from the
+intersection of scale membership and existing valid O2 tones. It arrives0.22–0.48
+seconds earlier or later, only when both encounters fit the same safe chord
+window. These are advice forecasts, not validity labels shown to the player. No full function/modulation analysis is claimed.
 
 These are game tiers, not a textbook ranking of musical value: foundation +6NAV
 /+6points, jazz +9/+10, rare +12/+14, only for compatible choices. Wrong rare
@@ -147,11 +149,11 @@ Mastery requires at least eight recent graded choices, >=80% successful across
 at least three route positions. Two mastered foundation modes gently increase
 advanced weights; four and forty successful mode choices increase rare weights.
 All enabled families remain possible; harmony/arrival eligibility and the regular
-compatible-offer guarantee remain in place. The next unmastered topic gets a
+compatible support slots remain in place. The next unmastered topic gets a
 small emphasis. These thresholds are provisional game pedagogy, not textbook
 standards. Continued mistakes reduce novelty pressure without banning a mode.
 
-Optional preflight lessons pick an unreviewed topic structurally relevant to at
+Optional preflight lessons rotate random topics structurally relevant to at
 least one route chord and respect selected families. Every existing catalogue
 mode has a compact card with the degree formula, alternate names, a C-rooted
 example, a chromatic keyboard showing chord/scale membership, separate chord,
@@ -166,3 +168,84 @@ Phrygian dominant = Mixolydian b2 b6 follows identical interval collections.
 Sparse, blues/bebop and functional/slash-bass cases remain contextual rather than
 universal claims of correctness. No Hungarian-minor scale was silently invented
 or added: cards cover the current verified41; extra scales need separate review.
+
+Preflight rotation is separate from adaptive in-flight weights. Each enabled
+preflight launch chooses from route-compatible modes in selected families,
+without repeating a topic until that eligible pool is exhausted. The last topic
+and rotation history survive reload. Manual lesson selection remains exact;
+replaying a just-completed route starts directly without a second preflight.
+The preflight checkbox can disable lessons.
+
+
+## Live phrase prototype —1.76
+
+Master pickups use original, context-aware phrase constructions: a target approach,
+a diatonic enclosure, broken-chord call/answer, a repeated motif, and pentatonic or
+blues turns when the chosen collection supports them. This is a small generative
+vocabulary, not transcriptions or recordings of textbook licks. General sources
+reviewed from the user’s private collection:
+
+- Jack Shneidman, *1001 Jazz Licks*, Introduction/How to Use, PDF2–3 and the
+  Dorian section p.52: harmonic/mode contexts, transposition, varied beginnings,
+  endings, phrasing and articulation.
+- Jerry Coker et al., *Patterns for Jazz*, Introduction, PDF7–8 and printed
+  pp.31–32/PDF41–42: context-specific patterns and non-chordal embellishment.
+- David Baker, *Improvisational Patterns: The Blues*, p.14: tempo, register,
+  volume, articulation and stylistic variation with accompaniment.
+- Mike Titlebaum, *Jazz Improvisation Using Simple Melodic Embellishment*,
+  chapter8 p.66/PDF89: accented arrival and quieter intermediate/ghost notes.
+
+The first implementation uses notes from the selected collection only, including
+octave-equivalent pitches. Its enclosure is an explicitly diatonic pedagogical
+adaptation. Chromatic bebop approaches outside a collection need a separately
+reviewed layer; they are not silently applied to every mode. Characteristic mode
+colours occur in the phrase, so e.g. Lydian#4 and Dorian6 do not disappear into a
+generic chord-only lick. A guide-tone arrival is preferred when the actual chord
+and chosen collection share it; an incompatible selection is never replaced by
+a compatible scale. Existing verdicts, penalties and combo scoring are unchanged.
+
+Events have individual onset, gate and velocity, with rests and recurring motifs.
+Normal entry waits at most one sixteenth of the actual sounding bar; very short
+windows use an immediate compact gesture. The planner shortens the construction
+instead of accelerating a long phrase. All events fit before the chord boundary,
+and existing pause/background/new-chord cancellation remains in control. This is
+short-phrase behaviour after a pickup, not a continuously improvising soloist.
+
+The soft-flute partials and overall level are retained. The workshop adds a
+**Phrase** button over its example chord; **Scale**, **Chord**, and **Together**
+retain their exercise roles. `?mode-phrases=patterns` selects the previous contour
+engine for in-flight comparison only. No textbook PDFs, scans or musical examples
+are runtime assets.
+
+
+## Mobile1.77 — preflight sound and selective navigation
+
+Master workshop has an optional Sound tab before flight: saved Phrase0, Mixed,
+or stepwise Scales. Device-local ear-yoga-mode-audition.v1 stores the preset,
+standalone-arpeggio percentage, combined percentage and rhythm preference.
+Defaults request50% phrases,25% broken arpeggios and25% combinations. Each
+default eight-slot series has4/2/2 requests; custom rounded percentages use a
+100-slot permutation. Short windows replace combinations with one short idea
+rather than compressing both. Combined order alternates. Stepwise exercises
+keep adjacent scale pitches; the literal selected collection stays unchanged.
+
+Phrase0 is the unchanged1.76 planner in garden-mode-phrases-zero.mjs, with a
+regression checksum. It is available in preflight and via mode-phrases=zero;
+mode-phrases=patterns keeps the former contour exercise for comparison.
+Mixed adds authored offbeat entries, breaths, different arrivals and occasional
+triplet/quintuplet cells. Free increases tuplet requests; Steady avoids them.
+Tuplets only play when note count/time fit with at least140ms between attacks.
+Enclosures remain diatonic; chromatic notes outside the selected scale are
+not silently introduced. This is a lightweight procedural musical sketch,
+not a claim to replicate a human player's improvisation. Existing cancellation
+on new chord, pause and background is retained.
+
+The old offer mix guaranteed compatibility in at least77.5% of offers before
+open-pool matches, and paired every eligible offer. This release replaces that
+with the shuffled2support/1conflict/1open bag described above and20NAV damage.
+Neutral judgments, no passive NAV drain,3.5-second recovery and musical
+assessment rules are unchanged. Blind pickup simulations must lose NAV on
+ordinary major/minor/dominant chords while at least half of supported forecasts
+remain compatible. The local adaptive teacher still increases advanced modes
+after two mastered foundations, and rare modes after four plus40 successes.
+No new catalog scales or textbook classifications were added by this balance edit.

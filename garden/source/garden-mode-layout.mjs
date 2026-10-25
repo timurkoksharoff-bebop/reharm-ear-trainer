@@ -2,11 +2,18 @@
 // never viewport pixels; visual studies do not change gameplay.
 export const GARDEN_MODE_LAYOUT_KEY='ear-yoga-mode-layout.v1';
 const MODES=['light','medium','hard','professor','guru'];
-const MODE_STYLES=['original','porcelain','capsule','portal','lotus'];
+const MODE_STYLES=['original','porcelain','capsule','portal','lotus','lotus-down'];
 const rows={light:'lower',medium:'lower',hard:'lower',professor:'upper',guru:'upper'};
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const value=(n,fallback,a,b)=>typeof n==='number'&&Number.isFinite(n)?clamp(n,a,b):fallback;
-export function gardenModeLayoutDefaults(){return {version:1,style:'lotus',group:{x:0,y:-.6,scale:1,gap:-1.2},upper:{x:0,y:0,scale:1,spacing:1},lower:{x:0,y:0,scale:1,spacing:1},buttons:Object.fromEntries(MODES.map(id=>[id,{x:id==='professor'?-1.1:id==='guru'?1.1:0,y:0,scale:1,rotation:0}]))};}
+// Keep complete user compositions available; shape alone is not a preset.
+export function gardenModeLayoutPreset(id='variant2'){
+ const first=id==='variant1',down=id==='variant3',lotus=first||down;
+ return {version:1,style:down?'lotus-down':first?'lotus':'capsule',group:{x:0,y:-.6,scale:lotus?1:.985,gap:lotus?-1.2:-.4},upper:{x:0,y:0,scale:1,spacing:1},lower:{x:0,y:0,scale:1,spacing:1},buttons:Object.fromEntries(MODES.map(id=>[id,{x:id==='professor'?-1.1:id==='guru'?1.1:0,y:0,scale:1,rotation:0}]))};
+}
+export function gardenModeLayoutDefaults(){return gardenModeLayoutPreset('variant2');}
+// Exported slider values can differ only by floating-point display noise.
+function samePreset(a,b){return Object.keys(b).every(key=>typeof b[key]==='object'&&b[key]!==null?samePreset(a?.[key]||{},b[key]):typeof b[key]==='number'?typeof a?.[key]==='number'&&Math.abs(a[key]-b[key])<1e-10:a?.[key]===b[key]);}
 export function normalizeGardenModeLayout(raw){
  const d=gardenModeLayoutDefaults();if(!raw||raw.version!==1)return d;
  // Stored v1 layouts predate selectable shapes. Keep those original layouts
@@ -36,7 +43,7 @@ export function mountGardenModeLayoutEditor({language,onOpen,onClose}={}){
  const names=()=>({group:t('Вся группа','All five buttons'),upper:t('Верхняя строка · мастер / гуру','Upper row · Master / Guru'),lower:t('Нижняя строка · три режима','Lower row · three modes'),light:t('Курсант','Cadet'),medium:t('Пилот','Pilot'),hard:t('Штурман','Navigator'),professor:t('Мастер','Master'),guru:t('Гуру','Guru')});
  const panel=document.createElement('aside');panel.id='mode-layout-editor';panel.hidden=true;panel.dataset.userContent='';panel.setAttribute('aria-label','Настройка кнопок режимов');document.body.append(panel);
  const dock=document.createElement('aside');dock.id='mode-layout-dock';dock.hidden=true;dock.dataset.userContent='';document.body.append(dock);
- let targetSelect,fieldHost,status,exportBox;const controls=new Map(),styleButtons=[];
+ let targetSelect,fieldHost,status,exportBox;const controls=new Map(),styleButtons=[],presetButtons=[];
  const element=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
  const action=(text,fn)=>{const b=element('button',text);b.type='button';b.onclick=fn;return b;};
  function current(){return ['group','upper','lower'].includes(selected)?state[selected]:state.buttons[selected];}
@@ -44,6 +51,7 @@ export function mountGardenModeLayoutEditor({language,onOpen,onClose}={}){
  function apply(){
   if(state.style==='original')delete cover.dataset.modeStyle;else cover.dataset.modeStyle=state.style;
   for(const b of styleButtons)b.setAttribute('aria-pressed',String(b.dataset.modeStyleChoice===state.style));
+  for(const b of presetButtons)b.setAttribute('aria-pressed',String(samePreset(state,gardenModeLayoutPreset(b.dataset.modeLayoutPreset))));
   const base=baseline();if(!base)return;const transforms=gardenModeLayoutTransforms(state,base);
   for(const id of MODES){const b=buttons[id];if(!b)continue;const p=transforms?.[id];if(p){b.style.translate=`${p.x*shell.clientWidth/100}px ${p.y*shell.clientHeight/100}px`;b.style.scale=String(p.scale);b.style.rotate=p.rotation+'deg';}else for(const prop of ['translate','scale','rotate'])b.style.removeProperty(prop);b.toggleAttribute('data-layout-selected',open&&!compact&&(selected===id||selected===rows[id]||selected==='group'));}
  }
@@ -60,8 +68,10 @@ export function mountGardenModeLayoutEditor({language,onOpen,onClose}={}){
  function renderPanel(){
   panel.replaceChildren();const head=element('header');head.append(element('div',null,'mode-layout-heading'),action('×',close));head.firstChild.append(element('small','EAR YOGA'),element('h2',t('Кнопки режимов','Mode button layout')));head.lastChild.setAttribute('aria-label',t('Применить и закрыть','Apply and close'));panel.append(head);
   panel.append(element('p',t('Вся обложка видна целиком. Перетаскивай кнопку на картинке или выбери строку и настрой её здесь.','The entire cover stays visible. Drag a button on the image, or choose a row and adjust it here.'),'mode-layout-intro'));
+  const presets=element('fieldset',null,'mode-layout-presets');presets.append(element('legend',t('Варианты композиции','Composition variants')));presetButtons.length=0;
+  for(const [id,ru,en]of [['variant1','Вариант 1 · Лотос','Variant 1 · Lotus'],['variant2','Вариант 2 · Капсула','Variant 2 · Capsule'],['variant3','Вариант 3 · Лотос ↓','Variant 3 · Lotus ↓']]){const b=action(t(ru,en),()=>{state=gardenModeLayoutPreset(id);renderFields();update();});b.dataset.modeLayoutPreset=id;b.setAttribute('aria-pressed',String(samePreset(state,gardenModeLayoutPreset(id))));presetButtons.push(b);presets.append(b);}panel.append(presets);
   const styles=element('fieldset',null,'mode-layout-styles');styles.append(element('legend',t('Форма кнопок','Button shape')));styleButtons.length=0;
-  const choices=[['original','Исходная','Original'],['porcelain','Фарфор','Porcelain'],['capsule','Капсула','Capsule'],['portal','Портал','Portal'],['lotus','Лотос','Lotus']];
+  const choices=[['original','Исходная','Original'],['porcelain','Фарфор','Porcelain'],['capsule','Капсула','Capsule'],['portal','Портал','Portal'],['lotus','Лотос','Lotus'],['lotus-down','Лотос ↓','Lotus ↓']];
   const shapeChoice=(id,ru,en)=>{const b=action('',()=>{state.style=id;update();}),sample=element('i',null,'mode-style-sample');b.dataset.modeStyleChoice=id;b.setAttribute('aria-pressed',String(state.style===id));sample.setAttribute('aria-hidden','true');b.append(sample,element('span',t(ru,en)));styleButtons.push(b);return b;};
   for(const choice of choices)styles.append(shapeChoice(...choice));panel.append(styles);
   const label=element('label',null,'mode-layout-target');label.append(element('span',t('Что настраиваем','Adjust')));targetSelect=element('select');targetSelect.setAttribute('aria-label',t('Объект настройки','Layout target'));for(const [id,name]of Object.entries(names())){const option=element('option',name);option.value=id;targetSelect.append(option);}targetSelect.onchange=()=>choose(targetSelect.value);label.append(targetSelect);panel.append(label);fieldHost=element('div',null,'mode-layout-fields');panel.append(fieldHost);renderFields();

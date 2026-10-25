@@ -44,6 +44,30 @@ Focused Chromium pixel checks at 820×1180 and 390×844 confirm exterior pixels
 are unchanged during presses and Student deselection; route activation works.
 These checks are desktop emulation, not physical iOS/Safari testing.
 
+## Detailed lower night surface — local preview1.74
+
+The user requested a naturally continuing night-side planet beneath the home
+controls, retaining cloud/terrain detail and tiny lights instead of a plain dark
+field. Created with the built-in image_gen tool (not the CLI fallback).
+
+- Source master: `garden/source/art/menu-night-surface-1.74.png`.
+- Runtime derivative: `assets/echo-garden/menu-night-surface-1.74.webp`, WebP92.
+- Only the lower surface is overlaid, feathering from61% to69% of cover height.
+  The original upper hero, ship, horizon and original masters remain in place.
+- Launch keeps its complete original geometric mask. An alpha-only SVG filter
+  removes blue photographic overscan while keeping the original RGB of its gold
+  and ivory; the original printed-ink layer remains above. No tighter tracing,
+  gold clipping, blur or repainting of the buttons is used.
+- This is a local preview asset, not a public release by itself.
+
+### Final generation prompt
+
+Use case: precise-object-edit. Asset type: portrait game background plate for EAR YOGA, same exact framing as input. Image1 is the clean background EDIT TARGET. Image2 is a supporting reference ONLY for the deep navy night texture and scattered tiny blue/cyan lights visible around and below its two large bottom buttons; DO NOT copy any buttons, text or UI from image2.
+
+Change ONLY the lower planetary surface in image1, from around66% down through the bottom. Extend the planet's night side naturally downward from the existing illuminated curved horizon: dark sapphire cloud banks and subtle terrain filaments, fine crisp wisps, sparse tiny distant turquoise city or bioluminescent lights, and a few pinprick glimmers. Retain physical surface detail in the shadow instead of flat navy paint or haze. From74% down, its navy values and density should harmonize closely with image2's existing dark lower field, continuing that same dark star-speckled surface UPWARD behind where the controls will be. Very restrained small lights, not a bright city or a new focal object. The surface gradually becomes dark while cloud texture remains legible. No hard rectangular transition, no blur, no broad empty gradient, no added ornament.
+
+INVARIANTS: preserve the upper62% completely, exactly the same original ship, lotus/orbits, golden fine lines, background planets, turquoise exhaust, starfield, and the original bright curved horizon at its current position/shape. Same tall863:1823 ratio and camera/crop. Preserve all original hero detail. No letters, logos, typography, controls, button contours, footer arcs, panels, moons or added large objects anywhere. Full opaque clean BACKGROUND artwork, not a mockup.
+
 ## Mode selection and English correction — 1.39
 
 English mode sprites now use the same complete gold contour masks as Russian;

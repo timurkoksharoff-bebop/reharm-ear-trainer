@@ -28,9 +28,15 @@
   --mode-rim:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20268%20111%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22edge%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff4d9%22%2F%3E%3Cstop%20offset%3D%22.28%22%20stop-color%3D%22%23dcc69b%22%2F%3E%3Cstop%20offset%3D%22.62%22%20stop-color%3D%22%238f774e%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23e9cf9e%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22inner%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff4df%22%20stop-opacity%3D%22.52%22%2F%3E%3Cstop%20offset%3D%22.4%22%20stop-color%3D%22%23f1d1a0%22%20stop-opacity%3D%22.03%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23091a25%22%20stop-opacity%3D%22.6%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M16%2044Q16%2030%2032%2030H76Q107%2030%20134%2016Q161%2030%20192%2030H236Q252%2030%20252%2044V80Q252%2094%20238%2094H30Q16%2094%2016%2080Z%22%20fill%3D%22none%22%20stroke%3D%22%23091724%22%20stroke-width%3D%225%22%20stroke-opacity%3D%22.36%22%2F%3E%3Cpath%20d%3D%22M16%2044Q16%2030%2032%2030H76Q107%2030%20134%2016Q161%2030%20192%2030H236Q252%2030%20252%2044V80Q252%2094%20238%2094H30Q16%2094%2016%2080Z%22%20fill%3D%22none%22%20stroke%3D%22url%28%23edge%29%22%20stroke-width%3D%221.7%22%2F%3E%3Cpath%20d%3D%22M22%2045Q22%2036%2033%2036H77Q108%2036%20134%2023Q160%2036%20191%2036H235Q246%2036%20246%2045V79Q246%2088%20237%2088H31Q22%2088%2022%2079Z%22%20fill%3D%22none%22%20stroke%3D%22url%28%23inner%29%22%20stroke-width%3D%221.4%22%2F%3E%3C%2Fsvg%3E")!important;
 }
 
+/* Downward Lotus: reflect only contours; lettering and top-lit glaze stay upright. */
+#garden-start[data-cover][data-mode-style="lotus-down"] .difficulty-picker button[data-difficulty]{
+  --mode-interior:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20268%20111%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M16%2067Q16%2081%2032%2081H76Q107%2081%20134%2095Q161%2081%20192%2081H236Q252%2081%20252%2067V31Q252%2017%20238%2017H30Q16%2017%2016%2031Z%22%2F%3E%3C%2Fsvg%3E")!important;
+  --mode-rim:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20268%20111%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22edge%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff4d9%22%2F%3E%3Cstop%20offset%3D%22.28%22%20stop-color%3D%22%23dcc69b%22%2F%3E%3Cstop%20offset%3D%22.62%22%20stop-color%3D%22%238f774e%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23e9cf9e%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22inner%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff4df%22%20stop-opacity%3D%22.52%22%2F%3E%3Cstop%20offset%3D%22.4%22%20stop-color%3D%22%23f1d1a0%22%20stop-opacity%3D%22.03%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23091a25%22%20stop-opacity%3D%22.6%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M16%2067Q16%2081%2032%2081H76Q107%2081%20134%2095Q161%2081%20192%2081H236Q252%2081%20252%2067V31Q252%2017%20238%2017H30Q16%2017%2016%2031Z%22%20fill%3D%22none%22%20stroke%3D%22%23091724%22%20stroke-width%3D%225%22%20stroke-opacity%3D%22.36%22%2F%3E%3Cpath%20d%3D%22M16%2067Q16%2081%2032%2081H76Q107%2081%20134%2095Q161%2081%20192%2081H236Q252%2081%20252%2067V31Q252%2017%20238%2017H30Q16%2017%2016%2031Z%22%20fill%3D%22none%22%20stroke%3D%22url%28%23edge%29%22%20stroke-width%3D%221.7%22%2F%3E%3Cpath%20d%3D%22M22%2066Q22%2075%2033%2075H77Q108%2075%20134%2088Q160%2075%20191%2075H235Q246%2075%20246%2066V32Q246%2023%20237%2023H31Q22%2023%2022%2032Z%22%20fill%3D%22none%22%20stroke%3D%22url%28%23inner%29%22%20stroke-width%3D%221.4%22%2F%3E%3C%2Fsvg%3E")!important;
+}
+
 /* Opaque dark glaze, with a quiet reflection at each edge. The selected tile
    shares Launch's warm ivory; the existing upward pearl sweep stays above it. */
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button .mode-rest{
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button .mode-rest{
   inset:0;clip-path:none;opacity:1;
   -webkit-mask:var(--mode-interior) center/100% 100% no-repeat;
   mask:var(--mode-interior) center/100% 100% no-repeat;
@@ -39,40 +45,44 @@
     radial-gradient(ellipse at 68% 120%,#47bcaa42 0%,transparent 54%),
     linear-gradient(180deg,#789a98 0%,#355968 19%,#133248 40%,#0b273b 64%,#1b4152 85%,#668c8b 100%);
 }
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button[aria-pressed="true"] .mode-rest{
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button[aria-pressed="true"] .mode-rest{
   background:
     radial-gradient(ellipse at 43% -28%,#fffff6 0%,#fff7e3b8 26%,transparent 64%),
     radial-gradient(ellipse at 50% 122%,#a78d67 0%,transparent 57%),
     linear-gradient(180deg,#f4e9d3 0%,#f3e8d1 35%,#deceb0 69%,#bca581 89%,#fff0d0 100%);
 }
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button .mode-rim{
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button .mode-rim{
   background:var(--mode-rim) center/100% 100% no-repeat;
   opacity:.9;
 }
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button[aria-pressed="true"] .mode-rim{opacity:1}
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button .experimental-contour,
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button :is(.reference-face,.reference-ink,.mode-water){display:none!important}
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button .pearl-light{
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button[aria-pressed="true"] .mode-rim{opacity:1}
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button .experimental-contour,
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button :is(.reference-face,.reference-ink,.mode-water){display:none!important}
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button .pearl-light{
   inset:0;border-radius:0;
   -webkit-mask:var(--mode-interior) center/100% 100% no-repeat;
   mask:var(--mode-interior) center/100% 100% no-repeat;
 }
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button[aria-pressed="true"] .pearl-light{opacity:.5}
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button .mode-live-name{
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button[aria-pressed="true"] .pearl-light{opacity:.5}
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button .mode-live-name{
   display:flex;align-items:center;justify-content:center;
   inset:0 6%;padding:0;line-height:1;
   color:#f4e2be;text-align:center;
   text-shadow:0 1px 2px #021424;
 }
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button[aria-pressed="true"] .mode-live-name{
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button[aria-pressed="true"] .mode-live-name{
   color:#153b43;text-shadow:0 1px 0 #fff9ebc2;
 }
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button .mode-status{
-  right:12%;bottom:18%;color:#b4c9c5;
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button .mode-status{
+  right:22%;bottom:25%;color:#b4c9c5;white-space:nowrap;
 }
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button[aria-pressed="true"] .mode-status{color:#566564}
-#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"]) .difficulty-picker button:focus-visible .mode-rim{
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button[aria-pressed="true"] .mode-status{color:#566564}
+#garden-start[data-cover]:is([data-mode-style="porcelain"],[data-mode-style="capsule"],[data-mode-style="portal"],[data-mode-style="lotus"],[data-mode-style="lotus-down"]) .difficulty-picker button:focus-visible .mode-rim{
   filter:drop-shadow(0 0 2px #fff0c1);
 }
 /* The shallow crest's optical centre sits just below the geometric centre. */
 #garden-start[data-cover][data-mode-style="lotus"] .difficulty-picker button .mode-live-name{padding-top:5%}
+
+/* Mirror the optical text inset, keeping the name in the broad body above the tip. */
+#garden-start[data-cover][data-mode-style="lotus-down"] .difficulty-picker button .mode-live-name{padding-bottom:5%}
+#garden-start[data-cover][data-mode-style="lotus-down"] .difficulty-picker button .mode-status{bottom:30%}

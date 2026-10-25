@@ -1,6 +1,6 @@
 // Presentation-only translations. Never translate catalog values or editable data.
 const EN={
- 'В меню':'Menu',
+ 'В меню':'Menu','Повторить этот маршрут':'Replay this route',
  'Следующий маршрут →':'Next route →','Свернуть награду':'Dismiss award','МАРШРУТ ПРОЙДЕН':'ROUTE COMPLETE','Маршрут покорён':'Route conquered','Новый личный рекорд':'New personal best','Очки':'Score','Время':'Time','Первый результат сохранён':'First result saved','★ Рекорд!':'★ New best!','✓ Завершено':'✓ Complete',
  '◈ Прожектор':'◈ Headlight','Посмотреть на экране':'Preview lighting','← К настройкам':'← Back to settings',
  'Прожектор освещает путь перед кораблём. Заметен в сумерках и ночью.':'The headlight lights the path ahead of the ship. Most visible at dusk and night.',

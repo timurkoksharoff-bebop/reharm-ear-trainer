@@ -29,7 +29,7 @@ body.mode-layout-editing #garden-start[data-cover] :is(.start-choice,.start-menu
 
 /* Keep every shape directly beside the full-cover comparison, without guides. */
 #mode-layout-dock{width:min(660px,calc(100vw - 16px));display:grid;gap:7px;padding:8px 10px;white-space:normal}
-#mode-layout-dock .mode-comparison-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+#mode-layout-dock .mode-comparison-choices{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
 #mode-layout-dock .mode-comparison-choices button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-height:50px;padding:5px 2px;font-size:10px;line-height:1.1}
 #mode-layout-dock .mode-comparison-choices button[aria-pressed=true]{border-color:#efd69c;background:#d2b57729;color:#fff1d0}
 #mode-layout-dock .mode-style-sample{width:27px;height:12px}
@@ -38,3 +38,12 @@ body.mode-layout-editing #garden-start[data-cover] :is(.start-choice,.start-menu
 #mode-layout-dock .mode-comparison-actions button{min-height:29px;font-size:10px;padding:5px 10px}
 body.mode-layout-comparing #garden-start[data-cover] .difficulty-picker button{cursor:default}
 @media(max-width:480px){#mode-layout-dock .mode-comparison-actions>span{display:none}#mode-layout-dock .mode-comparison-actions{justify-content:stretch}#mode-layout-dock .mode-comparison-actions button{flex:1}}
+
+/* Complete approved compositions, separate from the six shape studies. */
+#mode-layout-editor .mode-layout-presets{border:0;padding:0;margin:0 0 14px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#mode-layout-editor .mode-layout-presets legend{font-size:11px;color:#c9d8cf;margin-bottom:8px;padding:0}
+#mode-layout-editor .mode-layout-presets button{min-height:42px;padding:7px 8px;font-size:11px;line-height:1.25}
+#mode-layout-editor .mode-layout-presets button[aria-pressed=true]{border-color:#e4cc95;background:#d2b57720;color:#fff1d0}
+
+:is(#mode-layout-editor,#mode-layout-dock) [data-mode-style-choice="lotus-down"] .mode-style-sample{border-radius:0;clip-path:polygon(0 0,100% 0,100% 75%,75% 75%,50% 100%,25% 75%,0 75%)}
+#mode-layout-editor .mode-layout-presets [data-mode-layout-preset="variant3"]{grid-column:1/-1}

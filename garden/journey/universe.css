@@ -11,5 +11,18 @@
 /* Zero-depth award axis sits behind near planets and ahead of distant ones. */
 #cosmos-foreground{position:fixed;inset:0;width:100%;height:100%;z-index:16;pointer-events:none}.core-node{touch-action:none}
 
-/* Selected cover Variant3 typography and the same approved five-petal lotus. */
-.universe-header .brand{width:194px;display:flex;flex-direction:column;align-items:center;text-align:center;line-height:normal;color:#f4e1bb}.journey-brand-lotus{display:block;width:41px;height:30.75px;margin-bottom:-3px}.journey-brand-lotus svg{display:block;width:100%;height:100%}.journey-brand-title{display:block;font:400 31.6px Cormorant,serif;letter-spacing:1.26px;white-space:nowrap}.journey-brand-college{display:block;font:400 8.02px Forum,serif;letter-spacing:4.8px;color:#a7e3df;white-space:nowrap;margin-top:-3px;margin-left:6px}@media(max-width:700px){.universe-header .brand{width:151px}.journey-brand-lotus{width:32px;height:24px}.journey-brand-title{font-size:24.6px;letter-spacing:.98px}.journey-brand-college{font-size:6.25px;letter-spacing:3.74px;margin-left:4.6px}}@media(max-height:470px){.journey-brand-lotus{display:none}}
+/* The shared fixed-coordinate lockup keeps the lotus attached to the Y. */
+.universe-header .brand{width:194px;display:block;color:#f4e1bb;line-height:0}
+.journey-brand-lockup,.journey-brand-lockup .garden-wordmark-v3{display:block;width:100%;height:auto}
+@media(max-width:700px){.universe-header .brand{width:151px}}
+
+/* A small transparent ring with a full thumb-sized target. */
+.universe-header{left:max(32px,env(safe-area-inset-left,0px));right:max(32px,env(safe-area-inset-right,0px))}
+.universe-actions{display:flex;align-items:center;gap:14px;pointer-events:auto}
+.universe-home{position:relative;display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;backdrop-filter:none;color:#eedcba;box-shadow:none;pointer-events:auto}
+.universe-home::before{content:'';position:absolute;width:32px;height:32px;left:50%;top:50%;transform:translate(-50%,-50%);border:1px solid #b7a16f80;border-radius:50%;background:transparent;pointer-events:none}
+.universe-home svg{display:block;width:17px;height:17px}
+.universe-home:hover::before{border-color:#e0c890b3}
+.universe-home:active::before{border-color:#fff0c5}
+@media(max-width:700px){.universe-header{left:max(19px,env(safe-area-inset-left,0px));right:max(19px,env(safe-area-inset-right,0px))}.universe-actions{gap:8px}}
+@media(max-width:700px) and (min-height:471px) and (max-height:650px){.universe-title{top:82px}.core-axis{top:149px}.core-node{width:clamp(29px,7vh,43px);height:clamp(29px,7vh,43px)}}

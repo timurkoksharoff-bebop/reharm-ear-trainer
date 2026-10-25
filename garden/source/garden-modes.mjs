@@ -42,7 +42,20 @@ export function gardenModeFormula(mode){
 const guides={maj:[4],min:[3],'6':[4,9],m6:[3,9],maj7:[4,11],maj7sharp11:[4,11],m7:[3,10],m7natural9:[3,10],m7b5:[3,6,10],m7b5natural9:[3,6,10],m7b9:[3,10],'7':[4,10],'7b9':[4,10],'7b9b13':[4,10],'7b5':[4,6,10],'7sharp5':[4,8,10],'7alt':[4,10],dim7:[3,6,9],aug:[4,8],augMaj7:[4,8,11],minSharp5:[3,8],sus4:[5,7],sus2:[2,7],'7sus4':[5,10],add9:[4,2],mMaj7:[3,11],'7b13':[4,10],dim:[3,6]};
 const aliases={'ireal:mMaj7':'mMaj7','ireal:7b13':'7b13','ireal:m11':'m7natural9','ireal:9':'7','ireal:13':'7','ireal:7#9':'7','ireal:7#11':'7','ireal:o':'dim'};
 const extensions={maj7sharp11:[6],m7natural9:[2],m7b5natural9:[2],m7b9:[1],'7b9':[1],'7b9b13':[1,8],'7b5':[6],'7sharp5':[8],'7b13':[8],'ireal:m11':[2,5],'ireal:9':[2],'ireal:13':[2,9],'ireal:7#9':[3],'ireal:7#11':[6],add9:[2]};
-export const GARDEN_NAVIGATION_RULES=Object.freeze({initial:80,reward:6,conflictDamage:15,criticalGrace:3.5});
+export const GARDEN_NAVIGATION_RULES=Object.freeze({initial:80,reward:6,conflictDamage:20,criticalGrace:3.5});
+export const GARDEN_MODE_OFFER_RULES=Object.freeze({pairProbability:.35,pairOffsetMin:.22,pairOffsetMax:.48});
+// A shuffled four-offer phrase keeps useful choices available without making
+// every adjacent pickup a pre-solved scale/tension combination. A contrast is
+// drawn only from an already explicit conflict, never from a neutral colour.
+function modeOfferDeck(random){const deck=['support','support','contrast','open'];for(let i=deck.length-1;i>0;i--){const j=Math.min(i,Math.max(0,Math.floor(random()*(i+1))));[deck[i],deck[j]]=[deck[j],deck[i]];}return deck;}
+export function gardenModePairPlacement(offer,{random=Math.random,timeScale=offer?.timeScale??1}={}){
+ const e=offer?.entity,target=offer?.targetSounding,phase=Number(target?.phase),remaining=Number(target?.remaining);
+ if(!offer?.eligible||!e||!Number.isFinite(phase)||!Number.isFinite(remaining)||!(timeScale>0)||random()>=GARDEN_MODE_OFFER_RULES.pairProbability)return null;
+ const offset=GARDEN_MODE_OFFER_RULES.pairOffsetMin+random()*(GARDEN_MODE_OFFER_RULES.pairOffsetMax-GARDEN_MODE_OFFER_RULES.pairOffsetMin),direction=random()<.5?-1:1;
+ const lead=[direction*offset,-direction*offset].find(value=>phase-value>=.25&&remaining+value>=.7);
+ if(lead==null)return null;
+ return {x:Math.max(.16,Math.min(.84,e.x+(e.x<.5?.10:-.10))),y:e.y+e.vy*timeScale*lead,vy:e.vy,lead};
+}
 export const GARDEN_MODE_PICKUP_RULES=Object.freeze({dotRadius:3.2,hitRadius:4,shipRadius:14,nameOffset:-24,formulaOffset:-10});
 const modeTiers=Object.freeze({base:Object.freeze({id:'base',ru:'Базовый',en:'Foundation',navReward:6,points:6}),jazz:Object.freeze({id:'jazz',ru:'Джазовый',en:'Jazz',navReward:9,points:10}),rare:Object.freeze({id:'rare',ru:'Редкий',en:'Rare',navReward:12,points:14})});
 const baseModes=new Set(['ionian','dorian','phrygian','lydian','mixolydian','aeolian','major-pentatonic','minor-pentatonic','major-blues','minor-blues']);
@@ -119,7 +132,7 @@ export function gardenModeNotes(chord,tonic,mode){mode=typeof mode==='string'?ga
 export function gardenModeExplanation(reason,en=false){return ({sparse:['Пентатоника — неполный набор: отсутствие тона не штрафуется','A pentatonic is sparse: missing a tone is not penalised'],unknown:['Недостаточно контекста для оценки','Not enough harmonic context'],passing:['Блюзовые и проходящие звуки: оценивай фразу на слух','Blue and passing tones: judge the phrase by ear'],third:['Лад меняет терцовую окраску аккорда','The scale changes the chord’s third'],voicing:['Нужна осторожность с реально звучащей раскладкой аккорда','The actual chord voicing needs care'],incomplete:['Часть характерных тонов аккорда отсутствует','Some defining chord tones are absent'],context:['Нужен контекст функции, слеш-баса или заданного лада','Function, slash bass or stated mode needs context'],pentatonic:['Пентатоническая окраска; не все ступени аккорда обязательны','Pentatonic colour; not every chord tone is required'],colour:['Выраженная дополнительная окраска','Strong additional colour'],'passing-fourth':['4-я ступень — проходящая, не длительная над мажорной терцией','Treat the fourth as passing over a major third'],structure:['Опорные тоны и записанные альтерации совпадают','Guide tones and written alterations agree']})[reason]?.[en?1:0]||'';}
 export class GardenModesFlight{
  constructor({random=Math.random,onScale,onOffer,preference=null}={}){this.preference=preference;this.random=random;this.onScale=onScale;this.onOffer=onOffer;this.families=new Set(GARDEN_MODE_FAMILIES.map(f=>f.id));this.reset(false);}
- reset(enabled=false){this.enabled=enabled;this.oxygenEnabled=false;this.energy=100;this.navigationEnabled=enabled;this.navigation=GARDEN_NAVIGATION_RULES.initial;this.critical=0;this.gameOver=false;this.entities=[];this.flashes=[];this.clock=1.2;this.last=null;this.sequence=0;this.recent=[];this.windowKey=null;this.selectedTensions=new Map();this.activeMode=null;this.assessed=new Set();this.unlockThreshold=0;this.unlocked=false;this.offeringCount=0;this.lastOffer=null;}
+ reset(enabled=false){this.enabled=enabled;this.oxygenEnabled=false;this.energy=100;this.navigationEnabled=enabled;this.navigation=GARDEN_NAVIGATION_RULES.initial;this.critical=0;this.gameOver=false;this.entities=[];this.flashes=[];this.clock=1.2;this.last=null;this.sequence=0;this.recent=[];this.windowKey=null;this.selectedTensions=new Map();this.activeMode=null;this.assessed=new Set();this.unlockThreshold=0;this.unlocked=false;this.offeringCount=0;this.offerDeck=[];this.lastOffer=null;}
  setFamilies(ids){this.families=new Set(ids.filter(id=>GARDEN_MODE_FAMILIES.some(f=>f.id===id)));this.entities=this.entities.filter(e=>this.families.has(gardenModeById(e.modeId)?.family));}
  restore(){if(this.navigationEnabled&&!this.gameOver){this.navigation=100;this.critical=0;}}
  syncSounding(sounding){
@@ -163,14 +176,16 @@ export class GardenModesFlight{
    if(Math.abs(adjustedEta-eta)>.001){try{const adjusted=view.forecastSounding(adjustedEta);if(adjusted?.chord){eta=adjustedEta;spawnY-= (eta-initialEta)*.09*timeScale;target=adjusted;}}catch{}}
   }
   const selected=soundingKey(target)&&soundingKey(target)===this.windowKey?[...this.selectedTensions.values()]:[];
-  const grade=mode=>gardenModeTensionVerdict(target?.chord,mode,selected,{tonic:target?.tonic,tensionMode:target?.tensionMode??(!usesForecast?view.tensionMode:undefined)}),compatible=all.filter(m=>grade(m).verdict==='compatible'),accessible=compatible.filter(m=>gardenModeTier(m).id!=='rare'),forced=this.offeringCount%2===1&&accessible.length>0;
+  const grade=mode=>gardenModeTensionVerdict(target?.chord,mode,selected,{tonic:target?.tonic,tensionMode:target?.tensionMode??(!usesForecast?view.tensionMode:undefined)}),compatible=all.filter(m=>grade(m).verdict==='compatible'),accessible=compatible.filter(m=>gardenModeTier(m).id!=='rare'),contrasts=all.filter(m=>grade(m).verdict==='invalid');
+  if(!this.offerDeck.length)this.offerDeck=modeOfferDeck(this.random);
+  const role=this.offerDeck.pop(),supported=accessible.length?accessible:compatible,forced=role==='support'&&supported.length>0;
   // Recently seen labels are quieter, never excluded: a short valid palette
   // must not force an exotic or incompatible substitute just for novelty.
-  const candidates=forced?accessible:compatible.length&&this.random()<.55?compatible:all,mode=chooseWeighted(candidates,this.random,this.recent,this.preference);
+  const candidates=forced?supported:role==='contrast'&&contrasts.length?contrasts:all,mode=chooseWeighted(candidates,this.random,this.recent,this.preference);
   if(!mode)return;
   const entity=this.spawn(mode.id,{y:spawnY});if(!entity)return;
-  this.offeringCount++;this.recent=[...this.recent,mode.id].slice(-5);this.lastOffer={modeId:mode.id,tier:entity.tier,eta,usesForecast,phase:Number.isFinite(Number(target?.phase))?Number(target.phase):null,remaining:Number.isFinite(Number(target?.remaining))?Number(target.remaining):null,arrivalAdjusted:eta!==initialEta,compatible:grade(mode).verdict==='compatible',forced,targetRoot:target?.chord&&Number.isFinite(target.tonic)?gardenNoteName(target.tonic+Number(target.chord.offset)):null,targetQuality:target?.chord?.quality??null};
-  this.onOffer?.({entity,mode,targetSounding:target,tier:gardenModeTier(mode),eligible:this.lastOffer.compatible,eta});
+  this.offeringCount++;this.recent=[...this.recent,mode.id].slice(-5);const verdict=grade(mode).verdict;this.lastOffer={modeId:mode.id,tier:entity.tier,role,verdict,eta,usesForecast,phase:Number.isFinite(Number(target?.phase))?Number(target.phase):null,remaining:Number.isFinite(Number(target?.remaining))?Number(target.remaining):null,arrivalAdjusted:eta!==initialEta,compatible:verdict==='compatible',forced,targetRoot:target?.chord&&Number.isFinite(target.tonic)?gardenNoteName(target.tonic+Number(target.chord.offset)):null,targetQuality:target?.chord?.quality??null};
+  this.onOffer?.({entity,mode,targetSounding:target,tier:gardenModeTier(mode),eligible:this.lastOffer.compatible,eta,timeScale,role,verdict});
   return entity;
  }
  collect(entity,sounding,context={}){

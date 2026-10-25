@@ -720,7 +720,11 @@ body #mission-complete[hidden]{display:none!important}
 body #mission-complete .completion-medal{grid-column:1;grid-row:1;width:32px;height:32px;margin:0;align-self:center;color:#f2d699;filter:drop-shadow(0 0 6px #e9d29344)}
 .completion-medal svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.1}
 body #mission-complete>.overline{display:none}
-body #mission-complete h2{grid-column:2;grid-row:1;align-self:center;margin:0;padding-right:20px;text-align:left;font:17px/1.12 Georgia,serif;color:#fff0c9}
+body #mission-complete h2{grid-column:1/-1;grid-row:2;align-self:center;margin:0;padding:0;text-align:center;font:17px/1.12 Georgia,serif;color:#fff0c9}
+body #mission-complete #completion-replay{grid-column:2;grid-row:1;justify-self:end;display:grid;place-items:center;width:36px;height:36px;min-height:36px;margin-right:23px;padding:7px;border:1px solid #c9b27b70;border-radius:50%;background:#a7d4cb0a;box-shadow:none;color:#f4dfb3;pointer-events:auto}
+body #mission-complete #completion-replay svg{width:20px;height:20px}
+body #mission-complete #completion-replay:hover{background:#a7d4cb22;border-color:#e9d095bb}
+body #mission-complete #completion-replay::after{content:none!important}
 body #mission-complete p{grid-column:1/-1;display:block;margin:0;font:10px/1.3 system-ui;color:#cfdfd7;overflow-wrap:anywhere}
 body #mission-complete #mission-complete-copy{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 body #mission-complete #completion-bonus{display:none}
@@ -804,6 +808,29 @@ body.professor-mode.paged-chain .flight-tools-body{max-height:min(360px,calc(100
 #professor-lesson .legend-chord{color:#6ed9df}#professor-lesson .legend-scale{color:#e8ca7b}
 #mode-gate{width:min(460px,calc(100vw - 28px));max-height:calc(100dvh - 40px);box-sizing:border-box;overflow:auto;border-radius:24px;border:1px solid #c4b58788;background:linear-gradient(145deg,#17323a,#081925);color:#e6e8dc;padding:24px;font:14px/1.55 system-ui}#mode-gate::backdrop{background:#020e1bb3}#mode-gate h2{font:28px Georgia,serif;color:#f0dfb6}#mode-gate p{color:#bed3cf}#mode-gate div{display:flex;flex-wrap:wrap;gap:8px}#mode-gate button{font:inherit;color:#e7dfc4;background:#ffffff08;border:1px solid #acc7b755;padding:10px 13px;border-radius:14px;cursor:pointer}.difficulty-picker .mode-locked{filter:saturate(.7);opacity:.78}.mode-demo-active #world{pointer-events:none}.mode-demo-active .flight-tools,.mode-demo-active .degrees-panel,.mode-demo-active .answers-panel,.mode-demo-active #bass-panel{pointer-events:none}.mode-demo-active #answer-feedback{opacity:.65}
 
+/* Optional preflight sound questions; choices stay separate from the lesson. */
+#professor-lesson button,#professor-lesson select{min-height:44px;max-width:100%}
+#professor-lesson header button{min-width:44px;height:44px;padding:0}
+#professor-lesson nav button[aria-pressed="true"]{border-color:#ddc895aa;background:#d1c69b16;color:#f4dfb1}
+#professor-lesson .sound-intro{font-size:13px;line-height:1.6}
+#professor-lesson .mode-sound-form{display:grid;gap:12px;min-width:0}
+#professor-lesson .mode-sound-question{box-sizing:border-box;min-inline-size:0;margin:0;padding:12px;border:1px solid #a9c4b43d;border-radius:14px}
+#professor-lesson .mode-sound-question legend{padding:0 5px;font:16px/1.3 Georgia,serif;color:#e9d9af}
+#professor-lesson .mode-sound-question select{box-sizing:border-box;display:block;width:100%;min-width:0;margin:0;font-size:13px}
+#professor-lesson .mode-sound-question:disabled{opacity:.5}
+#professor-lesson .mode-sound-question:disabled select,#professor-lesson .mode-sound-question:disabled input{cursor:default}
+#professor-lesson .mode-sound-slider{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:10px;font-size:13px;line-height:1.4}
+#professor-lesson .mode-sound-slider+label{margin-top:8px}
+#professor-lesson .mode-sound-slider output{color:#ebd8a8;font:13px/1.4 ui-monospace,monospace}
+#professor-lesson .mode-sound-slider input{grid-column:1/-1;box-sizing:border-box;width:100%;min-width:0;min-height:44px;margin:0;accent-color:#dbc38e;cursor:pointer}
+#professor-lesson .mode-sound-summary{margin:8px 0 0;color:#a9cbbf;font-size:12px;line-height:1.6}
+#professor-lesson .mode-sound-note,#professor-lesson .mode-sound-example{margin:0;font-size:12px;line-height:1.6}
+#professor-lesson .mode-sound-example{color:#e7d6b0}
+#professor-lesson .mode-sound-preview{margin:0}
+#professor-lesson .mode-sound-preview button{flex:1 1 180px;font-size:13px}
+#professor-lesson footer label{min-height:44px}
+@media(max-width:360px){#professor-lesson .mode-sound-question{padding:10px}#professor-lesson .mode-sound-question legend{font-size:15px}#professor-lesson .mode-sound-question select{padding-inline:9px}}
+
 /* Transparent attraction HUD: no scrim or backdrop blur across flying scales. */
 #mode-demo{position:fixed;z-index:30;left:50%;top:var(--mode-demo-top,calc(50dvh + 50px));transform:translateX(-50%);box-sizing:border-box;width:min(260px,56vw);padding:8px 12px;text-align:center;color:#d5e8e4;background:linear-gradient(110deg,#09232b24,#09232b12);border:1px solid #c7d6bd30;border-radius:14px;text-shadow:0 1px 3px #03131c,0 0 5px #03131c;pointer-events:none;font:10px/1.3 system-ui}
 #mode-demo[hidden]{display:none}#mode-demo .mode-demo-title{font-size:9px;letter-spacing:2px;color:#eadbb2}#mode-demo p{margin:5px 0}#mode-demo .mode-demo-status{color:#b4d9d2}#mode-demo .mode-demo-requirements{color:#f0e3bd;overflow-wrap:anywhere}#mode-demo button{pointer-events:auto;appearance:none;background:#0a253966;border:1px solid #b6cdbb66;border-radius:20px;color:#f0e4bd;font:10px/1.2 system-ui;padding:8px 13px;cursor:pointer;margin-top:2px;min-height:30px}#mode-demo button:focus-visible{outline:2px solid #c8eed8;outline-offset:3px}#mode-demo button:hover{background:#317b7959}
@@ -845,7 +872,7 @@ body.mode-layout-editing #garden-start[data-cover] :is(.start-choice,.start-menu
 
 /* Keep every shape directly beside the full-cover comparison, without guides. */
 #mode-layout-dock{width:min(660px,calc(100vw - 16px));display:grid;gap:7px;padding:8px 10px;white-space:normal}
-#mode-layout-dock .mode-comparison-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+#mode-layout-dock .mode-comparison-choices{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
 #mode-layout-dock .mode-comparison-choices button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-height:50px;padding:5px 2px;font-size:10px;line-height:1.1}
 #mode-layout-dock .mode-comparison-choices button[aria-pressed=true]{border-color:#efd69c;background:#d2b57729;color:#fff1d0}
 #mode-layout-dock .mode-style-sample{width:27px;height:12px}
@@ -854,6 +881,15 @@ body.mode-layout-editing #garden-start[data-cover] :is(.start-choice,.start-menu
 #mode-layout-dock .mode-comparison-actions button{min-height:29px;font-size:10px;padding:5px 10px}
 body.mode-layout-comparing #garden-start[data-cover] .difficulty-picker button{cursor:default}
 @media(max-width:480px){#mode-layout-dock .mode-comparison-actions>span{display:none}#mode-layout-dock .mode-comparison-actions{justify-content:stretch}#mode-layout-dock .mode-comparison-actions button{flex:1}}
+
+/* Complete approved compositions, separate from the six shape studies. */
+#mode-layout-editor .mode-layout-presets{border:0;padding:0;margin:0 0 14px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#mode-layout-editor .mode-layout-presets legend{font-size:11px;color:#c9d8cf;margin-bottom:8px;padding:0}
+#mode-layout-editor .mode-layout-presets button{min-height:42px;padding:7px 8px;font-size:11px;line-height:1.25}
+#mode-layout-editor .mode-layout-presets button[aria-pressed=true]{border-color:#e4cc95;background:#d2b57720;color:#fff1d0}
+
+:is(#mode-layout-editor,#mode-layout-dock) [data-mode-style-choice="lotus-down"] .mode-style-sample{border-radius:0;clip-path:polygon(0 0,100% 0,100% 75%,75% 75%,50% 100%,25% 75%,0 75%)}
+#mode-layout-editor .mode-layout-presets [data-mode-layout-preset="variant3"]{grid-column:1/-1}
 
 /* Personal skill observatory; all imagery is drawn in a single local canvas. */
 #garden-skill-atlas[hidden],#garden-skill-atlas [hidden]{display:none!important}

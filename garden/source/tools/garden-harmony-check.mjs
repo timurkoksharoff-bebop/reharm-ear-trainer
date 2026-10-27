@@ -42,7 +42,7 @@ assert.equal(mission.snapshot().solvedParts,6);
 mission.restart();
 assert.deepEqual(mission.snapshot().progress,[{degree:false,quality:false},{degree:false,quality:false},{degree:false,quality:false}]);
 assert.equal(mission.snapshot().complete,false);
-assert.deepEqual(Object.values(PRESETS).map(preset=>preset.engine),['sample','sample','sample','sample','sample','deep','air']);
+assert.deepEqual(Object.values(PRESETS).map(preset=>preset.engine),['sample','sample','sample','sample','sample','sample','deep','air']);
 
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(0)});

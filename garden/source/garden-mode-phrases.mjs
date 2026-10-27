@@ -1,4 +1,5 @@
 import {gardenModePhraseZero} from './garden-mode-phrases-zero.mjs';
+import {gardenModeArpeggio} from './garden-mode-arpeggio.mjs';
 const pc=n=>((n%12)+12)%12;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const nearest=(value,notes)=>notes.reduce((best,n)=>Math.abs(n-value)<Math.abs(best-value)?n:best,notes[0]);
@@ -69,6 +70,12 @@ export function gardenModePhrase(notes,options={}){
  const requestedStyle=arpPercent===25&&combinedPercent===25?(slot%2===0?'phrase':slot===1||slot===5?'arpeggio':'combined'):draw<arpPercent?'arpeggio':draw<arpPercent+combinedPercent?'combined':'phrase';
  const order=(slot===3||slot!==7&&modulo(sequence,2)===0)?'phrase-arpeggio':'arpeggio-phrase';
  const profileIndex=modulo(sequence+Math.floor(sequence/12)*5,rhythmProfiles.length),requestedRhythm=rhythm==='steady'?'straight-rest':rhythm==='free'&&modulo(sequence,4)===1?(modulo(sequence,8)===1?'triplet-cell':'quintuplet-cell'):rhythmProfiles[profileIndex];
+ // Standalone arpeggios use the original recognisable scale contours, not the
+ // modal-colour/guide-tone mini-phrase used inside a combined gesture.
+ if(requestedStyle==='arpeggio'){
+  const arpeggio=gardenModeArpeggio(notes,{...options,variation:Math.floor(sequence/4)});
+  return arpeggio?{...arpeggio,requestedRhythm}:null;
+ }
  const beat=clamp(Number.isFinite(barSeconds)&&barSeconds>0?barSeconds/4:1,.6,1.5),available=Math.min(3.2,remaining-.12);
  const requestedEntry=({'offbeat-eighth':.5,'offbeat-sixteenth':.25,'space-answer':.25,'triplet-cell':.25,'quintuplet-cell':.125,anticipation:.125,syncopated:.25})[requestedRhythm]??0;
  const entryCapacity=Math.max(0,available-(beat*.25+.11));

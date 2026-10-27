@@ -40,7 +40,7 @@ export function mountGardenModeLayoutEditor({language,onOpen,onClose}={}){
  const buttons=Object.fromEntries(MODES.map(id=>[id,picker.querySelector(`[data-difficulty="${id}"]`)]));
  let open=false,selected='group',drag=null,compact=false,restoreStyles=null,restoreDisabled=null,restoreAriaDisabled=null,lastFocus=null;
  const t=(ru,en)=>language?.get?.()==='en'?en:ru;
- const names=()=>({group:t('Вся группа','All five buttons'),upper:t('Верхняя строка · мастер / гуру','Upper row · Master / Guru'),lower:t('Нижняя строка · три режима','Lower row · three modes'),light:t('Курсант','Cadet'),medium:t('Пилот','Pilot'),hard:t('Штурман','Navigator'),professor:t('Мастер','Master'),guru:t('Гуру','Guru')});
+ const names=()=>({group:t('Вся группа','All five buttons'),upper:t('Верхняя строка · капитан / гуру','Upper row · Captain / Guru'),lower:t('Нижняя строка · три режима','Lower row · three modes'),light:t('Курсант','Cadet'),medium:t('Пилот','Pilot'),hard:t('Штурман','Navigator'),professor:t('Капитан','Captain'),guru:t('Гуру','Guru')});
  const panel=document.createElement('aside');panel.id='mode-layout-editor';panel.hidden=true;panel.dataset.userContent='';panel.setAttribute('aria-label','Настройка кнопок режимов');document.body.append(panel);
  const dock=document.createElement('aside');dock.id='mode-layout-dock';dock.hidden=true;dock.dataset.userContent='';document.body.append(dock);
  let targetSelect,fieldHost,status,exportBox;const controls=new Map(),styleButtons=[],presetButtons=[];

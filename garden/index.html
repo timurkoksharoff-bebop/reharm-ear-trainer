@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#0d2326">
   <title>EAR YOGA · Space Music College</title>
-  <link rel="icon" href="icon.svg?v=1.77"><link rel="apple-touch-icon" href="icon-192-v1.77.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
-  <link rel="stylesheet" href="garden-flight.css?v=1.77">
-  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.77">
-  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.77">
-  <link rel="stylesheet" href="garden-mode-variants.css?v=1.77">
-  <link rel="stylesheet" href="ear-yoga-brand.css?v=1.77">
+  <link rel="icon" href="icon.svg?v=1.83"><link rel="apple-touch-icon" href="icon-192-v1.83.png"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="EAR YOGA">
+  <link rel="stylesheet" href="garden-flight.css?v=1.83">
+  <link rel="stylesheet" href="ear-yoga-cover.css?v=1.83">
+  <link rel="stylesheet" href="ear-yoga-orbital.css?v=1.83">
+  <link rel="stylesheet" href="garden-mode-variants.css?v=1.83">
+  <link rel="stylesheet" href="ear-yoga-brand.css?v=1.83">
 </head>
 <body class="training">
   <canvas id="world" aria-label="EAR YOGA. Веди корабль пальцем или стрелками." tabindex="0"></canvas>
@@ -66,7 +66,7 @@
           <h2 id="start-title" class="ear-yoga-wordmark">Ear <em>Yoga</em><b class="brand-baseline" aria-hidden="true"></b></h2>
           <span class="overline start-college">SPACE MUSIC COLLEGE<b class="brand-baseline" aria-hidden="true"></b></span>
         </div>
-        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Курсант</button><button data-difficulty="medium" aria-pressed="true">Пилот</button><button data-difficulty="hard" aria-pressed="false">Штурман</button><button data-difficulty="professor" aria-pressed="false" class="experimental-mode"><span class="mode-live-name">Мастер</span><small class="mode-status">β</small></button><button data-difficulty="guru" aria-pressed="false" class="experimental-mode" disabled title="Режим Гуру пока в разработке"><span class="mode-live-name">Гуру</span><small class="mode-status">скоро</small></button></div>
+        <div class="difficulty-picker" role="group" aria-label="Сложность полёта"><button data-difficulty="light" aria-pressed="false">Курсант</button><button data-difficulty="medium" aria-pressed="true">Пилот</button><button data-difficulty="hard" aria-pressed="false">Штурман</button><button data-difficulty="professor" aria-pressed="false" class="experimental-mode"><span class="mode-live-name">Капитан</span><small class="mode-status">β</small></button><button data-difficulty="guru" aria-pressed="false" class="experimental-mode" disabled title="Режим Гуру пока в разработке"><span class="mode-live-name">Гуру</span><small class="mode-status">скоро</small></button></div>
       </div>
       <button id="start-menu" class="start-menu" type="button"><svg class="settings-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="8" cy="6" r="2" fill="#061827"/><circle cx="16" cy="12" r="2" fill="#061827"/><circle cx="10" cy="18" r="2" fill="#061827"/></svg><span>Настройки</span></button>
       <div class="start-controls">
@@ -175,7 +175,7 @@
       <div class="world-cycle" aria-label="Непрерывный живой цикл планеты"><span><small>ЕДИНЫЙ МИР</small><strong id="world-cycle-name">Синие сады</strong></span><i aria-hidden="true"><b id="world-cycle-progress"></b></i><em>единая карта · живой цикл</em></div>
       <div class="music-settings">
         <label class="exercise-picker"><span>Фигура</span><select id="exercise-select" aria-label="Фигура выбранной главы"></select></label>
-        <fieldset class="sound-switch"><legend>Тембр</legend><div role="group" aria-label="Тембр синтезатора"><button data-pad="felt" aria-pressed="true" translate="no">Felt Piano</button><button data-pad="hybrid" aria-pressed="false" translate="no">Hybrid Keys</button><button data-pad="hybridOrchestra" aria-pressed="false" translate="no">Hybrid Orchestra</button><button data-pad="stringOrchestra" aria-pressed="false" translate="no">String Orchestra</button><button data-pad="pianoN" aria-pressed="false" translate="no">Piano N</button></div></fieldset>
+        <fieldset class="sound-switch"><legend>Тембр</legend><div role="group" aria-label="Тембр синтезатора"><button data-pad="felt" aria-pressed="true" translate="no">Felt Piano</button><button data-pad="grand" aria-pressed="false" translate="no" title="Salamander · Yamaha C5">Grand Piano</button><button data-pad="hybrid" aria-pressed="false" translate="no">Hybrid Keys</button><button data-pad="hybridOrchestra" aria-pressed="false" translate="no">Hybrid Orchestra</button><button data-pad="stringOrchestra" aria-pressed="false" translate="no">String Orchestra</button><button data-pad="pianoN" aria-pressed="false" translate="no">Piano N</button></div><small id="grand-piano-credit" hidden translate="no"><a href="assets/echo-garden/samples/grand/GRAND_PIANO_CREDITS.md" target="_blank" rel="noopener">Salamander · Alexander Holm · CC BY 3.0</a></small></fieldset>
         <fieldset class="audio-tuning"><legend>Звук · подстройка под устройство</legend>
           <label><span>Громкость</span><input id="garden-volume" type="range" min="80" max="180" step="5" value="120"><output for="garden-volume">120%</output></label>
           <label><span>Басы</span><input id="garden-eq-low" type="range" min="-6" max="6" step="1" value="0"><output for="garden-eq-low">0 dB</output></label>
@@ -218,6 +218,6 @@
     <p id="lighting-preview-note">Цикл показан быстрее, чтобы сравнить освещение.</p>
   </aside>
   <div id="loading" role="status"><span class="loading-mark">✳</span><p translate="no">EAR YOGA</p><small id="load-progress">Загружаем пейзажи</small><button id="retry" hidden onclick="location.reload()">Попробовать снова</button></div>
-  <script src="garden-flight.bundle.js?v=1.77" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
+  <script src="garden-flight.bundle.js?v=1.83" onerror="document.getElementById('load-progress').textContent=location.protocol==='file:'?'Открыт исходный файл. Откройте собранное приложение по ссылке превью.':'Не загрузился игровой код. Попробуй снова.';document.getElementById('retry').hidden=false"></script>
 <script src="pwa.js"></script></body>
 </html>

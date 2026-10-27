@@ -1,11 +1,14 @@
 import {gardenModePhrase} from './garden-mode-phrases.mjs';
+import {gardenModePhraseDense} from './garden-mode-phrases-dense.mjs';
 import {gardenModePhraseZero} from './garden-mode-phrases-zero.mjs';
+import {gardenModeArpeggio} from './garden-mode-arpeggio.mjs';
+import {gardenModePhraseImproved} from './garden-mode-phrases-improved.mjs';
 
 export const GARDEN_MODE_AUDITION_DEFAULTS=Object.freeze({preset:'mixed',arpeggioPercent:25,combinedPercent:25,rhythm:'lively'});
 const percent=(value,fallback)=>Number.isFinite(Number(value))?Math.max(0,Math.min(100,Math.round(Number(value)))):fallback;
 export function gardenModeAuditionConfig(value={}){
  const arpeggioPercent=percent(value.arpeggioPercent,25),combinedPercent=Math.min(100-arpeggioPercent,percent(value.combinedPercent,25));
- return {preset:['mixed','zero','scale'].includes(value.preset)?value.preset:'mixed',arpeggioPercent,combinedPercent,rhythm:['lively','steady','free'].includes(value.rhythm)?value.rhythm:'lively'};
+ return {preset:['mixed','improved','dense','zero','arpeggio','scale'].includes(value.preset)?value.preset:'mixed',arpeggioPercent,combinedPercent,rhythm:['lively','steady','free'].includes(value.rhythm)?value.rhythm:'lively'};
 }
 export class GardenModeAuditionSettings{
  constructor({storage=null}={}){this.storage=storage;let saved;try{saved=JSON.parse(storage?.getItem('ear-yoga-mode-audition.v1')||'null');}catch{}this.value=gardenModeAuditionConfig(saved?.version===1?saved:GARDEN_MODE_AUDITION_DEFAULTS);}
@@ -22,6 +25,6 @@ export function gardenModeScaleExercise(notes,{remaining=1.7,variation=0,barSeco
 }
 export function gardenModeAuditionPlan(notes,{audition,...options}={}){
  const settings=gardenModeAuditionConfig(audition);
- const plan=settings.preset==='zero'?gardenModePhraseZero(notes,options):settings.preset==='scale'?gardenModeScaleExercise(notes,options):gardenModePhrase(notes,{...options,mix:settings,rhythm:settings.rhythm});
+ const plan=settings.preset==='zero'?gardenModePhraseZero(notes,options):settings.preset==='arpeggio'?gardenModeArpeggio(notes,options):settings.preset==='scale'?gardenModeScaleExercise(notes,options):settings.preset==='dense'?gardenModePhraseDense(notes,options):settings.preset==='improved'?gardenModePhraseImproved(notes,{...options,mix:settings,rhythm:settings.rhythm}):gardenModePhrase(notes,{...options,mix:settings,rhythm:settings.rhythm});
  return plan?{...plan,audition:settings,preset:settings.preset}:null;
 }

@@ -103,7 +103,7 @@ fs.mkdirSync(out,{recursive:true});
   for(const [mode,labels,vials] of [['medium',['1','3','5','7'],4],['hard',null,5]]){
    await page.locator(`button[data-difficulty="${mode}"]`).click();await page.locator('#start-random').click();await page.waitForFunction(()=>gardenFlight.snapshot().mission.running);s=await snapshot();if(labels)assert.deepEqual(s.resonance.palette,labels);else assert.equal(s.resonance.palette.length,12);assert.equal(s.resonance.oxygenEnabled,mode==='hard');assert(!s.modes.enabled);assert.equal(await visibleVials(),vials);await page.evaluate(()=>gardenFlight.showMenu());
   }
-  await page.locator('#start-language').click();assert.deepEqual(await page.locator('.difficulty-picker .mode-live-name').allTextContents(),['Cadet','Pilot','Navigator','Master','Guru']);
+  await page.locator('#start-language').click();assert.deepEqual(await page.locator('.difficulty-picker .mode-live-name').allTextContents(),['Cadet','Pilot','Navigator','Captain','Guru']);
   await page.reload();await page.waitForFunction(()=>gardenFlight.snapshot().ready);assert(!await page.evaluate(()=>JSON.parse(localStorage.getItem('ear-yoga-professor-families.v1')).includes('blues')));assert.deepEqual(errors,[]);
   console.log('Professor1.57 browser PASS: bright-point /label-only /swept pickup; 1/3unlock /forecastpairs /6-14tierpoints /48combo /dedupe; 3+2 cover /4viewports; 12tensions+41scales /6vials; 9→Phrygian and Lydian→11 NAV−20; per-onset reset; pause/audio cancellation; life-wheel O2+NAV restoration; expanded inventory; exact slash ROOT/quality/BASS; original Student/Teacher; persisted families; RU/EN. '+out);
  }finally{await browser.close();}

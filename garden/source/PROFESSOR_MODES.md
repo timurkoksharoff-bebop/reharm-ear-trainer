@@ -179,7 +179,7 @@ The preflight checkbox can disable lessons.
 
 ## Live phrase prototype —1.76
 
-Master pickups use original, context-aware phrase constructions: a target approach,
+Captain pickups use original, context-aware phrase constructions: a target approach,
 a diatonic enclosure, broken-chord call/answer, a repeated motif, and pentatonic or
 blues turns when the chosen collection supports them. This is a small generative
 vocabulary, not transcriptions or recordings of textbook licks. General sources
@@ -220,7 +220,7 @@ are runtime assets.
 
 ## Mobile1.77 — preflight sound and selective navigation
 
-Master workshop has an optional Sound tab before flight: saved Phrase0, Mixed,
+Captain workshop has an optional Sound tab before flight: saved Phrase0, Mixed,
 or stepwise Scales. Device-local ear-yoga-mode-audition.v1 stores the preset,
 standalone-arpeggio percentage, combined percentage and rhythm preference.
 Defaults request50% phrases,25% broken arpeggios and25% combinations. Each
@@ -249,3 +249,49 @@ ordinary major/minor/dominant chords while at least half of supported forecasts
 remain compatible. The local adaptive teacher still increases advanced modes
 after two mastered foundations, and rare modes after four plus40 successes.
 No new catalog scales or textbook classifications were added by this balance edit.
+
+
+## Local1.79 — optional Phrases ×2
+
+Sound now offers an explicit experimental dense preset alongside Mixed, Phrase0
+and stepwise Scales. The existing default and saved mix/rhythm values remain.
+The dense preset reuses the original reviewed phrase cells at half their event
+times. Early catches combine a call and a related motif answer (up to three
+cells in unusually long windows); late catches retain one short ending.
+The response recalls the first two-note contour, voiced near the preceding
+melody, and resolves onto an actual chord/scale intersection. All cells use the
+literal selected collection; nearest octave equivalents avoid large register
+discontinuities at the faster pace. No chromatic substitutions, transcribed
+textbook licks, new chord classifications or altered accompaniment are added.
+
+Attack spacing stays at least75ms; event gates are at least45ms. Tiny breaths
+separate linked cells, and the complete line ends at least120ms before the
+remaining chord boundary. Existing soft-flute synthesis and cancellation on
+new pickup/chord/pause/background remain. The preset has its own phrasing,
+so Mixed percentage/rhythm controls are hidden while it is selected. Immediate
+Mixed and Phrase0 comparisons never change the selected dense setting.
+This is a local listening experiment, not a new public release.
+
+
+## Local1.80 — live comparison and restored standalone arpeggios
+
+The user rejected the audible quality of the double-time phrase study. It remains
+an optional experiment, not an approved musical baseline. Fast timing alone did
+not establish human-sounding improvisation. Phrase0 and the other comparisons
+remain unchanged.
+
+The standalone arpeggio branch now uses the original scale-pickup contours
+(up/down/thirds/pendulum/weave),3–18notes, instead of a2–6note colour-to-guide
+miniature that sounded like another melodic phrase. It retains literal selected
+scale notes, without an inserted phrase cell or a forced guide-tone last note.
+A separate Arpeggios only preset excludes phrase and combined segments entirely.
+Mixed still honours independent percentages:75% standalone plus25% combined
+does include a phrase in the combined quarter. The UI shows all three shares.
+
+Captain flights have a compact nonmodal Phrases button. Presets and mix percentages
+change during playback; immediate auditions use the actual sounding chord/root
+and remaining window, with the last picked/auditioned mode (Ionian only as an
+initial sound sample). These auditions are not answers: they award no points,
+NAV or teacher decisions. They do not pause/leave/restart the flight. The main
+Settings screen also has a direct Phrases & arpeggios shortcut. Combo receipts
+are smaller, transparent, without blur; text keeps a fine shadow for contrast.

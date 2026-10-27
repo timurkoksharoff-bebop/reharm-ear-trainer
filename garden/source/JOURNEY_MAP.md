@@ -23,7 +23,7 @@ percentage denominator. Grades are device-local, like existing game progress.
 Trial thresholds make early progress easier while keeping the two mastery grades:
 
 - 1: completed, including Cadet; legacy completions without answer evidence also retain1.
-- 2: Pilot/Navigator/Master answers, accuracy >=65%, at most7 laps.
+- 2: Pilot/Navigator/Captain answers, accuracy >=65%, at most7 laps.
 - 3: accuracy >=80%, at most4 laps.
 - 4: accuracy >=98%, at most1.65 laps; if flying notes were attempted, >=85% valid.
 - 5: independent answers, every answer correct, at most1.05 laps; every attempted flying note valid.
@@ -33,7 +33,7 @@ full answer reveals cap it at2. Unverified independence still caps at1.
 Existing stored bests retain their values and can improve on a replay under the
 new scale. Old `{stars}` records do not preserve hint provenance, so no blanket
 retrospective bonus is applied. Cadet's completion grade is1; higher grades use
-the Pilot/Navigator/Master answer criteria.
+the Pilot/Navigator/Captain answer criteria.
 
 One lap = chord count × the mode's actual chord duration. Pauses are excluded.
 The same receipt used for proficiency records supplies answer independence and
@@ -69,3 +69,17 @@ The circular arrow at the top of the completion card replays the exact current
 route in the same key and difficulty. Answers, timer, resources and attempt
 statistics start fresh; stored best stars/score remain. Next route still chooses
 another eligible route. Replay does not show a second preflight lesson.
+
+
+## Cinematic Epic passage —1.78
+
+The existing secret route cinematic-epic-13 opens Navigator and Captain when its
+actual flight grade is3stars or higher in Pilot/Navigator. There is no second
+hidden accuracy/time limit. Rating and passage share garden-route-rating.mjs.
+Reduced-choice assists can still earn3stars; full reveals cap the grade at2,
+Cadet earns1, and demos save no grade. Guru remains reserved.
+
+A saved3+star normal best for this exact secret route is also honoured on
+startup, so an already completed passage need not be replayed. This narrow
+secret-route recovery does not turn other historical stars into exam evidence
+or change any stored score, completion, grade or Reharm prerequisite.

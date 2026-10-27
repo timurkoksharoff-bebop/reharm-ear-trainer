@@ -10,7 +10,7 @@ function readWave(file){
  return {numberOfChannels:format.channels,sampleRate:format.rate,length,getChannelData:c=>channels[c]};
 }
 const starts={};
-for(const file of fs.readdirSync(directory)){
+for(const file of fs.readdirSync(directory).filter(file=>file.endsWith('.wav'))){
  const buffer=readWave(file),start=gardenSampleStart(buffer);starts[file]=Math.round(start*1000);
  if(file.startsWith('felt-'))assert(start>.14&&start<.22,'Felt recording pre-roll is skipped');
  if(file==='hybrid-c4.wav')assert(start>.45&&start<.46);

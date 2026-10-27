@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {gardenModePhrase} from '../garden-mode-phrases.mjs';
+import {gardenModeArpeggio} from '../garden-mode-arpeggio.mjs';
+import {gardenScalePhrase} from '../garden-harmony.mjs';
 import {GARDEN_MODES} from '../garden-modes.mjs';
 
 const pc=n=>((n%12)+12)%12;
@@ -12,14 +14,18 @@ for(const mode of GARDEN_MODES)for(let root=60;root<72;root++)for(const remainin
  assert(phrase,mode.id+' '+remaining);
  assert.equal(JSON.stringify({notes,options}),before,'planner must not mutate inputs');
  assert.deepEqual(phrase,gardenModePhrase(notes,options),'same inputs produce the same construction');
- assert(phrase.events.length>=2&&phrase.events.length<=8);
+ assert(phrase.events.length>=2&&phrase.events.length<=(phrase.requestedStyle==='arpeggio'?18:8));
  assert.deepEqual(phrase.notes,phrase.events.map(event=>event.midi));
  assert(phrase.notes.every(n=>mode.notes.includes(pc(n-root))),mode.id+' adds no unselected pitches');
  assert(phrase.duration<=3.2+1e-9&&phrase.duration<=remaining-.12+1e-9,'phrase ends before the chord boundary');
- assert.equal(phrase.events.at(-1).role,'target');
- assert([0,4,7,11].includes(pc(phrase.events.at(-1).midi-root)),'arrival belongs to the actual chord/selected-mode intersection');
- assert.equal(phrase.targetQualified,true);
- assert(phrase.events.some(event=>phrase.characteristic.some(n=>pc(n-root)===pc(event.midi-root))),'the phrase presents a modal colour');
+ if(phrase.requestedStyle==='arpeggio'){
+  assert(phrase.events.every(event=>event.role==='arpeggio'&&event.segment==='arpeggio'),'standalone runs contain no melodic phrase cells');
+ }else{
+  assert.equal(phrase.events.at(-1).role,'target');
+  assert([0,4,7,11].includes(pc(phrase.events.at(-1).midi-root)),'arrival belongs to the actual chord/selected-mode intersection');
+  assert.equal(phrase.targetQualified,true);
+  assert(phrase.events.some(event=>phrase.characteristic.some(n=>pc(n-root)===pc(event.midi-root))),'the phrase presents a modal colour');
+ }
  for(let i=0;i<phrase.events.length;i++){
   const event=phrase.events[i];
   assert(Number.isFinite(event.midi)&&event.onset>=0&&event.duration>=.06);
@@ -35,7 +41,7 @@ for(const id of ['ionian','dorian','lydian','mixolydian','minor-pentatonic','min
  for(let variation=0;variation<36;variation++){
   const phrase=gardenModePhrase(notes,{modeId:id,chord:{quality:'7'},remaining:4,variation});
   patterns.add(phrase.pattern);melodies.add(phrase.notes.join(','));rhythms.add(phrase.events.map(e=>e.onset).join(','));
-  assert(phrase.events.some((event,i)=>i&&event.onset>phrase.events[i-1].onset+phrase.events[i-1].duration+.035),'long phrases contain actual breathing space');
+  if(phrase.requestedStyle!=='arpeggio')assert(phrase.events.some((event,i)=>i&&event.onset>phrase.events[i-1].onset+phrase.events[i-1].duration+.035),'long phrases contain actual breathing space');
  }
  assert(patterns.size>=4,id+' chooses several construction families');
  assert(melodies.size>=8,id+' varies melodic sentences');
@@ -54,7 +60,7 @@ for(let variation=0;variation<64;variation++){
  if([3,10].includes(pc(dor.notes.at(-1)-60)))guideArrivals++;
 }
 assert(dorianSix>=32,'Dorian6 is presented regularly rather than hidden in generic minor figures');
-assert(guideArrivals>=48,'guide-tone arrivals predominate');
+ assert(guideArrivals>=32,'phrase and combined guide-tone arrivals remain available beside literal arpeggios');
 
 const first=gardenModePhrase(lydian,{modeId:'lydian',chord:{quality:'maj7'},remaining:4,variation:0});
 const answer=gardenModePhrase(lydian,{modeId:'lydian',chord:{quality:'maj7'},remaining:4,variation:0,previous:first});
@@ -70,7 +76,7 @@ const phrygian=[60,61,63,65,67,68,70,72];
 for(let variation=0;variation<16;variation++){
  const phrase=gardenModePhrase(phrygian,{modeId:'phrygian',chord:{quality:'maj7',notes:[48,64,67,71]},remaining:3,variation});
  assert(!phrase.notes.some(n=>[4,11].includes(pc(n-60))));
- assert([0,7].includes(pc(phrase.notes.at(-1)-60)));
+ if(phrase.requestedStyle!=='arpeggio')assert([0,7].includes(pc(phrase.notes.at(-1)-60)));
 }
 const precise=gardenModePhrase(lydian,{modeId:'lydian',chord:{quality:'maj7',notes:[55,59]},remaining:3,variation:2});
 assert([7,11].includes(pc(precise.target-60)),'actual omitted-root voicing controls the available anchors');
@@ -139,11 +145,41 @@ for(let variation=0;variation<144;variation++){
 }
 assert(arpPatterns.size>=6,'the arpeggio quarter retains multiple broken contours');
 assert.deepEqual(tuplets,new Set(['triplet-cell','quintuplet-cell']));
-assert(offbeatEntries>=90&&offbeatEntries<144,'weak entries are common while straight entries remain possible');
+assert(offbeatEntries>=60&&offbeatEntries<144,'phrase weak entries remain common beside straight standalone runs');
 assert(offbeatArrivals>=60,'arrivals are not all pinned to the strong beat');
 
 const prior=Object.freeze({...first,notes:Object.freeze([...first.notes]),events:Object.freeze(first.events.map(event=>Object.freeze({...event})))});
 const priorJSON=JSON.stringify(prior),input=Object.freeze([...dorian]),settings=Object.freeze({modeId:'dorian',chord:Object.freeze({quality:'m7',notes:Object.freeze([48,63,67,70])}),remaining:3.8,variation:-17,previous:prior});
 assert.deepEqual(gardenModePhrase(input,settings),gardenModePhrase(input,settings));
 assert.equal(JSON.stringify(prior),priorJSON,'history metadata is read without mutation');
+
+// Audible arpeggio requests must retain the approved original full contours,
+// rather than merely labelling a modal-colour/target mini-phrase as an arpeggio.
+for(const mode of GARDEN_MODES)for(const remaining of [.65,.8,1.7,3.8])for(let variation=-6;variation<12;variation++){
+ const pitches=[...mode.notes,12].map(n=>60+n),old=gardenScalePhrase(pitches,{remaining,variation}),run=gardenModeArpeggio(pitches,{remaining,variation,modeId:mode.id});
+ assert.deepEqual(run.notes,old.notes,'approved contour notes are retained');
+ assert.equal(run.step,old.step,'approved run speed is retained');
+ assert(run.step>=.1,'no rushed emergency arpeggio');
+ assert(run.events.every(event=>event.role==='arpeggio'&&event.segment==='arpeggio'));
+ assert(run.segments.every(segment=>segment.kind==='arpeggio'));
+ assert(run.events.every(event=>event.onset+event.duration<=remaining-.12));
+}
+for(const arpeggioPercent of [75,100])for(const combinedPercent of arpeggioPercent===75?[0,25]:[0])for(const remaining of [.8,1.7,3.8]){
+ let actualArpeggioRequests=0;
+ for(let variation=0;variation<100;variation++){
+  const plan=gardenModePhrase(dorian,{modeId:'dorian',chord:{quality:'m7'},remaining,variation,mix:{arpeggioPercent,combinedPercent}});
+  if(plan.requestedStyle==='arpeggio'){
+   actualArpeggioRequests++;
+   assert.equal(plan.style,'arpeggio');
+   assert(plan.events.every(event=>event.role==='arpeggio'&&event.segment==='arpeggio'),'requested standalone arpeggio never renders a phrase');
+   assert(plan.segments.every(segment=>segment.kind==='arpeggio'));
+   if(remaining===3.8)assert(plan.events.length===18,'an early pure run uses the long original contour');
+  }
+  if(arpeggioPercent===100)assert.equal(plan.requestedStyle,'arpeggio','100% excludes all phrase and combined requests');
+ }
+ assert.equal(actualArpeggioRequests,arpeggioPercent,'75% and100% produce the actual requested number of pure runs');
+}
+assert.equal(gardenModeArpeggio([60,NaN]),null);
+assert.equal(gardenModeArpeggio(dorian,{remaining:.64}),null);
+assert.equal(gardenModeArpeggio(dorian,{remaining:Infinity}),null);
 console.log(`Mode phrases PASS: ${checked} mode/root/time/tempo cases; literal pitch collections and targets; deterministic50/25/25 requests and playable long-window mix; both combined orders, short fallbacks, varied broken arpeggios, weak entries/arrivals, real triplets/quintuplets and safe note spacing.`);

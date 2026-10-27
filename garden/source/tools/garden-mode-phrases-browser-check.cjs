@@ -13,7 +13,7 @@ const out=process.env.GARDEN_QA_OUTPUT||'/private/tmp/ear-yoga-mode-phrases';fs.
  const preview=async()=>{await p.getByRole('button',{name:'Послушать мой вариант',exact:true}).click();await p.waitForFunction(()=>gardenFlight.snapshot().lastModePreview?.active);return (await snap()).lastModePreview;};
  const check=preview=>{assert.equal(preview.phrasing,'configured');assert(preview.events.length>=2);const pcs=new Set(preview.scaleNotes.map(n=>n%12));for(const e of preview.events){assert(pcs.has(e.midi%12));assert(e.onset>=0&&e.duration>0);assert(e.onset+e.duration<=preview.remaining-.08);}assert(new Set(preview.events.map(e=>e.velocity.toFixed(2))).size>1);};
  await p.goto(url.href);await p.waitForFunction(()=>window.gardenFlight?.snapshot().ready);await start();
- await p.locator('#professor-lesson select').selectOption('dorian');await soundTab();
+ await p.locator('#professor-lesson select[aria-label="Выбрать лад"]').selectOption('dorian');await soundTab();
  assert.deepEqual((await snap()).audition,{preset:'mixed',arpeggioPercent:25,combinedPercent:25,rhythm:'lively'});
  await p.locator('#mode-sound-preset').selectOption('zero');let audition=await preview();check(audition);assert.equal(audition.preset,'zero');assert.equal(audition.modeId,'dorian');report.zero=audition;
  assert(await p.locator('#mode-sound-arpeggioPercent').isDisabled());assert(await p.locator('#mode-sound-rhythm').isDisabled());

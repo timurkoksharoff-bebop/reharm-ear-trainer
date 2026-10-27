@@ -4,6 +4,8 @@ import {createGardenArrangement,gardenArrangementEvents} from './garden-arrangem
 import {gardenModePhrase} from './garden-mode-phrases.mjs';
 import {gardenModePhraseZero} from './garden-mode-phrases-zero.mjs';
 import {gardenModeAuditionPlan} from './garden-mode-audition.mjs';
+import {GardenModeTimbres} from './garden-mode-timbres.mjs';
+import {GARDEN_GRAND_PIANO_BANK} from './garden-grand-piano.mjs';
 
 // Indices refer to the actual scale, including its upper tonic. No added pitches.
 export function gardenScalePhrase(notes,{remaining=1.7,variation=0}={}){
@@ -88,6 +90,7 @@ export function gardenAnswerState(model,kind,value){
 }
 const PRESETS={
   felt:{name:'Felt Piano',engine:'sample',sampleSet:'felt',cutoff:1450,delay:0,feedback:0,drift:0},
+  grand:{name:'Grand Piano',engine:'sample',sampleSet:'grand',perNoteArpeggio:true,cutoff:12000,delay:0,feedback:0,drift:0},
   hybrid:{name:'Hybrid Keys',engine:'sample',sampleSet:'hybrid',sampleAttack:.24,cutoff:7000,delay:0,feedback:0,drift:0},
   hybridOrchestra:{name:'Hybrid Orchestra',engine:'sample',sampleSet:'hybridOrchestra',cutoff:9000,delay:.12,feedback:.08,drift:0},
   stringOrchestra:{name:'String Orchestra',engine:'sample',sampleSet:'stringOrchestra',cutoff:9000,delay:.16,feedback:.1,drift:0},
@@ -114,10 +117,10 @@ export function gardenSampleBankLevel(bank){
   // or recording pitch: a C5 sample transposed down decays much more slowly.
   const pitches=[43,48,55,60,64,67];let energy=0;
   for(const midi of pitches){
-    const sample=nearestSample(bank,midi),buffer=sample.buffer,rate=2**((midi-sample.midi)/12);
+    const sample=nearestSample(bank,midi),buffer=sample.buffer,rate=2**((midi-sample.midi+(sample.tune||0)/100)/12),regionGain=sample.regionGain??1;
     const first=Math.floor((sample.startOffset||0)*buffer.sampleRate),last=Math.min(buffer.length,first+Math.floor(3*rate*buffer.sampleRate));
     let sum=0,count=0;
-    for(let channel=0;channel<buffer.numberOfChannels;channel++){const data=buffer.getChannelData(channel);for(let i=first;i<last;i++){sum+=data[i]*data[i];count++;}}
+    for(let channel=0;channel<buffer.numberOfChannels;channel++){const data=buffer.getChannelData(channel);for(let i=first;i<last;i++){sum+=data[i]*data[i]*regionGain*regionGain;count++;}}
     energy+=count?sum/count:0;
   }
   return Math.sqrt(energy/pitches.length);
@@ -134,13 +137,14 @@ export class GardenPad{
     this.context=null;this.output=null;this.cleanOutput=null;this.filter=null;this.eqLow=null;this.eqMid=null;this.eqHigh=null;this.limiter=null;this.master=null;this.delay=null;this.delayFeedback=null;this.voices=[];this.preset='felt';this.sampleBanks={};this.generation=0;
     this.masterVolume=1.2;this.equalizer={low:0,mid:0,high:0};
     this.sampleSources={
+      grand:GARDEN_GRAND_PIANO_BANK.samples.map(({file,midi,tune=0,gainDb=0})=>[file,midi,tune,gainDb]),
       felt:[['felt-c3.wav',48],['felt-e3.wav',52],['felt-g3.wav',55]],
       hybrid:[['hybrid-c4.wav',60],['hybrid-d4.wav',62]],
       hybridOrchestra:[['hybrid-orchestra-c4.wav',60]],
       stringOrchestra:[['string-orchestra-c5.wav',72]],
       pianoN:[['piano-n-c5.wav',72]]
     };
-    this.transients=new Set();this.sounding=null;
+    this.transients=new Set();this.sounding=null;this.modeTimbres=null;
     this.backgrounded=false;this.backgroundTimer=0;this.lifecycleGain=null;
     this.samplesReady=deferSamplesUntilReady?new Promise(resolve=>addEventListener('garden-ready',()=>resolve(),{once:true})):Promise.resolve();
   }
@@ -185,8 +189,21 @@ export class GardenPad{
     for(;;){
       const preset=this.preset,spec=PRESETS[preset];
       if(spec.engine==='sample')await this.loadSampleBank(spec.sampleSet);
+      await this.prepareModeTimbre();
       if(cancelled())return false;
       if(preset===this.preset)return true;
+    }
+  }
+  async prepareModeTimbre(){
+    if((this.modeTimbre?.snapshot().timbre||'flute')==='flute')return !this.backgrounded&&!globalThis.document?.hidden;
+    if(!this.context)await this.unlock();
+    if(!this.context||this.backgrounded||globalThis.document?.hidden)return false;
+    if(!this.modeTimbres)this.modeTimbres=new GardenModeTimbres(this.context,{ready:this.samplesReady});
+    for(;;){
+      const id=this.modeTimbre?.snapshot().timbre||'flute';
+      await this.modeTimbres.prepare(id);
+      if(this.backgrounded||globalThis.document?.hidden)return false;
+      if(id===(this.modeTimbre?.snapshot().timbre||'flute'))return true;
     }
   }
   resetEcho(){
@@ -206,16 +223,17 @@ export class GardenPad{
   async loadSampleBank(sampleSet){
     if(!this.sampleBanks[sampleSet])this.sampleBanks[sampleSet]=(async()=>{
       await this.samplesReady;
-      const samples=await Promise.all((this.sampleSources[sampleSet]||[]).map(async([file,midi])=>{
+      const samples=await Promise.all((this.sampleSources[sampleSet]||[]).map(async([file,midi,tune=0,gainDb=0])=>{
         const url=`assets/echo-garden/samples/${file}`,embedded=globalThis.GARDEN_SAMPLE_DATA?.[url];
-        if(embedded)return {midi,data:Uint8Array.from(atob(embedded),c=>c.charCodeAt(0)).buffer};
-        const response=await fetch(url,{priority:'low'});if(!response.ok)throw Error(`Не загрузился семпл ${url}`);return {midi,data:await response.arrayBuffer()};
+        if(embedded)return {midi,tune,gainDb,data:Uint8Array.from(atob(embedded),c=>c.charCodeAt(0)).buffer};
+        const response=await fetch(url,{priority:'low'});if(!response.ok)throw Error(`Не загрузился семпл ${url}`);return {midi,tune,gainDb,data:await response.arrayBuffer()};
       }));
-      const bank=await Promise.all(samples.map(async sample=>{const buffer=await this.context.decodeAudioData(sample.data.slice(0));return {midi:sample.midi,buffer,startOffset:gardenSampleStart(buffer)};}));
+      const bank=await Promise.all(samples.map(async sample=>{const buffer=await this.context.decodeAudioData(sample.data.slice(0));return {midi:sample.midi,tune:sample.tune,regionGain:10**(sample.gainDb/20),buffer,startOffset:gardenSampleStart(buffer)};}));
       const levelGain=sampleSet==='felt'?1:gardenSampleBankGain(bank,await this.loadSampleBank('felt'));
       return bank.map(sample=>({...sample,levelGain}));
     })();
-    return this.sampleBanks[sampleSet];
+    const pending=this.sampleBanks[sampleSet];
+    try{return await pending;}catch(error){if(this.sampleBanks[sampleSet]===pending)delete this.sampleBanks[sampleSet];throw error;}
   }
   applyPreset(name){
     this.preset=PRESETS[name]?name:'felt';
@@ -291,10 +309,10 @@ export class GardenPad{
       // samples from tone to tone creates little attack/timbre jumps (most
       // noticeable on Felt Piano), which can sound like grace notes.
       const orderedNotes=[...notes].sort((a,b)=>a-b),middleNote=orderedNotes[Math.floor(orderedNotes.length/2)];
-      const phraseSample=arpeggio?nearestSample(sampleBank,middleNote):null;
+      const phraseSample=arpeggio&&!p.perNoteArpeggio?nearestSample(sampleBank,middleNote):null;
       notes.forEach((midi,index)=>{
         const sample=phraseSample||nearestSample(sampleBank,midi);
-        const voice=c.createBufferSource(),voiceGain=c.createGain(),at=now+(arpeggio?index*.18:0),level=(index===0?.62:1)*(sample.levelGain??1);voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi)/12);
+        const voice=c.createBufferSource(),voiceGain=c.createGain(),at=now+(arpeggio?index*.18:0),level=(index===0?.62:1)*(sample.levelGain??1)*(sample.regionGain??1);voice.buffer=sample.buffer;voice.playbackRate.value=2**((midi-sample.midi+(sample.tune||0)/100)/12);
         // A 240ms eased swell removes the hard recorded Hybrid Keys strike.
         // Start time, sample pitch, sustain and the other instruments stay exact.
         if(p.sampleAttack){voiceGain.gain.setValueAtTime(0,at);for(let step=1;step<=4;step++){const phase=step/4,weight=phase*phase*(3-2*phase);voiceGain.gain.linearRampToValueAtTime(level*weight,at+p.sampleAttack*phase);}}else voiceGain.gain.value=level;
@@ -327,6 +345,8 @@ export class GardenPad{
   }
   previewScale(notes,{remaining=1.7,phrasing='exercise',modeId=null,chord=this.sounding?.chord,tonic=this.sounding?.tonic,barSeconds=this.sounding?.barSeconds||4,audition=this.modeAudition?.snapshot()}={}){
     const c=this.context;if(!c||c.state!=='running'||this.backgrounded||!Array.isArray(notes)||notes.length<2||remaining<.65)return false;
+    const timbre=this.modeTimbre?.snapshot().timbre||'flute';
+    if(timbre!=='flute'&&!this.modeTimbres?.get(timbre)){this.prepareModeTimbre().catch(()=>{});return false;}
     this.modePreviewStop?.();
     // The preserved Zero keeps its1.76 entry. Mixed gestures use the same bar
     // grid plus authored rests; a spare subdivision avoids a uniform downbeat
@@ -339,7 +359,7 @@ export class GardenPad{
       :gardenScalePhrase(notes,{remaining,variation:this.modePhraseSequence||0});
     if(!phrase?.notes?.length)return false;
     const beat=barSeconds/4,firstPhase=beat>0?(phase+entryDelay+(phrase.events?.[0]?.onset||0))/beat:NaN;
-    if((phrasing==='improv'||configured&&phrase.preset==='mixed'&&phrase.audition.rhythm!=='steady')&&Number.isFinite(firstPhase)&&Math.abs(firstPhase-Math.round(firstPhase))<.035&&phrase.duration+entryDelay+beat*.25<remaining-.12)entryDelay+=beat*.25;
+    if((phrasing==='improv'||configured&&['mixed','improved'].includes(phrase.preset)&&phrase.audition.rhythm!=='steady')&&Number.isFinite(firstPhase)&&Math.abs(firstPhase-Math.round(firstPhase))<.035&&phrase.duration+entryDelay+beat*.25<remaining-.12)entryDelay+=beat*.25;
     this.modePhraseSequence=(this.modePhraseSequence||0)+1;
     const scaleNotes=[...notes];notes=phrase.notes;
     const {step}=phrase,duration=phrase.duration+entryDelay,at=c.currentTime+.012,group=c.createGain(),sources=[];
@@ -347,9 +367,9 @@ export class GardenPad{
     if(entryDelay)for(const event of events)event.onset+=entryDelay;
     group.gain.value=1;group.connect(this.cleanOutput);
     let stopped=false;const stop=()=>{if(stopped)return;stopped=true;const now=c.currentTime;group.gain.cancelScheduledValues(now);group.gain.setValueAtTime(group.gain.value,now);group.gain.linearRampToValueAtTime(0,now+.012);for(const source of sources){try{source.stop(now+.018);}catch{}}setTimeout(()=>{for(const source of sources)try{source.disconnect();}catch{}try{group.disconnect();}catch{}},25);this.transients.delete(stop);if(this.modePreviewStop===stop){this.modePreviewStop=null;if(this.lastModePreview)this.lastModePreview.active=false;}};
-    events.forEach(({midi,onset,duration:gate,velocity=1})=>{const start=at+onset,level=c.createGain(),peak=.052*Math.max(.25,Math.min(1.1,velocity));level.gain.setValueAtTime(.0001,start);level.gain.exponentialRampToValueAtTime(peak,start+Math.min(.022,gate*.22));level.gain.exponentialRampToValueAtTime(.0001,start+gate);level.connect(group);for(const [ratio,amplitude] of [[1,1],[2,.12]]){const tone=c.createOscillator(),partial=c.createGain();tone.type='sine';tone.frequency.value=frequency(midi)*ratio;partial.gain.value=amplitude;tone.connect(partial);partial.connect(level);tone.start(start);tone.stop(start+gate+.015);sources.push(tone);}});
+    events.forEach(event=>{if(timbre!=='flute'){const source=this.modeTimbres.schedule(timbre,event,at,group);if(source)sources.push(source);return;}const {midi,onset,duration:gate,velocity=1}=event,start=at+onset,level=c.createGain(),peak=.052*Math.max(.25,Math.min(1.1,velocity));level.gain.setValueAtTime(.0001,start);level.gain.exponentialRampToValueAtTime(peak,start+Math.min(.022,gate*.22));level.gain.exponentialRampToValueAtTime(.0001,start+gate);level.connect(group);for(const [ratio,amplitude] of [[1,1],[2,.12]]){const tone=c.createOscillator(),partial=c.createGain();tone.type='sine';tone.frequency.value=frequency(midi)*ratio;partial.gain.value=amplitude;tone.connect(partial);partial.connect(level);tone.start(start);tone.stop(start+gate+.015);sources.push(tone);}});
     if(melodic)this.lastModePhrase={modeId,motifId:phrase.motifId,pattern:phrase.pattern,notes:[...notes]};
-    this.modePreviewStop=stop;this.transients.add(stop);this.lastModePreview={active:true,notes:[...notes],scaleNotes,events:events.map(e=>({...e})),phrasing,modeId,motifId:phrase.motifId||null,pattern:phrase.pattern,preset:phrase.preset||null,style:phrase.style||null,requestedStyle:phrase.requestedStyle||null,rhythm:phrase.rhythm||null,requestedRhythm:phrase.requestedRhythm||null,audition:phrase.audition||null,segments:phrase.segments?.map(e=>({...e,start:e.start+entryDelay,end:e.end+entryDelay}))||null,at,duration,entryDelay,firstBeatPhase:beat>0?(phase+events[0].onset)/beat:null,character:'soft-flute',remaining};setTimeout(stop,(duration+.15)*1000);return true;
+    this.modePreviewStop=stop;this.transients.add(stop);this.lastModePreview={active:true,notes:[...notes],scaleNotes,events:events.map(e=>({...e})),phrasing,modeId,motifId:phrase.motifId||null,pattern:phrase.pattern,preset:phrase.preset||null,style:phrase.style||null,requestedStyle:phrase.requestedStyle||null,rhythm:phrase.rhythm||null,requestedRhythm:phrase.requestedRhythm||null,audition:phrase.audition||null,segments:phrase.segments?.map(e=>({...e,start:e.start+entryDelay,end:e.end+entryDelay}))||null,at,duration,entryDelay,firstBeatPhase:beat>0?(phase+events[0].onset)/beat:null,character:timbre==='flute'?'soft-flute':timbre,timbre,remaining};setTimeout(stop,(duration+.15)*1000);return true;
   }
   async feedback(correct,{complete=false,kind='degree',value=0}={}){
     const generation=this.generation;

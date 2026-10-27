@@ -1,5 +1,6 @@
 import {gardenQualityLabel,gardenDegreeLabel} from './garden-harmony.mjs';
 import {GARDEN_MODES,gardenModeById,gardenModeTier,gardenModeFormula,gardenModeVerdict,gardenModeExplanation} from './garden-modes.mjs';
+import {GARDEN_MODE_TIMBRES} from './garden-mode-timbres.mjs';
 
 const FOUNDATION=['ionian','dorian','mixolydian','lydian','aeolian'];
 const NEXT=['melodic-minor','harmonic-minor','lydian-dominant','locrian-n2','phrygian-dominant','altered','diminished-hw','whole-tone'];
@@ -74,7 +75,7 @@ export function gardenProfessorLesson(mode){
  return {mode,example,aliases:aliases[mode.id]||mode.en,advice:advice[mode.id]||passing||generic,compatible:example.result.verdict==='compatible'};
 }
 
-export function mountGardenProfessorTeacher({teacher,pad,language,audition,onPause,onResume}={}){
+export function mountGardenProfessorTeacher({teacher,pad,language,audition,voiceSettings,onPause,onResume}={}){
  const dialog=document.createElement('dialog');dialog.id='professor-lesson';dialog.dataset.userContent='';document.body.append(dialog);let selected=teacher.recommendation(),resume=null,tab='lesson',audioGeneration=0;
  const en=()=>language.get()==='en',t=(ru,eng)=>en()?eng:ru;
  const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(cls)e.className=cls;return e;};
@@ -84,26 +85,45 @@ export function mountGardenProfessorTeacher({teacher,pad,language,audition,onPau
  let fallbackSound={preset:'mixed',arpeggioPercent:25,combinedPercent:25,rhythm:'lively'};
  const soundConfig=()=>audition?.snapshot?.()||{...fallbackSound};
  const setSound=patch=>{stop();if(audition?.set)return audition.set(patch);fallbackSound={...fallbackSound,...patch};return soundConfig();};
- const listen=async kind=>{stop();const generation=audioGeneration,lesson=gardenProfessorLesson(gardenModeById(selected));try{await pad.unlock();if(generation!==audioGeneration||!dialog.open)return;const chord={offset:0,quality:lesson.example.quality,notes:[48,...lesson.example.tones.map(n=>60+n)]};if(kind!=='scale')await pad.play(chord,0,{barSeconds:4});if(generation!==audioGeneration||!dialog.open)return;if(kind!=='chord'){const configured=kind==='configured'||kind==='zero',config=soundConfig();pad.previewScale([...lesson.mode.notes,12].map(n=>60+n),{remaining:3.4,phrasing:configured?'configured':kind==='phrase'?'improv':'exercise',audition:configured?(kind==='zero'?{...config,preset:'zero'}:config):undefined,modeId:selected,chord,tonic:0,barSeconds:4});}}catch{const status=dialog.querySelector('.lesson-status');if(status)status.textContent=t('Не удалось включить звук. Нажми ещё раз.','Audio could not start. Try again.');}};
+ const setAudioLoading=(loading,message=null)=>{for(const control of dialog.querySelectorAll('.lesson-controls button,#mode-sound-voice'))control.disabled=loading;const status=dialog.querySelector('.lesson-status');if(status){status.setAttribute('aria-live','polite');status.setAttribute('aria-busy',String(loading));if(message!==null)status.textContent=message;}};
+ const appendVoiceChoice=(parent,number=null)=>{
+  const field=node('fieldset',null,'mode-voice-question'),title=t('Тембр ладов','Scale timbre');field.append(node('legend',(number?number+' · ':'')+title));
+  const select=node('select');select.id='mode-sound-voice';select.setAttribute('aria-label',title);for(const item of GARDEN_MODE_TIMBRES){const option=node('option',en()?item.en:item.ru);option.value=item.id;select.append(option);}select.value=voiceSettings?.snapshot?.()?.timbre||'flute';
+  const credit=node('a',t('Источники звуков','Sound credits'),'mode-voice-credit'),creditNote=node('small',null,'mode-voice-attribution');credit.href='assets/echo-garden/samples/modal/MODAL_SAMPLE_CREDITS.md';credit.target='_blank';credit.rel='noopener';const updateCredit=()=>{creditNote.textContent=select.value==='wurli'?'Wurlitzer · Greg Sullivan · CC BY 3.0':select.value==='drawbar'?'FreePats · CC0 · setBfree':'';};updateCredit();field.append(select,credit,creditNote);parent.append(field);
+  select.onchange=async()=>{stop();const generation=audioGeneration;voiceSettings?.set?.({timbre:select.value});updateCredit();setAudioLoading(true,t('Загружаю тембр…','Loading timbre…'));try{const ready=await pad.prepareModeTimbre?.();if(generation!==audioGeneration||!dialog.open)return;setAudioLoading(false,ready===false?t('Звук приостановлен. Повтори прослушивание.','Audio is paused. Try the preview again.'):'');}catch{if(generation===audioGeneration&&dialog.open)setAudioLoading(false,t('Тембр не загрузился. Повтори прослушивание.','The timbre could not load. Try the preview again.'));}};
+ };
+ const listen=async kind=>{
+  stop();const generation=audioGeneration,lesson=gardenProfessorLesson(gardenModeById(selected));setAudioLoading(true,t('Подготавливаю звук…','Preparing audio…'));
+  try{
+   await pad.unlock();if(generation!==audioGeneration||!dialog.open)return;
+   const ready=await pad.prepareModeTimbre?.();if(generation!==audioGeneration||!dialog.open)return;
+   if(ready===false){setAudioLoading(false,t('Звук приостановлен. Повтори прослушивание.','Audio is paused. Try the preview again.'));return;}
+   const chord={offset:0,quality:lesson.example.quality,notes:[48,...lesson.example.tones.map(n=>60+n)]};
+   if(kind!=='scale')await pad.play(chord,0,{barSeconds:4});if(generation!==audioGeneration||!dialog.open)return;
+   if(kind!=='chord'){const configured=kind==='configured'||kind==='zero'||kind==='mixed',config=soundConfig();pad.previewScale([...lesson.mode.notes,12].map(n=>60+n),{remaining:3.4,phrasing:configured?'configured':kind==='phrase'?'improv':'exercise',audition:configured?(kind==='zero'||kind==='mixed'?{...config,preset:kind}:config):undefined,modeId:selected,chord,tonic:0,barSeconds:4});}
+   setAudioLoading(false,'');
+  }catch{if(generation===audioGeneration&&dialog.open)setAudioLoading(false,t('Не удалось включить звук. Нажми ещё раз.','Audio could not start. Try again.'));}
+ };
  function renderSound(){
   const config=soundConfig();
   dialog.append(node('h2',t('Как звучат лады','How scales sound')),node('p',t('Выбери свой вариант перед полётом. Настройки сохраняются на этом устройстве.','Choose your sound before flying. Settings stay on this device.'),'sound-intro'));
   const form=node('div',null,'mode-sound-form');
   const question=(number,title)=>{const field=node('fieldset',null,'mode-sound-question');field.append(node('legend',number+' · '+title));form.append(field);return field;};
   const first=question(1,t('Какой вариант?','Which version?')),preset=node('select');preset.id='mode-sound-preset';preset.setAttribute('aria-label',t('Вариант звучания ладов','Scale sound version'));
-  for(const [value,ru,eng]of [['mixed','Смешанный','Mixed'],['zero','Фраза 0 · первый вариант','Phrase 0 · original'],['scale','Только гаммы · по ступеням','Scales only · stepwise']]){const option=node('option',t(ru,eng));option.value=value;preset.append(option);}preset.value=config.preset;first.append(preset);preset.onchange=()=>{setSound({preset:preset.value});render();};
-  const second=question(2,t('Сколько каждого типа?','How much of each?'));second.disabled=config.preset!=='mixed';
+  for(const [value,ru,eng]of [['mixed','Смешанный','Mixed'],['improved','Улучшенные фразы','Improved phrases'],['dense','Фразы ×2 · эксперимент','Phrases ×2 · experiment'],['zero','Фраза 0 · первый вариант','Phrase 0 · original'],['arpeggio','Только арпеджио · без фраз','Arpeggios only · no phrases'],['scale','Только гаммы · по ступеням','Scales only · stepwise']]){const option=node('option',t(ru,eng));option.value=value;preset.append(option);}preset.value=config.preset;first.append(preset);preset.onchange=()=>{setSound({preset:preset.value});render();};
+  const second=question(2,t('Сколько каждого типа?','How much of each?'));second.disabled=!['mixed','improved'].includes(config.preset);second.hidden=config.preset==='dense';
   const summary=node('p',null,'mode-sound-summary'),rangeControls=[];
   const slider=(key,ru,eng)=>{const label=node('label',null,'mode-sound-slider'),caption=node('span',t(ru,eng)),value=node('output'),input=node('input');input.type='range';input.id='mode-sound-'+key;input.min='0';input.max='100';input.step='5';input.value=String(config[key]);input.setAttribute('aria-label',t(ru,eng));value.htmlFor=input.id;label.append(caption,value,input);second.append(label);rangeControls.push({key,input,value});input.oninput=()=>{const patch={[key]:Number(input.value)},other=key==='arpeggioPercent'?'combinedPercent':'arpeggioPercent';if(patch[key]+Number(soundConfig()[other])>100)patch[other]=100-patch[key];updateMix(setSound(patch));};};
   const updateMix=current=>{for(const control of rangeControls){control.input.value=String(current[control.key]);control.value.textContent=current[control.key]+'%';}const phrases=Math.max(0,100-current.arpeggioPercent-current.combinedPercent);summary.textContent=t('Фразы ','Phrases ')+phrases+'% · '+t('Арпеджио ','Arpeggios ')+current.arpeggioPercent+'% · '+t('Совмещённые ','Combined ')+current.combinedPercent+'%';};
   slider('arpeggioPercent','Арпеджио','Arpeggios');slider('combinedPercent','Фраза + арпеджио','Phrase + arpeggio');second.append(summary);updateMix(config);
-  const third=question(3,t('Какой ритм?','Which rhythm?')),rhythm=node('select');third.disabled=config.preset!=='mixed';rhythm.id='mode-sound-rhythm';rhythm.setAttribute('aria-label',t('Ритм ладовых фраз','Scale phrase rhythm'));
+  const third=question(3,t('Какой ритм?','Which rhythm?')),rhythm=node('select');third.disabled=!['mixed','improved'].includes(config.preset);third.hidden=config.preset==='dense';rhythm.id='mode-sound-rhythm';rhythm.setAttribute('aria-label',t('Ритм ладовых фраз','Scale phrase rhythm'));
   for(const [value,ru,eng]of [['lively','Живой · акценты и паузы','Lively · accents and rests'],['steady','Ровный','Steady'],['free','Свободный','Free']]){const option=node('option',t(ru,eng));option.value=value;rhythm.append(option);}rhythm.value=config.rhythm;rhythm.onchange=()=>setSound({rhythm:rhythm.value});third.append(rhythm);
-  form.append(node('p',t('По умолчанию: 50% фраз, 25% арпеджио и 25% совмещённых; если времени мало, прозвучит короткий законченный вариант.','Default: 50% phrases, 25% arpeggios and 25% combined; short windows use a brief, complete idea.'),'mode-sound-note'));
+  appendVoiceChoice(form,4);
+  form.append(node('p',config.preset==='improved'?t('Связная мелодическая линия с развитием мотива и завершением в аккорд. В совмещённых вариантах гамма или ломанный ход продолжают ту же фразу.','A connected melodic line develops a motif and arrives on the chord. Combined versions join a scale or broken run into the same phrase.'):config.preset==='dense'?t('Фразы примерно вдвое плотнее. Ранний выбор даёт более длинную связанную линию; поздний — короткое завершение.','Phrases are roughly twice as dense. An early choice gives a longer connected line; a late choice gets a short ending.'):t('По умолчанию: 50% фраз, 25% арпеджио и 25% совмещённых; если времени мало, прозвучит короткий законченный вариант.','Default: 50% phrases, 25% arpeggios and 25% combined; short windows use a brief, complete idea.'),'mode-sound-note'));
   const lesson=gardenProfessorLesson(gardenModeById(selected));form.append(node('p',t('Пример: ','Example: ')+(en()?lesson.mode.en:lesson.mode.ru).split(' / ')[0]+' · '+lesson.example.label,'mode-sound-example'));
-  const controls=node('div',null,'lesson-controls mode-sound-preview');controls.append(button(t('Послушать мой вариант','Preview my sound'),()=>listen('configured')),button(t('Сравнить: Фраза 0','Compare: Phrase 0'),()=>listen('zero')));form.append(controls,node('p',' ','lesson-status'));dialog.append(form);
+  const controls=node('div',null,'lesson-controls mode-sound-preview');controls.append(button(t('Послушать мой вариант','Preview my sound'),()=>listen('configured')));if(['dense','improved'].includes(config.preset))controls.append(button(t('Сравнить: смешанный','Compare: Mixed'),()=>listen('mixed')));controls.append(button(t('Сравнить: Фраза 0','Compare: Phrase 0'),()=>listen('zero')));form.append(controls,node('p',' ','lesson-status'));dialog.append(form);
  }
- function render(){stop();dialog.replaceChildren();const header=node('header');header.append(node('small',t('МАСТЕР · МАСТЕРСКАЯ СЛУХА','MASTER · EAR WORKSHOP')),button('×',close));dialog.append(header);
+ function render(){stop();dialog.replaceChildren();const header=node('header');header.append(node('small',t('КАПИТАН · МАСТЕРСКАЯ СЛУХА','CAPTAIN · EAR WORKSHOP')),button('×',close));dialog.append(header);
  const nav=node('nav');for(const [id,ru,eng]of [['lesson','Лады','Scales'],['report','Разбор полётов','Flight review'],['sound','Звучание','Sound']]){const control=button(t(ru,eng),()=>{tab=id;render();});control.setAttribute('aria-pressed',String(tab===id));nav.append(control);}dialog.append(nav);
  if(tab==='sound')renderSound();
  else if(tab==='report'){
@@ -119,7 +139,7 @@ export function mountGardenProfessorTeacher({teacher,pad,language,audition,onPau
   for(let i=0;i<=12;i++){const k=node('div',null,'lesson-key'+([1,3,6,8,10].includes(i%12)?' black':''));k.append(node('small',['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B','C'][i]));if(lesson.example.tones.includes(i%12))k.append(node('i',null,'chord-dot'));if(m.notes.includes(i%12))k.append(node('i',null,'scale-dot'));keys.append(k);}dialog.append(keys);
   const legend=node('p',null,'lesson-legend');legend.append(node('span',t('● Аккорд','● Chord'),'legend-chord'),document.createTextNode(' · '),node('span',t('● Лад','● Scale'),'legend-scale'),document.createTextNode(t(' · две точки — общий звук',' · two dots: shared pitch')));dialog.append(legend);
   dialog.append(node('p',t('Пример в C: ','Example in C: ')+lesson.example.label+(lesson.compatible?t(' · опорные тоны совпадают',' · guide tones agree'):t(' · контекстная окраска, слушай сочетание',' · contextual colour; listen to the combination'))));
-  dialog.append(node('p',lesson.advice[en()?1:0]));const controls=node('div',null,'lesson-controls');controls.append(button(t('Лад','Scale'),()=>listen('scale')),button(t('Аккорд','Chord'),()=>listen('chord')),button(t('Вместе','Together'),()=>listen('together')),button(t('Фраза 0','Phrase 0'),()=>listen('zero')),button(t('Мой вариант','My sound'),()=>listen('configured')));dialog.append(controls,node('p',' ','lesson-status'));
+  dialog.append(node('p',lesson.advice[en()?1:0]));appendVoiceChoice(dialog);const controls=node('div',null,'lesson-controls');controls.append(button(t('Лад','Scale'),()=>listen('scale')),button(t('Аккорд','Chord'),()=>listen('chord')),button(t('Вместе','Together'),()=>listen('together')),button(t('Фраза 0','Phrase 0'),()=>listen('zero')),button(t('Мой вариант','My sound'),()=>listen('configured')));dialog.append(controls,node('p',' ','lesson-status'));
   const stats=teacher.data.modes[m.id];dialog.append(node('small',teacher.mastered(m.id)?t('Устойчивый результат в нескольких позициях','Consistent across several positions'):stats?t('Изучается · выборов: ','Learning · choices: ')+(stats.good+stats.bad):t('Новый материал','New material')));
   dialog.append(button(t('Урок понятен','Mark lesson reviewed'),()=>{teacher.lessonSeen(m.id);render();}));
  }
@@ -130,5 +150,5 @@ export function mountGardenProfessorTeacher({teacher,pad,language,audition,onPau
  // event before handing the pad back: a later cleanup must not kill the new
  // route's tonic (or the chord resumed after an optional lesson).
  dialog.addEventListener('close',()=>{stop();const next=resume;resume=null;if(next)next();else onResume?.();});
- return {open({modeId,next,report=false}={}){if(dialog.open)return;onPause?.();selected=modeId||(report?selected:teacher.randomLesson());resume=next||null;tab=report?'report':'lesson';render();dialog.showModal();},get isOpen(){return dialog.open;}};
+ return {open({modeId,next,report=false,sound=false}={}){if(dialog.open)return;onPause?.();selected=modeId||(report||sound?selected:teacher.randomLesson());resume=next||null;tab=sound?'sound':report?'report':'lesson';render();dialog.showModal();},get isOpen(){return dialog.open;}};
 }

@@ -1,4 +1,5 @@
 import {gardenExercisesForChapter} from './garden-harmony.mjs';
+import {gardenFlightStars} from './garden-route-rating.mjs';
 
 export const GARDEN_TEACHER_CHAPTERS=Object.freeze([2,3,4,7,8,9,12,13]);
 const all=Array.from({length:16},(_,i)=>gardenExercisesForChapter(i+1)).flat();
@@ -6,18 +7,24 @@ export const gardenHasIndependentBass=route=>route.sequence.some(c=>Number(c.off
 export const GARDEN_TEACHER_EXAMS=Object.freeze(GARDEN_TEACHER_CHAPTERS.flatMap(ch=>gardenExercisesForChapter(ch)).map(r=>r.id));
 export const GARDEN_PROFESSOR_EXAMS=Object.freeze(all.filter(gardenHasIndependentBass).map(r=>r.id));
 export const GARDEN_SECRET_ROUTE='cinematic-epic-13';
+export const GARDEN_SECRET_STARS=3;
 const approved=new Set(all.map(r=>r.id)),KEY='ear-yoga-mode-access.v1';
 const validFlight=f=>f&&['medium','hard'].includes(f.difficulty)&&Number.isFinite(f.accuracy)&&f.accuracy>0&&Number.isFinite(f.laps)&&f.laps>=0&&(f.independent||f.ratingCap===4);
 export class GardenModeAccess{
- constructor({storage=null,flights=[],testing=false}={}){this.testing=Boolean(testing);this.storage=storage;this.data={version:1,medium:[],hard:[],allAccess:false};try{const raw=JSON.parse(storage?.getItem(KEY)||'null');if(raw?.version===1){for(const mode of ['medium','hard'])this.data[mode]=[...new Set((Array.isArray(raw[mode])?raw[mode]:[]).filter(id=>approved.has(id)))];this.data.allAccess=raw.allAccess===true;}}catch{}for(const f of flights)this.record(f,{official:approved.has(f.route)||f.route===GARDEN_SECRET_ROUTE,save:false});this.save();}
+ constructor({storage=null,flights=[],testing=false}={}){this.testing=Boolean(testing);this.storage=storage;this.data={version:1,medium:[],hard:[],allAccess:false};try{const raw=JSON.parse(storage?.getItem(KEY)||'null');if(raw?.version===1){for(const mode of ['medium','hard'])this.data[mode]=[...new Set((Array.isArray(raw[mode])?raw[mode]:[]).filter(id=>approved.has(id)))];this.data.allAccess=raw.allAccess===true;}}catch{}for(const f of flights)this.record(f,{official:approved.has(f.route)||f.route===GARDEN_SECRET_ROUTE,save:false});
+  // One narrow recovery for the secret route: a previously awarded3+star best
+  // already proves this passage, including reduced-choice help. Full reveals
+  // are capped at2stars. Other stars never substitute for Reharm exam evidence.
+  try{const stars=JSON.parse(storage?.getItem('ear-yoga-route-stars.v1')||'{}')?.[GARDEN_SECRET_ROUTE]?.stars;if(Number.isInteger(stars)&&stars>=GARDEN_SECRET_STARS&&stars<=5)this.data.allAccess=true;}catch{}
+  this.save();}
  save(){try{this.storage?.setItem(KEY,JSON.stringify(this.data));}catch{}}
  record(f,{official=false,demo=false,save=true}={}){
   if(demo||!official||!validFlight(f))return {changed:false,secret:false};
   const before=this.snapshot(),mode=f.difficulty;
   if(approved.has(f.route)&&!this.data[mode].includes(f.route))this.data[mode].push(f.route);
-  // One real performance: no hints, no combined old score/time records, at most
-  // three musical loops. Flying-tone slips and collisions do not block it.
-  const secret=f.route===GARDEN_SECRET_ROUTE&&f.independent&&f.accuracy>=.93&&f.laps<=3;
+  // Use the visible grade rather than a second hidden accuracy/lap threshold.
+  // Partial filters may earn this; demos, full reveals and Cadet cannot.
+  const secret=f.route===GARDEN_SECRET_ROUTE&&gardenFlightStars(f)>=GARDEN_SECRET_STARS;
   if(secret)this.data.allAccess=true;
   if(save)this.save();const after=this.snapshot();return {changed:JSON.stringify(before)!==JSON.stringify(after),secret:!before.allAccess&&after.allAccess,teacher:!before.hard&&after.hard,professor:!before.professor&&after.professor};
  }

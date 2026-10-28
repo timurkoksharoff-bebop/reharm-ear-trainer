@@ -32,6 +32,8 @@ vec3 terrain(sampler2D tex,vec2 uv){
   vec3 c=gardenTile(tex,uv);
   if(u_lowcost>.5)return c;
   float water=smoothstep(.03,.22,c.g-c.r)*smoothstep(.05,.23,c.b-c.r);
+  // A dry pixel has no ripple displacement. Reuse its identical first sample.
+  if(water<=0.)return c;
   vec2 ripples=vec2(sin(uv.y*120.+u_time*.6),cos(uv.x*100.-u_time*.5))*.00065*water;
   return gardenTile(tex,uv+ripples);
 }
@@ -45,18 +47,20 @@ vec3 amberMaterial(vec3 c){
 void main(){
   vec2 uv=(v_uv-.5)*u_resolution/u_size+vec2(.5+u_pan,.53-u_scroll);
   vec3 base=terrain(u_base,uv);
-  float phase=mod(u_growth,4.),amount=fract(phase);vec3 a,b;
-  if(phase<1.){a=base;b=terrain(u_bloom,uv);}
-  else if(phase<2.){a=terrain(u_bloom,uv);b=terrain(u_thaw,uv);}
-  else if(phase<3.){a=terrain(u_thaw,uv);b=amberMaterial(base);}
-  else{a=amberMaterial(base);b=base;}
+  float phase=mod(u_growth,4.),amount=fract(phase);
   vec2 n=uv*5.;
   float field=noise(n)*.52+noise(n*2.7)*.29+noise(n*7.9)*.13;
   float shore=abs(waterness(base)-.5)*2.;
   field-=shore*.055+sin((uv.x+uv.y)*18.+noise(n*1.3)*4.)*.035;
   float edge=amount*1.42-.21;
   float blend=smoothstep(field-.14,field+.14,edge);
-  vec3 c=mix(a,b,blend);
+  // Away from a growing boundary only one material is visible. Do not sample
+  // the other painting there; keep the original blend within the boundary.
+  vec3 c;
+  if(phase<1.){c=base;if(blend>0.){vec3 bloom=terrain(u_bloom,uv);c=blend>=1.?bloom:mix(base,bloom,blend);}}
+  else if(phase<2.){if(blend<=0.)c=terrain(u_bloom,uv);else if(blend>=1.)c=terrain(u_thaw,uv);else c=mix(terrain(u_bloom,uv),terrain(u_thaw,uv),blend);}
+  else if(phase<3.){c=amberMaterial(base);if(blend<1.){vec3 thaw=terrain(u_thaw,uv);c=blend<=0.?thaw:mix(thaw,c,blend);}}
+  else c=mix(amberMaterial(base),base,blend);
   float neon=smoothstep(.08,.42,max(c.b,c.g)-c.r*.75)*smoothstep(.25,.72,max(c.b,c.g));
   float petal=smoothstep(.17,.55,c.r-c.g)*smoothstep(.25,.65,c.b);
   float emission=max(neon,petal*.65);
@@ -139,29 +143,54 @@ function createPass(canvas,fragment,images,options={}){
   return {gl,p,buffer,textures,use,f,v,texture,dispose(){textures.forEach(item=>gl.deleteTexture(item));gl.deleteBuffer(buffer);gl.deleteProgram(p);}};
 }
 
+// The fragment shader discards outside this rotated rectangle before applying
+// its texture wobble. Scissoring to the same rectangle avoids shading two whole
+// screens for a small ship. The margin covers pixel rounding at every DPR.
+function scissorShip(gl,canvas,s,size,shadow){
+  const co=Math.cos(s.angle),si=Math.sin(s.angle),margin=2;
+  const cx=s.x-si*size*.14+17*shadow,cy=s.y+co*size*.14+25*shadow;
+  const rx=(Math.abs(co)*.5+Math.abs(si)*.64)*size+margin;
+  const ry=(Math.abs(si)*.5+Math.abs(co)*.64)*size+margin;
+  const sx=canvas.width/s.width,sy=canvas.height/s.height;
+  const left=Math.max(0,Math.min(canvas.width,Math.floor((cx-rx)*sx)));
+  const right=Math.max(left,Math.min(canvas.width,Math.ceil((cx+rx)*sx)));
+  const bottom=Math.max(0,Math.min(canvas.height,Math.floor((s.height-cy-ry)*sy)));
+  const top=Math.max(bottom,Math.min(canvas.height,Math.ceil((s.height-cy+ry)*sy)));
+  gl.scissor(left,bottom,right-left,top-bottom);
+}
+
 export function createGardenRenderer(groundCanvas,shipCanvas,images) {
   const ground=createPass(groundCanvas,GROUND,images.slice(0,3),{alpha:false,antialias:false});
-  const vessel=createPass(shipCanvas,SHIP,images.slice(4,6),{alpha:true,antialias:true,premultipliedAlpha:false});
+  // Both triangles cover the whole canvas; all ship edges come from the
+  // feathered texture alpha. MSAA adds a full-size resolve without edge detail.
+  const vessel=createPass(shipCanvas,SHIP,images.slice(4,6),{alpha:true,antialias:false,premultipliedAlpha:false});
+  let groundFrames=0,shipFrames=0;
   return {
-    render(s){
-      const g=ground.gl;g.viewport(0,0,groundCanvas.width,groundCanvas.height);g.disable(g.BLEND);ground.use();
-      ground.texture('u_base',0,0);ground.texture('u_bloom',1,1);ground.texture('u_thaw',2,2);
-      ground.v('u_resolution',s.width,s.height);ground.v('u_pilot',s.x/s.width,s.y/s.height);
-      ground.f('u_size',s.worldSize);ground.f('u_scroll',s.scroll);ground.f('u_pan',s.pan);ground.f('u_time',s.time);
-      ground.f('u_growth',s.growth);ground.f('u_night',s.night);ground.f('u_lantern',s.lantern?1:0);
-      ground.f('u_mirror',s.mirrorTiles?1:0);ground.f('u_lowcost',s.lowCostGraphics?1:0);
-      g.drawArrays(g.TRIANGLES,0,6);
+    render(s,{ground:renderGround=true}={}){
+      if(renderGround){
+        const g=ground.gl;g.viewport(0,0,groundCanvas.width,groundCanvas.height);g.disable(g.BLEND);ground.use();
+        ground.texture('u_base',0,0);ground.texture('u_bloom',1,1);ground.texture('u_thaw',2,2);
+        ground.v('u_resolution',s.width,s.height);ground.v('u_pilot',s.x/s.width,s.y/s.height);
+        ground.f('u_size',s.worldSize);ground.f('u_scroll',s.scroll);ground.f('u_pan',s.pan);ground.f('u_time',s.time);
+        ground.f('u_growth',s.growth);ground.f('u_night',s.night);ground.f('u_lantern',s.lantern?1:0);
+        ground.f('u_mirror',s.mirrorTiles?1:0);ground.f('u_lowcost',s.lowCostGraphics?1:0);
+        g.drawArrays(g.TRIANGLES,0,6);groundFrames++;
+      }
 
       const gl=vessel.gl;gl.viewport(0,0,shipCanvas.width,shipCanvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+      shipFrames++;
       if(s.ship===2)return;
       gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);vessel.use();vessel.texture('u_ship',s.ship,0);
       vessel.v('u_resolution',s.width,s.height);vessel.v('u_pilot',s.x/s.width,s.y/s.height);
       const size=gardenShipSize(s.width,s.ship);
       vessel.f('u_shipSize',size);vessel.f('u_angle',s.angle);vessel.f('u_time',s.time);vessel.f('u_night',s.night);
       vessel.f('u_thrust',s.thrust??.45);vessel.f('u_brake',s.brake??0);vessel.f('u_lateral',Math.max(-1,Math.min(1,(s.motionX??0)*4)));
-      vessel.f('u_shadow',1);gl.drawArrays(gl.TRIANGLES,0,6);vessel.f('u_shadow',0);gl.drawArrays(gl.TRIANGLES,0,6);
+      gl.enable(gl.SCISSOR_TEST);
+      scissorShip(gl,shipCanvas,s,size,1);vessel.f('u_shadow',1);gl.drawArrays(gl.TRIANGLES,0,6);
+      scissorShip(gl,shipCanvas,s,size,0);vessel.f('u_shadow',0);gl.drawArrays(gl.TRIANGLES,0,6);
+      gl.disable(gl.SCISSOR_TEST);
     },
     dispose(){ground.dispose();vessel.dispose();},
-    diagnostics(){return {textures:ground.textures.length+vessel.textures.length,groundError:ground.gl.getError(),shipError:vessel.gl.getError(),width:groundCanvas.width,height:groundCanvas.height};}
+    diagnostics(){return {textures:ground.textures.length+vessel.textures.length,groundError:ground.gl.getError(),shipError:vessel.gl.getError(),width:groundCanvas.width,height:groundCanvas.height,shipWidth:shipCanvas.width,shipHeight:shipCanvas.height,groundFrames,shipFrames};}
   };
 }

@@ -835,9 +835,9 @@ body.professor-mode.paged-chain .flight-tools-body{max-height:min(360px,calc(100
 /* Fit Captain's paged answer rails between the measured chain, ROOT and
    overlapping resource vials; retain the existing short-landscape layout. */
 @media(min-height:521px){
- body.professor-mode.paged-chain.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{top:var(--flight-quality-top,224px);height:var(--flight-quality-height,326px);max-height:none}
- body.professor-mode.paged-chain.student-palette #harmony-hud[data-variant=minimal] #quality-options{height:100%;grid-template-rows:repeat(10,minmax(0,1fr));gap:3px}
- body.professor-mode.paged-chain.student-palette #harmony-hud[data-variant=minimal] #quality-options .quality-option{height:100%;min-height:0;max-height:29px;padding:0 3px;align-self:center;font-size:clamp(10px,calc(var(--flight-quality-height,326px)/26),12px)}
+ body.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{top:var(--flight-quality-top,224px);height:var(--flight-quality-height,326px);max-height:none}
+ body.student-palette #harmony-hud[data-variant=minimal] #quality-options{height:100%;grid-template-rows:repeat(10,minmax(0,1fr));gap:3px}
+ body.student-palette #harmony-hud[data-variant=minimal] #quality-options .quality-option{height:100%;min-height:0;max-height:29px;padding:0 3px;align-self:center;font-size:clamp(10px,calc(var(--flight-quality-height,326px)/26),12px)}
  body.professor-mode.paged-chain .bass-panel{top:var(--flight-bass-top,272px);bottom:auto;height:var(--flight-bass-height,360px)}
  body.professor-mode.paged-chain #bass-options{gap:3px}
  body.professor-mode.paged-chain.compact-bass-rail .bass-panel{width:96px}
@@ -846,3 +846,12 @@ body.professor-mode.paged-chain .flight-tools-body{max-height:min(360px,calc(100
 }
 
 #grand-piano-credit{display:block;margin-top:8px;max-width:100%;font:10px/1.4 Arial,sans-serif;color:#bdd8d0}#grand-piano-credit[hidden]{display:none}#grand-piano-credit a{color:inherit;text-underline-offset:2px}
+
+@media(min-height:521px){body.student-palette.compact-quality-rail #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{width:116px;max-width:116px}body.student-palette.compact-quality-rail #harmony-hud[data-variant=minimal] #quality-options{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr))}body.student-palette.compact-quality-rail #harmony-hud[data-variant=minimal] #quality-options .quality-option{width:100%;max-width:100%;min-width:0}}
+/* A short landscape window has room across the screen, not for ten tall rows. */
+@media(orientation:landscape) and (max-height:520px) and (min-width:650px){
+ body.student-palette #garden-vitals{right:190px}
+ body.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel,body.teacher-mode.student-palette #harmony-hud[data-variant=minimal] .answers-panel.answers-panel{top:var(--flight-quality-top,214px);width:176px;max-width:176px;height:var(--flight-quality-height,100px);max-height:none}
+ body.student-palette #harmony-hud[data-variant=minimal] #quality-options{height:100%;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:3px}
+ body.student-palette #harmony-hud[data-variant=minimal] #quality-options .quality-option{width:100%;max-width:100%;min-width:0;height:100%;min-height:0;max-height:23px;padding:0 3px;align-self:center;font-size:10px}
+}

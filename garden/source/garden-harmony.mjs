@@ -206,6 +206,36 @@ export class GardenPad{
       if(id===(this.modeTimbre?.snapshot().timbre||'flute'))return true;
     }
   }
+  async remindTonic(reference,tonicPitchClass,{seconds=1.25}={}){
+    if(!reference?.reference)return false;
+    const request=this.referenceRequest=(this.referenceRequest||0)+1;
+    let generation=this.generation;const preset=this.preset,wasBackgrounded=this.backgrounded;
+    await this.unlock();
+    if(wasBackgrounded&&!this.backgrounded&&this.generation===generation+1)generation++;
+    if(request!==this.referenceRequest||generation!==this.generation||this.backgrounded||globalThis.document?.hidden)return false;
+    this.referenceStop?.();
+    if(!this.referencePad){
+      // Reuse the current AudioContext, decoded banks and output EQ. This is a
+      // separate short voice group, never a second mission or AudioContext.
+      const preview=this.referencePad=new GardenPad();preview.context=this.context;preview.samplesReady=this.samplesReady;preview.sampleBanks=this.sampleBanks;
+      preview.cleanOutput=this.context.createGain();preview.cleanOutput.gain.value=.82;preview.cleanOutput.connect(this.eqLow);
+      preview.output=this.context.createGain();preview.output.gain.value=.46;preview.output.connect(this.filter);
+      preview.unlock=async()=>{};
+    }
+    const preview=this.referencePad;preview.preset=preset;
+    if(!await preview.prepare()||request!==this.referenceRequest||generation!==this.generation||preset!==this.preset||this.backgrounded||globalThis.document?.hidden)return false;
+    const c=this.context,at=c.currentTime,duration=Math.max(.6,Math.min(2,Number(seconds)||1.25));
+    const duck=this.referenceLevels??= [this.cleanOutput,this.output].filter(Boolean).map(node=>({node,base:node.gain.value}));
+    for(const {node,base}of duck){node.gain.cancelScheduledValues(at);node.gain.setTargetAtTime(base*.16,at,.015);}
+    let timer,ended=false;
+    const stop=(immediate=true)=>{if(ended)return;ended=true;clearTimeout(timer);preview.stop(immediate);for(const {node,base}of duck){node.gain.cancelScheduledValues(c.currentTime);node.gain.setTargetAtTime(base,c.currentTime,.025);}this.transients.delete(stop);if(this.referenceStop===stop)this.referenceStop=null;if(this.lastReferencePreview)this.lastReferencePreview.active=false;};
+    this.referenceStop=stop;this.transients.add(stop);
+    try{await preview.play(reference,tonicPitchClass,{barSeconds:duration});}
+    catch(error){stop();throw error;}
+    if(ended)return false;
+    this.lastReferencePreview={active:true,at,duration,tonic:tonicPitchClass,chord:{...reference},preset};
+    timer=setTimeout(()=>stop(false),duration*1000);return true;
+  }
   resetEcho(){
     const c=this.context;if(!c||!this.filter)return;
     if(this.delay){try{this.filter.disconnect(this.delay);this.delay.disconnect();this.delayFeedback.disconnect();this.wet.disconnect();}catch{}}
@@ -259,6 +289,7 @@ export class GardenPad{
     }
   }
   async play(chord,tonicPitchClass=5,{arpeggio=false,arrangement={},barSeconds=4}={}){
+    this.referenceStop?.(false);
     this.modePreviewStop?.();
     const generation=++this.generation;
     await this.unlock();

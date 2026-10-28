@@ -11,6 +11,8 @@ import {createLanguage} from './garden-language.mjs';
 import {createGuide,guideItemName,guideItemCopy} from './garden-guide.mjs';
 import {createTrial} from './garden-trial.mjs';
 import {createGardenRenderer} from './garden-flight-renderer.mjs';
+import {GardenGraphicsBudget} from './garden-graphics-budget.mjs';
+import {mountGardenFlightQuickControls} from './garden-flight-quick-controls.mjs';
 import {gardenRouteWindow,gardenNoteName,gardenJazzQuality,gardenJazzLabel,gardenRootOffset,gardenBassOffset,gardenQualityAnswer,gardenQualityAnswerLabel,gardenAvailableAnswers,createGardenMission,GardenPad,gardenExercisesForChapter,gardenDegreeLabel,gardenQualityLabel,gardenChordLabel,gardenAnswerState,gardenCanonicalQuality,GARDEN_QUALITY_PALETTE,GARDEN_CORE_QUALITIES,gardenFilteredChoices} from './garden-harmony.mjs';
 import {difficultyProfile,GARDEN_ADMISSION_ROUTES,gardenAdmissionState,recordGardenAdmission} from './garden-difficulty.mjs';
 import {GardenSequenceStudio,gardenMandalaDataUri,gardenRouteDisplayName} from './garden-sequence-studio.mjs';
@@ -54,7 +56,8 @@ const STATES=[
 ];
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x)),mod=(x,n)=>(x%n+n)%n;
 const mobileGraphics=matchMedia('(pointer:coarse)').matches;
-let renderScale=mobileGraphics?1.3:1.5,slowFrameAverage=16,graphicsSamples=0;
+const graphicsBudget=new GardenGraphicsBudget({mobile:mobileGraphics});
+let terrainDirty=true,quickControls=null,lastImpactX=null,lastImpactY=null;
 const s={ready:false,lowCostGraphics:mobileGraphics,from:0,to:0,transition:1,pending:null,growth:0,ship:1,time:0,travel:0,scroll:0,pan:0,night:0,lightMode:'cycle',cycle:0,lantern:true,paused:reduced,speed:2,altitude:1.25,visit:0,clean:false,angle:0,motionX:0,motionY:0,thrust:.45,brake:0,x:0,y:0,width:1,height:1,worldSize:1,tour:'reharm',chapter:1,mode:'quest',gameOver:false};
 let renderer,images,last=0,raf=0,dpr=1,dragId=null,tx=.5,ty=.56,keys=new Set(),loaded=0;
 const pad=new GardenPad({deferSamplesUntilReady:true});
@@ -87,7 +90,7 @@ const professorRatings=new GardenJourneyRatings(achievementStorage,'ear-yoga-pro
 const activeRatings=()=>difficulty==='professor'?professorRatings:journeyRatings;
 const gardenLife=createGardenLife({onArrangement:(style,rounds)=>mission?.arrange(style,rounds),onRestoration:()=>{resonance.restore();modesFlight.restore();}});
 const gardenRewards=createGardenRewards({reduced});
-let mission,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,lastCollisionEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false;
+let mission,latestMissionModel=null,studio,currentRoute,lastMissionPosition='',lastLifeEvent=0,lastCollisionEvent=0,studioPauseState=false,queuedStudioRoute=null,completionHandled=false;
 let chainView={route:null,position:null,page:null};
 let runBest=null,completionRecord='',lastRecordLabel=null;
 const runRecordId=()=>routeIdentity(currentRoute)+':'+difficulty+':'+(currentRoute?.baseTonic??5);
@@ -173,13 +176,14 @@ function renderProfessorSettings(){const en=language.get()==='en';professorSetti
 
 queueMicrotask(renderProfessorSettings);
 function resize(){
-  s.width=innerWidth;s.height=innerHeight;dpr=Math.min(devicePixelRatio||1,renderScale);
-  for(const canvas of [world,life,shipLayer]){canvas.width=Math.round(s.width*dpr);canvas.height=Math.round(s.height*dpr);}
+  s.width=innerWidth;s.height=innerHeight;const budget=graphicsBudget.snapshot();dpr=Math.min(devicePixelRatio||1,budget.overlayScale);
+  for(const [canvas,scale]of [[world,Math.min(devicePixelRatio||1,budget.groundScale)],[life,dpr],[shipLayer,dpr]]){const width=Math.round(s.width*scale),height=Math.round(s.height*scale);if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;if(canvas===world)terrainDirty=true;}}
   s.worldSize=Math.max(s.width*.86,s.height*.95)/s.altitude;
   s.x=tx*s.width;s.y=ty*s.height;
 }
 resize();addEventListener('resize',resize);window.visualViewport?.addEventListener('resize',resize);
 function ui(){
+  quickControls?.refresh();
   document.body.classList.toggle('bright-garden',s.night<.45);
   const active=Math.floor(mod(s.growth,4)),item=STATES[active],progress=mod(s.growth,1);
   $('state-title').textContent=item.name;$('state-note').textContent=item.note;
@@ -201,7 +205,7 @@ function renderVitals(){
   resElement.hidden=!res.oxygenEnabled;resElement.style.setProperty('--level',String(res.energy/100));resElement.classList.toggle('low',res.energy<24);
   resElement.setAttribute('aria-label',`O₂: ${Math.round(res.energy)}%`);$('vital-resonance').textContent=String(Math.round(res.energy));
   const nav=modesFlight.snapshot(),navElement=document.querySelector('.vital[data-resource="navigation"]');navElement.hidden=!nav.navigationEnabled;navElement.style.setProperty('--level',String(nav.navigation/100));navElement.classList.toggle('low',nav.navigation<24);navElement.setAttribute('aria-label',`NAV: ${Math.round(nav.navigation)}%`);$('vital-navigation').textContent=String(Math.round(nav.navigation));
-  const repeatState=mission?.snapshot();$('infinity-toggle').disabled=!repeatState?.running||repeatState.complete||(!repeatState.held&&(model.inventory.hold||0)<1);$('infinity-toggle').title=repeatState?.held?'Выключить повтор и продолжить':`Повторить аккорд · зарядов лотоса: ${model.inventory.hold||0}`;
+  const repeatState=latestMissionModel??mission?.snapshot();$('infinity-toggle').disabled=!repeatState?.running||repeatState.complete||(!repeatState.held&&(model.inventory.hold||0)<1);$('infinity-toggle').title=repeatState?.held?'Выключить повтор и продолжить':`Повторить аккорд · зарядов лотоса: ${model.inventory.hold||0}`;
   for(const [name,definition] of Object.entries(GARDEN_RESOURCES)){
     const element=document.querySelector(`.vital[data-resource="${name}"]`),value=Math.round(model.resources[name]);
     if(!element)continue;
@@ -216,7 +220,7 @@ function renderVitals(){
   const callout=$('vital-event');
   if(event&&model.eventAge<2.4){callout.textContent=`${event.harmful?'−':'+'} ${event.label}`;callout.classList.toggle('harmful',event.harmful);callout.classList.add('visible');}
   else callout.classList.remove('visible');
-  for(const button of document.querySelectorAll('[data-use-artifact]')){const kind=button.dataset.useArtifact,count=model.inventory[kind]||0,spec=GARDEN_ITEMS[kind],state=mission?.snapshot(),repeating=Boolean(spec.repeat&&state?.held);button.querySelector('b').textContent=count?String(count):'';button.classList.toggle('ready',count>0||repeating);button.classList.toggle('repeating',repeating);button.setAttribute('aria-pressed',String(repeating));if(spec.repeat){button.title=repeating?'∞ Повтор включён · нажми, чтобы продолжить':`${spec.label} · зарядов: ${count}`;button.setAttribute('aria-label',button.title);}button.hidden=Boolean(spec.teacherOnly&&!state?.separateBass)||(!spec.navigationDelta&&count<1&&!repeating);button.disabled=(!repeating&&count<1)||(spec.shield&&model.shieldHits>0)||s.paused||!state?.running||state.cursor<0||(spec.assist?.reveal&&(spec.assist.answerKind==='both'?state.answerKinds.every(kind=>state.currentParts[kind]):state.currentParts[spec.assist.answerKind]));}
+  for(const button of document.querySelectorAll('[data-use-artifact]')){const kind=button.dataset.useArtifact,count=model.inventory[kind]||0,spec=GARDEN_ITEMS[kind],state=repeatState,repeating=Boolean(spec.repeat&&state?.held);button.querySelector('b').textContent=count?String(count):'';button.classList.toggle('ready',count>0||repeating);button.classList.toggle('repeating',repeating);button.setAttribute('aria-pressed',String(repeating));if(spec.repeat){button.title=repeating?'∞ Повтор включён · нажми, чтобы продолжить':`${spec.label} · зарядов: ${count}`;button.setAttribute('aria-label',button.title);}button.hidden=Boolean(spec.teacherOnly&&!state?.separateBass)||(!spec.navigationDelta&&count<1&&!repeating);button.disabled=(!repeating&&count<1)||(spec.shield&&model.shieldHits>0)||s.paused||!state?.running||state.cursor<0||(spec.assist?.reveal&&(spec.assist.answerKind==='both'?state.answerKinds.every(kind=>state.currentParts[kind]):state.currentParts[spec.assist.answerKind]));}
 }
 function collisionThud(){
   const audio=pad.context;if(!audio||audio.state!=='running')return;
@@ -227,6 +231,7 @@ function collisionThud(){
   oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
 }
 function renderMission(model){
+  latestMissionModel=model;
   requestAnimationFrame(layoutFlightTools);
   if(!modeDemo?.active){skillFlight.observe(model);run.observe(model);}renderRun();
   renderTutorial(model);
@@ -282,7 +287,7 @@ function renderMission(model){
   const visibleBasses=gardenFilteredChoices('bass',model.current,model.filters?.bass);
   $('bass-options').replaceChildren(...(model.separateBass?DEGREE_NAMES.map((name,offset)=>{const pitch=((model.exercise.baseTonic??5)+offset)%12,button=document.createElement('button'),answer=gardenAnswerState(model,'bass',offset);button.className=`degree-option${answer.selected?' selected locked':''}${visibleBasses.has(offset)?'':' filtered'}`;button.textContent=name;button.dataset.bass=String(pitch);button.dataset.bassDegree=String(offset);button.setAttribute('aria-label',`Бас ${name}`);button.setAttribute('aria-pressed',String(answer.selected));button.disabled=answer.disabled||!visibleBasses.has(offset);bindAnswerPress(button,()=>answerPart('bass',offset));return button;}):[]));
   $('teacher-key').hidden=!model.rootMode;
-  $('teacher-key').textContent=`ROOT · KEY: ${gardenNoteName(model.exercise.baseTonic??5)}`;
+  $('teacher-key').textContent=`ROOT · KEY: ${gardenNoteName(model.exercise.baseTonic??5)}`;quickControls?.refresh();
   $('degree-options').replaceChildren(...DEGREE_NAMES.map((name,offset)=>{const button=document.createElement('button'),answer=gardenAnswerState(model,'degree',offset);button.className=`degree-option${answer.selected?' selected locked':''}${visibleDegrees.has(offset)?'':' filtered'}`;button.setAttribute('aria-pressed',String(answer.selected));button.textContent=name;button.dataset.degree=String(offset);button.disabled=answer.disabled||!visibleDegrees.has(offset);bindAnswerPress(button,()=>answerPart('degree',offset));return button;}));
   const makeQuality=quality=>{const button=document.createElement('button'),answer=gardenAnswerState(model,'quality',quality);button.className=`quality-option${answer.selected?' selected locked':''}${visibleQualities.has(quality)?'':' filtered'}`;button.setAttribute('aria-pressed',String(answer.selected));button.textContent=model.separateBass?(gardenJazzQuality(quality)||'△'):gardenQualityAnswerLabel(quality);button.title=/^\d+:/.test(quality)?'Ступень и тип верхнего аккорда; бас выбери внизу':`Тип аккорда: ${gardenQualityLabel(quality)}`;button.dataset.quality=quality;button.disabled=answer.disabled||!visibleQualities.has(quality);bindAnswerPress(button,()=>answerPart('quality',quality));return button;};
   $('quality-options').replaceChildren(...GARDEN_CORE_QUALITIES.map(makeQuality));
@@ -460,7 +465,7 @@ async function launchRoute(route,{skipLesson=false}={}){
   gardenLife.difficulty=difficultyProfile(difficulty);s.speed=gardenLife.difficulty.speed;tutorialStep=0;
   hideGardenStart();$('mission-complete').hidden=true;setGardenMenu(false,{resume:false});$('game-over').hidden=true;s.gameOver=false;gardenLife.reset();renderVitals();bindMission(route);if(difficulty==='professor')professorTeacher.beginFlight(routeIdentity(route));
   if(!wasTutorialDismissed()){guide.open({resume:true});return;}
-  if(await resumeMissionPlayback()){world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}
+  if(await resumeMissionPlayback()){quickControls?.refresh();world.focus({preventScroll:true});$('answer-feedback').textContent=`Маршрут «${routeTitle(route)}» загружен`;ui();}
 }
 function layoutModeDemo(){
  if(!modeDemo?.active)return;const hud=$('mode-demo');if(!hud)return;const box=selector=>{const e=document.querySelector(selector);return e?.getClientRects().length?e.getBoundingClientRect():null;};const route=box('.route-panel'),root=box('.degrees-panel'),bass=box('#bass-panel'),answers=box('.answers-panel');if(!route)return;
@@ -468,14 +473,23 @@ function layoutModeDemo(){
 }
 function layoutFlightTools(){
  layoutModeDemo();
- if(difficulty!=='professor'){document.body.classList.remove('compact-bass-rail');return;}const route=document.querySelector('.route-panel');if(!route?.getClientRects().length)return;const edge=route.getBoundingClientRect().bottom,toolsTop=Math.max(128,Math.min(innerHeight-146,edge+12));document.body.style.setProperty('--professor-combo-top',`${Math.max(112,Math.min(innerHeight-125,edge+12))}px`);document.body.style.setProperty('--flight-tools-top',`${toolsTop}px`);
- // Paged routes need bounds from the actual chain and bottom controls. The
- // legacy 224px quality anchor plus ten fixed rows could run into the vials.
- const root=document.querySelector('.degrees-panel')?.getBoundingClientRect(),answers=document.querySelector('.answers-panel')?.getBoundingClientRect(),vitals=document.querySelector('.garden-vitals')?.getBoundingClientRect();
- const bottom=(root?.top??innerHeight-100)-12,qualityTop=edge+12,bassTop=toolsTop+48;
- const touchesVials=answers&&vitals&&answers.left<vitals.right&&answers.right>vitals.left;
- const qualityBottom=Math.min(bottom,touchesVials?vitals.top-10:bottom),bassSpace=Math.max(0,bottom-bassTop);
- document.body.style.setProperty('--flight-quality-top',`${qualityTop}px`);document.body.style.setProperty('--flight-quality-height',`${Math.max(80,Math.min(326,qualityBottom-qualityTop))}px`);
+ // The extra 44px controls belong to the bottom answer rail. Keep resource
+ // vials above their actual hit targets only when they share horizontal space.
+ const quickBar=$('flight-quick-controls'),bottomRail=document.querySelector('.degrees-panel'),vials=$('garden-vitals');
+ if(quickBar&&!quickBar.hidden&&bottomRail?.getClientRects().length&&vials?.getClientRects().length){
+  const vr=vials.getBoundingClientRect(),targets=[...quickBar.querySelectorAll('.flight-quick-reference,.flight-quick-label,.flight-quick-restart')].map(e=>e.getBoundingClientRect()),overlap=targets.some(r=>r.left<vr.right&&r.right>vr.left);
+  const bottom=overlap?`${Math.ceil(innerHeight-bottomRail.getBoundingClientRect().top+10)}px`:'';
+  if(vials.style.bottom!==bottom)vials.style.bottom=bottom;
+ }
+ const route=document.querySelector('.route-panel');if(!route?.getClientRects().length)return;
+ const edge=route.getBoundingClientRect().bottom,root=document.querySelector('.degrees-panel')?.getBoundingClientRect(),answers=document.querySelector('.answers-panel')?.getBoundingClientRect(),vitals=document.querySelector('.garden-vitals')?.getBoundingClientRect();
+ const bottom=(root?.top??innerHeight-100)-12,qualityTop=edge+12,touchesVials=answers&&vitals&&answers.left<vitals.right&&answers.right>vitals.left;
+ const qualityBottom=Math.min(bottom,touchesVials?vitals.top-10:bottom),qualitySpace=qualityBottom-qualityTop;
+ document.body.style.setProperty('--flight-quality-top',`${qualityTop}px`);document.body.style.setProperty('--flight-quality-height',`${Math.max(80,Math.min(326,qualitySpace))}px`);
+ document.body.classList.toggle('compact-quality-rail',innerHeight>520&&innerWidth<=600&&qualitySpace<180);
+ if(difficulty!=='professor'){document.body.classList.remove('compact-bass-rail');return;}
+ const toolsTop=Math.max(128,Math.min(innerHeight-146,edge+12));document.body.style.setProperty('--professor-combo-top',`${Math.max(112,Math.min(innerHeight-125,edge+12))}px`);document.body.style.setProperty('--flight-tools-top',`${toolsTop}px`);
+ const bassTop=toolsTop+48,bassSpace=Math.max(0,bottom-bassTop);
  document.body.style.setProperty('--flight-bass-top',`${bassTop}px`);document.body.style.setProperty('--flight-bass-height',`${Math.max(80,Math.min(480,bassSpace))}px`);
  document.body.classList.toggle('compact-bass-rail',document.body.classList.contains('paged-chain')&&innerHeight>520&&innerWidth<=600&&bassSpace<270);
 }
@@ -608,6 +622,7 @@ world.addEventListener('pointermove',e=>{if(e.pointerId===dragId)move(e.clientX,
 for(const name of ['pointerup','pointercancel','lostpointercapture'])world.addEventListener(name,e=>{if(e.pointerId===dragId)dragId=null;});
 addEventListener('keydown',e=>{
   if(modeLayoutEditor?.isOpen||skillAtlas?.isOpen||e.target.closest?.('#live-phrase-controls'))return;
+  if(e.target.closest?.('#flight-quick-controls')&&!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyW','KeyA','KeyS','KeyD'].includes(e.code))return;
   if(modeDemo?.active){if(e.target.closest?.('#mode-demo')&&e.code!=='Escape')return;if(e.code==='Escape'){e.preventDefault();stopModeDemo();}else if(e.code==='Space'){e.preventDefault();$('mission-toggle').click();}else if(!['Tab','Enter'].includes(e.code)){e.preventDefault();}return;}
   if($('recording-result').open||$('achievements-board')?.open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,select,textarea,[contenteditable="true"]')||e.repeat&&['Space','KeyH'].includes(e.code))return;
   if(e.code==='Escape'&&lightingPreview.active){e.preventDefault();closeLightingPreview();return;}
@@ -618,7 +633,7 @@ addEventListener('keydown',e=>{
   if(e.code==='Space'){e.preventDefault();$('mission-toggle').click();}if(e.code==='KeyH')clean(!s.clean);if(e.code==='Escape'&&s.clean)clean(false);
 },true);
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();dragId=null;});
-document.addEventListener('visibilitychange',()=>{last=0;keys.clear();if(document.hidden){mission?.pause();pad.backgroundSilence();s.paused=true;cancelAnimationFrame(raf);raf=0;}else{ui();if(!raf)raf=requestAnimationFrame(frame);}});
+document.addEventListener('visibilitychange',()=>{last=0;graphicsBudget.resetTiming();terrainDirty=true;keys.clear();if(document.hidden){mission?.pause();pad.backgroundSilence();s.paused=true;cancelAnimationFrame(raf);raf=0;}else{ui();if(!raf)raf=requestAnimationFrame(frame);}});
 addEventListener('pagehide',()=>{mission?.pause();pad.backgroundSilence();});
 function update(dt,clockDt=dt){
   if(s.paused)return;
@@ -642,7 +657,7 @@ function update(dt,clockDt=dt){
   s.thrust=clamp(.46-s.motionY*1.9,.22,1);s.brake=clamp(s.motionY*2.4,0,1);
   s.angle+=(clamp(dx/s.width,-.3,.3)-s.angle)*(1-Math.exp(-dt*4));
   s.pan+=((s.x/s.width-.5)*.13-s.pan)*(1-Math.exp(-dt));
-  const missionState=mission?.snapshot();
+  const missionState=latestMissionModel??mission?.snapshot();
   const pacingBarSeconds=missionState?.barSeconds*timeScale;
   if(comboNotice){comboNotice.age+=realClockDt;if(comboNotice.age>2.6){comboToast.hidden=true;comboNotice=null;document.querySelector('.run-readout').classList.remove('combo-score');}}
   run.tick(realClockDt,Boolean(missionState?.running&&missionState.cursor>=0&&!s.gameOver));renderRun();
@@ -652,7 +667,7 @@ function update(dt,clockDt=dt){
   resonance.update(dt,harmonicView);modesFlight.update(dt,harmonicView);
   if((lifeState.gameOver||resonance.gameOver||modesFlight.gameOver)&&!s.gameOver){s.gameOver=true;s.paused=true;mission?.pause();pad.stop(true);$('game-over').querySelector('span').textContent=resonance.gameOver?'O₂ · 0':modesFlight.gameOver?'NAV · 0':'КРИТИЧЕСКОЕ СТОЛКНОВЕНИЕ';$('game-over').hidden=false;}
   const shake=lifeState.impact||0,shakeX=Math.sin(s.time*83)*shake*7,shakeY=Math.cos(s.time*71)*shake*5;
-  document.documentElement.style.setProperty('--impact-x',`${shakeX.toFixed(2)}px`);document.documentElement.style.setProperty('--impact-y',`${shakeY.toFixed(2)}px`);
+  const impactX=`${shakeX.toFixed(2)}px`,impactY=`${shakeY.toFixed(2)}px`;if(impactX!==lastImpactX){lastImpactX=impactX;document.documentElement.style.setProperty('--impact-x',impactX);}if(impactY!==lastImpactY){lastImpactY=impactY;document.documentElement.style.setProperty('--impact-y',impactY);}
   document.body.classList.toggle('garden-impact',shake>.05);
   const hazardForce=gardenLife.getFlightForce();
   tx=clamp(tx+hazardForce.x*dt,.1,.9);ty=clamp(ty+hazardForce.y*dt,.2,.78);
@@ -684,9 +699,11 @@ function atmosphere(){
 let uiTick=0;
 function frame(now){
   raf=0;if(document.hidden)return;
+  if(!graphicsBudget.allowFrame(now)){raf=requestAnimationFrame(frame);return;}
   const frameMs=last?now-last:0,dt=Math.min(.05,frameMs/1000);last=now;
-  if(mobileGraphics&&frameMs>0&&frameMs<250){slowFrameAverage=slowFrameAverage*.98+frameMs*.02;if(++graphicsSamples>180&&slowFrameAverage>27&&renderScale>1.1){renderScale=1.1;resize();}}
-  if(s.ready&&!journey?.isOpen&&!skillAtlas?.isOpen&&!document.body.classList.contains('start-open')){if(lightingPreview.active&&lightingPreview.playing&&s.lightMode==='cycle'){s.cycle=mod(s.cycle+dt*15,360);s.night=(1-Math.cos(s.cycle*Math.PI/180))/2;}update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2});atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
+  const active=s.ready&&!journey?.isOpen&&!skillAtlas?.isOpen&&!document.body.classList.contains('start-open');
+  if(graphicsBudget.observe(frameMs,{active:active&&!s.paused}))resize();
+  if(s.ready&&!journey?.isOpen&&!skillAtlas?.isOpen&&!document.body.classList.contains('start-open')){if(lightingPreview.active&&lightingPreview.playing&&s.lightMode==='cycle'){s.cycle=mod(s.cycle+dt*15,360);s.night=(1-Math.cos(s.cycle*Math.PI/180))/2;}update(dt,Math.min(.5,frameMs/1000));renderer.render({...s,lantern:s.lantern&&s.ship!==2},{ground:graphicsBudget.drawGround(now,terrainDirty)});terrainDirty=false;atmosphere();if(now-uiTick>200){ui();renderVitals();const model=mission.snapshot();$('bar-countdown').textContent=model.running?`${Math.max(0,(model.deadline-performance.now())/1000).toFixed(1)} сек`:`${model.barSeconds.toFixed(1)} сек`;uiTick=now;}}
   raf=requestAnimationFrame(frame);
 }
 async function load(){
@@ -715,7 +732,7 @@ function error(e){s.ready=false;$('loading').hidden=false;$('load-progress').tex
 $('retry').addEventListener('click',()=>location.reload());
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();s.ready=false;last=0;$('loading').hidden=false;$('load-progress').textContent='Восстанавливаем изображение…';});
 for(const canvas of [world,shipLayer])canvas.addEventListener('webglcontextrestored',()=>{try{renderer?.dispose();renderer=createGardenRenderer(world,shipLayer,images.slice(0,6));s.ready=true;last=0;$('loading').hidden=true;}catch(e){error(e);}});
-window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:renderer?.diagnostics(),lightingPreview:{active:lightingPreview.active,playing:lightingPreview.playing},mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),modes:modesFlight.snapshot(),access:modeAccess.snapshot(),demo:modeDemo?.snapshot(),teacher:professorTeacher.snapshot(),audition:modeAudition.snapshot(),modeTimbre:modeTimbre.snapshot(),run:run.snapshot(),combos:professorCombos.snapshot(),audio:{state:pad.context?.state,time:pad.context?.currentTime,sounding:pad.sounding&&{at:pad.sounding.at,barSeconds:pad.sounding.barSeconds}},lastTension:pad.lastTension&&{...pad.lastTension},lastModePreview:pad.lastModePreview&&{...pad.lastModePreview,notes:[...pad.lastModePreview.notes]},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),spawnMode:(id,options)=>modesFlight.spawn(id,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
+window.gardenFlight=Object.freeze({snapshot:()=>({...s,keys:keys.size,particles:motes.length,graphics:{...renderer?.diagnostics(),budget:graphicsBudget.snapshot()},lightingPreview:{active:lightingPreview.active,playing:lightingPreview.playing},mission:mission.snapshot(),life:gardenLife.snapshot(),resonance:resonance.snapshot(),modes:modesFlight.snapshot(),access:modeAccess.snapshot(),demo:modeDemo?.snapshot(),teacher:professorTeacher.snapshot(),audition:modeAudition.snapshot(),modeTimbre:modeTimbre.snapshot(),run:run.snapshot(),combos:professorCombos.snapshot(),audio:{state:pad.context?.state,time:pad.context?.currentTime,sounding:pad.sounding&&{at:pad.sounding.at,barSeconds:pad.sounding.barSeconds}},referencePreview:pad.lastReferencePreview&&{...pad.lastReferencePreview},lastTension:pad.lastTension&&{...pad.lastTension},lastModePreview:pad.lastModePreview&&{...pad.lastModePreview,notes:[...pad.lastModePreview.notes]},progress:{...progress},currentRoute:currentRoute?.id}),advanceChord:()=>mission.advance(),spawnCollectible:kind=>gardenLife.forceSpawn(kind,{x:.5,y:.22}),spawnTension:(label,options)=>resonance.spawn(label,options),spawnMode:(id,options)=>modesFlight.spawn(id,options),showMenu:()=>showGardenStart(),randomRoute:()=>randomGardenRoute()});
 if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','localhost'].includes(location.hostname)){
  const probe=document.createElement('button');probe.id='qa-repeat-pickup';probe.textContent='Проверка: выпустить лотос ∞';probe.style.cssText='position:fixed;left:12px;bottom:180px;z-index:60;color:#d9edcd;background:#102922;border:1px solid #799e84;padding:8px';
  probe.addEventListener('click',()=>{if(!mission.snapshot().running)return;gardenLife.forceSpawn('hold',{x:s.x/s.width,y:s.y/s.height-.12,vx:0});});document.body.append(probe);
@@ -724,6 +741,7 @@ if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','lo
 document.body.append($('language-toggle'));
 language=createLanguage();
 renderModeNames();
+quickControls=mountGardenFlightQuickControls({language,getState:()=>({visible:Boolean(currentRoute&&$('garden-start').hidden&&!s.gameOver&&!modeDemo?.active&&!document.body.classList.contains('world-open')),canReference:Boolean(currentRoute&&!document.hidden&&!s.gameOver),canRestart:Boolean(currentRoute&&!s.gameOver),keyLabel:'KEY: '+gardenNoteName(currentRoute?.baseTonic??5)}),onReference:async()=>{const model=mission.snapshot();await pad.remindTonic(model.reference,model.exercise.baseTonic??5);},onRestart:async()=>{if(currentRoute)await launchRoute(currentRoute,{skipLesson:true});}});
 if(localTesting){const note=document.createElement('small');note.id='local-testing-note';note.textContent=language.get()==='en'?'Local testing · modes unlocked':'Локальный тест · режимы открыты';document.querySelector('.garden-start-shell').append(note);}
 modeLayoutEditor=mountGardenModeLayoutEditor({language,onOpen:()=>showGardenStart(),onClose:()=>ui()});
 const layoutButton=document.createElement('button');layoutButton.id='mode-layout-open';layoutButton.type='button';layoutButton.dataset.userContent='';layoutButton.textContent=language.get()==='en'?'Mode button layout':'Расположение кнопок режимов';layoutButton.onclick=()=>modeLayoutEditor.open();$('settings-panel').append(layoutButton);

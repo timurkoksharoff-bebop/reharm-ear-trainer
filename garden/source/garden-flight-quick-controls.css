@@ -1,23 +1,30 @@
-/* A transparent row in the measured answer rail, above the degree buttons. */
+/* Tonic keeps its original position in the measured answer rail. The empty
+   third column preserves the label and reminder geometry after moving Restart. */
 #flight-quick-controls{display:grid;grid-template-columns:44px minmax(0,110px) 44px;justify-content:center;align-items:center;gap:3px;min-height:44px;margin:0 0 2px;color:#d5ede7;pointer-events:none}
 #flight-quick-controls .flight-quick-label{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 4px;text-align:center;font:11px/1.3 system-ui,sans-serif;text-shadow:0 1px 4px #001719}
 #flight-quick-controls #teacher-key{margin:0;font:inherit;white-space:nowrap}
 #flight-quick-controls .flight-quick-key{white-space:nowrap}
-#flight-quick-controls .flight-quick-button{position:relative;display:grid;place-items:center;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;color:inherit;pointer-events:auto;touch-action:manipulation;cursor:pointer}
-#flight-quick-controls .flight-quick-button:before{content:"";position:absolute;inset:7px;border:1px solid #b7e4dd63;border-radius:50%;background:#0c2e3312;pointer-events:none}
-#flight-quick-controls .flight-quick-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button{position:relative;display:grid;place-items:center;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none;color:inherit;pointer-events:auto;touch-action:manipulation;cursor:pointer}
+:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button:before{content:"";position:absolute;inset:7px;border:1px solid #b7e4dd63;border-radius:50%;background:#0c2e3312;pointer-events:none}
+:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 #flight-quick-controls .flight-quick-reference ellipse{fill:currentColor;stroke:none}
-#flight-quick-controls .flight-quick-button:hover:before,#flight-quick-controls .flight-quick-button:focus-visible:before{border-color:#e0f5e9b3;background:#8bdfcf15}
-#flight-quick-controls .flight-quick-button:focus-visible{outline:1px solid #c5f3eb;outline-offset:-2px}
-#flight-quick-controls .flight-quick-button:active:before{background:#8bdfcf28}
-#flight-quick-controls .flight-quick-button:disabled{opacity:.4;cursor:default}
-#flight-quick-controls[data-confirming=true] .flight-quick-restart{color:#f1deb1}
-#flight-quick-controls[data-confirming=true] .flight-quick-restart:before{border-color:#f1deb1bd;background:#e5cb7b16}
-#flight-quick-controls .flight-quick-confirmation{display:flex;align-items:center;justify-content:center;gap:2px;pointer-events:auto}
-#flight-quick-controls .flight-quick-prompt{white-space:nowrap;color:#f1deb1;font-size:11px}
-#flight-quick-controls .flight-quick-cancel{color:#c7d9d2}
-#flight-quick-controls .flight-quick-cancel:before{border-color:#b7e4dd3d}
-#flight-quick-controls .flight-quick-cancel svg{width:15px;height:15px}
+:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button:hover:before,:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button:focus-visible:before{border-color:#e0f5e9b3;background:#8bdfcf15}
+:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button:focus-visible{outline:1px solid #c5f3eb;outline-offset:-2px}
+:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button:active:before{background:#8bdfcf28}
+:is(#flight-quick-controls,#flight-restart-controls) .flight-quick-button:disabled{opacity:.4;cursor:default}
+/* The route already reserves the rightmost 54px below the Menu button.
+   Restart uses that top transport gutter, clear of the bottom answer rail. */
+#flight-restart-controls{position:fixed;right:8px;top:calc(var(--flight-transport-top,max(9px,env(safe-area-inset-top))) + 50px);width:44px;height:44px;z-index:29;color:#c5f3eb;pointer-events:none;font:11px/1.2 system-ui,sans-serif}
+#flight-restart-controls .flight-quick-button:before{inset:3px;border-color:#b7e4dd50;background:#0c2e330d}
+#flight-restart-controls .flight-quick-restart svg{width:22px;height:22px}
+#flight-restart-controls[data-confirming=true] .flight-quick-restart{color:#f1deb1}
+#flight-restart-controls[data-confirming=true] .flight-quick-restart:before{border-color:#f1deb1bd;background:#e5cb7b16}
+#flight-restart-controls[data-confirming=true] .flight-quick-restart svg{width:17px;height:17px;transform:translateY(-5px)}
+#flight-restart-controls .flight-quick-confirmation{position:absolute;right:0;top:48px;width:44px;height:44px;pointer-events:none}
+#flight-restart-controls .flight-quick-prompt{position:absolute;left:0;top:-21px;width:44px;text-align:center;white-space:nowrap;color:#f1deb1;font-size:9px;line-height:1.2;pointer-events:none}
+#flight-restart-controls .flight-quick-cancel{color:#c7d9d2}
+#flight-restart-controls .flight-quick-cancel:before{border-color:#b7e4dd3d}
+#flight-restart-controls .flight-quick-cancel svg{width:15px;height:15px}
 #flight-quick-controls .flight-quick-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none}
-body.start-open #flight-quick-controls,body.world-open #flight-quick-controls,body.tutorial-open #flight-quick-controls,body.mode-demo-active #flight-quick-controls{display:none!important}
+body.start-open :is(#flight-quick-controls,#flight-restart-controls),body.world-open :is(#flight-quick-controls,#flight-restart-controls),body.tutorial-open :is(#flight-quick-controls,#flight-restart-controls),body.mode-demo-active :is(#flight-quick-controls,#flight-restart-controls){display:none!important}
 @media(max-width:360px){#flight-quick-controls{gap:1px}#flight-quick-controls .flight-quick-label{padding:0 2px;font-size:10px}}

@@ -483,7 +483,8 @@ function layoutFlightTools(){
  }
  const route=document.querySelector('.route-panel');if(!route?.getClientRects().length)return;
  const edge=route.getBoundingClientRect().bottom,root=document.querySelector('.degrees-panel')?.getBoundingClientRect(),answers=document.querySelector('.answers-panel')?.getBoundingClientRect(),vitals=document.querySelector('.garden-vitals')?.getBoundingClientRect();
- const bottom=(root?.top??innerHeight-100)-12,qualityTop=edge+12,touchesVials=answers&&vitals&&answers.left<vitals.right&&answers.right>vitals.left;
+ const confirmation=$('flight-restart-confirmation'),confirmationBounds=confirmation&&!confirmation.hidden&&confirmation.getClientRects().length?confirmation.getBoundingClientRect():null;
+ const bottom=(root?.top??innerHeight-100)-12,qualityTop=Math.max(edge+12,answers&&confirmationBounds&&answers.left<confirmationBounds.right&&answers.right>confirmationBounds.left?confirmationBounds.bottom+8:0),touchesVials=answers&&vitals&&answers.left<vitals.right&&answers.right>vitals.left;
  const qualityBottom=Math.min(bottom,touchesVials?vitals.top-10:bottom),qualitySpace=qualityBottom-qualityTop;
  document.body.style.setProperty('--flight-quality-top',`${qualityTop}px`);document.body.style.setProperty('--flight-quality-height',`${Math.max(80,Math.min(326,qualitySpace))}px`);
  document.body.classList.toggle('compact-quality-rail',innerHeight>520&&innerWidth<=600&&qualitySpace<180);
@@ -622,7 +623,7 @@ world.addEventListener('pointermove',e=>{if(e.pointerId===dragId)move(e.clientX,
 for(const name of ['pointerup','pointercancel','lostpointercapture'])world.addEventListener(name,e=>{if(e.pointerId===dragId)dragId=null;});
 addEventListener('keydown',e=>{
   if(modeLayoutEditor?.isOpen||skillAtlas?.isOpen||e.target.closest?.('#live-phrase-controls'))return;
-  if(e.target.closest?.('#flight-quick-controls')&&!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyW','KeyA','KeyS','KeyD'].includes(e.code))return;
+  if(e.target.closest?.('#flight-quick-controls,#flight-restart-controls')&&!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyW','KeyA','KeyS','KeyD'].includes(e.code))return;
   if(modeDemo?.active){if(e.target.closest?.('#mode-demo')&&e.code!=='Escape')return;if(e.code==='Escape'){e.preventDefault();stopModeDemo();}else if(e.code==='Space'){e.preventDefault();$('mission-toggle').click();}else if(!['Tab','Enter'].includes(e.code)){e.preventDefault();}return;}
   if($('recording-result').open||$('achievements-board')?.open||e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,select,textarea,[contenteditable="true"]')||e.repeat&&['Space','KeyH'].includes(e.code))return;
   if(e.code==='Escape'&&lightingPreview.active){e.preventDefault();closeLightingPreview();return;}
@@ -741,7 +742,7 @@ if(new URLSearchParams(location.search).get('qa')==='infinity'&&['127.0.0.1','lo
 document.body.append($('language-toggle'));
 language=createLanguage();
 renderModeNames();
-quickControls=mountGardenFlightQuickControls({language,getState:()=>({visible:Boolean(currentRoute&&$('garden-start').hidden&&!s.gameOver&&!modeDemo?.active&&!document.body.classList.contains('world-open')),canReference:Boolean(currentRoute&&!document.hidden&&!s.gameOver),canRestart:Boolean(currentRoute&&!s.gameOver),keyLabel:'KEY: '+gardenNoteName(currentRoute?.baseTonic??5)}),onReference:async()=>{const model=mission.snapshot();await pad.remindTonic(model.reference,model.exercise.baseTonic??5);},onRestart:async()=>{if(currentRoute)await launchRoute(currentRoute,{skipLesson:true});}});
+quickControls=mountGardenFlightQuickControls({language,getState:()=>({visible:Boolean(currentRoute&&$('garden-start').hidden&&!s.gameOver&&!modeDemo?.active&&!document.body.classList.contains('world-open')),canReference:Boolean(currentRoute&&!document.hidden&&!s.gameOver),canRestart:Boolean(currentRoute&&!s.gameOver),keyLabel:'KEY: '+gardenNoteName(currentRoute?.baseTonic??5)}),onLayout:layoutFlightTools,onReference:async()=>{const model=mission.snapshot();await pad.remindTonic(model.reference,model.exercise.baseTonic??5);},onRestart:async()=>{if(currentRoute)await launchRoute(currentRoute,{skipLesson:true});}});
 if(localTesting){const note=document.createElement('small');note.id='local-testing-note';note.textContent=language.get()==='en'?'Local testing · modes unlocked':'Локальный тест · режимы открыты';document.querySelector('.garden-start-shell').append(note);}
 modeLayoutEditor=mountGardenModeLayoutEditor({language,onOpen:()=>showGardenStart(),onClose:()=>ui()});
 const layoutButton=document.createElement('button');layoutButton.id='mode-layout-open';layoutButton.type='button';layoutButton.dataset.userContent='';layoutButton.textContent=language.get()==='en'?'Mode button layout':'Расположение кнопок режимов';layoutButton.onclick=()=>modeLayoutEditor.open();$('settings-panel').append(layoutButton);
